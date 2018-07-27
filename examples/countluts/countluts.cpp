@@ -67,16 +67,18 @@ public:
     kitty::dynamic_truth_table function( num_vars );
     kitty::create_from_hex_string( function, type.substr( 2u ) );
 
+    std::cout << "Number of vars = " << function.num_vars() << "\n";
+    std::cout << "\n\n\n";
     functions[num_vars][function]++;
     npn_classes[num_vars][std::get<0>( kitty::exact_npn_canonization( function ) )]++;
   }
 
   void print_statistics() const
   {
+
     for ( auto i = 0u; i < functions.size(); ++i )
     {
       if ( functions[i].empty() ) continue;
-
       std::cout << "LUTs with " << i << " variables: "
                 << std::setw( 4 ) << functions[i].size() << "   classes: "
                 << std::setw( 4 ) << npn_classes[i].size() << '\n';
