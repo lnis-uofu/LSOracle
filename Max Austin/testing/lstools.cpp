@@ -155,18 +155,19 @@ namespace alice{
 	  				int nodeIdx = aig.node_to_index(node);
 	  				int childIdx = aig._storage->nodes[node].children[j].index;
 
-
-
 	  				//For some reason the indeces for inputs and outputs are off by 1 in the data structure
 	  				if(childIdx < (aig.num_pis() + aig.num_pos()))
 	  					childIdx--;
 
 	  				//The last gate node is actually the output and should instead be linked to the output node
 	  				//which is at the end of the input and output list
+	  				/*std::cout << "size = " << aig.size() << "\n";
+	  				std::cout << "number outputs = " << aig.num_pos() << "\n";
+	  				std::cout << "offset = " << outputOffset << "\n";
 	  				if(nodeIdx == (aig.size() - aig.num_pos())){
 	  					nodeIdx = (aig.num_pis() + aig.num_pos() - outputOffset);
 	  					outputOffset++;
-	  				}
+	  				}*/
 	  				
 	  				edge.push_back(nodeIdx);
 	  				edge.push_back(childIdx);
@@ -211,6 +212,7 @@ namespace alice{
 				std::cout << "\n";
 				ndx++;
 			}
+			
 
 			aig.foreach_node( [&]( auto node ) {
 
@@ -230,9 +232,9 @@ namespace alice{
 			  			
 			  		}
 			  	}
-
-			  	aig.add_connections_network(connections);
 			});
+
+			aig.add_connections_network(connections);
 		}
 		else{
 			std::cout << filename << " is not a valid aig file\n";
@@ -339,7 +341,7 @@ namespace alice{
 
 			  	//If a node has more than one output, add that net to the list of hyperedges
 			  	if(aig._storage->connections[nodeNdx].size() > 0){
-
+			  		std::cout << "HERE\n";
 			  		std::vector<int> connection_to_add = aig._storage->connections[nodeNdx];
 			  		//Add root node to the hyper edge
 					connection_to_add .insert(aig._storage->connections[nodeNdx].begin(), nodeNdx);
@@ -385,14 +387,14 @@ namespace alice{
 
 			std::cout << "Example truth table\n";
 			aig.foreach_node( [&]( auto node ) {
-				const auto cubes = kitty::isop( aig.node_function(node));
-
-				  /* print ISOP */
-				  for ( auto cube : cubes )
-				  {
-				    cube.print( aig.node_function(node).num_vars() );
-				    std::cout << "\n\n";
-				  }
+				std::cout << "node " << aig.node_to_index(node) << " gate logic = 0x";
+				auto func = aig.node_function(node);
+				aig.foreach_fanin( node, [&]( auto const& conn, auto i ) {
+					if ( aig.is_complemented( conn ) ) {
+				        kitty::flip_inplace( func, i );
+				    }
+				});
+				std::cout << kitty::to_hex(func) << "\n";
 			});
 			if(input.is_open()){
 				int nodeNdx = 0;
@@ -415,8 +417,252 @@ namespace alice{
 			std::cout << "There is no stored AIG network\n";
 		}
 
+	}
 
+	bool is_in_vector(std::vector<int> vec, int nodeIdx){
 
+		if(find(vec.begin(),vec.end(),nodeIdx) != vec.end())
+			return true;
+		else
+			return false;
+	}
+
+	bool is_in_map(std::map<int, std::vector<int>> _map, int nodeIdx){
+
+		if(_map.find(nodeIdx) != _map.end())
+			return true;
+		else 
+			return false;
+	}
+
+	std::vector<int> get_logic_from_hex(std::string hex){
+
+		std::cout << "Logic Hex VAlue = " << hex << "\n";
+		int hexValue = atoi(hex.c_str());
+		switch(hexValue){
+			case 8:
+				return {1, 1};
+				break;
+			
+			case 1:
+				return {0, 0};
+				break;
+			
+			case 4:
+				return {0, 1};
+				break;
+			
+			case 2:
+				return {1, 0};
+				break; 
+			
+			default:
+				std::cout << "Error in gate logic\n";
+			
+		}
+	}
+
+	std::vector<std::vector<int>> other_possible_outputs(std::vector<int> out){
+		std::vector<std::vector<int>> possibles = {{0,0},{0,1},{1,0},{1,1}};
+
+		for(int i = 0; i < possibles.size(); i++){
+
+			if(possibles.at(i) == out){
+				possibles.erase(possibles.begin() + i);
+			}
+		}
+
+		return possibles;
+
+	}
+
+	void genTruth(mockturtle::aig_network aig, int nodeIdx, int outNum, int wantedOut, int partition){
+
+		auto node = aig.index_to_node(nodeIdx);
+		std::cout << "\nwantedOut = " << wantedOut << "\n";
+
+		std::cout << "output node = " << nodeIdx << "\n";
+		std::cout << "size of output truth table = " << aig._storage->truth[partition][outNum].size() << "\n";
+		std::cout << "output index = " << outNum << "\n\n";
+
+		if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
+
+			std::cout << "INPUT FOUND\n";
+
+			if(wantedOut == 0){
+				aig._storage->truth[partition][outNum].push_back(0);
+			}
+			else{
+				aig._storage->truth[partition][outNum].push_back(1);
+			}
+		}
+		else{
+
+			auto func = aig.node_function(node);
+			aig.foreach_fanin( node, [&]( auto const& conn, auto i ) {
+				if ( aig.is_complemented( conn ) ) {
+			        kitty::flip_inplace( func, i );
+			    }
+			});
+			std::vector<int> out = get_logic_from_hex(kitty::to_hex(func));
+
+			if(wantedOut == 0){
+				std::vector<std::vector<int>> wantedOutputs = other_possible_outputs(out);
+				std::cout << "Before = " << aig._storage->truth[partition][outNum].size() << "\n";
+				if((aig._storage->truth[partition][outNum].size() < wantedOutputs.size()) && aig._storage->truth[partition][outNum].size() > 0){
+					int sizeDiff = wantedOutputs.size() - aig._storage->truth[partition].size();
+					for(int i = 0; i < sizeDiff; i++){
+						aig._storage->truth[partition][outNum].push_back(aig._storage->
+							truth[partition][outNum].at(aig._storage->truth[partition][outNum].size() - 1));
+					}
+				}
+				std::cout << "After = " << aig._storage->truth[partition][outNum].size() << "\n";
+
+				for(int i = 0; i < wantedOutputs.size(); i++){
+					std::cout << "Wanted Output " << i << " = ";
+					for(int j = 0; j < wantedOutputs.at(i).size(); j++){
+						std::cout << wantedOutputs.at(i).at(j) << " ";
+					}
+					std::cout << "\n";
+				}
+
+				for(int i = 0; i < wantedOutputs.size(); i++){
+					
+					int child1Idx = aig._storage->nodes[node].children[0].index;
+
+					if(child1Idx < (aig.num_pis() + aig.num_pos()))
+	  					child1Idx--;
+
+					int child2Idx = aig._storage->nodes[node].children[1].index ;
+
+					if(child2Idx < (aig.num_pis() + aig.num_pos()))
+	  					child2Idx--;
+
+					std::cout << "New nodeIdx child1 = " << child1Idx << "\n";
+					std::cout << "New output index = " << outNum << "\n";
+					std::cout << "New wanted out child1 = " << wantedOutputs.at(i).at(0) << "\n";
+					std::cout << "New partition = " << partition << "\n";
+					genTruth(aig, child1Idx,outNum,wantedOutputs.at(i).at(0), partition);
+					std::cout << "New nodeIdx child2 = " << child2Idx << "\n";
+					std::cout << "New output index = " << outNum << "\n";
+					std::cout << "New wanted out child2 = " << wantedOutputs.at(i).at(1) << "\n";
+					std::cout << "New partition = " << partition << "\n";
+					genTruth(aig, child2Idx,outNum,wantedOutputs.at(i).at(1), partition);
+				}
+			}
+			else{
+				int child1Idx = aig._storage->nodes[node].children[0].index;
+
+				if(child1Idx < (aig.num_pis() + aig.num_pos()))
+	  					child1Idx--;
+
+				int child2Idx = aig._storage->nodes[node].children[1].index ;
+
+				if(child2Idx < (aig.num_pis() + aig.num_pos()))
+	  					child2Idx--;
+
+				std::cout << "New nodeIdx child1 = " << child1Idx << "\n";
+				std::cout << "New output index = " << outNum << "\n";
+				std::cout << "New wanted out child1 = " << out.at(0) << "\n";
+				std::cout << "New nodeIdx child1 = " << partition << "\n";
+				genTruth(aig, child1Idx,outNum,out.at(0), partition);
+				std::cout << "New nodeIdx child2 = " << child2Idx << "\n";
+				std::cout << "New output index = " << outNum << "\n";
+				std::cout << "New wanted out child2 = " << out.at(1) << "\n";
+				std::cout << "New nodeIdx child2 = " << partition << "\n";
+				genTruth(aig, child2Idx,outNum,out.at(1), partition);
+			}
+		}
+	}
+
+	ALICE_COMMAND(output_truth_table, "Output", "Output the truth table for each partition in blif format"){
+
+		if(!store<mockturtle::aig_network>().empty()){
+			auto aig = store<mockturtle::aig_network>().current();
+			if(aig._storage->partitionMap.size() != 0){
+
+				for(int i = 0; i < aig._storage->num_partitions; i++){
+
+					aig.foreach_node( [&]( auto node ) {
+
+						int nodeIdx = aig.node_to_index(node);
+						if(aig._storage->partitionMap[nodeIdx] == i){
+
+							std::map<int,std::vector<int>>::iterator it;
+							for(int j = 0; j < aig._storage->partitionConn[i][nodeIdx].size(); j++){
+																
+								if(!is_in_map(aig._storage->partitionConn[i], aig._storage->partitionConn[i][nodeIdx].at(j))
+								 && !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)){
+									aig._storage->partitionOutputs[i].push_back(nodeIdx);
+								}
+								int child1Idx = aig._storage->nodes[node].children[0].index;
+								int child2Idx = aig._storage->nodes[node].children[1].index;
+								if(child1Idx < (aig.num_pis() + aig.num_pos()))
+	  								child1Idx--;
+	  							if(child2Idx < (aig.num_pis() + aig.num_pos()))
+	  								child2Idx--;
+								bool child1 = is_in_map(aig._storage->partitionConn[i], child1Idx);
+								bool child2 = is_in_map(aig._storage->partitionConn[i], child2Idx);
+
+								if((aig._storage->nodes[node].children.size() != 0) && ((child1 && !child2) || (!child1 && child2))){
+									if(!child1 && !is_in_vector(aig._storage->partitionInputs[i],child1Idx))
+										aig._storage->partitionInputs[i].push_back(child1Idx);
+									else if(!child2 && !is_in_vector(aig._storage->partitionInputs[i],child2Idx))
+										aig._storage->partitionInputs[i].push_back(child2Idx);
+								}
+
+								if( ( (!child1 && !child2) || aig.is_pi(node) ) && !is_in_vector(aig._storage->partitionInputs[i],nodeIdx)){
+
+									aig._storage->partitionInputs[i].push_back(nodeIdx);
+								}
+							}
+						}
+					});
+				}
+
+				for(int i = 0; i < aig._storage->num_partitions; i++){
+
+					std::cout << "Partition " << i << " Inputs: ";
+					for(int j = 0; j < aig._storage->partitionInputs[i].size(); j++){
+						std::cout << aig._storage->partitionInputs[i].at(j) << " ";
+					}
+					std::cout << "\n";
+					std::cout << "Partition " << i << " Outputs: ";
+					for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
+						std::cout << aig._storage->partitionOutputs[i].at(j) << " ";
+					}
+					std::cout << "\n";
+				}
+
+				for(int i = 0; i < aig._storage->num_partitions; i++){
+
+					for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
+
+						aig._storage->truth.clear();
+						genTruth(aig, aig._storage->partitionOutputs[0].at(j), j, 1, i);
+
+					}
+				}
+
+				for(int i = 0; i < aig._storage->num_partitions; i++){
+
+					std::cout << "Partition " << 0 << " truth table logic\n";
+					for(int j = 0; j < aig._storage->partitionOutputs[0].size(); j++){
+						for(int k = 0; k < aig._storage->truth[0][j].size(); k++){
+							std::cout << aig._storage->truth[0][j].at(k);
+						}
+						std::cout << " 1\n";
+					}
+				}
+
+			}
+			else{
+				std::cout << "The partitions have not been mapped to the stored aig network\n";
+			}
+		}
+		else{
+			std::cout << "There is no stored AIG network\n";
+		}
 	}
 
 } // namespace alice

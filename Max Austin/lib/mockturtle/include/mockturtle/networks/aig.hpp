@@ -251,6 +251,18 @@ public:
     _storage->partitionMap[nodeIdx] = partition;
   }
 
+  int get_size_part(int partition){
+
+    int result = 0;
+    foreach_node( [&]( auto node ) {
+      int nodeIdx = node_to_index(node); 
+      if(_storage->partitionMap[nodeIdx] == partition)
+        result++;
+    });    
+
+    return result;
+  }
+
   std::map<int, int> get_partition(){
 
     return _storage->partitionMap;
@@ -265,34 +277,72 @@ public:
 
     for(int i = 0; i < _storage->num_partitions; i++){
 
-      aig_network partitionNet;
       std::map<int, std::vector<int>> partConnTemp;
+
       foreach_node( [&]( auto node ) {
 
-          int nodeIdx = node_to_index(node);        
+          int nodeIdx = node_to_index(node);       
+          
+          //If the current node is part of the current partition, it gets
+          //added to the partition connection
+          if(_storage->partitionMap[nodeIdx] == i){            
+
+            partConnTemp[nodeIdx] = _storage->connections[nodeIdx];
+          }
+     
+      });
+
+    /*for(int i = 0; i < _storage->num_partitions; i++){
+
+      aig_network partitionNet;
+      std::map<int, std::vector<int>> partConnTemp;
+
+      foreach_node( [&]( auto node ) {
+
+          int nodeIdx = node_to_index(node);       
           
           //If the current node is part of the current partition, it gets
           //added to the partition connection
           if(_storage->partitionMap[nodeIdx] == i){
+
+            
+
             std::vector<signal> childSigs;
-            for(int j = 0; j < _storage->nodes[nodeIdx].children.size(); j++){
-              int childIdx = _storage->nodes[nodeIdx].children[j].index;
-              signal child = make_signal(index_to_node(childIdx));
-              childSigs.push_back(child);
+            if(_storage->nodes[nodeIdx].children.size() == 0){
+              childSigs.push_back(get_constant(0));
+              childSigs.push_back(get_constant(0));
             }
+            else{
+              for(int j = 0; j < _storage->nodes[nodeIdx].children.size(); j++){
+                int childIdx = _storage->nodes[nodeIdx].children[j].index;
+                signal child = make_signal(index_to_node(childIdx));
+                childSigs.push_back(child);
+              }
+            }
+            std::cout << "Cloning node " << nodeIdx << "\n";
             partitionNet.clone_node(*this, node, childSigs);
             partConnTemp[nodeIdx] = _storage->connections[nodeIdx];
-          }        
-      });
+            std::cout << "Original Connections ";
+            for(int j = 0; j < _storage->connections[nodeIdx].size(); j++){
+              std::cout << _storage->connections[nodeIdx].at(j) << " ";
+            }
+            std::cout << "\n";
+          }
 
-      int j = 0;
+          std::cout << "Partition " << i << " size: " << partitionNet._storage->nodes.size() << "\n";
+          std::cout << "Calculated size: " << get_size_part(i) << "\n";        
+      });*/
+
+
+      
+      /*
       partitionNet.foreach_node( [&]( auto node ) {
           int fanin = partitionNet.fanin_size(node);
 
           //Add edges for the inputs and outputs
           if(fanin == 0){
 
-            std::cout << "node " << j << " = " << partitionNet.node_to_index(node) << "\n";
+            std::cout << "node " << partitionNet.node_to_index(node) << " = " << partitionNet.node_to_index(node) << "\n";
           }
           for(int k = 0; k < fanin; k++){
             
@@ -305,16 +355,31 @@ public:
                 childIdx--;
 
               
-              std::cout << "node " << j<< " child[" << k << "] = " << childIdx << "\n";
+              std::cout << "node " << partitionNet.node_to_index(node) << " child[" << k << "] = " << childIdx << "\n";
           }
 
-          j++;
-      });
+      });*/
 
-      partitionNet._storage->connections = partConnTemp;
+      //partitionNet._storage->connections = partConnTemp;
       _storage->partitionConn[i] = partConnTemp;
-    }
-    
+
+      for(int i = 0; i < _storage->num_partitions; i++){
+        std::cout << "Partition " << i << "\n\n";
+        foreach_node( [&]( auto node ) {
+          int nodeIdx = node_to_index(node); 
+          if(_storage->partitionMap[nodeIdx] == i){
+
+            std::cout << "Connections found for " << nodeIdx << "\n";
+            std::cout << "Connections: ";
+            for(int j = 0; j < _storage->partitionConn[i][nodeIdx].size(); j++){
+              std::cout << _storage->partitionConn[i][nodeIdx].at(j) << " ";
+            }
+            std::cout << "\n";
+          }
+        });
+      }
+
+    } 
   }
 #pragma endregion
 
