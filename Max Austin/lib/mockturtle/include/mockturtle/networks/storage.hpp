@@ -202,6 +202,7 @@ struct storage
   std::map<int, int> partitionMap;
   //Map of each node's respective connection indeces 
   std::map<int, std::vector<int>> connections;
+  
   //Map of each node's respective connection indeces in each respective partition
   std::map<int, std::map<int, std::vector<int>>> partitionConn;
   //The connections coming into a specific partition
@@ -210,6 +211,7 @@ struct storage
   std::map<int, std::vector<int>> partitionOutputs;
   //Stores truth table data for the outputs of each partition 
   std::map<int, std::map<int, std::vector<int>>> truth;
+
 
   spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
 
