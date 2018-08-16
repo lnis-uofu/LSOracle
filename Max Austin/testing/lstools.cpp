@@ -136,9 +136,6 @@ namespace alice{
 				
 	  			int fanin = aig.fanin_size(node);
 
-	  			//Used so the gate that goes to a specific output is mapped to the correct
-	  			//output node
-	  			int outputOffset = 1;
 	  			//Add edges for the inputs and outputs
 	  			if(fanin == 0){
 	  				
@@ -161,12 +158,12 @@ namespace alice{
 
 	  				//The last gate node is actually the output and should instead be linked to the output node
 	  				//which is at the end of the input and output list
-	  				/*std::cout << "size = " << aig.size() << "\n";
-	  				std::cout << "number outputs = " << aig.num_pos() << "\n";
-	  				std::cout << "offset = " << outputOffset << "\n";
-	  				if(nodeIdx == (aig.size() - aig.num_pos())){
+	  				/*std::cout << "Size = " << aig.size() << "\n";
+	  				std::cout << "Node = " << nodeIdx << "\n";
+	  				if(aig.num_pos() >= (aig.size() - nodeIdx)){
+	  					int outputOffset = aig.size() - nodeIdx;
 	  					nodeIdx = (aig.num_pis() + aig.num_pos() - outputOffset);
-	  					outputOffset++;
+	  					std::cout << "Node being offset = " << nodeIdx << "\n";
 	  				}*/
 	  				
 	  				edge.push_back(nodeIdx);
@@ -214,7 +211,7 @@ namespace alice{
 			}
 			
 
-			aig.foreach_node( [&]( auto node ) {
+			/*aig.foreach_node( [&]( auto node ) {
 
 				int nodeNdx = aig.node_to_index(node);
 				int fanin = aig.fanin_size(node);
@@ -232,7 +229,7 @@ namespace alice{
 			  			
 			  		}
 			  	}
-			});
+			});*/
 
 			aig.add_connections_network(connections);
 		}
@@ -338,18 +335,22 @@ namespace alice{
 			std::vector<std::vector<int>> hyperEdges;
 			aig.foreach_node( [&]( auto node ) {
 				int nodeNdx = aig.node_to_index(node);				
-
+				std::cout << "Node = " << nodeNdx << "\n";
 			  	//If a node has more than one output, add that net to the list of hyperedges
 			  	if(aig._storage->connections[nodeNdx].size() > 0){
-			  		std::cout << "HERE\n";
+			  		std::cout << "HERE1\n";
 			  		std::vector<int> connection_to_add = aig._storage->connections[nodeNdx];
+			  		std::cout << "HERE2\n";
 			  		//Add root node to the hyper edge
-					connection_to_add .insert(aig._storage->connections[nodeNdx].begin(), nodeNdx);
+					connection_to_add.insert(aig._storage->connections[nodeNdx].begin(), nodeNdx);
+					std::cout << "HERE3\n";
 					hyperEdges.push_back(connection_to_add);
+					std::cout << "HERE4\n";
 				}
 
 			} );
 	  		
+	  		std::cout << "Got out\n";
 			//Write to the hypergraph file
 	  		std::cout << "hyperEdges = \n";
 	  		//Subtract the size by one because the output node is duplicated with one of the gate nodes
@@ -476,24 +477,22 @@ namespace alice{
 
 	}
 
-	void genTruth(mockturtle::aig_network aig, int nodeIdx, int outNum, int wantedOut, int partition){
+	void genTruth(mockturtle::aig_network aig, int nodeIdx, int wantedOut, int partition){
 
 		auto node = aig.index_to_node(nodeIdx);
-		std::cout << "\nwantedOut = " << wantedOut << "\n";
 
-		std::cout << "output node = " << nodeIdx << "\n";
-		std::cout << "size of output truth table = " << aig._storage->truth[partition][outNum].size() << "\n";
-		std::cout << "output index = " << outNum << "\n\n";
+		std::cout << "\noutput node = " << nodeIdx << "\n\n";
+		std::cout << "wantedOut = " << wantedOut << "\n";		
 
 		if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
 
 			std::cout << "INPUT FOUND\n";
 
 			if(wantedOut == 0){
-				aig._storage->truth[partition][outNum].push_back(0);
+				aig._storage->truth[partition][nodeIdx].push_back(0);
 			}
 			else{
-				aig._storage->truth[partition][outNum].push_back(1);
+				aig._storage->truth[partition][nodeIdx].push_back(1);
 			}
 		}
 		else{
@@ -508,15 +507,14 @@ namespace alice{
 
 			if(wantedOut == 0){
 				std::vector<std::vector<int>> wantedOutputs = other_possible_outputs(out);
-				std::cout << "Before = " << aig._storage->truth[partition][outNum].size() << "\n";
-				if((aig._storage->truth[partition][outNum].size() < wantedOutputs.size()) && aig._storage->truth[partition][outNum].size() > 0){
+
+				if((aig._storage->truth[partition][nodeIdx].size() < wantedOutputs.size()) && aig._storage->truth[partition][nodeIdx].size() > 0){
 					int sizeDiff = wantedOutputs.size() - aig._storage->truth[partition].size();
 					for(int i = 0; i < sizeDiff; i++){
-						aig._storage->truth[partition][outNum].push_back(aig._storage->
-							truth[partition][outNum].at(aig._storage->truth[partition][outNum].size() - 1));
+						aig._storage->truth[partition][nodeIdx].push_back(aig._storage->
+							truth[partition][nodeIdx].at(aig._storage->truth[partition][nodeIdx].size() - 1));
 					}
 				}
-				std::cout << "After = " << aig._storage->truth[partition][outNum].size() << "\n";
 
 				for(int i = 0; i < wantedOutputs.size(); i++){
 					std::cout << "Wanted Output " << i << " = ";
@@ -538,16 +536,14 @@ namespace alice{
 					if(child2Idx < (aig.num_pis() + aig.num_pos()))
 	  					child2Idx--;
 
-					std::cout << "New nodeIdx child1 = " << child1Idx << "\n";
-					std::cout << "New output index = " << outNum << "\n";
+					std::cout << "\nNew nodeIdx child1 = " << child1Idx << "\n";
 					std::cout << "New wanted out child1 = " << wantedOutputs.at(i).at(0) << "\n";
-					std::cout << "New partition = " << partition << "\n";
-					genTruth(aig, child1Idx,outNum,wantedOutputs.at(i).at(0), partition);
-					std::cout << "New nodeIdx child2 = " << child2Idx << "\n";
-					std::cout << "New output index = " << outNum << "\n";
+					std::cout << "New partition = " << partition << "\n\n";
+					genTruth(aig, child1Idx,wantedOutputs.at(i).at(0), partition);
+					std::cout << "\nNew nodeIdx child2 = " << child2Idx << "\n";
 					std::cout << "New wanted out child2 = " << wantedOutputs.at(i).at(1) << "\n";
-					std::cout << "New partition = " << partition << "\n";
-					genTruth(aig, child2Idx,outNum,wantedOutputs.at(i).at(1), partition);
+					std::cout << "New partition = " << partition << "\n\n";
+					genTruth(aig, child2Idx,wantedOutputs.at(i).at(1), partition);
 				}
 			}
 			else{
@@ -561,16 +557,14 @@ namespace alice{
 				if(child2Idx < (aig.num_pis() + aig.num_pos()))
 	  					child2Idx--;
 
-				std::cout << "New nodeIdx child1 = " << child1Idx << "\n";
-				std::cout << "New output index = " << outNum << "\n";
+				std::cout << "\nNew nodeIdx child1 = " << child1Idx << "\n";
 				std::cout << "New wanted out child1 = " << out.at(0) << "\n";
-				std::cout << "New nodeIdx child1 = " << partition << "\n";
-				genTruth(aig, child1Idx,outNum,out.at(0), partition);
-				std::cout << "New nodeIdx child2 = " << child2Idx << "\n";
-				std::cout << "New output index = " << outNum << "\n";
+				std::cout << "New nodeIdx child1 = " << partition << "\n\n";
+				genTruth(aig, child1Idx,out.at(0), partition);
+				std::cout << "\nNew nodeIdx child2 = " << child2Idx << "\n";
 				std::cout << "New wanted out child2 = " << out.at(1) << "\n";
-				std::cout << "New nodeIdx child2 = " << partition << "\n";
-				genTruth(aig, child2Idx,outNum,out.at(1), partition);
+				std::cout << "New nodeIdx child2 = " << partition << "\n\n";
+				genTruth(aig, child2Idx,out.at(1), partition);
 			}
 		}
 	}
@@ -591,7 +585,7 @@ namespace alice{
 							std::map<int,std::vector<int>>::iterator it;
 							for(int j = 0; j < aig._storage->partitionConn[i][nodeIdx].size(); j++){
 																
-								if(!is_in_map(aig._storage->partitionConn[i], aig._storage->partitionConn[i][nodeIdx].at(j))
+								if((aig.is_po(node) || (!is_in_map(aig._storage->partitionConn[i], aig._storage->partitionConn[i][nodeIdx].at(j))))
 								 && !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)){
 									aig._storage->partitionOutputs[i].push_back(nodeIdx);
 								}
@@ -664,6 +658,7 @@ namespace alice{
 			std::cout << "There is no stored AIG network\n";
 		}
 	}
+	
 
 } // namespace alice
 

@@ -197,6 +197,17 @@ public:
     return n == 0;
   }
 
+  bool is_po( node const& n ) const{
+
+    int nodeIdx = node_to_index(n);
+    int totalIO = num_pos() + num_pis();
+
+    bool greaterThanInput = nodeIdx >= (totalIO - num_pos());
+    std::cout << "Node = " << nodeIdx << "\n";
+    std::cout << "size - number of outputs = " << size() - num_pos() << "\n";
+    return nodeIdx >= size() - num_pos();
+  }
+
   bool is_pi( node const& n ) const
   {
     return _storage->nodes[n].children[0].data == ~static_cast<std::size_t>( 0 ) && _storage->nodes[n].children[1].data == ~static_cast<std::size_t>( 0 );
@@ -287,6 +298,11 @@ public:
           //added to the partition connection
           if(_storage->partitionMap[nodeIdx] == i){            
 
+            std::cout << "part conn for node " << nodeIdx << "\n";
+            for(int j = 0; j < _storage->connections[nodeIdx].size(); j++){
+              std::cout << _storage->connections[nodeIdx].at(j) << " ";
+            }
+            std::cout << "\n";
             partConnTemp[nodeIdx] = _storage->connections[nodeIdx];
           }
      
@@ -331,11 +347,11 @@ public:
 
           std::cout << "Partition " << i << " size: " << partitionNet._storage->nodes.size() << "\n";
           std::cout << "Calculated size: " << get_size_part(i) << "\n";        
-      });*/
+      });
 
 
       
-      /*
+      
       partitionNet.foreach_node( [&]( auto node ) {
           int fanin = partitionNet.fanin_size(node);
 
@@ -361,7 +377,7 @@ public:
       });*/
 
       //partitionNet._storage->connections = partConnTemp;
-      _storage->partitionConn[i] = partConnTemp;
+     _storage->partitionConn[i] = partConnTemp;
 
       for(int i = 0; i < _storage->num_partitions; i++){
         std::cout << "Partition " << i << "\n\n";
