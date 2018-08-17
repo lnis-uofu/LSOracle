@@ -158,12 +158,9 @@ namespace alice{
 
 	  				//The last gate node is actually the output and should instead be linked to the output node
 	  				//which is at the end of the input and output list
-	  				/*std::cout << "Size = " << aig.size() << "\n";
-	  				std::cout << "Node = " << nodeIdx << "\n";
-	  				if(aig.num_pos() >= (aig.size() - nodeIdx)){
+	  				/*if(aig.num_pos() >= (aig.size() - nodeIdx)){
 	  					int outputOffset = aig.size() - nodeIdx;
 	  					nodeIdx = (aig.num_pis() + aig.num_pos() - outputOffset);
-	  					std::cout << "Node being offset = " << nodeIdx << "\n";
 	  				}*/
 	  				
 	  				edge.push_back(nodeIdx);
@@ -211,7 +208,7 @@ namespace alice{
 			}
 			
 
-			/*aig.foreach_node( [&]( auto node ) {
+			aig.foreach_node( [&]( auto node ) {
 
 				int nodeNdx = aig.node_to_index(node);
 				int fanin = aig.fanin_size(node);
@@ -229,7 +226,7 @@ namespace alice{
 			  			
 			  		}
 			  	}
-			});*/
+			});
 
 			aig.add_connections_network(connections);
 		}
@@ -334,7 +331,16 @@ namespace alice{
 			//Remove all children indeces from nodes so that the only connections remaining are outputs
 			std::vector<std::vector<int>> hyperEdges;
 			aig.foreach_node( [&]( auto node ) {
-				int nodeNdx = aig.node_to_index(node);				
+				int nodeNdx = aig.node_to_index(node);	
+				std::cout << "connections found for " << nodeNdx << "\n";
+				std::cout << "Connections = ";
+
+				for(int i = 0; i < aig._storage->connections[nodeNdx].size(); i++){
+					 std::cout << aig._storage->connections[nodeNdx].at(i) << " ";
+				}
+
+				std::cout << "\n";
+							
 				std::cout << "Node = " << nodeNdx << "\n";
 			  	//If a node has more than one output, add that net to the list of hyperedges
 			  	if(aig._storage->connections[nodeNdx].size() > 0){
@@ -342,7 +348,7 @@ namespace alice{
 			  		std::vector<int> connection_to_add = aig._storage->connections[nodeNdx];
 			  		std::cout << "HERE2\n";
 			  		//Add root node to the hyper edge
-					connection_to_add.insert(aig._storage->connections[nodeNdx].begin(), nodeNdx);
+					connection_to_add.insert(connection_to_add.begin(), nodeNdx);
 					std::cout << "HERE3\n";
 					hyperEdges.push_back(connection_to_add);
 					std::cout << "HERE4\n";
@@ -569,6 +575,37 @@ namespace alice{
 		}
 	}
 
+
+	ALICE_COMMAND(test_truth, "test", "Output the truth table using cut enumeration"){
+
+		if(!store<mockturtle::aig_network>().empty()){
+			auto aig = store<mockturtle::aig_network>().current();
+
+			auto cuts = mockturtle::cut_enumeration<mockturtle::aig_network, true>( aig ); /* true enables truth table computation */
+			aig.foreach_node( [&]( auto n ) {
+
+
+			  const auto index = aig.node_to_index( n );
+			 
+			  for ( auto const& set : cuts.cuts( index ) )
+			  {
+			  	/*
+			    for ( auto const& cut : set )
+			    {
+			      std::cout << "Cut " << *cut
+			                << " with truth table " << kitty::to_hex( cuts.truth_table( *cut ) )
+			                << "\n";
+			    }
+			    */
+			  }
+			} );
+
+		}
+		else{
+			std::cout << "No AIG network stored\n";
+		}
+	}
+
 	ALICE_COMMAND(output_truth_table, "Output", "Output the truth table for each partition in blif format"){
 
 		if(!store<mockturtle::aig_network>().empty()){
@@ -633,7 +670,7 @@ namespace alice{
 					for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
 
 						aig._storage->truth.clear();
-						genTruth(aig, aig._storage->partitionOutputs[0].at(j), j, 1, i);
+						genTruth(aig, aig._storage->partitionOutputs[0].at(j), 1, i);
 
 					}
 				}
