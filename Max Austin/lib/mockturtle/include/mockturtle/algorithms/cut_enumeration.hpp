@@ -518,7 +518,9 @@ network_cuts<Ntk, ComputeTruth, CutData> cut_enumeration( Ntk const& ntk, cut_en
   network_cuts<Ntk, ComputeTruth, CutData> res( ntk.size() );
   detail::cut_enumeration_impl<Ntk, ComputeTruth, CutData> p( ntk, ps, res );
   p.run();
+  
   return res;
 }
+
 
 } /* namespace mockturtle */
