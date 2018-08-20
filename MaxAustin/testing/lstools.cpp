@@ -589,6 +589,10 @@ namespace alice{
 			 
 			  for ( auto const& set : cuts.cuts( index ) )
 			  {
+
+			  	std::cout << "Cut " << *set
+			                << " with truth table " << kitty::to_hex( cuts.truth_table( *set ) )
+			                << "\n";
 			  	/*
 			    for ( auto const& cut : set )
 			    {
