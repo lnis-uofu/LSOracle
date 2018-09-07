@@ -157,11 +157,13 @@ public:
   aig_network() : _storage( std::make_shared<aig_storage>() )
   {
     _storage->num_partitions = 0;
+    _storage->partitionSize.clear();
   }
 
   aig_network( std::shared_ptr<aig_storage> storage ) : _storage( storage )
   {
     _storage->num_partitions = 0;
+    _storage->partitionSize.clear();
   }
 #pragma endregion
 
@@ -205,7 +207,15 @@ public:
     bool greaterThanInput = nodeIdx >= (totalIO - num_pos());
     std::cout << "Node = " << nodeIdx << "\n";
     std::cout << "size - number of outputs = " << size() - num_pos() << "\n";
-    return nodeIdx >= size() - num_pos();
+    bool result = false;
+    if(nodeIdx >= size() - num_pos())
+      result = true;
+
+    if(nodeIdx > (num_pis() - 1) && nodeIdx < totalIO)
+      result = true;
+
+    std::cout << "is_po result = " << result << "\n";
+    return result;
   }
 
   bool is_pi( node const& n ) const
@@ -251,7 +261,10 @@ public:
 
   void add_to_partition(int nodeIdx, int partition){
 
-    std::cout << "Adding " << partition << " as partition for " << nodeIdx << "\n";
+    if(is_po(nodeIdx)){
+      int nodeIdx_temp = (num_pis() + (size() - nodeIdx)) - 1;
+      nodeIdx = nodeIdx_temp;
+    }
     int temp_part_num = partition + 1;
 
     //Calculate the number of partitions by keeping track of the 
@@ -259,7 +272,9 @@ public:
     if(temp_part_num > _storage->num_partitions)
       _storage->num_partitions = temp_part_num;
 
+    std::cout << "Adding " << partition << " as partition for " << nodeIdx << "\n";
     _storage->partitionMap[nodeIdx] = partition;
+    _storage->partitionSize[partition]++;
   }
 
   int get_size_part(int partition){

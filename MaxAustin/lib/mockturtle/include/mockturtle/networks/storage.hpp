@@ -197,6 +197,8 @@ struct storage
   std::vector<std::size_t> inputs;
   std::vector<typename node_type::pointer_type> outputs;
 
+  std::string net_name;
+
   int num_partitions;
   //Map of each node's partition number
   std::map<int, int> partitionMap;
@@ -209,8 +211,19 @@ struct storage
   std::map<int, std::vector<int>> partitionInputs;
   //The connections coming out of a specific partition
   std::map<int, std::vector<int>> partitionOutputs;
+  //Stores the size of each partition
+  std::map<int, int> partitionSize;
+
+  //Stores the node indeces that each index in the truth table correspond to
+  std::map<int, std::vector<int>> index;
   //Stores truth table data for the outputs of each partition 
-  std::map<int, std::map<int, std::vector<int>>> truth;
+  std::map<int, std::vector<std::vector<int>>> tt;
+  //Keeps track of the outputs needed for each gate in order to build a truth table
+  std::map<int, std::vector<int>> wantedOut;
+
+  //Stores truth table data for the onset and offset of each node respectively
+  std::map<int, std::vector<int>> onset;
+  std::map<int, std::vector<std::vector<int>>> offset;
 
 
   spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
