@@ -359,6 +359,60 @@ namespace alice{
 	  os << "gates: " << bench.num_gates() << std::endl;
 	}//end klut_network print store statistics
 
+	ALICE_ADD_STORE(abc::Gia_Man_t*, "gia", "g", "AIG", "AIGs")
+
+    /* Implements the short string to describe a store element in store -a */
+    ALICE_DESCRIBE_STORE( abc::Gia_Man_t*, gia )
+    {
+        const auto name = abc::Gia_ManName( gia );
+        const auto pi_num = abc::Gia_ManPiNum( gia );
+        const auto po_num = abc::Gia_ManPoNum( gia );
+        return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+    }
+
+    /* Implements the functionality of ps -a */
+    ALICE_PRINT_STORE_STATISTICS( abc::Gia_Man_t*, os, gia )
+    {
+        abc::Gps_Par_t Pars{};
+        abc::Gia_ManPrintStats( gia, &Pars );
+    }
+
+    /* Implements the log returned by ps -a */
+    ALICE_LOG_STORE_STATISTICS( abc::Gia_Man_t*, gia )
+    {
+        return {
+                {"name", abc::Gia_ManName( gia )},
+                {"inputs", abc::Gia_ManPiNum( gia )},
+                {"outputs", abc::Gia_ManPoNum( gia )},
+                {"nodes", abc::Gia_ManAndNum( gia )},
+                {"latches"}, abc::Gia_ManRegNum(gia),
+                {"levels", abc::Gia_ManLevelNum( gia )}};
+    }
+
+    ALICE_ADD_FILE_TYPE( aiger, "Aiger" )
+
+/* Implements the functionality of read_aiger -a */
+    ALICE_READ_FILE( abc::Gia_Man_t*, aiger, filename, cmd )
+    {
+        return abc::Gia_AigerRead( (char*)filename.c_str(), 0, 0, 0 );
+    }
+
+/* Implements the functionality of write_aiger -a */
+    ALICE_WRITE_FILE( abc::Gia_Man_t*, aiger, gia, filename, cmd )
+    {
+        abc::Gia_AigerWrite( gia, (char*)filename.c_str(), 1, 0 );
+    }
+
+/* Implements the command syn3 */
+    ALICE_COMMAND( syn3, "Optimization", "Performs AIG optimization" )
+    {
+        auto& gia = store<abc::Gia_Man_t*>().current();
+
+        auto aig_new = abc::Gia_ManAigSyn3( gia, 0, 0 );
+        abc::Gia_ManStop( gia );
+        gia = aig_new;
+    }
+
 	/*Reads an blif file and stores the CBA network in a store*/
 	ALICE_COMMAND( get_blif, "Input", "Uses the lorina library to read in a blif file" ){
 
@@ -1281,21 +1335,30 @@ namespace alice{
 		//mockturtle::lut_mapping<mapped_view<mig_network, true>, true>( mapped_mig );
 	}
 
+    ALICE_COMMAND(interleaving, "Modification", "NPN + depth MIG rewriting") {
+        auto& mig = store<mockturtle::mig_network>().current();
 
-	ALICE_COMMAND(arear, "Modification", "Exact NPN MIG rewriting") {
-		auto& mig = store<mockturtle::mig_network>().current();
+        mockturtle::mig_npn_resynthesis resyn;
+        mockturtle::cut_rewriting_params ps;
 
-		std::cout << "Mig gates " << mig.num_gates() << std::endl;
+        ps.cut_enumeration_ps.cut_size = 4;
 
-		mockturtle::mig_npn_resynthesis resyn;
-		mockturtle::cut_rewriting_params ps;
+        mockturtle::cut_rewriting(mig, resyn, ps);
+        mig = mockturtle::cleanup_dangling( mig );
 
-		ps.cut_enumeration_ps.cut_size = 4;
+    }
 
-		mockturtle::cut_rewriting(mig, resyn, ps);
-		mig = mockturtle::cleanup_dangling( mig );
 
-		std::cout << "Mig gates after area optimization " << mig.num_gates() << std::endl;
+	ALICE_COMMAND(migscript, "Modification", "Exact NPN MIG rewriting") {
+		auto& opt = store<mockturtle::mig_network>().current();
+        mockturtle::depth_view mig_depth{opt};
+
+		//DEPTH REWRITING
+        std::cout << "Mig level " << mig_depth.depth() << " mig gates " << opt.num_gates() << std::endl;
+
+        mockturtle::mig_script migopt;
+        opt = migopt.run(opt);
+
 	}
 
 	ALICE_COMMAND(depthr, "Modification", "Logic depth oriented MIG rewriting"){
