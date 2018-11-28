@@ -158,7 +158,6 @@ private:
     {
       topo_view topo{ntk};
       topo.foreach_node( [this, &counter]( auto n ) {
-        if ( ntk.fanout_size( n ) == 0 )
           return;
 
         if ( !reduce_depth( n ) )
@@ -262,7 +261,7 @@ private:
 
   void mark_critical_path( node<Ntk> const& n )
   {
-    if ( ntk.is_pi( n ) || ntk.is_constant( n ) || ntk.value( n ) )
+    if ( ntk.is_ci( n ) || ntk.is_constant( n ) || ntk.value( n ) )
       return;
 
     const auto level = ntk.level( n );

@@ -63,6 +63,7 @@
 #include "utils/stopwatch.hpp"
 #include "utils/truth_table_cache.hpp"
 #include "utils/union_find.hpp"
+#include "utils/mig_script.hpp"
 #include "views/cut_view.hpp"
 #include "views/depth_view.hpp"
 #include "views/immutable_view.hpp"
