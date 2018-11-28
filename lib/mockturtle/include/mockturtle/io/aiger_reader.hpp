@@ -128,10 +128,28 @@ public:
     outputs.push_back( lit );
   }
 
+  virtual void on_input_name( unsigned index, const std::string& name ) const
+  {
+    (void)index;
+    (void)name;
+    _ntk.create_in_name(index, name);
+    inputNames[index] = name;
+  }
+
+  virtual void on_output_name( unsigned index, const std::string& name ) const
+  {
+    (void)index;
+    (void)name;
+    _ntk.create_out_name(index, name);
+    outputNames[index] = name;
+  }
+
 private:
   Ntk& _ntk;
 
   mutable std::vector<unsigned> outputs;
+  mutable std::map<int, std::string> inputNames;
+  mutable std::map<int, std::string> outputNames;
   mutable std::vector<signal<Ntk>> signals;
 };
 

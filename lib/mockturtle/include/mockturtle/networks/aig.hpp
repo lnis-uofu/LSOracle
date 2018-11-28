@@ -173,6 +173,15 @@ public:
     return {0, static_cast<size_t>( value ? 1 : 0 )};
   }
 
+  void create_in_name(unsigned index, const std::string& name){
+    //std::cout << "input index " << (int)index << " name " << name << "\n";
+    _storage->inputNames[index] = name;
+  }
+  void create_out_name(unsigned index, const std::string& name){
+    //std::cout << "output index " << (int)index << " name " << name << "\n";
+    _storage->outputNames[index] = name;
+  }
+
   signal create_pi( std::string const& name = {} )
   {
     (void)name;
@@ -181,6 +190,7 @@ public:
     auto& node = _storage->nodes.emplace_back();
     node.children[0].data = node.children[1].data = ~static_cast<std::size_t>( 0 );
     _storage->inputs.emplace_back( index );
+    
     return {index, 0};
   }
 
@@ -202,19 +212,11 @@ public:
   bool is_po( node const& n ) const{
 
     int nodeIdx = node_to_index(n);
-    int totalIO = num_pos() + num_pis();
-
-    bool greaterThanInput = nodeIdx >= (totalIO - num_pos());
-    std::cout << "Node = " << nodeIdx << "\n";
-    std::cout << "size - number of outputs = " << size() - num_pos() << "\n";
     bool result = false;
-    if(nodeIdx >= size() - num_pos())
-      result = true;
-
-    if(nodeIdx > (num_pis() - 1) && nodeIdx < totalIO)
-      result = true;
-
-    std::cout << "is_po result = " << result << "\n";
+    for(int i = 0; i < _storage->outputs.size(); i++){
+      if(_storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
     return result;
   }
 
@@ -261,10 +263,6 @@ public:
 
   void add_to_partition(int nodeIdx, int partition){
 
-    if(is_po(nodeIdx)){
-      int nodeIdx_temp = (num_pis() + (size() - nodeIdx)) - 1;
-      nodeIdx = nodeIdx_temp;
-    }
     int temp_part_num = partition + 1;
 
     //Calculate the number of partitions by keeping track of the 
@@ -313,11 +311,11 @@ public:
           //added to the partition connection
           if(_storage->partitionMap[nodeIdx] == i){            
 
-            std::cout << "part conn for node " << nodeIdx << "\n";
-            for(int j = 0; j < _storage->connections[nodeIdx].size(); j++){
-              std::cout << _storage->connections[nodeIdx].at(j) << " ";
-            }
-            std::cout << "\n";
+            // std::cout << "part conn for node " << nodeIdx << "\n";
+            // for(int j = 0; j < _storage->connections[nodeIdx].size(); j++){
+            //   std::cout << _storage->connections[nodeIdx].at(j) << " ";
+            // }
+            // std::cout << "\n";
             partConnTemp[nodeIdx] = _storage->connections[nodeIdx];
           }
      
@@ -394,21 +392,21 @@ public:
       //partitionNet._storage->connections = partConnTemp;
      _storage->partitionConn[i] = partConnTemp;
 
-      for(int i = 0; i < _storage->num_partitions; i++){
-        std::cout << "Partition " << i << "\n\n";
-        foreach_node( [&]( auto node ) {
-          int nodeIdx = node_to_index(node); 
-          if(_storage->partitionMap[nodeIdx] == i){
+      // for(int i = 0; i < _storage->num_partitions; i++){
+      //   // std::cout << "Partition " << i << "\n\n";
+      //   foreach_node( [&]( auto node ) {
+      //     int nodeIdx = node_to_index(node); 
+      //     if(_storage->partitionMap[nodeIdx] == i){
 
-            std::cout << "Connections found for " << nodeIdx << "\n";
-            std::cout << "Connections: ";
-            for(int j = 0; j < _storage->partitionConn[i][nodeIdx].size(); j++){
-              std::cout << _storage->partitionConn[i][nodeIdx].at(j) << " ";
-            }
-            std::cout << "\n";
-          }
-        });
-      }
+      //       // std::cout << "Connections found for " << nodeIdx << "\n";
+      //       // std::cout << "Connections: ";
+      //       // for(int j = 0; j < _storage->partitionConn[i][nodeIdx].size(); j++){
+      //       //   std::cout << _storage->partitionConn[i][nodeIdx].at(j) << " ";
+      //       // }
+      //       // std::cout << "\n";
+      //     }
+      //   });
+      // }
 
     } 
   }
@@ -499,6 +497,43 @@ public:
     (void)source;
     assert( children.size() == 2u );
     return create_and( children[0u], children[1u] );
+  }
+#pragma endregion
+
+#pragma region Restructuring
+void substitute_node( node const& old_node, signal const& new_signal )
+{
+  /* find all parents from old_node */
+    for ( auto& n : _storage->nodes )
+    {
+      for ( auto& child : n.children )
+      {
+        if ( child.index == old_node )
+        {
+          child.index = new_signal.index;
+          child.weight ^= new_signal.complement;
+
+          // increment fan-in of new node
+          _storage->nodes[new_signal.index].data[0].h1++;
+        }
+      }
+    }
+
+    /* check outputs */
+    for ( auto& output : _storage->outputs )
+    {
+      if ( output.index == old_node )
+      {
+        output.index = new_signal.index;
+        output.weight ^= new_signal.complement;
+
+        // increment fan-in of new node
+        _storage->nodes[new_signal.index].data[0].h1++;
+      }
+    }
+
+    // reset fan-in of old node
+    _storage->nodes[old_node].data[0].h1 = 0;
   }
 #pragma endregion
 
