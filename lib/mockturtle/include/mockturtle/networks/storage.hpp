@@ -108,6 +108,7 @@ struct regular_node
 {
   using pointer_type = node_pointer<PointerFieldSize>;
 
+  
   std::array<pointer_type, Fanin> children;
   std::array<cauint64_t, Size> data;
 
@@ -196,6 +197,8 @@ struct storage
   std::vector<node_type> nodes;
   std::vector<std::size_t> inputs;
   std::vector<typename node_type::pointer_type> outputs;
+  std::map<int, std::string> inputNames;
+  std::map<int, std::string> outputNames;
 
   std::string net_name;
 
@@ -222,11 +225,19 @@ struct storage
   std::map<int, std::vector<int>> wantedOut;
 
   //Stores truth table data for the onset and offset of each node respectively
-  std::map<int, std::vector<int>> onset;
+  std::map<int, std::vector<std::vector<int>>> onset;
   std::map<int, std::vector<std::vector<int>>> offset;
 
+  std::map<int, float> test_runtime;
+
+  std::map<int, int> output_cone_depth;
+  std::map<int, std::vector<int>> logic_cone_inputs;
+  bool test_timeout;
 
   spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
+
+  std::map<int,kitty::dynamic_truth_table> tt_map;
+  std::map<int,kitty::dynamic_truth_table> output_tt;
 
   T data;
 };

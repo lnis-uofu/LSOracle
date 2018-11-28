@@ -14,4 +14,4 @@ endif()
 
 add_subdirectory(lib)
 add_subdirectory(examples)
-add_subdirectory(testing)
+add_subdirectory(lstools)

@@ -101,6 +101,23 @@ void clear_bit( static_truth_table<NumVars, true>& tt, uint64_t index )
 }
 /*! \endcond */
 
+/*! \brief Flip bit at index
+  \param tt Truth table
+  \param index Bit index
+*/
+template<typename TT>
+void flip_bit( TT& tt, uint64_t index )
+{
+  tt._bits[index >> 6] ^= uint64_t( 1 ) << ( index & 0x3f );
+}
+
+/*! \cond PRIVATE */
+template<int NumVars>
+void flip_bit( static_truth_table<NumVars, true>& tt, uint64_t index )
+{
+  tt._bits ^= uint64_t( 1 ) << index;
+}
+
 /*! \brief Clears all bits
 
   \param tt Truth table

@@ -645,6 +645,10 @@ inline return_code read_aiger( std::istream& in, const aiger_reader& reader, dia
   {
     if ( std::regex_search( line, m, aig_regex::input ) )
     {
+      // std::cout << "line = " << line << "\n";
+      // std::string name = line.substr(3);
+      // std::cout << "name = " << name << "\n";
+      // std::cout << "m[2u] = " << m[2u] << "\n";
       reader.on_input_name( std::atol( std::string( m[1u] ).c_str() ), m[2u] );
     }
     else if ( std::regex_search( line, m, aig_regex::latch ) )
