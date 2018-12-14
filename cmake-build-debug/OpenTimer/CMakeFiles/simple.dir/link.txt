@@ -1,0 +1,1 @@
+/usr/local/bin/g++-8  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/simple.dir/example/simple/simple.cpp.o  -o ../../OpenTimer/example/simple/simple ../../OpenTimer/lib/libOpenTimer.a -lstdc++fs 

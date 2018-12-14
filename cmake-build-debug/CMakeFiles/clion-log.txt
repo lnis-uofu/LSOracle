@@ -1,0 +1,88 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=/usr/local/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/local/bin/g++-8 -G "CodeBlocks - Unix Makefiles" /Users/walterlau/Desktop/teste/lslnis/LSOracle
+-- The CXX compiler identification is GNU 8.2.0
+-- Checking whether CXX compiler has -isysroot
+-- Checking whether CXX compiler has -isysroot - yes
+-- Checking whether CXX compiler supports OSX deployment target flag
+-- Checking whether CXX compiler supports OSX deployment target flag - yes
+-- Check for working CXX compiler: /usr/local/bin/g++-8
+-- Check for working CXX compiler: /usr/local/bin/g++-8 -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test HAS_FCOLOR_DIAGNOSTICS
+-- Performing Test HAS_FCOLOR_DIAGNOSTICS - Failed
+-- The C compiler identification is GNU 8.2.0
+-- Checking whether C compiler has -isysroot
+-- Checking whether C compiler has -isysroot - yes
+-- Checking whether C compiler supports OSX deployment target flag
+-- Checking whether C compiler supports OSX deployment target flag - yes
+-- Check for working C compiler: /usr/local/bin/gcc-8
+-- Check for working C compiler: /usr/local/bin/gcc-8 -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Performing Test C_COMPILER_SUPPORTS__-Wall
+-- Performing Test C_COMPILER_SUPPORTS__-Wall - Success
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wall
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wall - Success
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-unused-function
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-unused-function - Success
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-unused-function
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-unused-function - Success
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-write-strings
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-write-strings - Success
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-write-strings
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-write-strings - Success
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-sign-compare
+-- Performing Test C_COMPILER_SUPPORTS__-Wno-sign-compare - Success
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-sign-compare
+-- Performing Test CXX_COMPILER_SUPPORTS__-Wno-sign-compare - Success
+-- Performing Test C_COMPILER_SUPPORTS__-fpermissive
+-- Performing Test C_COMPILER_SUPPORTS__-fpermissive - Failed
+-- Performing Test CXX_COMPILER_SUPPORTS__-fpermissive
+-- Performing Test CXX_COMPILER_SUPPORTS__-fpermissive - Success
+-- Performing Test C_COMPILER_SUPPORTS__-w
+-- Performing Test C_COMPILER_SUPPORTS__-w - Success
+-- Performing Test CXX_COMPILER_SUPPORTS__-w
+-- Performing Test CXX_COMPILER_SUPPORTS__-w - Success
+-- Performing Test READLINE_WORKS
+-- Performing Test READLINE_WORKS - Success
+-- Performing Test HAS_NO_UNNEEDED_INTERNAL_DECLARATION
+-- Performing Test HAS_NO_UNNEEDED_INTERNAL_DECLARATION - Success
+-- Performing Test HAS_NO_DEPRECATED_DECLARATIONS
+-- Performing Test HAS_NO_DEPRECATED_DECLARATIONS - Success
+-- Performing Test HAS_WNO_UNKNOWN_PRAGMAS
+-- Performing Test HAS_WNO_UNKNOWN_PRAGMAS - Success
+-- CMAKE_ROOT: /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.12
+-- CMAKE_HOST_SYSTEM: Darwin-18.2.0
+-- CMAKE_CXX_COMPILER_VERSION: 8.2.0
+-- CMAKE_BUILD_TYPE: Debug
+-- CMAKE_SYSTEM_NAME: Darwin
+-- CMAKE_CXX_COMPILER: /usr/local/bin/g++-8
+-- CMAKE_CXX_FLAGS: 
+-- CMAKE_CXX_FLAGS_DEBUG: -g
+-- CMAKE_CXX_FLAGS_RELEASE: -O3 -DNDEBUG
+-- CMAKE_CXX_FLAGS_RELWITHDEBINFO: -O2 -g -DNDEBUG
+-- CMAKE_CXX_FLAGS_MINSIZEREL: -Os -DNDEBUG
+-- CMAKE_EXE_LINKER_FLAGS: 
+-- CMAKE_INSTALL_PREFIX: /usr/local
+-- CMAKE_MODULE_PATH: 
+-- OT_VERSION: 2.0.0 (alpha)
+-- OT_HOME: /Users/walterlau/Desktop/teste/lslnis/LSOracle/OpenTimer
+-- OT_BENCHMARK_DIR: /Users/walterlau/Desktop/teste/lslnis/LSOracle/OpenTimer/benchmark
+-- OT_UNITTEST_DIR: /Users/walterlau/Desktop/teste/lslnis/LSOracle/OpenTimer/unittest
+-- OT_LICENSE: /Users/walterlau/Desktop/teste/lslnis/LSOracle/OpenTimer/LICENSE
+-- CMAKE_ARCHIVE_OUTPUT_DIRECTORY: /Users/walterlau/Desktop/teste/lslnis/LSOracle/OpenTimer/lib
+-- PYTHON_EXECUTABLE: /usr/bin/python
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - found
+-- Found Threads: TRUE  
+-- Found Tclsh: /usr/bin/tclsh (found version "8.5") 
+-- OT_LINK_FLAGS: OpenTimer;Threads::Threads;stdc++fs
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/walterlau/Desktop/teste/lslnis/LSOracle/cmake-build-debug

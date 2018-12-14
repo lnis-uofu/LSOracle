@@ -1,0 +1,28 @@
+Performing C++ SOURCE FILE Test HAS_FCOLOR_DIAGNOSTICS failed with the following output:
+Change Dir: /Users/walterlau/Desktop/teste/lslnis/LSOracle/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_73c15/fast"
+/Library/Developer/CommandLineTools/usr/bin/make -f CMakeFiles/cmTC_73c15.dir/build.make CMakeFiles/cmTC_73c15.dir/build
+Building CXX object CMakeFiles/cmTC_73c15.dir/src.cxx.o
+/usr/local/bin/g++    -DHAS_FCOLOR_DIAGNOSTICS   -fcolor-diagnostics -std=gnu++17 -o CMakeFiles/cmTC_73c15.dir/src.cxx.o -c /Users/walterlau/Desktop/teste/lslnis/LSOracle/build/CMakeFiles/CMakeTmp/src.cxx
+g++: error: unrecognized command line option '-fcolor-diagnostics'
+make[1]: *** [CMakeFiles/cmTC_73c15.dir/src.cxx.o] Error 1
+make: *** [cmTC_73c15/fast] Error 2
+
+Source file was:
+int main() { return 0; }
+Performing C SOURCE FILE Test C_COMPILER_SUPPORTS__-fpermissive failed with the following output:
+Change Dir: /Users/walterlau/Desktop/teste/lslnis/LSOracle/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9b9dd/fast"
+/Library/Developer/CommandLineTools/usr/bin/make -f CMakeFiles/cmTC_9b9dd.dir/build.make CMakeFiles/cmTC_9b9dd.dir/build
+Building C object CMakeFiles/cmTC_9b9dd.dir/src.c.o
+/usr/local/bin/gcc   -DC_COMPILER_SUPPORTS__-fpermissive   -fpermissive -o CMakeFiles/cmTC_9b9dd.dir/src.c.o   -c /Users/walterlau/Desktop/teste/lslnis/LSOracle/build/CMakeFiles/CMakeTmp/src.c
+cc1: warning: command line option '-fpermissive' is valid for C++/ObjC++ but not for C
+<command-line>: warning: ISO C99 requires whitespace after the macro name
+Linking C executable cmTC_9b9dd
+/usr/local/Cellar/cmake/3.12.1/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9b9dd.dir/link.txt --verbose=1
+/usr/local/bin/gcc  -DC_COMPILER_SUPPORTS__-fpermissive -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_9b9dd.dir/src.c.o  -o cmTC_9b9dd 
+
+Source file was:
+int main(void) { return 0; }

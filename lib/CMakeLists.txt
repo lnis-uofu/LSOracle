@@ -20,15 +20,16 @@ target_compile_definitions(fmt INTERFACE FMT_HEADER_ONLY)
 add_library(json INTERFACE) # v3.0.0
 target_include_directories(json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/json)
 
-add_subdirectory(OpenTimer)
-include_directories(${PROJECT_SOURCE_DIR}/OpenTimer)  # add OpenTimer include
+#add_subdirectory(../OpenTimer)
+#add to core folder
+#include_directories(${PROJECT_SOURCE_DIR}/LSOracle/core/OpenTimer)  # add OpenTimer include
+
 set(CMAKE_CXX_STANDARD 17)                            # enable c++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Threads REQUIRED)                        # thread library (pthread)
-
+#find_package(Threads REQUIRED)                        # thread library (pthread)
 
 add_subdirectory(mockturtle)
 
-set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
-add_subdirectory(percy)
+#set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
+#add_subdirectory(percy)

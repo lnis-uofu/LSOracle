@@ -28,11 +28,11 @@ include(AliceTools)
 add_subdirectory(lib)
 add_subdirectory(include)
 
-if(ALICE_EXAMPLES)
-  add_subdirectory(examples)
-endif()
+#if(ALICE_EXAMPLES)
+#  add_subdirectory(examples)
+#endif()
 
-if(ALICE_TEST)
-  add_subdirectory(test)
-endif()
+#if(ALICE_TEST)
+#  add_subdirectory(test)
+#endif()
 

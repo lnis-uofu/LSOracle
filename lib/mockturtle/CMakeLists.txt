@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
-option(MOCKTURTLE_TEST "Build tests" ON)
+#option(MOCKTURTLE_TEST "Build tests" ON)
 
 # some specific compiler definitions
 include(CheckCXXCompilerFlag)
@@ -24,6 +24,6 @@ endif()
 add_subdirectory(include)
 add_subdirectory(lib)
 
-if(MOCKTURTLE_TEST)
-  add_subdirectory(test)
-endif()
+#if(MOCKTURTLE_TEST)
+#  add_subdirectory(test)
+#endif()

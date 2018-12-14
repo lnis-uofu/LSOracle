@@ -12,7 +12,14 @@ if (HAS_FCOLOR_DIAGNOSTICS)
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(examples)
-add_subdirectory(testing)
+#add_subdirectory(examples)
+add_subdirectory(OpenTimer)
+include_directories(${PROJECT_SOURCE_DIR}/OpenTimer)  # add OpenTimer include
+
+set(CMAKE_CXX_STANDARD 17)                            # enable c++17
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(Threads REQUIRED)                        # thread library (pthread)
+add_subdirectory(core)
 
 find_package(Threads REQUIRED)
