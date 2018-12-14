@@ -1,0 +1,61 @@
+language: cpp
+
+#dist: trusty
+sudo: false
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test # For newer GCC
+    - george-edison55-precise-backports # For cmake
+    packages:
+    - autoconf
+    - automake
+    - bash
+    - bison
+    - build-essential
+    - cmake
+    - ctags
+    - curl
+    - doxygen
+    - flex
+    - fontconfig
+    - g++-4.9
+    - gcc-4.9
+    - gdb
+    - git
+    - gperf
+    - libcairo2-dev
+    - libevent-dev
+    - libfontconfig1-dev
+    - liblist-moreutils-perl
+    - libncurses5-dev
+    - libx11-dev
+    - libxft-dev
+    - libxml++2.6-dev
+    - perl
+    - python
+    - texinfo
+    - time
+    - valgrind
+    - zip
+    - qt5-default
+
+# Compiler
+compiler:
+  - gcc
+
+before_install:
+
+install:
+
+script:
+ - mkdir build
+ - cd build
+ - cmake -DCMAKE CXX FLAGS=-fPIC -DCMAKE C FLAGS=-fPIC ..
+ - make
+
+after_failure:
+  - echo "failure"
+
+after_success:
+  - echo "success"
