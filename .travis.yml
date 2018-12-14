@@ -19,8 +19,8 @@ addons:
     - doxygen
     - flex
     - fontconfig
-    - g++-4.9
-    - gcc-4.9
+    - g++-7
+    - gcc-7
     - gdb
     - git
     - gperf
