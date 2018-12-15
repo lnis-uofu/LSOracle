@@ -49,10 +49,7 @@ before_install:
 install:
 
 script:
- - mkdir build
- - cd build
- - cmake -DCMAKE CXX FLAGS=-fPIC -DCMAKE C FLAGS=-fPIC ..
- - make
+ - ./travis_run_build.sh
 
 after_failure:
   - echo "failure"
