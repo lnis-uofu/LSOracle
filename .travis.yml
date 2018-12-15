@@ -1,48 +1,42 @@
 language: cpp
 
-#dist: trusty
-sudo: false
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test # For newer GCC
-    - george-edison55-precise-backports # For cmake
-    packages:
-    - autoconf
-    - automake
-    - bash
-    - bison
-    - build-essential
-    - cmake
-    - ctags
-    - curl
-    - doxygen
-    - flex
-    - fontconfig
-    - g++-7
-    - gcc-7
-    - gdb
-    - git
-    - gperf
-    - libcairo2-dev
-    - libevent-dev
-    - libfontconfig1-dev
-    - liblist-moreutils-perl
-    - libncurses5-dev
-    - libx11-dev
-    - libxft-dev
-    - libxml++2.6-dev
-    - perl
-    - python
-    - texinfo
-    - time
-    - valgrind
-    - zip
-    - qt5-default
-
-# Compiler
-compiler:
-  - gcc
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    sudo: required
+    compiler: gcc
+    addons:
+      apt:
+        sources: 
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+    env: COMPILER=g++-7
+  - os: linux
+    dist: trusty
+    sudo: required
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-8
+    env: COMPILER=g++-8
+  - os: linux
+    dist: trusty
+    sudo: required
+    compiler: clang
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-6.0
+        packages:
+          - clang-6.0
+          - g++-7
+    env: COMPILER=clang++-6.0
 
 before_install:
   - chmod +x travis_run_build.sh
