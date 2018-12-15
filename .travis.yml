@@ -45,6 +45,7 @@ compiler:
   - gcc
 
 before_install:
+  - chmod +x travis_run_build.sh
 
 install:
 
