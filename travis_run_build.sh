@@ -1,4 +1,4 @@
 mkdir build
 cd build
-cmake -DCMAKE CXX FLAGS=-fPIC -DCMAKE C FLAGS=-fPIC ..
+cmake -DCMAKE_CXX_FLAGS=-fPIC -DCMAKE_C_FLAGS=-fPIC ..
 make
