@@ -1,1 +1,0 @@
-/usr/local/bin/g++-8  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/lstools.dir/lstools.cpp.o  -o lstools ../lib/abc/libabc.a ../../OpenTimer/lib/libOpenTimer.a -lstdc++fs -lreadline -lreadline -lpthread -lm -ldl 

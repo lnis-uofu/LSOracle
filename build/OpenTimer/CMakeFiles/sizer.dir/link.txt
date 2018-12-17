@@ -1,1 +1,0 @@
-/usr/local/bin/g++   -Wall -O2 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/sizer.dir/example/sizer/sizer.cpp.o  -o ../../OpenTimer/example/sizer/sizer ../../OpenTimer/lib/libOpenTimer.a -lstdc++fs 

@@ -1,1 +1,0 @@
-/usr/local/bin/g++   -Wall -O2 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/optimizer.dir/example/optimizer/optimizer.cpp.o  -o ../../OpenTimer/example/optimizer/optimizer ../../OpenTimer/lib/libOpenTimer.a -lstdc++fs 
