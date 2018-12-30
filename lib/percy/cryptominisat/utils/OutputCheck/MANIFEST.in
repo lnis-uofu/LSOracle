@@ -1,0 +1,5 @@
+include LICENCE
+include pypi_description.rst
+include README.md
+include version.py
+include RELEASE-VERSION

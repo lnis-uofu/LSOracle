@@ -1,0 +1,21 @@
+version: '0.5pre.{build}'
+
+image: Visual Studio 2017
+
+platform:
+  - x64
+
+configuration:
+  - Release
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - cmake -G "Visual Studio 15 2017 Win64" -DKITTY_EXAMPLES=OFF -DKITTY_TEST=ON -Dgtest_force_shared_crt=ON -DCMAKE_CXX_FLAGS=/D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING .
+
+build:
+  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+
+test_script:
+  - '%APPVEYOR_BUILD_FOLDER%\test\%CONFIGURATION%\run_tests.exe'
