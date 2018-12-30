@@ -1,0 +1,144 @@
+This package implements a number of tools that operate on DIMACS CNF files.
+
+Here is a short summary of the tools and their usage:
+
+ - cnf-cat [FILE] ...
+
+    Concatenate the clauses of one or more CNF files.
+
+ - cnf-clause [[LITERAL] ... 0] ...
+
+    Generate a CNF file containing the clauses specified on the command
+    line. Example:
+
+    $ cnf-clause 1 2 0 -1 3 0
+    p cnf 3 2
+    1 2 0
+    -1 3 0
+
+ - cnf-grep VARIABLE [FILE]
+
+    Read the CNF file specified by FILE (or standard input if omitted)
+    and output the clauses containing the variable VARIABLE. Example:
+
+    $ cnf-clause 1 2 0 -1 3 0 | cnf-grep 2
+    p cnf 3 1
+    1 2 0
+
+ - cnf-renumber [FILE]
+
+    Read the CNF file specified by FILE (or standard input if omitted)
+    and rename the variables so that they start at 1 and go to N, where
+    N is the number of distinct variables in the input. Example:
+
+    $ cnf-clause 100 101 0 | cnf-pack
+    p cnf 2 1
+    1 2 0
+
+ - cnf-propagate [FILE]
+
+    Read the CNF file specified by FILE (or standard input if omitted)
+    and carry out unit propagation recursively until no further
+    propagations can be made. Note that no clauses are removed; both
+    unit clauses and tautologies (e.g. 1 -1 0) will remain in the output.
+    Example:
+
+    $ cnf-clause 1 2 0 -1 3 0 -3 0 | cnf-propagate
+    p cnf 3 3
+    2 0
+    -1 0
+    -3 0
+
+ - cnf-shuffle-clauses [FILE]
+
+    Shuffle the order of the clauses, but leave the order of literals
+    within each clause intact.
+
+ - cnf-shuffle-literals [FILE]
+
+    Shuffle the order of the literals within each clause, but leave the
+    order of the clauses intact.
+
+ - cnf-shuffle-variables [FILE]
+
+    rENAME the variables randomly using a one-to-one mapping. The
+    resulting CNF output is equisatisfiable with the CNF input.
+    Example:
+
+    $ cnf-clause 1 2 3 0 | cnf-shuffle-variables
+    p cnf 3 1
+    2 3 1 0
+
+ - cnf-sort-clauses [FILE]
+
+    Order the clauses in ascending order. Example:
+
+    $ cnf-clause 3 2 1 0 -3 -2 -1 0 | cnf-sort-clauses
+    p cnf 3 2
+    -3 -2 -1 0
+    3 2 1 0
+
+ - cnf-sort-literals [FILE]
+
+    Order the literals within each clause in ascending order. Example:
+
+    $ cnf-clause 3 2 1 0 -3 -2 -1 0 | cnf-sort-literals
+    p cnf 3 2
+    1 2 3 0
+    -3 -2 -1 0
+
+ - cnf-stat [FILE]
+
+    Print some simple statistics about the CNF input. Example:
+
+    $ cnf-stat 20-r-16-160-r-00-shuffle-1.cnf
+    Literals: 121157 (61952 negative, 59205 positive)
+    Clause length histogram:
+     1: 1
+     2: 15608
+     3: 29980
+
+ - cnf-fuzz-nossum
+        Generate a random problem. By Vegard Nossum, with additions by
+        Mate Soos
+
+ - cnf-fuzz-biere
+        CNF fuzzer by Armin Biere (April 2010). See Armin Biere's paper
+        in SAT'10 proceedings for details
+
+ - cnf-fuzz-brummayer.py
+         Fuzzing Tool for CNF, written by Robert Daniel Brummayer, 2009
+
+ - compare.pl
+        Compares two solvers side-by-side, by Vegard Nossum.
+
+        Usage:
+        perl compare.pl program1 program2 args
+
+        The output from program1 will be printed in yellow/brown, while the
+        output from program2 will be printed in green. Output lines are
+        prefixed with a timestamp which is basically the number of seconds
+        (not CPU time) since the program was started. The arguments will be
+        supplied to both programs.
+
+ - sgen4
+        The program generates small, difficult satisfiability benchmarks in
+        the DIMACS cnf format. The benchmark is written to standard output
+        and the available options are:
+
+        -n number-of-variables        This specifies the minimum number of variables - there may be slightly more.
+        -sat                          Generate a satisfiable instance
+        -unsat                        Generate an unsatisfiable instance
+        -[no]reorder                  Randomly reorder literals and clauses in the generated instance
+        -s seed                       Specify a seed for random number generation
+        -m model-filename             If a satisfiable instance is being generated, write a satisfying model
+        -min-variables            The normal mode of operation is to be as difficult as possible for a small number of literals. This options means use as few variables as possible.
+
+        Typical usage:
+
+        sgen4 -n 60 -unsat > unsat-60.cnf
+        sgen4 -n 150 -sat > sat-60.cnf
+        sgen4 -n 150 -sat -m sat-60.model > sat-60.cnf
+
+        See file sgen4descr.pdf for further details
+
