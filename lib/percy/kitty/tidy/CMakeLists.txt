@@ -1,0 +1,13 @@
+if(${CMAKE_VERSION} VERSION_GREATER "3.6")
+  find_program(CLANG_TIDY_EXE NAMES "clang-tidy" DOC "path to clang-tidy executable")
+  if(NOT CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy not found.")
+  else()
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-cppcoreguidelines-*,-llvm-header-guard,-cert-err58-cpp,-google-runtime-references,-llvm-include-order" "-header-filter=kitty/.*")
+  endif()
+
+  add_executable(kitty_tidy tidy.cpp)
+  target_link_libraries(kitty_tidy kitty)
+  set_target_properties(kitty_tidy PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+endif()
