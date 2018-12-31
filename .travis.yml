@@ -39,7 +39,6 @@ matrix:
     env: COMPILER=clang++-6.0
 
 before_install:
-  - chmod +x travis_run_build.sh
 
 install:
 
