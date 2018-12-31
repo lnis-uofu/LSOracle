@@ -8,19 +8,6 @@ matrix:
     compiler: gcc
     addons:
       apt:
-        sources: 
-          - ubuntu-toolchain-r-test
-          - george-edison55-precise-backports
-        packages:
-          - g++-7
-          - cmake
-    env: COMPILER=g++-7
-  - os: linux
-    dist: trusty
-    sudo: required
-    compiler: gcc
-    addons:
-      apt:
         sources:
           - ubuntu-toolchain-r-test
           - george-edison55-precise-backports
@@ -28,27 +15,17 @@ matrix:
           - g++-8
           - cmake
     env: COMPILER=g++-8
-  - os: linux
-    dist: trusty
-    sudo: required
-    compiler: clang
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-6.0
-          - george-edison55-precise-backports
-        packages:
-          - clang-6.0
-          - g++-7
-          - cmake
-    env: COMPILER=clang++-6.0
 
 before_install:
 
 install:
 
 script:
+ - ln -s /usr/bin/gcc-8 /usr/local/bin/gcc
+ - ln -s /usr/bin/g++-8 /usr/local/bin/g++
+ - export CC=/usr/bin/gcc-8
+ - export CXX=/usr/bin/g++-8
+ - gcc -v && g++ -v && cmake --version
  - mkdir build
  - cd build
  - cmake ..
