@@ -10,6 +10,7 @@ matrix:
       apt:
         sources: 
           - ubuntu-toolchain-r-test
+          - george-edison55-precise-backports
         packages:
           - g++-7
           - cmake
@@ -22,6 +23,7 @@ matrix:
       apt:
         sources:
           - ubuntu-toolchain-r-test
+          - george-edison55-precise-backports
         packages:
           - g++-8
           - cmake
@@ -35,6 +37,7 @@ matrix:
         sources:
           - ubuntu-toolchain-r-test
           - llvm-toolchain-trusty-6.0
+          - george-edison55-precise-backports
         packages:
           - clang-6.0
           - g++-7
