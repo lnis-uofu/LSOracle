@@ -12,6 +12,7 @@ matrix:
           - ubuntu-toolchain-r-test
         packages:
           - g++-7
+          - cmake
     env: COMPILER=g++-7
   - os: linux
     dist: trusty
@@ -23,6 +24,7 @@ matrix:
           - ubuntu-toolchain-r-test
         packages:
           - g++-8
+          - cmake
     env: COMPILER=g++-8
   - os: linux
     dist: trusty
@@ -36,6 +38,7 @@ matrix:
         packages:
           - clang-6.0
           - g++-7
+          - cmake
     env: COMPILER=clang++-6.0
 
 before_install:
