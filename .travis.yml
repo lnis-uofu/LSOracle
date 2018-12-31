@@ -21,8 +21,6 @@ before_install:
 install:
 
 script:
- - ln -s /usr/bin/gcc-8 /usr/local/bin/gcc
- - ln -s /usr/bin/g++-8 /usr/local/bin/g++
  - export CC=/usr/bin/gcc-8
  - export CXX=/usr/bin/g++-8
  - gcc -v && g++ -v && cmake --version
