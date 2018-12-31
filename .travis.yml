@@ -44,7 +44,10 @@ before_install:
 install:
 
 script:
- - ./travis_run_build.sh
+ - mkdir build
+ - cd build
+ - cmake ..
+ - make
 
 after_failure:
   - echo "failure"
