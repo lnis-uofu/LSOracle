@@ -1,7 +1,7 @@
-# Getting Started with LSOraclte
+# Getting Started with LSOracle
 
 [![Build Status](https://travis-ci.org/LNIS-Projects/LSOracle.svg?branch=master)](https://travis-ci.org/LNIS-Projects/LSOracle)
-
+[![Documentation Status](https://readthedocs.org/projects/lsoracle/badge/?version=latest)](https://lsoracle.readthedocs.io/en/latest/?badge=latest)
 
 ## Introduction
 
