@@ -27,4 +27,7 @@ To run sequential MIG, please do as follows:
 * migscript                                             //interleaves area and depth optimization in the same way as the ABC resyn2 optimization command. 
 * write_verilog                                       //outputs the optimized network in Verilog format, that can be used to technology mapping or functional verification. 
 
+## Full Documentation 
+
+The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/latest/?badge=latest)
 

@@ -12,9 +12,12 @@ Welcome to LSOracle's documentation!
 
    epfl/index
 
+   seqmig/index
+
+   lsoracle/index 
+
 .. toctree::
    :caption: Apendix
    
    contact 
-   reference
 

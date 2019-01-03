@@ -10,3 +10,7 @@ EPFL Logic Synthesis Libraries
 
     kitty
 
+    lorina
+
+    mockturtle
+
