@@ -41,6 +41,8 @@
 #include "../traits.hpp"
 #include "immutable_view.hpp"
 
+#include <sparsepp/spp.h>
+
 namespace mockturtle
 {
 
@@ -68,6 +70,7 @@ public:
   using storage = typename Ntk::storage;
   using node = typename Ntk::node;
   using signal = typename Ntk::signal;
+  static constexpr bool is_topologically_sorted = true;
 
 public:
   explicit cut_view( Ntk const& ntk, const std::vector<node>& leaves, const node& root )
@@ -82,8 +85,6 @@ public:
     static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
     static_assert( has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
-    this->clear_visited();
-
     /* constants */
     add_constants();
 
@@ -94,9 +95,16 @@ public:
     }
 
     traverse( root );
+
+    /* restore visited */
+    for ( auto const& n : _nodes )
+    {
+      this->set_visited( n, 0 );
+    }
   }
 
-  explicit cut_view( Ntk const& ntk, const std::vector<signal>& leaves, const node& root )
+    template<typename _Ntk = Ntk, typename = std::enable_if_t<!std::is_same_v<typename _Ntk::signal, typename _Ntk::node>>>
+    explicit cut_view( Ntk const& ntk, const std::vector<signal>& leaves, const node& root )
       : immutable_view<Ntk>( ntk ), _root( root )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
@@ -107,8 +115,6 @@ public:
     static_assert( has_get_constant_v<Ntk>, "Ntk does not implement the get_constant method" );
     static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
     static_assert( has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
-
-    this->clear_visited();
 
     /* constants */
     add_constants();
@@ -121,6 +127,12 @@ public:
     }
 
     traverse( root );
+
+    /* restore visited */
+    for ( auto const& n : _nodes )
+    {
+      this->set_visited( n, 0 );
+    }
   }
 
   inline auto size() const { return _nodes.size(); }
@@ -205,11 +217,17 @@ private:
   }
 
 public:
-  unsigned _num_constants{1};
-  unsigned _num_leaves{0};
-  std::vector<node> _nodes;
-  std::unordered_map<node, uint32_t> _node_to_index;
-  node _root;
+    unsigned _num_constants{1};
+    unsigned _num_leaves{0};
+    std::vector<node> _nodes;
+    spp::sparse_hash_map<node, uint32_t> _node_to_index;
+    node _root;
 };
+
+    template<class T>
+    cut_view(T const&, std::vector<node<T>> const&, node<T> const&) -> cut_view<T>;
+
+    template<class T, typename = std::enable_if_t<!std::is_same_v<typename T::signal, typename T::node>>>
+    cut_view(T const&, std::vector<signal<T>> const&, node<T> const&) -> cut_view<T>;
 
 } /* namespace mockturtle */

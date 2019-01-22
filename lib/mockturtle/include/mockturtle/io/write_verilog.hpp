@@ -116,7 +116,7 @@ namespace mockturtle
         static_assert( has_is_xor3_v<Ntk>, "Ntk does not implement the is_xor3 method" );
         static_assert( has_is_maj_v<Ntk>, "Ntk does not implement the is_maj method" );
         static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
-        static_assert( has_ri_index_v<Ntk>, "Ntk does not implement the ri_index method" );
+//        static_assert( has_ri_index_v<Ntk>, "Ntk does not implement the ri_index method" );
 
         //counting number of digits to add leading 0's
         auto digitsIn  = std::to_string(ntk.num_pis()-ntk.num_latches()).length();
@@ -298,7 +298,7 @@ namespace mockturtle
  * - `get_node`
  * - `get_constant`
  * - `is_constant`
- * - `is_pi`
+ * - `is_ci`
  * - `is_and`
  * - `is_or`
  * - `is_xor`

@@ -77,6 +77,13 @@ namespace mockturtle
         /*! \brief Use don't cares for optimization. */
         bool use_dont_cares{false};
 
+        /*! \brief Candidate selection strategy. */
+        enum
+        {
+            minimize_weight,
+            greedy
+        } candidate_selection_strategy = minimize_weight;
+
         /*! \brief Show progress. */
         bool progress{false};
 
@@ -205,7 +212,7 @@ namespace mockturtle
           std::vector<uint32_t> vertices( g.num_vertices() );
           std::iota( vertices.begin(), vertices.end(), 0 );
 
-          std::sort( vertices.begin(), vertices.end(), [&g]( auto v, auto w ) {
+          std::stable_sort( vertices.begin(), vertices.end(), [&g]( auto v, auto w ) {
               const auto value_v = g.gwmin_value( v );
               const auto value_w = g.gwmin_value( w );
               return value_v > value_w || ( value_v == value_w && g.degree( v ) > g.degree( w ) );
@@ -352,15 +359,27 @@ namespace mockturtle
         template<class Ntk, class RewritingFn, class Iterator>
         inline constexpr bool has_rewrite_with_dont_cares_v = has_rewrite_with_dont_cares<Ntk, RewritingFn, Iterator>::value;
 
-        template<class Ntk, class RewritingFn>
+        template<class Ntk>
+        struct unit_cost
+        {
+            uint32_t operator()( Ntk const& ntk, node<Ntk> const& node ) const
+            {
+                (void)ntk;
+                (void)node;
+                return 1u;
+            }
+        };
+
+        template<class Ntk, class RewritingFn, class NodeCostFn>
         class cut_rewriting_impl
         {
         public:
-            cut_rewriting_impl( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st )
+            cut_rewriting_impl( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st, NodeCostFn const& cost_fn )
                     : ntk( ntk ),
                       rewriting_fn( rewriting_fn ),
                       ps( ps ),
-                      st( st ) {}
+                      st( st ),
+                      cost_fn( cost_fn ) {}
 
             void run()
             {
@@ -380,13 +399,14 @@ namespace mockturtle
 
               /* iterate over all original nodes in the network */
               const auto size = ntk.size();
+              auto max_total_gain = 0u;
               progress_bar pbar{ntk.size(), "cut_rewriting |{0}| node = {1:>4}@{2:>2} / " + std::to_string( size ), ps.progress};
               ntk.foreach_node( [&]( auto const& n ) {
                   /* stop once all original nodes were visited */
                   if ( n >= size )
                     return false;
 
-                  /* do not iterate over constants or PIs */
+                  /* do not iterate over constants or PIs/ROs */
                   if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
                     return true;
 
@@ -415,17 +435,27 @@ namespace mockturtle
                     int32_t value = detail::recursive_deref( ntk, n );
                     {
                       stopwatch t( st.time_rewriting );
+                      int32_t best_gain{-1};
 
                       const auto on_signal = [&]( auto const& f_new ) {
-                          int32_t gain = value - detail::recursive_ref( ntk, ntk.get_node( f_new ) );
-                          detail::recursive_deref( ntk, ntk.get_node( f_new ) );
+                          auto [v, contains] = recursive_ref_contains( ntk.get_node( f_new ), n );
+                          recursive_deref( ntk.get_node( f_new ) );
 
-                          ( *cut )->data.gain = gain;
+                          int32_t gain = contains ? -1 : value - v;
+
                           if ( gain > 0 || ( ps.allow_zero_gain && gain == 0 ) )
                           {
-                            best_replacements[n].push_back( f_new );
+                              if ( best_gain == -1 )
+                              {
+                                  ( *cut )->data.gain = best_gain = gain;
+                                  best_replacements[n].push_back( f_new );
+                              }
+                              else if ( gain > best_gain )
+                              {
+                                  ( *cut )->data.gain = best_gain = gain;
+                                  best_replacements[n].back() = f_new;
+                              }
                           }
-
                           return true;
                       };
 
@@ -449,9 +479,12 @@ namespace mockturtle
                       {
                         rewriting_fn( ntk, cuts.truth_table( *cut ), children.begin(), children.end(), on_signal );
                       }
+                      if ( best_gain > 0 )
+                      {
+                          max_total_gain += best_gain;
+                      }
                     }
-
-                    detail::recursive_ref( ntk, n );
+                      recursive_ref( n );
                   }
 
                   return true;
@@ -459,12 +492,17 @@ namespace mockturtle
 
               stopwatch t2( st.time_mis );
               auto [g, map] = network_cuts_graph( ntk, cuts, ps.allow_zero_gain );
-              const auto is = maximum_weighted_independent_set_gwmin( g );
 
               if ( ps.very_verbose )
               {
                 std::cout << "[i] replacement dependency graph has " << g.num_vertices() << " vertices and " << g.num_edges() << " edges\n";
-                std::cout << "[i] size of independent set is " << is.size() << "\n";
+              }
+
+              const auto is = ( ps.candidate_selection_strategy == cut_rewriting_params::minimize_weight ) ? maximum_weighted_independent_set_gwmin( g ) : maximal_weighted_independent_set( g );
+
+              if ( ps.very_verbose )
+              {
+                  std::cout << "[i] size of independent set is " << is.size() << "\n";
               }
 
               for ( const auto v : is )
@@ -495,10 +533,67 @@ namespace mockturtle
             }
 
         private:
+            uint32_t recursive_deref( node<Ntk> const& n )
+            {
+                /* terminate? */
+                if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+                    return 0;
+
+                /* recursively collect nodes */
+                uint32_t value{cost_fn( ntk, n )};
+                ntk.foreach_fanin( n, [&]( auto const& s ) {
+                    if ( ntk.decr_value( ntk.get_node( s ) ) == 0 )
+                    {
+                        value += recursive_deref( ntk.get_node( s ) );
+                    }
+                } );
+                return value;
+            }
+
+            uint32_t recursive_ref( node<Ntk> const& n )
+            {
+                /* terminate? */
+                if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+                    return 0;
+
+                /* recursively collect nodes */
+                uint32_t value{cost_fn( ntk, n )};
+                ntk.foreach_fanin( n, [&]( auto const& s ) {
+                    if ( ntk.incr_value( ntk.get_node( s ) ) == 0 )
+                    {
+                        value += recursive_ref( ntk.get_node( s ) );
+                    }
+                } );
+                return value;
+            }
+
+            std::pair<int32_t, bool> recursive_ref_contains( node<Ntk> const& n, node<Ntk> const& repl )
+            {
+                /* terminate? */
+                if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+                    return {0, false};
+
+                /* recursively collect nodes */
+                int32_t value = cost_fn( ntk, n );
+                bool contains = ( n == repl );
+                ntk.foreach_fanin( n, [&]( auto const& s ) {
+                    contains = contains || ( ntk.get_node( s ) == repl );
+                    if ( ntk.incr_value( ntk.get_node( s ) ) == 0 )
+                    {
+                        const auto [v, c] = recursive_ref_contains( ntk.get_node( s ), repl );
+                        value += v;
+                        contains = contains || c;
+                    }
+                } );
+                return {value, contains};
+            }
+
+        private:
             Ntk& ntk;
             RewritingFn&& rewriting_fn;
             cut_rewriting_params const& ps;
             cut_rewriting_stats& st;
+            NodeCostFn cost_fn;
         };
 
     } /* namespace detail */
@@ -545,15 +640,15 @@ namespace mockturtle
  * \param ps Rewriting params
  * \param pst Rewriting statistics
  */
-    template<class Ntk, class RewritingFn>
-    void cut_rewriting( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps = {}, cut_rewriting_stats* pst = nullptr )
+    template<class Ntk, class RewritingFn, class NodeCostFn = detail::unit_cost<Ntk>>
+    void cut_rewriting( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps = {}, cut_rewriting_stats* pst = nullptr, NodeCostFn const& cost_fn = {} )
     {
       static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
       static_assert( has_fanout_size_v<Ntk>, "Ntk does not implement the fanout_size method" );
       static_assert( has_foreach_node_v<Ntk>, "Ntk does not implement the foreach_node method" );
       static_assert( has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
       static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
-      static_assert( has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
+      static_assert( has_is_ci_v<Ntk>, "Ntk does not implement the is_ci method" );
       static_assert( has_clear_values_v<Ntk>, "Ntk does not implement the clear_values method" );
       static_assert( has_incr_value_v<Ntk>, "Ntk does not implement the incr_value method" );
       static_assert( has_decr_value_v<Ntk>, "Ntk does not implement the decr_value method" );
@@ -564,7 +659,7 @@ namespace mockturtle
       static_assert( has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
       cut_rewriting_stats st;
-      detail::cut_rewriting_impl<Ntk, RewritingFn> p( ntk, rewriting_fn, ps, st );
+        detail::cut_rewriting_impl<Ntk, RewritingFn, NodeCostFn> p( ntk, rewriting_fn, ps, st, cost_fn );
       p.run();
 
       if ( ps.verbose )

@@ -1,5 +1,9 @@
 #include <ot/timer/timer.hpp>
 
+/*
+ * Interfaces the command line with OpenTimer API
+ */
+
 class STA {
 private:
     ot::Timer timer;
