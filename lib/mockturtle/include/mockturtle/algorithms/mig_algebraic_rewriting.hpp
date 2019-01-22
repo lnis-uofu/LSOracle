@@ -78,6 +78,9 @@ struct mig_algebraic_depth_rewriting_params
    * number of dangling nodes are taken into account.
    */
   float overhead{2.0f};
+
+  /*! \brief Allow area increase while optimizing depth. */
+  bool allow_area_increase{true};
 };
 
 namespace detail
@@ -125,7 +128,6 @@ private:
 
   void run_selective()
   {
-    std::cout << "Running selective " << std::endl;
     uint32_t counter{0};
     while ( true )
     {
@@ -192,6 +194,10 @@ private:
     if ( ntk.level( ntk.get_node( ocs[2] ) ) <= ntk.level( ntk.get_node( ocs[1] ) ) + 1 )
       return false;
 
+    /* child must have single fanout, if no area overhead is allowed */
+    if ( !ps.allow_area_increase && ntk.fanout_size( ntk.get_node( ocs[2] ) ) != 1 )
+      return false;
+
     /* get children of last child */
     auto ocs2 = ordered_children( ntk.get_node( ocs[2] ) );
 
@@ -212,7 +218,7 @@ private:
       const auto& [x, y, z, u, assoc] = *cand;
       auto opt = ntk.create_maj( z, assoc ? u : x, ntk.create_maj( x, y, u ) );
       ntk.substitute_node( n, opt );
-      ntk.update();
+      ntk.update_levels();
 
       return true;
     }
@@ -222,7 +228,7 @@ private:
                                ntk.create_maj( ocs[0], ocs[1], ocs2[0] ),
                                ntk.create_maj( ocs[0], ocs[1], ocs2[1] ) );
     ntk.substitute_node( n, opt );
-    ntk.update();
+    ntk.update_levels();
     return true;
   }
 
@@ -305,7 +311,7 @@ private:
  * - `level`
  * - `create_maj`
  * - `substitute_node`
- * - `update`
+ * - `update_levels`
  * - `foreach_node`
  * - `foreach_po`
  * - `foreach_fanin`
@@ -331,7 +337,7 @@ void mig_algebraic_depth_rewriting( Ntk& ntk, mig_algebraic_depth_rewriting_para
   static_assert( has_level_v<Ntk>, "Ntk does not implement the level method" );
   static_assert( has_create_maj_v<Ntk>, "Ntk does not implement the create_maj method" );
   static_assert( has_substitute_node_v<Ntk>, "Ntk does not implement the substitute_node method" );
-  static_assert( has_update_v<Ntk>, "Ntk does not implement the update method" );
+  static_assert( has_update_levels_v<Ntk>, "Ntk does not implement the update_levels method" );
   static_assert( has_foreach_node_v<Ntk>, "Ntk does not implement the foreach_node method" );
   static_assert( has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_po method" );
   static_assert( has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );

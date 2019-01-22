@@ -1,4 +1,5 @@
 /* mockturtle: C++ logic network library
+ *
  * Copyright (C) 2018  EPFL
  *
  * Permission is hereby granted, free of charge, to any person

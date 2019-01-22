@@ -132,8 +132,9 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
  * - `foreach_pi`
  * - `foreach_po`
  * - `clone_node`
- * - `is_pi`
+ * - `is_ci`
  * - `is_constant`
+ * - `create_ro`
  */
 template<typename Ntk>
 Ntk cleanup_dangling( Ntk const& ntk )
@@ -150,8 +151,10 @@ Ntk cleanup_dangling( Ntk const& ntk )
   static_assert( has_foreach_pi_v<Ntk>, "Ntk does not implement the foreach_pi method" );
   static_assert( has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_po method" );
   static_assert( has_clone_node_v<Ntk>, "Ntk does not implement the clone_node method" );
-  static_assert( has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
+  static_assert( has_is_ci_v<Ntk>, "Ntk does not implement the is_ci method" );
   static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
+  static_assert( has_create_ro_v<Ntk>, "Ntk does not implement the create_ro method" );
+
 
   Ntk dest;
   std::vector<signal<Ntk>> pis;
@@ -161,13 +164,13 @@ Ntk cleanup_dangling( Ntk const& ntk )
       dest._storage->data.latches.emplace_back(0);
   }
 
-  //create pis
+  //create PIs
   for ( auto i = 0u; i < ntk.num_pis() - ntk.num_latches(); ++i )
   {
       pis.push_back( dest.create_pi() );
   }
 
-  //create registers outputs
+  //create Registers Outputs
   for ( auto i = ntk.num_pis() - ntk.num_latches(); i < ntk.num_pis(); ++i )
   {
       pis.push_back( dest.create_ro() );

@@ -24,52 +24,42 @@
  */
 
 /*!
-  \file gia_cut.hpp
-  \brief Cut enumeration as in giaCut.c
+  \file events.hpp
+  \brief Event API for updating a logic network.
   \author Mathias Soeken
 */
 
 #pragma once
 
-#include <algorithm>
-#include <cstdint>
+#include <functional>
+#include <vector>
 
-#include "../cut_enumeration.hpp"
+#include "../traits.hpp"
 
 namespace mockturtle
 {
 
-    struct cut_enumeration_gia_cut
+/*! \brief Network events.
+ *
+ * This data structure can be returned by a network.  Clients can add functions
+ * to network events to call code whenever an event occurs.  Events are adding
+ * a node, modifying a node, and deleting a node.
+ */
+    template<class Ntk>
+    struct network_events
     {
-        uint32_t num_tree_leaves;
-    };
+        /*! \brief Event when node `n` is added. */
+        std::vector<std::function<void( node<Ntk> const& n )>> on_add;
 
-    template<bool ComputeTruth>
-    bool operator<( cut_type<ComputeTruth, cut_enumeration_gia_cut> const& c1, cut_type<ComputeTruth, cut_enumeration_gia_cut> const& c2 )
-    {
-      if ( c1->data.num_tree_leaves < c2->data.num_tree_leaves )
-      {
-        return true;
-      }
-      if ( c1->data.num_tree_leaves > c2->data.num_tree_leaves )
-      {
-        return false;
-      }
-      return c1.size() < c2.size();
-    }
+        /*! \brief Event when `n` is modified.
+         *
+         * The event also informs about the previous children.  Note that the new
+         * children are already available at the time the event is triggered.
+         */
+        std::vector<std::function<void( node<Ntk> const& n, std::vector<signal<Ntk>> const& previous_children )>> on_modified;
 
-    template<>
-    struct cut_enumeration_update_cut<cut_enumeration_gia_cut>
-    {
-        template<typename Cut, typename NetworkCuts, typename Ntk>
-        static void apply( Cut& cut, NetworkCuts const& cuts, Ntk const& ntk, node<Ntk> const& n )
-        {
-          (void)n;
-          cut->data.num_tree_leaves = std::count_if( cut.begin(), cut.end(),
-                                                     [&ntk]( auto index ) {
-                                                         return ntk.fanout_size( index ) == 1;
-                                                     } );
-        }
+        /*! \brief Event when `n` is deleted. */
+        std::vector<std::function<void( node<Ntk> const& n )>> on_delete;
     };
 
 } // namespace mockturtle
