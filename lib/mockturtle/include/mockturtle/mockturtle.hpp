@@ -48,6 +48,7 @@
 #include "algorithms/reubstitution.hpp"
 #include "algorithms/simulation.hpp"
 #include "algorithms/sta.hpp"
+#include "algorithms/hyperg.hpp"
 #include "generators/arithmetic.hpp"
 #include "io/aiger_reader.hpp"
 #include "io/bench_reader.hpp"
