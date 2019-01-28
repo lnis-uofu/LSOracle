@@ -2566,19 +2566,18 @@ namespace alice{
 		}
 	}
 
-    ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig file" ){
+ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig file" ){
+	  std::string filename = "";
+    std::cout << "Enter aig filename: ";
+    std::cin >> filename;
 
-        std::string filename = "";
-        std::cout << "Enter aig filename: ";
-        std::cin >> filename;
-
-        if(checkExt(filename, "aig")){
-            mockturtle::aig_network aig;
-            lorina::read_aiger(filename, mockturtle::aiger_reader( aig ));
-            std::cout << "AIG file = " << filename << " stored" << std::endl;
-            store<mockturtle::aig_network>().extend() = aig;
-        }
+    if(checkExt(filename, "aig")){
+        mockturtle::aig_network aig;
+        lorina::read_aiger(filename, mockturtle::aiger_reader( aig ));
+        std::cout << "AIG file = " << filename << " stored" << std::endl;
+        store<mockturtle::aig_network>().extend() = aig;
     }
+}
 
     ALICE_COMMAND(write_aig, "Output", "Writes the AIG in the ASCII format"){
         auto aig = store<mockturtle::aig_network>().current();
@@ -3119,15 +3118,14 @@ namespace alice{
 
     public:
         explicit hyperG_command( const environment::ptr& env )
-                : command( env, "Output current stored AIG network in a hypergraph representation to be used by hMetis" ){
+                : command( env, "Output current stored AIG network in a hypergraph representation." ){
 
             opts.add_option( "--filename,filename", filename, "hypergraph file to write to" )->required();
         }
 
-    protected:
-        void execute(){
-
-            //Check to make sure that the user stores an AIG in the store before running this command
+	protected:
+	  void execute(){
+          //Check to make sure that the user stores an AIG in the store before running this command
             if(!store<mockturtle::aig_network>().empty()){
 
                 if(checkExt(filename, "hpg")){
@@ -3138,50 +3136,15 @@ namespace alice{
                 }
 
                 std::ofstream output;
-                output.open(filename);
 
                 auto aig = store<mockturtle::aig_network>().current();
 
-                //Remove all children indeces from nodes so that the only connections remaining are outputs
-                std::vector<std::vector<int>> hyperEdges;
-                aig.foreach_node( [&]( auto node ) {
-                    int nodeNdx = aig.node_to_index(node);
-
-                    // for(int i = 0; i < aig._storage->connections[nodeNdx].size(); i++){
-                    // 	 std::cout << aig._storage->connections[nodeNdx].at(i) << " ";
-                    // }
-
-                    // std::cout << "\n";
-
-                    //If a node has more than one output, add that net to the list of hyperedges
-                    if(aig._storage->connections[nodeNdx].size() > 0){
-                        std::vector<int> connection_to_add = aig._storage->connections[nodeNdx];
-                        //Add root node to the hyper edge
-                        connection_to_add.insert(connection_to_add.begin(), nodeNdx);
-                        hyperEdges.push_back(connection_to_add);
-                    }
-
-                } );
-
-                //Write to the hypergraph file
-                //Subtract the size by one because the output node is duplicated with one of the gate nodes
-                output << hyperEdges.size() + 1 << " " << aig.size() /*- 1*/ << "\n";
-                for(int i = 0; i < hyperEdges.size(); i++){
-                    for(int j = 0; j < hyperEdges.at(i).size(); j++){
-                        //Add 1 to the indeces because hMetis does not recognize hyperedges containing vertex 0
-                        output << hyperEdges.at(i).at(j) + 1 << " ";
-                    }
-                    output << "\n";
-                }
-
-                output.close();
+              mockturtle::hypergraph(aig, filename);
             }
             else{
                 std::cout << "There is no AIG network stored\n";
             }
-
         }
-
     private:
         std::string filename{};
     };
