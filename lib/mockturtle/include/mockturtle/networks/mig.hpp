@@ -171,6 +171,15 @@ public:
     return {0, static_cast<uint64_t>( value ? 1 : 0 )};
   }
 
+   void create_in_name(unsigned index, const std::string& name){
+    // std::cout << "input index " << (int)index << " name " << name << "\n";
+    _storage->inputNames[index] = name;
+  }
+  void create_out_name(unsigned index, const std::string& name){
+    // std::cout << "output index " << (int)index << " name " << name << "\n";
+    _storage->outputNames[index] = name;
+  }
+
   signal create_pi( std::string const& name = {} )
   {
     (void)name;
@@ -224,6 +233,17 @@ public:
   bool is_constant( node const& n ) const
   {
     return n == 0;
+  }
+
+  bool is_po( node const& n ) const{
+
+    int nodeIdx = node_to_index(n);
+    bool result = false;
+    for(int i = 0; i < _storage->outputs.size(); i++){
+      if(_storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
+    return result;
   }
 
   bool is_ci( node const& n ) const
