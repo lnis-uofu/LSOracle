@@ -235,17 +235,6 @@ public:
     return n == 0;
   }
 
-  bool is_po( node const& n ) const{
-
-    int nodeIdx = node_to_index(n);
-    bool result = false;
-    for(int i = 0; i < _storage->outputs.size(); i++){
-      if(_storage->outputs.at(i).index == nodeIdx)
-        result = true;
-    }
-    return result;
-  }
-
   bool is_ci( node const& n ) const
   {
       return (_storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data && _storage->nodes[n].children[0].data == _storage->nodes[n].children[2].data);
