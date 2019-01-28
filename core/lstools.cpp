@@ -2838,15 +2838,15 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
 
     ALICE_ADD_COMMAND(get_aig, "Input");
 
-    class get_all_aigs_command : public alice::command{
+    class get_all_partitions_command : public alice::command{
 
     
     public:
-      explicit get_all_aigs_command( const environment::ptr& env )
-          : command( env, "Exports an AIG of every partition" ){
+      explicit get_all_partitions_command( const environment::ptr& env )
+          : command( env, "Exports every partition to a file format (default is AAG)" ){
             opts.add_option( "--directory,directory", dir, "Directory to write aag files to" )->required();
-            add_flag("--cone,-c", "Writes an AIG of every cone of every partition");
-            add_flag("--verilog,-v", "Writes every partition or cone to a verilog file (default is to an AAG file)");
+            add_flag("--cone,-c", "Writes out every cone of every partition");
+            add_flag("--verilog,-v", "Writes every partition or cone to a verilog file");
       }
 
     protected:
@@ -2931,62 +2931,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
         std::string dir{};
     };
 
-    ALICE_ADD_COMMAND(get_all_aigs, "Output");
-
-    ALICE_COMMAND(get_all_aigs_test, "Output", "Exports an AIG of every logic cone after partitioning"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            if(aig._storage->num_partitions != 0){
-                for(int i = 0; i < aig._storage->num_partitions; i++){
-                    int partition = i;
-
-                    // std::cout << "\npartition = " << partition << "\n\n";
-                    std::string upper_dir = aig._storage->net_name + "_aig_parts_test/";
-                    mkdir(upper_dir.c_str(), 0777);
-                    // std::string middle_dir = upper_dir + aig._storage->net_name + "_" + std::to_string(aig._storage->num_partitions) + "/";
-                    // mkdir(middle_dir.c_str(), 0777);
-                    // std::string lower_dir = middle_dir + aig._storage->net_name + "_" + std::to_string(aig._storage->num_partitions) + "_aag/";
-                    // mkdir(lower_dir.c_str(), 0777);
-                    for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-                        int output = aig._storage->partitionOutputs[i].at(j);
-                        BFS_traversal(aig, output, partition);
-                        int num_inputs = aig._storage->logic_cone_inputs[output].size();
-                        int levels = computeLevelPart(aig, output, partition);
-                        // std::cout << "\noutput = " << output << "\n";
-                        // if(num_inputs >= 10 || levels >= 5){
-                        std::string filename = upper_dir + aig._storage->net_name + "_" + std::to_string(partition) + "_" + std::to_string(output) + ".aag";
-                        // std::cout << "filename = " << filename << "\n";
-                        mockturtle::aig_network cone = create_aig_from_part(aig, partition, output);
-                        cone.foreach_node([&](auto node){
-                            std::cout << "node " << cone.node_to_index(node) << " child[0] " << cone._storage->nodes[node].children[0].index << "\n";
-                            std::cout << "node " << cone.node_to_index(node) << " child[1] " << cone._storage->nodes[node].children[1].index << "\n";
-                        });
-                        std::cout << "Inputs\n";
-                        for(int k = 0; k < cone._storage->inputs.size(); k++){
-                            std::cout << cone._storage->inputs.at(k) << ": " << cone._storage->inputNames[cone._storage->inputs.at(k) - 1] << "\n";
-                        }
-                        std::cout << "Outputs\n";
-                        for(int k = 0; k < cone._storage->outputs.size(); k++){
-                            std::cout << cone._storage->outputs[k].index << ": " << cone._storage->outputNames[k] << "\n";
-                        }
-                        write_aig(cone, filename);
-                        // }
-                        // else{
-                        // 	std::cout << "Cone is too small for accurate training with " << num_inputs << " inputs and " << levels << " levels\n";
-                        // }
-                    }
-                    // std::cout << "\n";
-                }
-
-            }
-            else{
-                std::cout << "Partitions have not been mapped\n";
-            }
-        }
-        else{
-            std::cout << "There is no AIG network stored\n";
-        }
-    }
+    ALICE_ADD_COMMAND(get_all_partitions, "Output");
 
     class get_logic_cone_command : public alice::command{
 
