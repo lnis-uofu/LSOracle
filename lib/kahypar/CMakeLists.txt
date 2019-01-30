@@ -13,9 +13,9 @@ find_package(Threads REQUIRED)
 message(STATUS "Found Threads: ${CMAKE_THREAD_LIBS_INIT}")
 
 #ensure that gmock is built before tests are executed
-add_subdirectory(external_tools/googletest EXCLUDE_FROM_ALL)
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
+#add_subdirectory(external_tools/googletest EXCLUDE_FROM_ALL)
+#include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+#include_directories(SYSTEM ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
 
 # add third-party maximum flow algorithms to project
 include_directories(external_tools/maximum_flow)
@@ -110,7 +110,7 @@ if(KAHYPAR_USE_MINIMAL_BOOST)
   set_target_properties(mini_boost PROPERTIES LINKER_LANGUAGE CXX)
   set(Boost_LIBRARIES mini_boost)
 else()
-  set(BOOST_MIN_VERSION "1.67.0")
+  set(BOOST_MIN_VERSION "1.48.0")
   find_package(Boost ${BOOST_MIN_VERSION} COMPONENTS program_options REQUIRED)
   if(Boost_FOUND)
     include_directories( ${Boost_INCLUDE_DIRS})
