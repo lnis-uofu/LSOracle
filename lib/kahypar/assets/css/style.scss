@@ -1,0 +1,14 @@
+---
+---
+
+@import "{{ site.theme }}";
+header, section, footer {
+  float:none;
+  position:static;
+  width:auto;
+}
+
+h1 {
+  font-size:28px;
+  text-align:center;
+}
