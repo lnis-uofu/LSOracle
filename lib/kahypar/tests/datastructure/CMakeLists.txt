@@ -1,0 +1,8 @@
+add_gmock_test(hypergraph_test hypergraph_test.cc)
+add_gmock_test(graph_test graph_test.cc)
+add_gmock_test(priority_queue_test priority_queue_test.cc)
+add_gmock_test(kway_priority_queue_test kway_priority_queue_test.cc)
+add_gmock_test(sparse_set_test sparse_set_test.cc)
+add_gmock_test(sparse_map_test sparse_map_test.cc)
+add_gmock_test(binary_heap_test binary_heap_test.cc)
+add_gmock_test(flow_network_test flow_network_test.cc)
