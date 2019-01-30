@@ -171,6 +171,15 @@ public:
     return {0, static_cast<uint64_t>( value ? 1 : 0 )};
   }
 
+   void create_in_name(unsigned index, const std::string& name){
+    // std::cout << "input index " << (int)index << " name " << name << "\n";
+    _storage->inputNames[index] = name;
+  }
+  void create_out_name(unsigned index, const std::string& name){
+    // std::cout << "output index " << (int)index << " name " << name << "\n";
+    _storage->outputNames[index] = name;
+  }
+
   signal create_pi( std::string const& name = {} )
   {
     (void)name;
