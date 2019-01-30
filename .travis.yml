@@ -36,6 +36,18 @@ install:
     fi
   - cmake --version
 
+before_script:
+# print out some version numbers
+- $CMAKE_CXX --version
+# configure
+- cd "${TRAVIS_BUILD_DIR}"
+#- mkdir build; cp sonar-project.properties build; cd build
+#- cmake
+#  -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+#  -DCMAKE_C_COMPILER="$CMAKE_CC" -DCMAKE_CXX_COMPILER="$CMAKE_CXX" -DKAHYPAR_USE_GCOV="$COV"
+#  -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+#  $CMAKE_ARGS ..
+
 script:
  - export CC=/usr/bin/gcc-8
  - export CXX=/usr/bin/g++-8
