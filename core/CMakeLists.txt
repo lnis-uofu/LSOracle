@@ -10,5 +10,5 @@ find_package(Threads REQUIRED)                        # thread library (pthread)
 
 add_executable(lstools lstools.cpp)
 #target_link_libraries(lstools mockturtle kitty alice libabc)
-target_link_libraries(lstools mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs)
+target_link_libraries(lstools mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs KaHyPar)
 #target_link_libraries(lstools ../lib/OpenTimer Threads::Threads stdc++fs mockturtle kitty alice libabc )

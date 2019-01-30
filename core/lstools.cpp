@@ -2,6 +2,7 @@
 #include <alice/alice.hpp>
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
+#include <libkahypar.h>
 
 #include <mockturtle/views/mffc_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
@@ -2933,42 +2934,117 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
         }
     }
 
-    class hyperG_command : public alice::command{
+//holds kahypar configuration. Fix it to not be global.
+uint32_t kahyp_num_hyperedges = 0;
+uint32_t kahyp_num_vertices = 0;
+uint32_t kahyp_num_indeces_hyper = 0;
+unsigned long kahyp_num_sets = 0;
+std::vector<uint32_t > kahypar_connections;
+std::vector<unsigned long> kahyp_set_indeces;
 
-    public:
-        explicit hyperG_command( const environment::ptr& env )
-                : command( env, "Output current stored AIG network in a hypergraph representation." ){
-
-            opts.add_option( "--filename,filename", filename, "hypergraph file to write to" )->required();
-        }
+class hyperG_command : public alice::command{
+	public:
+    explicit hyperG_command( const environment::ptr& env )
+	  : command( env, "Output current stored AIG network in a hypergraph representation." ){}
 
 	protected:
 	  void execute(){
-          //Check to make sure that the user stores an AIG in the store before running this command
-            if(!store<mockturtle::aig_network>().empty()){
+	    //Check to make sure that the user stores an AIG in the store before running this command
+	    if(!store<mockturtle::aig_network>().empty()){
+	      auto aig = store<mockturtle::aig_network>().current();
 
-                if(checkExt(filename, "hpg")){
-                    // std::cout << "Writing to " << filename << std::endl;
-                }
-                else{
-                    std::cout << filename << " is not a valid hpg file\n";
-                }
+	      //instantiate and initializate class
+	      mockturtle::hypergraph<mockturtle::aig_network> t(aig);
+        t.get_hypergraph(aig);
+        t.return_hyperedges(kahypar_connections);
+        kahyp_num_hyperedges = t.get_num_edges();
+        kahyp_num_vertices = t.get_num_vertices();
+        kahyp_num_indeces_hyper = t.get_num_indeces();
+        kahyp_num_sets = t.get_num_sets();
+        t.get_indeces(kahyp_set_indeces);
+	    }
+	    else{
+	      std::cout << "There is no AIG network stored\n";
+	    }
+	  }
+	};
 
-                std::ofstream output;
+	ALICE_ADD_COMMAND(hyperG, "Partitioning");
 
-                auto aig = store<mockturtle::aig_network>().current();
+class partitioning_command : public alice::command{
 
-              mockturtle::hypergraph(aig, filename);
-            }
-            else{
-                std::cout << "There is no AIG network stored\n";
-            }
-        }
-    private:
-        std::string filename{};
-    };
+public:
+  explicit partitioning_command( const environment::ptr& env )
+    : command( env, "Generates AIG partitions." )
+    {
+      opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
+    }
 
-    ALICE_ADD_COMMAND(hyperG, "Partitioning");
+protected:
+  void execute(){
+
+    //configures kahypar
+    kahypar_context_t* context = kahypar_context_new();
+    kahypar_configure_context_from_file(context, "/Users/walterlau/CLionProjects/LSOracle/cmake-build-debug/core/test.ini");
+
+    //set number of hyperedges and vertices. These variables are defined by the hyperG command
+    const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
+    const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
+
+    //set all edges to have the same weight
+    std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
+
+    for( int i = 0; i < kahyp_num_vertices; i++ ){
+      hyperedge_weights[i] = 1;
+    }
+
+    //vector with indeces where each set starts
+    std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
+
+    for ( int j = 0; j < kahyp_num_sets+1; j++){
+      //std::cout << "HyperEdge indices at " << j << " is receiveing the value " << kahyp_set_indeces[j] << std::endl;
+      //hyperedge_indices[j] = std::move(kahyp_set_indeces[j]);
+      hyperedge_indices[j] = kahyp_set_indeces[j];
+      std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
+    }
+
+    std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
+
+    //std::cout << "Kahypar connections " << std::endl;
+    for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
+      //std::cout << "HyperEdges at " << i << " is receiveing the value " << kahypar_connections[i] << std::endl;
+      //hyperedges[i] = std::move(kahypar_connections[i]);
+      hyperedges[i] = kahypar_connections[i];
+      std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
+    }
+
+    const double imbalance = 0.03;
+    const kahypar_partition_id_t k = num_partitions;
+
+    kahypar_hyperedge_weight_t objective = 0;
+
+    std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
+
+    kahypar_partition(num_vertices, num_hyperedges,
+                      imbalance, k, nullptr, hyperedge_weights.get(),
+                      hyperedge_indices.get(), hyperedges.get(),
+                      &objective, context, partition.data());
+
+    std::cout << "################ Partitions ################" << std::endl;
+    for(int i = 0; i != num_vertices; ++i) {
+      std::cout << partition[i] << std::endl;
+    }
+
+    kahypar_context_free(context);
+
+  }
+
+private:
+  int num_partitions{};
+};
+
+ALICE_ADD_COMMAND(partitioning, "Partitioning");
+
 
     class map_part_command : public alice::command{
 
@@ -3488,21 +3564,6 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
             std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
         }
 	}
-
-    ALICE_COMMAND(test_sta, "Analysis", "Runs STA"){
-//       ot::Timer timer;
-//
-//       timer.read_celllib("ot/osu018_stdcells.lib", std::nullopt)  // read the library (O(1) builder)
-//			   .read_verilog("ot/simple.v")                  // read the verilog netlist (O(1) builder)
-//			   .read_spef("ot/simple.spef")                  // read the parasitics (O(1) builder)
-//			   .read_sdc("ot/simple.sdc")                    // read the design constraints (O(1) builder)
-//			   .update_timing();                          // update timing (O(1) builder)
-//
-//		if(auto tns = timer.tns(); tns) std::cout << "TNS: " << *tns << '\n';  // (O(N) action)
-//		if(auto wns = timer.wns(); wns) std::cout << "WNS: " << *wns << '\n';  // (O(N) action))
-//
-//		timer.dump_timer(std::cout);                    // dump the timer details (O(1) accessor)
-    }
 
     ALICE_COMMAND(show_aig, "Output", "Writes the the aig dot file"){
 
