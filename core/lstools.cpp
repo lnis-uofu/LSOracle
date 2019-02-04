@@ -2,6 +2,7 @@
 #include <alice/alice.hpp>
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
+#include <oracle/oracle.hpp>
 #include <libkahypar.h>
 
 #include <mockturtle/views/mffc_view.hpp>
@@ -23,7 +24,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <iomanip>
-#include <../mockturtle/include/mockturtle/networks/storage.hpp>
+// #include <../mockturtle/include/mockturtle/networks/storage.hpp>
 #include <ot/timer/timer.hpp>
 
 namespace alice{
@@ -905,6 +906,7 @@ namespace alice{
         }
         aigfile.close();
     }
+
 
     //testing
 
@@ -2551,21 +2553,37 @@ namespace alice{
 		/*TODO check to make sure that the file entered is valid and add store*/	
 	}//end get_blif
 
-	ALICE_COMMAND( get_mig, "Input", "Uses the lorina library to read in an aig file into a mig network" ){
+	class get_mig_command : public alice::command{
 
-		std::string filename = "";
-		std::cout << "Enter aig filename: ";
-		std::cin >> filename;
+    public:
+      explicit get_mig_command( const environment::ptr& env )
+          : command( env, "Uses the lorina library to read in an aig file into a mig network" ){
 
-		if(checkExt(filename, "aig")){
-			mockturtle::mig_network mig;
-			lorina::read_aiger(filename, mockturtle::aiger_reader( mig ));
-			std::cout << "AIG file = " << filename << " stored" << std::endl;
-			store<mockturtle::mig_network>().extend() = mig;
+        opts.add_option( "--filename,filename", filename, "AIG file to read in as an MIG" )->required();
+      }
 
-			std::cout << "MIG size = " << mig.size() << "\n";
-		}
-	}
+    protected:
+        void execute(){
+
+            if(checkExt(filename, "aig")){
+                mockturtle::mig_network mig;
+                lorina::read_aiger(filename, mockturtle::aiger_reader( mig ));
+                std::cout << "AIG file = " << filename << " stored" << std::endl;
+                store<mockturtle::mig_network>().extend() = mig;
+
+                filename.erase(filename.end() - 4, filename.end());
+                mig._storage->net_name = filename;
+
+            }
+            else{
+                std::cout << "Not a valid AIG file\n";
+            }
+        }
+    private:
+      std::string filename{};
+    };
+
+    ALICE_ADD_COMMAND(get_mig, "Input");
 
 ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig file" ){
 	  std::string filename = "";
@@ -2580,60 +2598,87 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
     }
 }
 
-    ALICE_COMMAND(write_aig, "Output", "Writes the AIG in the ASCII format"){
-        auto aig = store<mockturtle::aig_network>().current();
+    class write_aig_command : public alice::command{
 
-        std::string filename = " ";
-        std::cout << "Enter aiger filename: ";
-        std::cin >> filename;
+    public:
+      explicit write_aig_command( const environment::ptr& env )
+          : command( env, "Writes the AIG in the ASCII format" ){
 
-        std::ofstream aigfile;
-        aigfile.open (filename);
+        opts.add_option( "--filename,filename", filename, "AAG file to write stored AIG to" )->required();
+      }
 
-        // header info - MILOA
-        auto _num_inputs = aig.num_pis();
-        auto _num_latches = aig.num_latches();
-        auto _num_outputs = aig.num_pos();
-        auto _num_ands = aig.num_gates();
-        auto _num_vertices = aig.num_pis() + aig.num_gates();
+    protected:
+      void execute(){
+        if(checkExt(filename, "aag")){
+            if(!store<mockturtle::aig_network>().empty()){
+                auto aig = store<mockturtle::aig_network>().current();
 
-        //write aig header
-        aigfile << "aag " << _num_vertices << " " << _num_inputs - _num_latches << " " << _num_latches << " " << (_num_outputs - _num_latches) << " " << _num_ands << std::endl;
+                std::ofstream aigfile;
+                aigfile.open (filename);
 
-        aig.foreach_pi([&] (auto node)
-                       {
-                           auto index = aig.pi_index(node);
-                           aigfile << (index+1)*2 << "\n";
-                       });
+                // header info - MILOA
+                auto _num_inputs = aig.num_pis();
+                auto _num_latches = aig.num_latches();
+                auto _num_outputs = aig.num_pos();
+                auto _num_ands = aig.num_gates();
+                auto _num_vertices = aig.num_pis() + aig.num_gates();
 
-        //write aig latches
-        auto lineIdx = ((aig.num_pis()-aig.num_latches())*2)+2;
-        for(int i=0; i<aig.num_latches(); i++){
-            auto regIdx = aig.num_pos() - aig.num_latches() + i;
-            aigfile << lineIdx << " " << aig._storage->outputs[regIdx].data << "\n";
-            lineIdx += 2;
+                //write aig header
+                aigfile << "aag " << _num_vertices << " " << _num_inputs - _num_latches << " " << _num_latches << " " << (_num_outputs - _num_latches) << " " << _num_ands << std::endl;
+
+                aig.foreach_pi([&] (auto node){
+                    auto index = aig.pi_index(node);
+                    aigfile << (index+1)*2 << "\n";
+                });
+
+                //write aig latches
+                auto lineIdx = ((aig.num_pis()-aig.num_latches())*2)+2;
+                for(int i=0; i<aig.num_latches(); i++){
+                    auto regIdx = aig.num_pos() - aig.num_latches() + i;
+                    aigfile << lineIdx << " " << aig._storage->outputs[regIdx].data << "\n";
+                    lineIdx += 2;
+                }
+
+                //write aig outputs
+                for(int i=0; i<aig.num_pos()- aig.num_latches(); i++){
+                    aigfile << aig._storage->outputs[i].data << "\n";
+                }
+
+                auto skipLatches = 0;
+                aig.foreach_gate([&] (auto node){
+                    //skip latches in the nodes vector
+                    if(skipLatches>=aig.num_latches()) {
+                        auto index = aig.node_to_index(node);
+                        auto left = aig._storage->nodes[index].children[0].data;
+                        auto right = aig._storage->nodes[index].children[1].data;
+                        aigfile << index*2 << " " << left << " " << right << "\n";
+                    }
+                    skipLatches+=1;
+                });
+
+                for(int i = 0; i < aig._storage->inputs.size(); i++){
+                    aigfile << "i" << i << " " << aig._storage->inputNames[aig._storage->inputs.at(i) - 1] << "\n";
+                }
+                for(int i = 0; i < aig._storage->outputs.size(); i++){
+                    aigfile << "o" << i << " " << aig._storage->outputNames[i] << "\n";
+                }
+
+                aigfile.close();
+            }
+            else{
+                std::cout << "No AIG stored\n";
+            }
         }
-
-        //write aig outputs
-        for(int i=0; i<aig.num_pos()- aig.num_latches(); i++){
-            aigfile << aig._storage->outputs[i].data << "\n";
+        else{
+            std::cout << "File not a vlid aag file\n";
         }
+      }
 
-        auto skipLatches = 0;
-        aig.foreach_gate([&] (auto node)
-                         {
-                             //skip latches in the nodes vector
-                             if(skipLatches>=aig.num_latches()) {
-                                 auto index = aig.node_to_index(node);
-                                 auto left = aig._storage->nodes[index].children[0].data;
-                                 auto right = aig._storage->nodes[index].children[1].data;
-                                 aigfile << index*2 << " " << left << " " << right << "\n";
-                             }
-                             skipLatches+=1;
-                         });
+    private:
+      std::string filename{};
+    };
 
-        aigfile.close();
-    }
+    ALICE_ADD_COMMAND(write_aig, "Output");
 
 	/*Reads a bench file and store the k-LUT network in a store*/
 /*
@@ -2694,75 +2739,20 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
     class get_aig_command : public alice::command{
 
     public:
-        explicit get_aig_command( const environment::ptr& env )
-                : command( env, "Uses the lorina library to read in an aig file" ){
+      explicit get_aig_command( const environment::ptr& env )
+          : command( env, "Uses the lorina library to read in an aig file" ){
 
-            opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
-        }
+        opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
+      }
 
     protected:
-        void execute(){
+      void execute(){
 
-            if(checkExt(filename, "aig")){
+        if(checkExt(filename, "aig")){
                 mockturtle::aig_network aig;
                 lorina::read_aiger(filename, mockturtle::aiger_reader( aig ));
                 // std::cout << "AIG file = " << filename << " stored" << std::endl;
                 store<mockturtle::aig_network>().extend() = aig;
-
-                std::vector<std::vector<int>> initEdge;
-                //Map of each node's respective connection indeces
-                std::map<int, std::vector<int>> connections;
-
-                // std::cout << "AIG size = " << aig.size() << "\n";
-                // std::cout << "AIG input size = " << aig.num_pis() << "\n";
-                // std::cout << "AIG output size = " << aig.num_pos() << "\n";
-                // std::cout << "AIG gate size = " << aig.num_gates() << "\n";
-                mockturtle::fanout_view fanout_aig{aig};
-                aig.foreach_node( [&]( auto node ) {
-                    int nodeNdx = aig.node_to_index(node);
-
-                    std::set<mockturtle::node<mockturtle::aig_network>> nodes;
-                    fanout_aig.foreach_fanout(node, [&](const auto& p){
-                        nodes.insert(p);
-                    });
-                    std::cout << "node " << nodeNdx << " child[0] = " << aig._storage->nodes[node].children[0].index << "\n";
-                    std::cout << "node " << nodeNdx << " child[1] = " << aig._storage->nodes[node].children[1].index << "\n";
-                    for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-
-                        connections[nodeNdx].push_back(aig.node_to_index(*it));
-                    }
-                    if(aig.is_po(node)){
-                        connections[nodeNdx].push_back(aig._storage->nodes[node].children[0].index);
-                        connections[nodeNdx].push_back(aig._storage->nodes[node].children[1].index);
-                    }
-                    //Get truth table logic for each node
-                    auto func = aig.node_function(node);
-                    aig.foreach_fanin( node, [&]( auto const& conn, auto i ) {
-                        int childIdx = aig._storage->nodes[node].children[i].index;
-                        // std::cout << "child = " << childIdx << "\n";
-                        if ( aig.is_complemented( conn ) ) {
-
-                            kitty::flip_inplace( func, i );
-                        }
-
-                        if(aig.is_po(childIdx)){
-                            // std::cout << "child is a po\n";
-                            auto output = aig._storage->outputs.at(get_output_index(aig,childIdx));
-                            if(output.data & 1){
-                                // std::cout << "child output is inverted\n";
-                                kitty::flip_inplace( func, i );
-                            }
-                        }
-                    });
-                    // std::cout << "node " << nodeNdx << " logic = 0x" << kitty::to_hex(func) << "\n";
-                    std::vector<std::vector<int>> onset_data = get_logic_from_hex(kitty::to_hex(func));
-
-                    aig._storage->onset[nodeNdx] = onset_data;
-
-                    std::vector<std::vector<int>> offset_data = other_possible_outputs(aig._storage->onset[nodeNdx]);
-                    aig._storage->offset[nodeNdx] = offset_data;
-                });
-
 
                 if(aig._storage->inputNames.size() == 0){
 
@@ -2793,48 +2783,19 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
                     std::cout << aig._storage->outputs.at(i).index << ": " << aig._storage->outputNames[i] << "\n";
                 }
 
-                for(int i = 0; i < aig._storage->outputs.size(); i++){
-                    auto outState = aig._storage->outputs[i].data;
-                    if(outState & 1){
-                        // std::cout << "node inverting = " << aig._storage->outputs[i].index << "\n";
-                        // std::cout << "Inverted \n";
-                        std::vector<std::vector<int>> onset_cpy;
-                        std::vector<std::vector<int>> offset_cpy;
-                        for(int j = 0; j < aig._storage->onset[aig._storage->outputs[i].index].size(); j++){
-                            offset_cpy.push_back(aig._storage->onset[aig._storage->outputs[i].index].at(j));
-                        }
-                        for(int j = 0; j < aig._storage->offset[aig._storage->outputs[i].index].size(); j++){
-                            onset_cpy.push_back(aig._storage->offset[aig._storage->outputs[i].index].at(j));
-                        }
-                        // std::cout << "New onset\n";
-                        // for(int j = 0; j < onset_cpy.size(); j++){
-                        // 	for(int k = 0; k < onset_cpy.at(j).size(); k++){
-                        // 		std::cout << onset_cpy.at(j).at(k);
-                        // 	}
-                        // 	std::cout << "\n";
-                        // }
-                        aig._storage->onset[aig._storage->outputs[i].index] = onset_cpy;
-                        aig._storage->offset[aig._storage->outputs[i].index] = offset_cpy;
-
-
-                    }
-                    //std::cout << "output = " << aig._storage->outputs[i].index << "\n";
-                }
-
                 filename.erase(filename.end() - 4, filename.end());
                 aig._storage->net_name = filename;
-                aig.add_connections_network(connections);
 
 
             }
             else{
                 std::cout << filename << " is not a valid aig file\n";
             }
-
-        }
+        
+      }
 
     private:
-        std::string filename{};
+      std::string filename{};
     };
 
     ALICE_ADD_COMMAND(get_aig, "Input");
@@ -2992,6 +2953,68 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
   			std::cout << cuts.cuts( aig.node_to_index( node ) ) << "\n";
 		} );
 	}
+
+class test_part_view_command : public alice::command{
+
+    public:
+        explicit test_part_view_command( const environment::ptr& env )
+                : command( env, "Test the new partition view" ){
+
+            opts.add_option( "--filename,filename", filename, "partitioning file to map AIG nodes to" )->required();
+        }
+
+    protected:
+        void execute(){
+
+
+            if(!store<mockturtle::aig_network>().empty()){
+                
+                auto aig = store<mockturtle::aig_network>().current();
+                mockturtle::mig_npn_resynthesis resyn2;
+                auto mig2 = mockturtle::node_resynthesis<mockturtle::mig_network>(aig, resyn2);
+                mockturtle::depth_view aig_depth{aig};
+                std::cout << "aig size = " << aig.num_gates() << " and depth = " << aig_depth.depth() << "\n";
+                // mockturtle::fanout_view<mockturtle::aig_network> fanout_ntk( aig );
+                aig.clear_visited();
+                oracle::partition_manager<mockturtle::aig_network> partitions(aig, filename);
+
+                for(int i = 0; i < partitions.get_part_num(); i++){
+                    oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(aig, i);
+                    std::cout << "\nPartition " << i << "\n";
+                    mockturtle::depth_view part_depth{part};
+                    std::cout << "orig majority nodes = " << part.num_gates() << " and orig depth = " << part_depth.depth() << "\n";
+
+                    // mockturtle::akers_resynthesis<mockturtle::partition_view<mockturtle::aig_network>> resyn1;
+                    // mockturtle::cut_rewriting_params ps;
+                    // ps.cut_enumeration_ps.cut_size = 4;
+                    // mockturtle::cut_rewriting(part, resyn1, ps);
+                    // part = mockturtle::cleanup_dangling( part );
+
+                    // std::cout << "converting to MIG network\n";
+                    // mockturtle::mig_npn_resynthesis resyn;
+                    // auto mig = mockturtle::node_resynthesis<oracle::partition_view<mockturtle::mig_network>>(part, resyn);
+                    // // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + ".v");
+
+                    // // mockturtle::mig_script migopt;
+                    // // mig = migopt.run(mig);
+                    // // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + "_opt.v");
+                    // mockturtle::depth_view mig_depth{mig};
+                    // std::cout << "new majority nodes = " << mig.num_gates() << " and new depth = " << mig_depth.depth() << "\n";
+                }
+                // mockturtle::depth_view aig_depth2{aig};
+                // std::cout << "new aig size = " << aig.num_gates() << " and depth = " << aig_depth2.depth() << "\n";
+            }
+            else{
+                std::cout << "There is no stored AIG network\n";
+            }
+
+        }
+
+    private:
+        std::string filename{};
+    };
+
+    ALICE_ADD_COMMAND(test_part_view, "Test");
 
     ALICE_COMMAND( partition_sizes, "Partitioning", "Shows the size of each partition"){
 
@@ -3952,15 +3975,36 @@ ALICE_ADD_COMMAND(partitioning, "Partitioning");
 		dset.close();
 	}
 
-    ALICE_COMMAND(write_verilog, "Output", "Writes the Boolean network into structural verilog") {
-	    auto& mig = store<mockturtle::mig_network>().current();
+    class write_verilog_command : public alice::command{
 
-        std::string filename = " ";
-        std::cout << "Enter filename: ";
-        std::cin >> filename;
+    public:
+      explicit write_verilog_command( const environment::ptr& env )
+          : command( env, "Writes the Boolean network into structural verilog" ){
 
-        mockturtle::write_verilog(mig, filename);
-    }
+        opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
+      }
+
+    protected:
+        void execute(){
+            if(checkExt(filename, "v")){
+                if(!store<mockturtle::mig_network>().empty()){
+                    auto& mig = store<mockturtle::mig_network>().current();
+                    mockturtle::write_verilog(mig, filename);
+                }
+                else{
+                    std::cout << "There is not an MIG network stored.\n";
+                }
+            }
+            else{
+                std::cout << filename << " is not a valid verilog file\n";
+            }
+        }
+
+    private:
+      std::string filename{};
+    };
+
+    ALICE_ADD_COMMAND(write_verilog, "Output");
 
 	ALICE_COMMAND(tmap, "Transformation", "Performs LUT techmapping") {
 		auto mig = store<mockturtle::mig_network>().current();;

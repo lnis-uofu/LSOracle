@@ -11,4 +11,4 @@ find_package(Threads REQUIRED)                        # thread library (pthread)
 add_executable(lstools lstools.cpp)
 
 target_include_directories(lstools PRIVATE ../lib/kahypar/include)
-target_link_libraries(lstools mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar)
+target_link_libraries(lstools oracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar)

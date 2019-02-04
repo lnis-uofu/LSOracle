@@ -34,5 +34,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(mockturtle)
 
+add_subdirectory(oracle)
+target_link_libraries(oracle INTERFACE mockturtle)
+
 #set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
 #add_subdirectory(percy)
