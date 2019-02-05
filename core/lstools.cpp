@@ -3088,13 +3088,13 @@ uint32_t kahyp_num_hyperedges = 0;
 uint32_t kahyp_num_vertices = 0;
 uint32_t kahyp_num_indeces_hyper = 0;
 unsigned long kahyp_num_sets = 0;
-std::vector<uint32_t > kahypar_connections;
+std::vector<uint32_t> kahypar_connections;
 std::vector<unsigned long> kahyp_set_indeces;
 
 class hyperG_command : public alice::command{
 	public:
     explicit hyperG_command( const environment::ptr& env )
-	  : command( env, "Output current stored AIG network in a hypergraph representation." ){}
+	  : command( env, "Converts current stored AIG network in a hypergraph representation." ){}
 
 	protected:
 	  void execute(){
@@ -3134,7 +3134,7 @@ protected:
 
     //configures kahypar
     kahypar_context_t* context = kahypar_context_new();
-    kahypar_configure_context_from_file(context, "/Users/walterlau/CLionProjects/LSOracle/cmake-build-debug/core/test.ini");
+    kahypar_configure_context_from_file(context, "/tmp/tmp.PxNvjAyWJL/cmake-build-debug-remote/core/test.ini");
 
     //set number of hyperedges and vertices. These variables are defined by the hyperG command
     const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
@@ -3144,28 +3144,27 @@ protected:
     std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
 
     for( int i = 0; i < kahyp_num_vertices; i++ ){
-      hyperedge_weights[i] = 1;
+      hyperedge_weights[i] = 2;
     }
 
     //vector with indeces where each set starts
     std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
 
     for ( int j = 0; j < kahyp_num_sets+1; j++){
-      //std::cout << "HyperEdge indices at " << j << " is receiveing the value " << kahyp_set_indeces[j] << std::endl;
-      //hyperedge_indices[j] = std::move(kahyp_set_indeces[j]);
       hyperedge_indices[j] = kahyp_set_indeces[j];
       std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
     }
 
     std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
 
-    //std::cout << "Kahypar connections " << std::endl;
     for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
-      //std::cout << "HyperEdges at " << i << " is receiveing the value " << kahypar_connections[i] << std::endl;
-      //hyperedges[i] = std::move(kahypar_connections[i]);
       hyperedges[i] = kahypar_connections[i];
       std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
     }
+
+    std::cout << "Number of hyperedges " << num_hyperedges << "\n"
+    << "Number of vertices " << num_vertices << "\n"
+    << "Number of partitions " << num_partitions << "\n";
 
     const double imbalance = 0.03;
     const kahypar_partition_id_t k = num_partitions;
@@ -3180,7 +3179,7 @@ protected:
                       &objective, context, partition.data());
 
     std::cout << "################ Partitions ################" << std::endl;
-    for(int i = 0; i != num_vertices; ++i) {
+    for(int i = 0; i < num_vertices; ++i) {
       std::cout << partition[i] << std::endl;
     }
 
