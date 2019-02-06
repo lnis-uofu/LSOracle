@@ -33,3 +33,4 @@
 #pragma once
 #include "partitioning/partition_manager.hpp"
 #include "partitioning/partition_view.hpp"
+#include "partitioning/hyperg.hpp"

@@ -19,4 +19,3 @@ if (HAS_WNO_UNKNOWN_PRAGMAS)
 endif()
 
 add_subdirectory(include)
-add_subdirectory(lib)
