@@ -2960,7 +2960,8 @@ class test_part_view_command : public alice::command{
         explicit test_part_view_command( const environment::ptr& env )
                 : command( env, "Test the new partition view" ){
 
-            opts.add_option( "--filename,filename", filename, "partitioning file to map AIG nodes to" )->required();
+            // opts.add_option( "--filename,filename", filename, "partitioning file to map AIG nodes to" )->required();
+                opts.add_option( "--num_parts,p", num_parts, "Number of partitions to create" )->required();
         }
 
     protected:
@@ -2976,14 +2977,22 @@ class test_part_view_command : public alice::command{
                 std::cout << "aig size = " << aig.num_gates() << " and depth = " << aig_depth.depth() << "\n";
                 // mockturtle::fanout_view<mockturtle::aig_network> fanout_ntk( aig );
                 aig.clear_visited();
-                oracle::partition_manager<mockturtle::aig_network> partitions(aig, filename);
+                oracle::partition_manager<mockturtle::aig_network> partitions(aig, num_parts);
 
                 for(int i = 0; i < partitions.get_part_num(); i++){
                     oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(aig, i);
                     std::cout << "\nPartition " << i << "\n";
                     mockturtle::depth_view part_depth{part};
                     std::cout << "orig majority nodes = " << part.num_gates() << " and orig depth = " << part_depth.depth() << "\n";
-
+                    // std::cout << "running exact synthesis\n";
+                    // auto part_outputs = part.outputs();
+                    // percy::spec spec;
+                    // percy::chain c;
+                    // for(int j = 0; j < part_outputs.size(); j++){
+                    //     spec[0] = part_outputs.at(j);
+                    // }
+                    // auto result = percy::synthesize( spec, c );
+                    // std::cout << "exact synthesis success = " << (result == percy::success) << "\n";
                     // mockturtle::akers_resynthesis<mockturtle::partition_view<mockturtle::aig_network>> resyn1;
                     // mockturtle::cut_rewriting_params ps;
                     // ps.cut_enumeration_ps.cut_size = 4;
@@ -2993,11 +3002,11 @@ class test_part_view_command : public alice::command{
                     // std::cout << "converting to MIG network\n";
                     // mockturtle::mig_npn_resynthesis resyn;
                     // auto mig = mockturtle::node_resynthesis<oracle::partition_view<mockturtle::mig_network>>(part, resyn);
-                    // // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + ".v");
+                    // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + ".v");
 
-                    // // mockturtle::mig_script migopt;
-                    // // mig = migopt.run(mig);
-                    // // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + "_opt.v");
+                    // mockturtle::mig_script migopt;
+                    // mig = migopt.run(mig);
+                    // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + "_opt.v");
                     // mockturtle::depth_view mig_depth{mig};
                     // std::cout << "new majority nodes = " << mig.num_gates() << " and new depth = " << mig_depth.depth() << "\n";
                 }
@@ -3012,9 +3021,11 @@ class test_part_view_command : public alice::command{
 
     private:
         std::string filename{};
+        int num_parts = 0;
     };
 
     ALICE_ADD_COMMAND(test_part_view, "Test");
+
 
     ALICE_COMMAND( partition_sizes, "Partitioning", "Shows the size of each partition"){
 
@@ -3083,429 +3094,28 @@ class test_part_view_command : public alice::command{
         }
     }
 
-//holds kahypar configuration. Fix it to not be global.
-uint32_t kahyp_num_hyperedges = 0;
-uint32_t kahyp_num_vertices = 0;
-uint32_t kahyp_num_indeces_hyper = 0;
-unsigned long kahyp_num_sets = 0;
-std::vector<uint32_t> kahypar_connections;
-std::vector<unsigned long> kahyp_set_indeces;
-
-class hyperG_command : public alice::command{
-	public:
-    explicit hyperG_command( const environment::ptr& env )
-	  : command( env, "Converts current stored AIG network in a hypergraph representation." ){}
-
-	protected:
-	  void execute(){
-	    //Check to make sure that the user stores an AIG in the store before running this command
-	    if(!store<mockturtle::aig_network>().empty()){
-	      auto aig = store<mockturtle::aig_network>().current();
-
-	      //instantiate and initializate class
-	      mockturtle::hypergraph<mockturtle::aig_network> t(aig);
-        t.get_hypergraph(aig);
-        t.return_hyperedges(kahypar_connections);
-        kahyp_num_hyperedges = t.get_num_edges();
-        kahyp_num_vertices = t.get_num_vertices();
-        kahyp_num_indeces_hyper = t.get_num_indeces();
-        kahyp_num_sets = t.get_num_sets();
-        t.get_indeces(kahyp_set_indeces);
-	    }
-	    else{
-	      std::cout << "There is no AIG network stored\n";
-	    }
-	  }
-	};
-
-	ALICE_ADD_COMMAND(hyperG, "Partitioning");
-
-class partitioning_command : public alice::command{
-
-public:
-  explicit partitioning_command( const environment::ptr& env )
-    : command( env, "Generates AIG partitions." )
-    {
-      opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
-    }
-
-protected:
-  void execute(){
-
-    //configures kahypar
-    kahypar_context_t* context = kahypar_context_new();
-    kahypar_configure_context_from_file(context, "/tmp/tmp.PxNvjAyWJL/cmake-build-debug-remote/core/test.ini");
-
-    //set number of hyperedges and vertices. These variables are defined by the hyperG command
-    const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
-    const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
-
-    //set all edges to have the same weight
-    std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
-
-    for( int i = 0; i < kahyp_num_vertices; i++ ){
-      hyperedge_weights[i] = 2;
-    }
-
-    //vector with indeces where each set starts
-    std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
-
-    for ( int j = 0; j < kahyp_num_sets+1; j++){
-      hyperedge_indices[j] = kahyp_set_indeces[j];
-      std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
-    }
-
-    std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
-
-    for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
-      hyperedges[i] = kahypar_connections[i];
-      std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
-    }
-
-    std::cout << "Number of hyperedges " << num_hyperedges << "\n"
-    << "Number of vertices " << num_vertices << "\n"
-    << "Number of partitions " << num_partitions << "\n";
-
-    const double imbalance = 0.03;
-    const kahypar_partition_id_t k = num_partitions;
-
-    kahypar_hyperedge_weight_t objective = 0;
-
-    std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
-
-    kahypar_partition(num_vertices, num_hyperedges,
-                      imbalance, k, nullptr, hyperedge_weights.get(),
-                      hyperedge_indices.get(), hyperedges.get(),
-                      &objective, context, partition.data());
-
-    std::cout << "################ Partitions ################" << std::endl;
-    for(int i = 0; i < num_vertices; ++i) {
-      std::cout << partition[i] << std::endl;
-    }
-
-    kahypar_context_free(context);
-
-  }
-
-private:
-  int num_partitions{};
-};
-
-ALICE_ADD_COMMAND(partitioning, "Partitioning");
-
-
-    class map_part_command : public alice::command{
+    class partitioning_command : public alice::command{
 
     public:
-        explicit map_part_command( const environment::ptr& env )
-                : command( env, "Map the AIG node connections to their respective partitions from hMetis" ){
-
-            opts.add_option( "--filename,filename", filename, "partitioning file to map AIG nodes to" )->required();
+      explicit partitioning_command( const environment::ptr& env )
+        : command( env, "Generates AIG partitions." )
+        {
+          opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
         }
 
     protected:
-        void execute(){
+      void execute(){
 
-            std::string line;
-            std::ifstream input (filename);
-
-            if(!store<mockturtle::aig_network>().empty()){
-                auto aig = store<mockturtle::aig_network>().current();
-
-                aig.foreach_node( [&]( auto node ) {
-                    auto func = aig.node_function(node);
-                    aig.foreach_fanin( node, [&]( auto const& conn, auto i ) {
-                        if ( aig.is_complemented( conn ) ) {
-                            kitty::flip_inplace( func, i );
-                        }
-                    });
-                    // std::cout << kitty::to_hex(func) << "\n";
-                });
-                if(input.is_open()){
-                    int nodeNdx = 0;
-                    while ( getline (input,line) ){
-
-                        int partition = atoi(line.c_str());
-                        aig.add_to_partition(nodeNdx, partition);
-                        nodeNdx++;
-                    }
-                    input.close();
-
-                    aig.map_partition_conn();
-
-                    map_part_io(aig);
-                }
-                else{
-                    std::cout << "Unable to open file\n";
-                }
-
-
-            }
-            else{
-                std::cout << "There is no stored AIG network\n";
-            }
-
-        }
+        auto ntk = store<mockturtle::aig_network>().current();
+        oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions);
+      }
 
     private:
-        std::string filename{};
+      int num_partitions{};
     };
 
-    ALICE_ADD_COMMAND(map_part, "Partitioning");
-
-    ALICE_COMMAND(node_tt, "TT logic", "Output truth table data for each node"){
-        auto aig = store<mockturtle::aig_network>().current();
-        std::string filename = aig._storage->net_name + "_node_tt.txt";
-        std::ofstream output;
-        output.open (filename);
-        aig.foreach_node( [&]( auto node ) {
-
-            int nodeIdx = aig.node_to_index(node);
-            output << "truth tables for [" << nodeIdx << "]\n";
-            std::cout << "truth tables for [" << nodeIdx << "]\n";
-            output << "children = {";
-            std::cout << "children = {";
-            for(int j = 0; j < aig.fanin_size(node); j++){
-                output << aig._storage->nodes[node].children[j].index << " ";
-                std::cout << aig._storage->nodes[node].children[j].index << " ";
-            }
-            output << "}\n";
-            std::cout << "}\n";
-
-            output << "onset:\n";
-            std::cout << "onset:\n";
-            for(int i = 0; i < aig._storage->onset[nodeIdx].size(); i++){
-                for(int j = 0; j < aig._storage->onset[nodeIdx].at(i).size(); j++){
-                    output << aig._storage->onset[nodeIdx].at(i).at(j);
-                    std::cout << aig._storage->onset[nodeIdx].at(i).at(j);
-                }
-                output << " 1\n";
-                std::cout << " 1\n";
-            }
-            output << "\n";
-            std::cout << "\n";
-
-            output << "offset:\n";
-            std::cout << "offset:\n";
-            for(int i = 0; i < aig._storage->offset[nodeIdx].size(); i++){
-                for(int j = 0; j < aig._storage->offset[nodeIdx].at(i).size(); j++){
-                    output << aig._storage->offset[nodeIdx].at(i).at(j);
-                    std::cout << aig._storage->offset[nodeIdx].at(i).at(j);
-                }
-                output << " 0\n";
-                std::cout << " 0\n";
-            }
-            output << "\n";
-            std::cout << "\n";
-        });
-        output.close();
-
-    }//node_tt()
-
-    ALICE_COMMAND(test_string_insert, "test", "test string insert to be used for truth table"){
-
-        std::vector<int> index;
-
-        std::vector<std::vector<bool>> tt;
-        int numInputs = 4;
-        std::vector<bool> defaultSlate;
-        for(int i = 0; i < numInputs; i++){
-            defaultSlate.push_back(1);
-        }
-        tt.push_back(defaultSlate);
-
-        std::vector<std::vector<bool>> testAdd = {{0,0},{0,1},{1,0}};
-
-        int child1 = 5;
-        int child2 = 8;
-        index.push_back(child1);
-        index.push_back(child2);
-
-        // std::cout << "index = {";
-        // for(int j = 0; j < index.size(); j++){
-        // 	std::cout << index.at(j) << " ";
-        // }
-        // std::cout << "}\n";
-
-        //Wanted Out is 0
-        int size = tt.size() * 3;
-        for(int i = 0; i < size; i += 3){
-
-
-            // std::cout << "Set index: " << get_index(index, child1) << " to " << testAdd.at(0).at(0) << "\n";
-            // std::cout << "Set index: " << get_index(index, child2) << " to " << testAdd.at(0).at(1) << "\n";
-            tt.at(i).at( get_index(index, child1)) = testAdd.at(0).at(0);
-            tt.at(i).at( get_index(index, child2)) = testAdd.at(0).at(1);
-
-
-            int idx = i + 1;
-            for(int j = 1; j < testAdd.size(); j++){
-
-
-
-                tt.insert(tt.begin() + idx, tt.at(i));
-
-                // std::cout << "Set index: " << get_index(index, child1) << " to " << testAdd.at(j).at(0) << "\n";
-                // std::cout << "Set index: " << get_index(index, child2) << " to " << testAdd.at(j).at(1) << "\n";
-
-                tt.at(idx).at(get_index(index, child1)) = testAdd.at(j).at(0);
-                tt.at(idx).at(get_index(index, child2)) = testAdd.at(j).at(1);
-
-                idx++;
-            }
-
-        }
-
-        // std::cout << "Final after insertion:\n";
-        // for(int i = 0; i < tt.size(); i++){
-        // 	std::cout << "tt.at(" << i << ") ";
-        // 	for(int j = 0; j < tt.at(i).size(); j++){
-
-        // 	 std::cout << tt.at(i).at(j);
-        // 	}
-        // 	std::cout << "\n";
-        // }
-
-
-        int child3 = 1;
-        int child4 = 2;
-        std::replace(index.begin(), index.end(),child1, child3);
-        index.push_back(child4);
-
-        std::vector<std::vector<int>> testAdd2 = {{1,0}};
-        // std::cout << "index = {";
-        // for(int j = 0; j < index.size(); j++){
-        // 	std::cout << index.at(j) << " ";
-        // }
-        // std::cout << "}\n";
-
-        size = tt.size();
-        for(int i = 0; i < size; i++){
-
-
-            // std::cout << "Set index: " << get_index(index, child3) << " to " << testAdd2.at(0).at(0) << "\n";
-            // std::cout << "Set index: " << get_index(index, child4) << " to " << testAdd2.at(0).at(1) << "\n";
-            tt.at(i).at(get_index(index, child3)) = testAdd2.at(0).at(0);
-            tt.at(i).at(get_index(index, child4)) = testAdd2.at(0).at(1);
-
-
-            int idx = i + 1;
-            for(int j = 1; j < testAdd2.size(); j++){
-
-
-
-                tt.insert(tt.begin() + idx, tt.at(i));
-
-                // std::cout << "Set index: " << get_index(index, child3) << " to " << testAdd2.at(j).at(0) << "\n";
-                // std::cout << "Set index: " << get_index(index, child4) << " to " << testAdd2.at(j).at(1) << "\n";
-
-                tt.at(idx).at(get_index(index, child3)) = testAdd2.at(j).at(0);
-                tt.at(idx).at(get_index(index, child4)) = testAdd2.at(j).at(1);
-
-                idx++;
-            }
-
-        }
-
-        // std::cout << "Final after insertion:\n";
-        // for(int i = 0; i < tt.size(); i++){
-        // 	std::cout << "tt.at(" << i << ") ";
-        // 	for(int j = 0; j < tt.at(i).size(); j++){
-
-        // 	 std::cout << tt.at(i).at(j);
-        // 	}
-        // 	std::cout << "\n";
-        // }
-
-        int child5 = 3;
-        int child6 = 4;
-        std::replace(index.begin(), index.end(), child2, child5);
-        index.push_back(child6);
-
-        std::vector<std::vector<int>> testAdd3 = {{0,1},{1,0},{1,1}};
-        // std::cout << "index = {";
-        // for(int j = 0; j < index.size(); j++){
-        // 	std::cout << index.at(j) << " ";
-        // }
-        // std::cout << "}\n";
-
-        //Wanted out is 0
-        size = tt.size() * 3;
-        for(int i = 0; i < size; i += 3){
-
-
-            // std::cout << "Set index: " << get_index(index, child5) << " to " << testAdd3.at(0).at(0) << "\n";
-            // std::cout << "Set index: " << get_index(index, child6) << " to " << testAdd3.at(0).at(1) << "\n";
-            tt.at(i).at(get_index(index, child5)) = testAdd3.at(0).at(0);
-            tt.at(i).at(get_index(index, child6)) = testAdd3.at(0).at(1);
-
-
-            int idx = i + 1;
-            for(int j = 1; j < testAdd3.size(); j++){
-
-                tt.insert(tt.begin() + idx, tt.at(i));
-
-                // std::cout << "Set index: " << get_index(index, child5) << " to " << testAdd3.at(j).at(0) << "\n";
-                // std::cout << "Set index: " << get_index(index, child6) << " to " << testAdd3.at(j).at(1) << "\n";
-
-                tt.at(idx).at(get_index(index, child5)) = testAdd3.at(j).at(0);
-                tt.at(idx).at(get_index(index, child6)) = testAdd3.at(j).at(1);
-
-                idx++;
-            }
-
-        }
-
-        // std::cout << "Final after insertion:\n";
-        // for(int i = 0; i < tt.size(); i++){
-        // 	std::cout << "tt.at(" << i << ") ";
-        // 	for(int j = 0; j < tt.at(i).size(); j++){
-
-        // 	 std::cout << tt.at(i).at(j);
-        // 	}
-        // 	std::cout << "\n";
-        // }
-    }//test_string_insert()
-
-
-    ALICE_COMMAND(test_truth, "test", "Output the truth table using cut enumeration"){
-
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-
-            mockturtle::cut_enumeration_params ps;
-            ps.cut_size = 6;
-            ps.cut_limit = 8;
-            ps.minimize_truth_table = true;
-
-            auto cuts = mockturtle::cut_enumeration<mockturtle::aig_network, true>( aig, ps ); /* true enables truth table computation */
-            aig.foreach_node( [&]( auto n ) {
-
-
-                const auto index = aig.node_to_index( n );
-
-                for ( auto const& set : cuts.cuts( index ) )
-                {
-
-                    std::cout << "Cut " << *set
-                              << " with truth table " << kitty::to_hex( cuts.truth_table( *set ) )
-                              << "\n";
-
-                    /* for ( auto const& cut : (auto &) set )
-                     {
-                       std::cout << "Cut " << *cut
-                                 << " with truth table " << kitty::to_hex( cuts.truth_table( *cut ) )
-                                 << "\n";
-                     }*/
-
-                }
-            } );
-
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }//test_truth()
+    ALICE_ADD_COMMAND(partitioning, "Partitioning");
+    
 
     class output_truth_table_command : public alice::command{
 

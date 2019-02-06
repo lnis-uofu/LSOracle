@@ -40,8 +40,10 @@
 
 #include <mockturtle/traits.hpp>
 #include "partition_view.hpp"
+#include "hyperg.hpp"
 #include <mockturtle/networks/detail/foreach.hpp>
 #include <mockturtle/views/fanout_view.hpp>
+#include <libkahypar.h>
 
 namespace oracle
 {
@@ -49,10 +51,6 @@ namespace oracle
 /*! \brief Partitions circuit using multi-level hypergraph partitioner
  *
  */
-    // template<typename Ntk, bool window_interface = has_traverse_v<Ntk>>
-    // class window_view
-    // {
-    // };
 
     template<typename Ntk>
     class partition_manager : public Ntk
@@ -63,7 +61,7 @@ namespace oracle
         using signal = typename Ntk::signal;
 
     public:
-        explicit partition_manager( Ntk const& ntk, std::string hmetis_file/*,int part_num*/ ) : Ntk( ntk )
+        explicit partition_manager( Ntk const& ntk, /*std::string hmetis_file*/int part_num ) : Ntk( ntk )
         {
 
             static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
@@ -74,18 +72,86 @@ namespace oracle
             static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
             static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
+            uint32_t kahyp_num_hyperedges = 0;
+            uint32_t kahyp_num_vertices = 0;
+            uint32_t kahyp_num_indeces_hyper = 0;
+            unsigned long kahyp_num_sets = 0;
+            std::vector<uint32_t> kahypar_connections;
+            std::vector<unsigned long> kahyp_set_indeces;
+
             /******************
             Generate HyperGraph
             ******************/
-
+            oracle::hypergraph<mockturtle::aig_network> t(ntk);
+            t.get_hypergraph(ntk);
+            t.return_hyperedges(kahypar_connections);
+            kahyp_num_hyperedges = t.get_num_edges();
+            kahyp_num_vertices = t.get_num_vertices();
+            kahyp_num_indeces_hyper = t.get_num_indeces();
+            kahyp_num_sets = t.get_num_sets();
+            t.get_indeces(kahyp_set_indeces);
             /******************
-            Partition with MLPart
+            Partition with kahypar
             ******************/
+            //configures kahypar
+            kahypar_context_t* context = kahypar_context_new();
+            kahypar_configure_context_from_file(context, "../../core/test.ini");
 
+            //set number of hyperedges and vertices. These variables are defined by the hyperG command
+            const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
+            const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
+
+            //set all edges to have the same weight
+            std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
+
+            for( int i = 0; i < kahyp_num_vertices; i++ ){
+              hyperedge_weights[i] = 2;
+            }
+
+            //vector with indeces where each set starts
+            std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
+
+            for ( int j = 0; j < kahyp_num_sets+1; j++){
+              hyperedge_indices[j] = kahyp_set_indeces[j];
+              std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
+            }
+
+            std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
+
+            for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
+              hyperedges[i] = kahypar_connections[i];
+              std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
+            }
+
+            std::cout << "Number of hyperedges " << num_hyperedges << "\n"
+            << "Number of vertices " << num_vertices << "\n"
+            << "Number of partitions " << num_partitions << "\n";
+
+            const double imbalance = 0.03;
+            const kahypar_partition_id_t k = part_num;
+
+            kahypar_hyperedge_weight_t objective = 0;
+
+            std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
+
+            kahypar_partition(num_vertices, num_hyperedges,
+                              imbalance, k, nullptr, hyperedge_weights.get(),
+                              hyperedge_indices.get(), hyperedges.get(),
+                              &objective, context, partition.data());
+
+            std::cout << "################ Partitions ################" << std::endl;
+            for(int i = 0; i < num_vertices; ++i) {
+              std::cout << partition[i] << std::endl;
+              add_to_partition(i, partition[i]);
+            }
+
+            kahypar_context_free(context);
             /******************
             Map IO of partitions
             ******************/
-            map_part(ntk, hmetis_file);
+            map_partition_conn(ntk);
+
+            map_part_io(ntk);
 
             // check_parts();
 
@@ -238,12 +304,12 @@ namespace oracle
                     }
                 });
                 
-                std::cout << "partitionInputs " << i << " {";
+                std::cout << "Partition " << i << " Inputs {";
                 for(auto node : partitionInputs[i]){
                     std::cout << ntk.node_to_index(node) << " ";
                 }
                 std::cout << "}\n";
-                std::cout << "partitionOutputs " << i << " {";
+                std::cout << "Partition " << i << " Outputs{";
                 for(auto node : partitionOutputs[i]){
                     std::cout << ntk.node_to_index(node) << " ";
                 }

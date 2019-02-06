@@ -11,15 +11,15 @@ namespace mockturtle {
 template<class Ntk>
 class hypergraph {
 
-  Ntk &ntk;
+  Ntk const& ntk;
   std::vector<std::vector<uint32_t>> hyperEdges;
-  std::set<node<Ntk>> nodes;
+  std::set<Ntk::node> nodes;
   std::vector<uint32_t> connections;
 
 public:
-  hypergraph(Ntk &ntk) : ntk(ntk) {};
+  hypergraph(Ntk const& ntk) : ntk(ntk) {};
 
-  void get_hypergraph(Ntk &ntk);
+  void get_hypergraph(Ntk const& ntk);
 
   void return_hyperedges(std::vector<uint32_t> &connections);
 
@@ -35,12 +35,12 @@ public:
 };
 
 template<class Ntk>
-void hypergraph<Ntk>::get_hypergraph(Ntk &ntk) {
+void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
   static_assert(has_foreach_node_v<Ntk>, "Ntk does not implement the foreach_node method");
   static_assert(has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method");
   static_assert(has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method");
   static_assert(has_size_v<Ntk>, "Ntk does not implement the size method");
-
+std::cout << "HERE\n";
   //fanout view to iterate over fanouts and generate hyper edges
   mockturtle::fanout_view fanout{ntk};
 
@@ -54,15 +54,18 @@ void hypergraph<Ntk>::get_hypergraph(Ntk &ntk) {
 
     int nodeNdx = ntk.node_to_index(node);
 
-    fanout.foreach_fanout(node, [&](const auto &p) {
-      nodes.insert(p);
-    });
+    if(!ntk.is_po(node)) {
 
-    for (auto it : nodes) {
-      connections.push_back(ntk.node_to_index(it));
+      fanout.foreach_fanout(node, [&](const auto &p) {
+        nodes.insert(p);
+      });
+
+      for (auto it : nodes) {
+        connections.push_back(ntk.node_to_index(it));
+      }
     }
 
-    if (ntk.is_po(node)) {
+    else if (ntk.is_po(node)) {
       ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
         connections.push_back(ntk._storage->nodes[node].children[i].index);
       });
@@ -81,7 +84,7 @@ template<class Ntk>
 void hypergraph<Ntk>::return_hyperedges(std::vector<uint32_t> &connections) {
   for (int i = 0; i < hyperEdges.size(); i++) {
     for (int j = 0; j < hyperEdges.at(i).size(); j++) {
-      connections.push_back(hyperEdges.at(i).at(j) + 1);
+      connections.push_back(hyperEdges.at(i).at(j) );
     }
   }
 }
@@ -119,12 +122,12 @@ void hypergraph<Ntk>::get_indeces(std::vector<unsigned long> &indeces) {
     if (i == 0) {
       indeces.push_back((unsigned long) (0));
     } else {
-      count += (hyperEdges.at(i - 1).size() - 1);
+      count += (hyperEdges.at(i - 1).size());
       indeces.push_back(count);
     }
   }
   int last_index = hyperEdges.size()-1;
-  count += (hyperEdges.at(last_index).size()-1);
+  count += (hyperEdges.at(last_index).size());
   indeces.push_back(count);
 }
 } //end of namespace
