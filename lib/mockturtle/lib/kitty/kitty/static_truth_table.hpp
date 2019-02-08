@@ -26,7 +26,6 @@
 /*!
   \file static_truth_table.hpp
   \brief Implements static_truth_table
-
   \author Mathias Soeken
 */
 
@@ -36,12 +35,12 @@
 #include <cstdint>
 
 #include "detail/constants.hpp"
+#include "traits.hpp"
 
 namespace kitty
 {
 
 /*! Truth table in which number of variables is known at compile time.
-
   We dispatch on the Boolean template parameter to distinguish between
   a small truth table (up to 6 variables) and a large truth table
   (more than 6 variables).  A small truth table fits into a single
@@ -120,8 +119,24 @@ struct static_truth_table<NumVars, true>
    */
   inline auto crend() const noexcept { return ( &_bits ) + 1; }
 
-  /*! Masks the number of valid truth table bits.
+  /*! \brief Assign other truth table if number of variables match.
+    This replaces the current truth table with another truth table, if `other`
+    has the same number of variables.  Otherwise, the truth table is not
+    changed.
+    \param other Other truth table
+  */
+  template<class TT, typename = std::enable_if_t<is_truth_table<TT>::value>>
+  static_truth_table<NumVars>& operator=( const TT& other )
+  {
+    if ( other.num_vars() == num_vars() )
+    {
+      std::copy( other.begin(), other.end(), begin() );
+    }
 
+    return *this;
+  }
+
+  /*! Masks the number of valid truth table bits.
     If the truth table has less than 6 variables, it may not use all
     the bits.  This operation makes sure to zero out all non-valid
     bits.
@@ -152,7 +167,6 @@ struct static_truth_table<NumVars, false>
   /*! \endcond */
 
   /*! Standard constructor.
-
     The number of variables provided to the truth table must be known
     at runtime.  The number of blocks will be computed as a compile
     time constant.
@@ -220,8 +234,24 @@ struct static_truth_table<NumVars, false>
    */
   inline auto crend() const noexcept { return _bits.crend(); }
 
-  /*! Masks the number of valid truth table bits.
+  /*! \brief Assign other truth table if number of variables match.
+    This replaces the current truth table with another truth table, if `other`
+    has the same number of variables.  Otherwise, the truth table is not
+    changed.
+    \param other Other truth table
+  */
+  template<class TT, typename = std::enable_if_t<is_truth_table<TT>::value>>
+  static_truth_table<NumVars>& operator=( const TT& other )
+  {
+    if ( other.num_vars() == num_vars() )
+    {
+      std::copy( other.begin(), other.end(), begin() );
+    }
 
+    return *this;
+  }
+
+  /*! Masks the number of valid truth table bits.
     We know that we will have at least 7 variables in this data
     structure.
   */
@@ -232,4 +262,8 @@ public: /* fields */
   std::array<uint64_t, NumBlocks> _bits;
   /*! \endcond */
 };
+
+template<int NumVars>
+struct is_truth_table<kitty::static_truth_table<NumVars>> : std::true_type {};
+
 } // namespace kitty

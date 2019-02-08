@@ -26,7 +26,6 @@
 /*!
   \file algorithm.hpp
   \brief Implements several generic algorithms on truth tables
-
   \author Mathias Soeken
 */
 
@@ -43,10 +42,8 @@ namespace kitty
 {
 
 /*! \brief Perform bitwise unary operation on truth table
-
   \param tt Truth table
   \param op Unary operation that takes as input a word (`uint64_t`) and returns a word
-
   \return new constructed truth table of same type and dimensions
  */
 template<typename TT, typename Fn>
@@ -70,15 +67,12 @@ auto unary_operation( const static_truth_table<NumVars, true>& tt, Fn&& op )
 /*! \endcond */
 
 /*! \brief Perform bitwise binary operation on two truth tables
-
   The dimensions of `first` and `second` must match.  This is ensured
   at compile-time for static truth tables, but at run-time for dynamic
   truth tables.
-
   \param first First truth table
   \param second Second truth table
   \param op Binary operation that takes as input two words (`uint64_t`) and returns a word
-
   \return new constructed truth table of same type and dimensions
  */
 template<typename TT, typename Fn>
@@ -104,16 +98,13 @@ auto binary_operation( const static_truth_table<NumVars, true>& first, const sta
 /*! \endcond */
 
 /*! \brief Perform bitwise ternary operation on three truth tables
-
   The dimensions of `first`, `second`, and `third` must match.  This
   is ensured at compile-time for static truth tables, but at run-time
   for dynamic truth tables.
-
   \param first First truth table
   \param second Second truth table
   \param third Third truth table
   \param op Ternary operation that takes as input two words (`uint64_t`) and returns a word
-
   \return new constructed truth table of same type and dimensions
  */
 template<typename TT, typename Fn>
@@ -149,15 +140,12 @@ auto ternary_operation( const static_truth_table<NumVars, true>& first, const st
 /*! \endcond */
 
 /*! \brief Computes a predicate based on two truth tables
-
   The dimensions of `first` and `second` must match.  This is ensured
   at compile-time for static truth tables, but at run-time for dynamic
   truth tables.
-
   \param first First truth table
   \param second Second truth table
   \param op Binary operation that takes as input two words (`uint64_t`) and returns a Boolean
-
   \return true or false based on the predicate
  */
 template<typename TT, typename Fn>
@@ -177,10 +165,8 @@ bool binary_predicate( const static_truth_table<NumVars, true>& first, const sta
 /*! \endcond */
 
 /*! \brief Assign computed values to bits
-
   The functor `op` computes bits which are assigned to the bits of the
   truth table.
-
   \param tt Truth table
   \param op Unary operation that takes no input and returns a word (`uint64_t`)
 */
@@ -201,9 +187,7 @@ void assign_operation( static_truth_table<NumVars, true>& tt, Fn&& op )
 /*! \endcond */
 
 /*! \brief Iterates through each block of a truth table
-
  The functor `op` is called for every block of the truth table.
-
  \param tt Truth table
  \param op Unary operation that takes as input a word (`uint64_t`) and returns void
 */
@@ -215,10 +199,8 @@ void for_each_block( const TT& tt, Fn&& op )
 
 /*! \brief Iterates through each block of a truth table in reverse
     order
-
  The functor `op` is called for every block of the truth table in
  reverse order.
-
  \param tt Truth table
  \param op Unary operation that takes as input a word (`uint64_t`) and returns void
 */
@@ -292,10 +274,8 @@ void for_each_one_bit_jump( const static_truth_table<NumVars, true>& tt, Fn&& op
 /*! \endcond */
 
 /*! \brief Iterates through each 1-bit in the truth table
-
   The functor `op` is called for every bit position of the truth table
   for which the bit is assigned 1.
-
   \param tt Truth table
   \param op Unary operation that takes as input a word (`uint64_t`) and returns void
 */

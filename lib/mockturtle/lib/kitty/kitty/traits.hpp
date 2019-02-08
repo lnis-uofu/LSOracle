@@ -26,7 +26,6 @@
 /*!
   \file traits.hpp
   \brief Type traits for truth tables
-
   \author Mathias Soeken
 */
 
@@ -34,19 +33,10 @@
 
 #include <type_traits>
 
-#include "dynamic_truth_table.hpp"
-#include "static_truth_table.hpp"
-
 namespace kitty
 {
 
 template<class TT>
 struct is_truth_table : std::false_type {};
-
-template<>
-struct is_truth_table<kitty::dynamic_truth_table> : std::true_type {};
-
-template<int NumVars>
-struct is_truth_table<kitty::static_truth_table<NumVars>> : std::true_type {};
 
 }

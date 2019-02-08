@@ -1,5 +1,5 @@
-/* oracle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* kitty: C++ truth table library
+ * Copyright (C) 2017-2018  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,13 +24,15 @@
  */
 
 /*!
-  \file oracle.hpp
-  \brief Main header file for oracle
-
-  \author Max Austin
+  \file mscfix.hpp
+  \brief Fixes some compatibility issues with MS VC compilers
+  \author Mathias Soeken
 */
 
 #pragma once
-#include "partitioning/partition_manager.hpp"
-#include "partitioning/hyperg.hpp"
-#include "partitioning/partition_view.hpp"
+
+// Use Windows popcount version where appropriate
+#ifdef _MSC_VER
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#endif

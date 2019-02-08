@@ -26,7 +26,6 @@
 /*!
   \file constructors.hpp
   \brief Implements operations to construct truth tables
-
   \author Mathias Soeken
 */
 
@@ -36,9 +35,12 @@
 #include <chrono>
 #include <istream>
 #include <random>
+#include <stack>
+#include <string>
 
 #include "cube.hpp"
 #include "detail/constants.hpp"
+#include "detail/mscfix.hpp"
 #include "detail/utils.hpp"
 #include "dynamic_truth_table.hpp"
 #include "operations.hpp"
@@ -49,14 +51,12 @@ namespace kitty
 {
 
 /*! \brief Creates truth table with number of variables
-
   If some truth table instance is given, one can create a truth table with the
   same type by calling the `construct()` method on it.  This function helps if
   only the number of variables is known and the base type and uniforms the
   creation of static and dynamic truth tables.  Note, however, that for static
   truth tables `num_vars` must be consistent to the number of variables in the
   truth table type.
-
   \param num_vars Number of variables
 */
 template<typename TT>
@@ -77,7 +77,6 @@ inline dynamic_truth_table create<dynamic_truth_table>( unsigned num_vars )
 /*! \endcond */
 
 /*! \brief Constructs projections (single-variable functions)
-
   \param tt Truth table
   \param var_index Index of the variable, must be smaller than the truth table's number of variables
   \param complement If true, realize inverse projection
@@ -116,7 +115,7 @@ void create_nth_var( TT& tt, uint64_t var_index, bool complement = false )
       }
     }
   }
-};
+}
 
 /*! \cond PRIVATE */
 template<int NumVars>
@@ -131,12 +130,10 @@ void create_nth_var( static_truth_table<NumVars, true>& tt, uint64_t var_index, 
 /*! \endcond */
 
 /*! \brief Constructs truth table from binary string
-
   Note that the first character in the string represents the most
   significant bit in the truth table.  For example, the 2-input AND
   function is represented by the binary string "1000".  The number of
   characters in `binary` must match the number of bits in `tt`.
-
   \param tt Truth table
   \param binary Binary string with as many characters as bits in the truth table
 */
@@ -159,13 +156,11 @@ void create_from_binary_string( TT& tt, const std::string& binary )
 }
 
 /*! \brief Constructs truth table from hexadecimal string
-
   Note that the first character in the string represents the four most
   significant bit in the truth table.  For example, the 3-input
   majority function is represented by the binary string "E8" or "e8".
   The number of characters in `hex` must be one fourth the number of
   bits in `tt`.
-
   \param tt Truth table
   \param hex Hexadecimal string
 */
@@ -218,10 +213,8 @@ void create_from_hex_string( TT& tt, const std::string& hex )
 }
 
 /*! \brief Creates string from raw character data
-
   Can create a truth table from the data that is produced by
   `print_raw`, e.g., from binary files or `std::stringstream`.
-
   \param tt Truth table
   \param in Input stream
 */
@@ -232,10 +225,8 @@ void create_from_raw( TT& tt, std::istream& in )
 }
 
 /*! \brief Constructs a truth table from random value
-
   Computes random words and assigns them to the truth table.  The
   number of variables is determined from the truth table.
-
   \param tt Truth table
   \param seed Random seed
 */
@@ -249,11 +240,9 @@ void create_random( TT& tt, std::default_random_engine::result_type seed )
 }
 
 /*! \brief Constructs a truth table from random value
-
   Computes random words and assigns them to the truth table.  The
   number of variables is determined from the truth table.  Seed is
   taken from current time.
-
   \param tt Truth table
 */
 template<typename TT>
@@ -263,11 +252,9 @@ void create_random( TT& tt )
 }
 
 /*! \brief Constructs a truth table from a range of words
-
   The range of words is given in terms of a begin and end iterator.
   Hence, it's possible to copy words from a C++ container or a C
   array.
-
   \param tt Truth table
   \param begin Begin iterator
   \param end End iterator
@@ -280,17 +267,13 @@ void create_from_words( TT& tt, InputIt begin, InputIt end )
 }
 
 /*! \brief Creates truth table from cubes representation
-
   A sum-of-product is represented as a vector of products (called
   cubes).
-
   An empty truth table is given as first argument to determine type
   and number of variables.  Literals in products that do not fit the
   number of variables of the truth table are ignored.
-
   The cube representation only allows truth table sizes up to 32
   variables.
-
   \param tt Truth table
   \param cubes Vector of cubes
   \param esop Use ESOP instead of SOP
@@ -332,16 +315,12 @@ void create_from_cubes( TT& tt, const std::vector<cube>& cubes, bool esop = fals
 }
 
 /*! \brief Creates truth table from clause representation
-
   A product-of-sum is represented as a vector of sums (called clauses).
-
   An empty truth table is given as first argument to determine type
   and number of variables.  Literals in sums that do not fit the
   number of variables of the truth table are ignored.
-
   The clause representation only allows truth table sizes up to 32
   variables.
-
   \param tt Truth table
   \param clauses Vector of clauses
   \param esop Use product of exclusive sums instead of POS
@@ -385,9 +364,7 @@ void create_from_clauses( TT& tt, const std::vector<cube>& clauses, bool esop = 
 }
 
 /*! \brief Constructs majority-n function
-
   The number of variables is determined from the truth table.
-
   \param tt Truth table
 */
 template<typename TT>
@@ -397,10 +374,8 @@ inline void create_majority( TT& tt )
 }
 
 /*! \brief Constructs threshold function
-
   The resulting function is true, if strictly more than `threshold` inputs are
   1. The number of variables is determined from the truth table.
-
   \param tt Truth table
   \param threshold threshold value
 */
@@ -419,10 +394,8 @@ void create_threshold( TT& tt, uint8_t threshold )
 }
 
 /*! \brief Constructs equals-k function
-
   The resulting function is true, if exactly `bitcount` bits are 1.  The number
   of variables is determiend from the truth table.
-
   \param tt Truth table
   \param bitcount equals-k value
 */
@@ -441,11 +414,9 @@ void create_equals( TT& tt, uint8_t bitcount )
 }
 
 /*! \brief Constructs symmetric function
-
   Bits in `counts` are numbered from 0 to 63.  If bit `i` is set in `counts`,
   the created truth table will evaluate to true, if `i` bits are set in the
   input assignment.
-
   \param tt Truth table
   \param counts Bitcount mask
 */
@@ -459,6 +430,30 @@ void create_symmetric( TT& tt, uint64_t counts )
     if ( ( counts >> __builtin_popcount( x ) ) & 1 )
     {
       set_bit( tt, x );
+    }
+  }
+}
+
+/*! \brief Constructs parity function over n variables
+  The number of variables is determined from the truth table.
+  \param tt Truth table
+*/
+template<typename TT>
+void create_parity( TT& tt )
+{
+  clear( tt );
+
+  *tt.begin() = UINT64_C( 0x6996966996696996 );
+
+  if ( tt.num_vars() < 6 )
+  {
+    tt.mask_bits();
+  }
+  else if ( tt.num_vars() > 6 )
+  {
+    for ( auto i = 1u; i < tt.num_blocks(); i <<= 1 )
+    {
+      std::transform( tt.begin(), tt.begin() + i, tt.begin() + i, []( auto const& block ) { return ~block; } );
     }
   }
 }
@@ -625,21 +620,16 @@ bool create_from_chain( TT& tt, Fn&& next_line, std::vector<TT>& steps, std::str
 /*! \endcond */
 
 /*! \brief Constructs truth table from Boolean chain
-
   If ``tt`` has \f$n\f$ variables, then each string in ``steps`` is of the form
-
   \verbatim embed:rst
       ::
-
         x<i> = x<j> <op> x<k>
   \endverbatim
-
   where ``<i>`` is an increasing number starting from \f$n + 1\f$, and ``<j>``
   and ``<k>`` refer to previous steps or primary inputs where \f$j < i\f$ and
   \f$k < i\f$.  Primary inputs are indexed from \f$1\f$ to \f$n\f$.  The last
   computed step will be assigned to ``tt``.  The following operators are
   supported:
-
   \verbatim embed:rst
       +----------+-------------------------+-------------+
       | ``<op>`` | Operation               | Truth table |
@@ -665,12 +655,10 @@ bool create_from_chain( TT& tt, Fn&& next_line, std::vector<TT>& steps, std::str
       | ``"|"``  | Disjunction             | 1110        |
       +----------+-------------------------+-------------+
   \endverbatim
-
   The following example will generate the majority function:
-
   \verbatim embed:rst
       .. code-block:: cpp
-      
+
          kitty::static_truth_table<3> tt;
          kitty::create_from_chain( tt, {"x4 = x1 & x2",
                                         "x5 = x1 & x3",
@@ -678,15 +666,12 @@ bool create_from_chain( TT& tt, Fn&& next_line, std::vector<TT>& steps, std::str
                                         "x7 = x4 | x5",
                                         "x8 = x6 | x7"} );
   \endverbatim
-
   If parsing fails, the function returns ``false``, and if ``error`` is not
   ``nullptr``, it contains a descriptive reason, why parsing failed.  Otherwise,
   the function returns ``true``.
-
   \param tt Truth table
   \param steps Vector of steps
   \param error If not null, a pointer to store the error message
-
   \return True on success
 */
 template<typename TT>
@@ -695,8 +680,8 @@ bool create_from_chain( TT& tt, const std::vector<std::string>& steps, std::stri
   std::vector<TT> vec_steps;
   auto it = steps.begin();
   if ( !create_from_chain( tt, [&it, &steps]() {
-         return ( it != steps.end() ) ? *it++ : std::string();
-       },
+                             return ( it != steps.end() ) ? *it++ : std::string();
+                           },
                            vec_steps, error ) )
   {
     return false;
@@ -707,14 +692,11 @@ bool create_from_chain( TT& tt, const std::vector<std::string>& steps, std::stri
 }
 
 /*! \brief Constructs truth tables from Boolean chain
-
   Like ``create_from_chain``, but also returns all internally computed steps.
-
   \param num_vars Number of input variables
   \param tts Truth table for all steps, tt[i] corresponds to step x\f$(i + 1)\f$
   \param steps Vector of steps
   \param error If not null, a pointer to store the error message
-
   \return True on success
 */
 template<typename TT>
@@ -724,8 +706,8 @@ bool create_multiple_from_chain( unsigned num_vars, std::vector<TT>& tts, const 
   tts.clear();
   auto it = steps.begin();
   if ( !create_from_chain( tt, [&it, &steps]() {
-         return ( it != steps.end() ) ? *it++ : std::string();
-       },
+                             return ( it != steps.end() ) ? *it++ : std::string();
+                           },
                            tts, error ) )
   {
     return false;
@@ -736,15 +718,12 @@ bool create_multiple_from_chain( unsigned num_vars, std::vector<TT>& tts, const 
 }
 
 /*! \brief Constructs truth table from Boolean chain
-
   Like the other ``create_from_chain`` function, but reads chain from an input
   stream instead of a vector of strings.  Lines are separated by a new line.
   Empty lines are skipped over.
-
   \param tt Truth table
   \param in Input stream to read chain
   \param error If not null, a pointer to store the error message
-
   \return True on success
 */
 template<typename TT>
@@ -777,14 +756,11 @@ bool create_from_chain( TT& tt, std::istream& in, std::string* error = nullptr )
 }
 
 /*! \brief Constructs truth tables from Boolean chain
-
   Like ``create_from_chain``, but also returns all internally computed steps.
-
   \param num_vars Number of input variables
   \param tts Truth table for all steps, tt[i] corresponds to step x\f$(i + 1)\f$
   \param in Input stream to read chain
   \param error If not null, a pointer to store the error message
-
   \return True on success
 */
 template<typename TT>
@@ -818,11 +794,9 @@ bool create_multiple_from_chain( unsigned num_vars, std::vector<TT>& tts, std::i
 }
 
 /*! \brief Creates characteristic function
-
   Creates the truth table of the characteristic function, which contains one
   additional variable.  The new output variable will be the most-significant
   variable of the new function.
-
   \param tt Truth table for characteristic function
   \param from Input truth table
 */
@@ -838,6 +812,178 @@ inline void create_characteristic( TT& tt, const TTFrom& from )
   extend_to_inplace( ext, from );
 
   tt = ~var ^ ext;
+}
+
+/*! \brief Creates truth table from textual expression
+  An expression `E` is a constant `0` or `1`, or a variable `a`, `b`, ..., `p`,
+  the negation of an expression `!E`, the conjunction of multiple expressions
+  `(E...E)`, the disjunction of multiple expressions `{E...E}`, the exclusive
+  OR of multiple expressions `[E...E]`, or the majority of three expressions
+  `<EEE>`.  Examples are `[(ab)(!ac)]` to describe if-then-else, or `!{!a!b}`
+  to describe the application of De Morgan's law to `(ab)`.  The size of the
+  truth table must fit the largest variable in the expression, e.g., if `c` is
+  the largest variable, then the truth table have at least three variables.
+  \param tt Truth table
+  \param from Expression as string
+*/
+template<typename TT>
+bool create_from_expression( TT& tt, const std::string& expression )
+{
+  enum stack_symbols
+  {
+    FUNC,
+    AND,
+    OR,
+    XOR,
+    MAJ,
+    NEG
+  };
+  std::stack<stack_symbols> symbols;
+  std::stack<TT> truth_tables;
+
+  const auto push_tt = [&]( TT& func ) {
+    while ( !symbols.empty() && symbols.top() == NEG )
+    {
+      func = ~func;
+      symbols.pop();
+    }
+    symbols.push( FUNC );
+    truth_tables.push( func );
+  };
+
+  for ( auto const& c : expression )
+  {
+    switch ( c )
+    {
+      default:
+        if ( c >= 'a' && c <= 'p' )
+        {
+          auto var = tt.construct();
+          create_nth_var( var, c - 'a' );
+          push_tt( var );
+        }
+        else
+        {
+          std::cerr << "[e] unexpected symbol in expression: " << c << "\n";
+          return false;
+        }
+        break;
+      case '0':
+      {
+        auto func = tt.construct();
+        push_tt( func );
+      }
+        break;
+      case '1':
+      {
+        auto func = ~tt.construct();
+        push_tt( func );
+      }
+        break;
+      case '!':
+        symbols.push( NEG );
+        break;
+      case '(':
+        symbols.push( AND );
+        break;
+      case '{':
+        symbols.push( OR );
+        break;
+      case '[':
+        symbols.push( XOR );
+        break;
+      case '<':
+        symbols.push( MAJ );
+        break;
+      case ')':
+      {
+        auto func = ~tt.construct();
+        while ( !symbols.empty() && symbols.top() == FUNC )
+        {
+          func &= truth_tables.top();
+          symbols.pop();
+          truth_tables.pop();
+        }
+        if ( symbols.empty() || symbols.top() != AND )
+        {
+          std::cerr << "[e] could not parse AND expression\n";
+          return false;
+        }
+        symbols.pop();
+        push_tt( func );
+      }
+        break;
+      case '}':
+      {
+        auto func = tt.construct();
+        while ( !symbols.empty() && symbols.top() == FUNC )
+        {
+          func |= truth_tables.top();
+          symbols.pop();
+          truth_tables.pop();
+        }
+        if ( symbols.empty() || symbols.top() != OR )
+        {
+          std::cerr << "[e] could not parse OR expression\n";
+          return false;
+        }
+        symbols.pop();
+        push_tt( func );
+      }
+        break;
+      case ']':
+      {
+        auto func = tt.construct();
+        while ( !symbols.empty() && symbols.top() == FUNC )
+        {
+          func ^= truth_tables.top();
+          symbols.pop();
+          truth_tables.pop();
+        }
+        if ( symbols.empty() || symbols.top() != XOR )
+        {
+          std::cerr << "[e] could not parse XOR expression\n";
+          return false;
+        }
+        symbols.pop();
+        push_tt( func );
+      }
+        break;
+      case '>':
+      {
+        std::vector<TT> children;
+        while ( !symbols.empty() && symbols.top() == FUNC )
+        {
+          children.push_back( truth_tables.top() );
+          symbols.pop();
+          truth_tables.pop();
+        }
+        if ( symbols.empty() || symbols.top() != MAJ )
+        {
+          std::cerr << "[e] could not parse MAJ expression\n";
+          return false;
+        }
+        if ( children.size() != 3u )
+        {
+          std::cerr << "[e] MAJ expression must have three children\n";
+          return false;
+        }
+        symbols.pop();
+        auto func = ternary_majority( children[0], children[1], children[2] );
+        push_tt( func );
+      }
+        break;
+    }
+  }
+
+  if ( symbols.size() != 1 || truth_tables.size() != 1 )
+  {
+    std::cerr << "[e] expression parsing incomplete\n";
+    return false;
+  }
+
+  tt = truth_tables.top();
+  return true;
 }
 
 } // namespace kitty
