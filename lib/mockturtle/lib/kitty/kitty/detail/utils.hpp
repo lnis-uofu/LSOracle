@@ -26,13 +26,13 @@
 /*!
   \file utils.hpp
   \brief Helper functions
-
   \author Mathias Soeken
 */
 
 /*! \cond PRIVATE */
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 namespace kitty
@@ -45,8 +45,8 @@ namespace detail
 inline void ltrim( std::string& s )
 {
   s.erase( s.begin(), std::find_if( s.begin(), s.end(), []( int ch ) {
-             return std::isspace( ch ) == 0;
-           } ) );
+    return std::isspace( ch ) == 0;
+  } ) );
 }
 
 inline void rtrim( std::string& s )
@@ -54,7 +54,7 @@ inline void rtrim( std::string& s )
   s.erase( std::find_if( s.rbegin(), s.rend(), []( int ch ) {
              return std::isspace( ch ) == 0;
            } )
-               .base(),
+             .base(),
            s.end() );
 }
 

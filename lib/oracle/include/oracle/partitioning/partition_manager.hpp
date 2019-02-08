@@ -113,19 +113,19 @@ namespace oracle
 
             for ( int j = 0; j < kahyp_num_sets+1; j++){
               hyperedge_indices[j] = kahyp_set_indeces[j];
-              std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
+              //std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
             }
 
             std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
 
             for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
               hyperedges[i] = kahypar_connections[i];
-              std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
+              //std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
             }
 
-            std::cout << "Number of hyperedges " << num_hyperedges << "\n"
-            << "Number of vertices " << num_vertices << "\n"
-            << "Number of partitions " << num_partitions << "\n";
+            //std::cout << "Number of hyperedges " << num_hyperedges << "\n"
+            //<< "Number of vertices " << num_vertices << "\n"
+            //<< "Number of partitions " << num_partitions << "\n";
 
             const double imbalance = 0.03;
             const kahypar_partition_id_t k = part_num;
@@ -139,9 +139,9 @@ namespace oracle
                               hyperedge_indices.get(), hyperedges.get(),
                               &objective, context, partition.data());
 
-            std::cout << "################ Partitions ################" << std::endl;
+            //std::cout << "################ Partitions ################" << std::endl;
             for(int i = 0; i < num_vertices; ++i) {
-              std::cout << partition[i] << std::endl;
+              //std::cout << partition[i] << std::endl;
               add_to_partition(i, partition[i]);
             }
 

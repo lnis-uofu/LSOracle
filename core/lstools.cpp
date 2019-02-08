@@ -7,6 +7,9 @@
 
 #include <mockturtle/views/mffc_view.hpp>
 #include <mockturtle/views/fanout_view.hpp>
+//should work even though I dont explictly include the xag here. Fix it
+#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
+
 
 #include <iostream>
 #include <string>
@@ -24,7 +27,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <iomanip>
-// #include <../mockturtle/include/mockturtle/networks/storage.hpp>
 #include <ot/timer/timer.hpp>
 
 namespace alice{
@@ -2954,6 +2956,13 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
 		} );
 	}
 
+ALICE_COMMAND( opt_aig, "Optimization", "Test performing AIG optimization"){
+    auto aig = store<mockturtle::aig_network>().current();
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    mockturtle::cut_rewriting( aig, resyn);
+    aig = cleanup_dangling( aig );
+	}
+
 class test_part_view_command : public alice::command{
 
     public:
@@ -2966,15 +2975,13 @@ class test_part_view_command : public alice::command{
 
     protected:
         void execute(){
-
-
+            //running on AIG now. Fix it (the same way you use to print_stats with the ntk as parameter I guess)
             if(!store<mockturtle::aig_network>().empty()){
-                
+                //reads in the current network in memory
                 auto aig = store<mockturtle::aig_network>().current();
-                mockturtle::mig_npn_resynthesis resyn2;
-                auto mig2 = mockturtle::node_resynthesis<mockturtle::mig_network>(aig, resyn2);
-                mockturtle::depth_view aig_depth{aig};
-                std::cout << "aig size = " << aig.num_gates() << " and depth = " << aig_depth.depth() << "\n";
+
+                //create different partitions view for the AIG. Optimize each partition modifying the original network.
+
                 // mockturtle::fanout_view<mockturtle::aig_network> fanout_ntk( aig );
                 aig.clear_visited();
                 oracle::partition_manager<mockturtle::aig_network> partitions(aig, num_parts);

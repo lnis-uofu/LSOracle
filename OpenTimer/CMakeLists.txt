@@ -96,7 +96,7 @@ OpenTimer requires tclsh to build. Visit: https://www.tcl.tk/software/tcltk/")
 endif(NOT TCL_TCLSH)
 
 # CTest
-include(CTest)
+#include(CTest)
 
 # configure a header file to pass some of the CMake settins
 configure_file(
@@ -192,9 +192,9 @@ message(STATUS "OT_LINK_FLAGS: ${OT_LINK_FLAGS}")
 ###########################################################
 
 # simple
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/simple)
-add_executable(simple example/simple/simple.cpp)
-target_link_libraries(simple ${OT_LINK_FLAGS})
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/simple)
+#add_executable(simple example/simple/simple.cpp)
+#target_link_libraries(simple ${OT_LINK_FLAGS})
 
 # unit
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/unit)
@@ -202,14 +202,14 @@ target_link_libraries(simple ${OT_LINK_FLAGS})
 #target_link_libraries(unit ${OT_LINK_FLAGS})
 
 # optimizer
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/optimizer)
-add_executable(optimizer example/optimizer/optimizer.cpp)
-target_link_libraries(optimizer ${OT_LINK_FLAGS})
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/optimizer)
+#add_executable(optimizer example/optimizer/optimizer.cpp)
+#target_link_libraries(optimizer ${OT_LINK_FLAGS})
 
 # sizer
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/sizer)
-add_executable(sizer example/sizer/sizer.cpp)
-target_link_libraries(sizer ${OT_LINK_FLAGS})
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/sizer)
+#add_executable(sizer example/sizer/sizer.cpp)
+#target_link_libraries(sizer ${OT_LINK_FLAGS})
 
 ##aes_cipher
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/example/aes_cipher)

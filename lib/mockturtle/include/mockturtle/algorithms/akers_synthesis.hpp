@@ -1,3 +1,34 @@
+/* mockturtle: C++ logic network library
+ * Copyright (C) 2018  EPFL
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*!
+  \file akers_synthesis.hpp
+  \brief Akers synthesis
+  \author Eleonora Testa
+*/
+
 #pragma once
 
 #include <algorithm>
@@ -19,9 +50,9 @@
 namespace mockturtle
 {
 
-/* cube operators needed from Kitty :  
+/* cube operators needed from Kitty :
 - & (bitwise and )
-- is_subset_of 
+- is_subset_of
 - is_const0
 */
 
@@ -67,7 +98,7 @@ public:
   using row_t = kitty::cube;
 
   unitized_table( const std::string& columns )
-      : columns( columns )
+    : columns( columns )
   {
   }
 
@@ -131,7 +162,7 @@ public:
     return ( n1 == 0x30 && n2 == 0x31 ) || ( ( n1 + 0x20 ) == n2 );
   }
 
-  inline unsigned num_columns() const
+  inline auto num_columns() const
   {
     return columns.size();
   }
@@ -360,11 +391,11 @@ class akers_synthesis_impl
 {
 public:
   akers_synthesis_impl( Ntk ntk, kitty::dynamic_truth_table const& func, kitty::dynamic_truth_table const& care, LeavesIterator begin, LeavesIterator end )
-      : ntk( ntk ),
-        func( func ),
-        care( care ),
-        begin( begin ),
-        end( end )
+    : ntk( ntk ),
+      func( func ),
+      care( care ),
+      begin( begin ),
+      end( end )
   {
   }
 
@@ -520,7 +551,7 @@ private:
     auto this_table = table;
     for ( auto f = 0u; f < random_gates.size(); f++ )
     {
-      auto last_gate_id = table.add_gate( random_gates[f] );
+      table.add_gate( random_gates[f] );
       table.reduce();
       if ( ( table.rows.size() != this_table.rows.size() ) || ( table.columns.size() != this_table.columns.size() - 1 ) )
       {
@@ -712,7 +743,7 @@ private:
         if ( column == j )
           continue;
         auto found = true;
-        auto offset = 0u;
+        std::size_t offset = 0u;
         for ( auto r = 0u; r < num_rows; ++r, offset += num_columns )
         {
           if ( !matrix[offset + i] && !matrix[offset + j] )
@@ -745,7 +776,7 @@ private:
   LeavesIterator end;
 
   unsigned reduce{0};
-  unsigned previous_size{0};
+  std::size_t previous_size{0};
 };
 
 } // namespace detail

@@ -26,16 +26,17 @@
 /*!
   \file dynamic_truth_table.hpp
   \brief Implements dynamic_truth_table
-
   \author Mathias Soeken
 */
 
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 #include <vector>
 
 #include "detail/constants.hpp"
+#include "traits.hpp"
 
 namespace kitty
 {
@@ -45,24 +46,20 @@ namespace kitty
 struct dynamic_truth_table
 {
   /*! Standard constructor.
-
     The number of variables provided to the truth table can be
     computed at runtime.  However, once the truth table is constructed
     its number of variables cannot change anymore.
-
     The constructor computes the number of blocks and resizes the
     vector accordingly.
-
     \param num_vars Number of variables
   */
   explicit dynamic_truth_table( int num_vars )
-      : _bits( ( num_vars <= 6 ) ? 1 : ( 1 << ( num_vars - 6 ) ) ),
-        _num_vars( num_vars )
+    : _bits( ( num_vars <= 6 ) ? 1 : ( 1 << ( num_vars - 6 ) ) ),
+      _num_vars( num_vars )
   {
   }
 
   /*! Empty constructor.
-
     Creates an empty truth table. It has 0 variables, but no bits, i.e., it is
     different from a truth table for the constant function.  This constructor is
     only used for convenience, if algorithms require the existence of default
@@ -128,8 +125,27 @@ struct dynamic_truth_table
    */
   inline auto crend() const noexcept { return _bits.crend(); }
 
-  /*! Masks the number of valid truth table bits.
+  /*! \brief Assign other truth table.
+    This replaces the current truth table with another truth table.  The truth
+    table type is arbitrary.  The vector of bits is resized accordingly.
+    \param other Other truth table
+  */
+  template<class TT, typename = std::enable_if_t<is_truth_table<TT>::value>>
+  dynamic_truth_table& operator=( const TT& other )
+  {
+    _bits.resize( other.num_blocks() );
+    std::copy( other.begin(), other.end(), begin() );
+    _num_vars = other.num_vars();
 
+    if ( _num_vars < 6 )
+    {
+      mask_bits();
+    }
+
+    return *this;
+  }
+
+  /*! Masks the number of valid truth table bits.
     If the truth table has less than 6 variables, it may not use all
     the bits.  This operation makes sure to zero out all non-valid
     bits.
@@ -148,4 +164,7 @@ public: /* fields */
   int _num_vars;
   /*! \endcond */
 };
+
+template<>
+struct is_truth_table<kitty::dynamic_truth_table> : std::true_type {};
 } // namespace kitty

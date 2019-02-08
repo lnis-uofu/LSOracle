@@ -26,7 +26,6 @@
 /*!
   \file immutable_view.hpp
   \brief Disables all methods to change the network
-
   \author Mathias Soeken
 */
 

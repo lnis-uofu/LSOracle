@@ -26,7 +26,6 @@
 /*!
   \file operations.hpp
   \brief Implements several operations on truth tables
-
   \author Mathias Soeken
 */
 
@@ -98,7 +97,6 @@ inline TT ternary_majority( const TT& first, const TT& second, const TT& third )
 }
 
 /*! \brief Performs ternary if-then-else of three truth tables
-
   \param first Truth table for condition
   \param second Truth table for then-case
   \param third Truth table for else-case
@@ -110,7 +108,6 @@ inline TT ternary_ite( const TT& first, const TT& second, const TT& third )
 }
 
 /*! \brief Checks whether two truth tables are equal
-
   \param first First truth table
   \param second Second truth table
 */
@@ -126,9 +123,7 @@ inline bool equal( const TT& first, const TT& second )
 }
 
 /*! \brief Checks whether a truth table is lexicographically smaller than another
-
   Comparison is initiated from most-significant bit.
-
   \param first First truth table
   \param second Second truth table
 */
@@ -148,7 +143,6 @@ inline bool less_than( const static_truth_table<NumVars, true>& first, const sta
 /*! \endcond */
 
 /*! \brief Checks whether truth table is contant 0
-
   \param tt Truth table
 */
 template<typename TT>
@@ -166,7 +160,6 @@ inline bool is_const0( const static_truth_table<NumVars, true>& tt )
 /*! \endcond */
 
 /*! \brief Checks whether truth table depends on given variable index
-
   \param tt Truth table
   \param var_index Variable index
 */
@@ -208,11 +201,9 @@ bool has_var( const static_truth_table<NumVars, true>& tt, uint8_t var_index )
 /*! \endcond */
 
 /*! \brief Computes the next lexicographically larger truth table
-
   This methods updates `tt` to become the next lexicographically
   larger truth table. If `tt` is already the largest truth table, the
   updated truth table will contain all zeros.
-
   \param tt Truth table
 */
 template<typename TT>
@@ -246,9 +237,7 @@ inline void next_inplace( static_truth_table<NumVars, true>& tt )
 /*! \endcond */
 
 /*! \brief Returns the next lexicographically larger truth table
-
   Out-of-place variant for `next_inplace`.
-
   \param tt Truth table
 */
 template<typename TT>
@@ -260,7 +249,6 @@ inline TT next( const TT& tt )
 }
 
 /*! \brief Computes co-factor with respect to 0
-
   \param tt Truth table
   \param var_index Variable index
 */
@@ -297,7 +285,6 @@ void cofactor0_inplace( static_truth_table<NumVars, true>& tt, uint8_t var_index
 /*! \endcond */
 
 /*! \brief Returns co-factor with respect to 0
-
  \param tt Truth table
  \param var_index Variable index
 */
@@ -310,7 +297,6 @@ TT cofactor0( const TT& tt, uint8_t var_index )
 }
 
 /*! \brief Computes co-factor with respect to 1
-
   \param tt Truth table
   \param var_index Variable index
 */
@@ -346,7 +332,6 @@ void cofactor1_inplace( static_truth_table<NumVars, true>& tt, uint8_t var_index
 /*! \endcond */
 
 /*! \brief Returns co-factor with respect to 1
-
  \param tt Truth table
  \param var_index Variable index
 */
@@ -359,11 +344,9 @@ TT cofactor1( const TT& tt, uint8_t var_index )
 }
 
 /*! \brief Swaps two adjacent variables in a truth table
-
   The function swaps variable `var_index` with `var_index + 1`.  The
   function will change `tt` in-place.  If `tt` should not be changed,
   one can use `swap_adjacent` instead.
-
   \param tt Truth table
   \param var_index A variable
 */
@@ -383,7 +366,7 @@ void swap_adjacent_inplace( TT& tt, uint8_t var_index )
                              ( ( word & detail::permutation_masks[var_index][2] ) >> shift );
                     } );
   }
-  /* permute (half) parts of words */
+    /* permute (half) parts of words */
   else if ( var_index == 5 )
   {
     auto it = std::begin( tt._bits );
@@ -396,7 +379,7 @@ void swap_adjacent_inplace( TT& tt, uint8_t var_index )
       it += 2;
     }
   }
-  /* permute comlete words */
+    /* permute comlete words */
   else
   {
     const auto step = 1 << ( var_index - 6 );
@@ -427,10 +410,8 @@ void swap_adjacent_inplace( static_truth_table<NumVars, true>& tt, uint8_t var_i
 /*! \endcond */
 
 /*! \brief Swaps two adjacent variables in a truth table
-
   The function swaps variable `var_index` with `var_index + 1`.  The
   function will return a new truth table with the result.
-
   \param tt Truth table
   \param var_index A variable
 */
@@ -443,11 +424,9 @@ inline TT swap_adjacent( const TT& tt, uint8_t var_index )
 }
 
 /*! \brief Swaps two variables in a truth table
-
   The function swaps variable `var_index1` with `var_index2`.  The
   function will change `tt` in-place.  If `tt` should not be changed,
   one can use `swap` instead.
-
   \param tt Truth table
   \param var_index1 First variable
   \param var_index2 Second variable
@@ -537,10 +516,8 @@ inline void swap_inplace( static_truth_table<NumVars, true>& tt, uint8_t var_ind
 /* \endcond */
 
 /*! \brief Swaps two adjacent variables in a truth table
-
   The function swaps variable `var_index1` with `var_index2`.  The
   function will return a new truth table with the result.
-
   \param tt Truth table
   \param var_index1 First variable
   \param var_index2 Second variable
@@ -554,11 +531,9 @@ inline TT swap( const TT& tt, uint8_t var_index1, uint8_t var_index2 )
 }
 
 /*! \brief Flips a variable in a truth table
-
   The function flips variable `var_index` in `tt`.  The function will
   change `tt` in-place.  If `tt` should not be changed, one can use
   `flip` instead.
-
   \param tt Truth table
   \param var_index A variable
 */
@@ -607,10 +582,8 @@ inline void flip_inplace( static_truth_table<NumVars, true>& tt, uint8_t var_ind
 /* \endcond */
 
 /*! \brief Flips a variable in a truth table
-
   The function flips variable `var_index` in `tt`.  The function will
   not change `tt` and return the result as a copy.
-
   \param tt Truth table
   \param var_index A variable
 */
@@ -623,7 +596,6 @@ inline TT flip( const TT& tt, uint8_t var_index )
 }
 
 /*! \brief Reorders truth table to have minimum base
-
   This function will reorder variables, such that there are no
   "holes".  For example, the function \f$ x_0 \land x_2 \f$ will be
   changed to \f$ x_0 \land x_1 \f$ by swapping \f$ x_1 \f$ with \f$
@@ -631,11 +603,9 @@ inline TT flip( const TT& tt, uint8_t var_index )
   support will be moved to the back.  Note that the size of the truth
   table is not changed, because for `static_truth_table` one cannot
   compute it at compile-time.
-
   The function changes the truth table and returns a vector with all
   variable indexes that were in the functional support of the original
   function.
-
   \param tt Truth table
  */
 template<typename TT>
@@ -662,10 +632,8 @@ std::vector<uint8_t> min_base_inplace( TT& tt )
 }
 
 /*! \brief Expands truth table from minimum base to original based on support
-
   This is the inverse operation to `min_base_inplace`, where the
   support is used to swap variables back to their original positions.
-
   \param tt Truth table
   \param support Original indexes of support variables
 */
@@ -680,11 +648,9 @@ void expand_inplace( TT& tt, const std::vector<uint8_t>& support )
 }
 
 /*! \brief Extends smaller truth table to larger one
-
   The most significant variables will not be in the functional support of the
   resulting truth table, but the method is helpful to align a truth table when
   being used with another one.
-
   \param tt Larger truth table to create
   \param from Smaller truth table to copy from
 */
@@ -715,12 +681,10 @@ void extend_to_inplace( TT& tt, const TTFrom& from )
 }
 
 /*! \brief Extends smaller truth table to larger static one
-
   This is an out-of-place version of `extend_to_inplace` that has the truth
   table as a return value.  It only works for creating static truth tables.  The
   template parameter `NumVars` must be equal or larger to the number of
   variables in `from`.
-
   \param from Smaller truth table to copy from
 */
 template<int NumVars, typename TTFrom>
@@ -732,12 +696,10 @@ inline static_truth_table<NumVars> extend_to( const TTFrom& from )
 }
 
 /*! \brief Extends smaller truth table to larger dynamic one
-
   This is an out-of-place version of `extend_to_inplace` that has the truth
   table as a return value.  It only works for creating dynamic truth tables.
   The parameter `num_vars` must be equal or larger to the number of variables in
   `from`.
-
   \param from Smaller truth table to copy from
 */
 template<typename TTFrom>
@@ -749,11 +711,9 @@ inline dynamic_truth_table extend_to( const TTFrom& from, unsigned num_vars )
 }
 
 /*! \brief Shrinks larger truth table to smaller one
-
   The function expects that the most significant bits, which are cut off, are
-  not in the functional support of the original function.  Only then it is 
-  ensured that the resulting function is equivalent. 
-
+  not in the functional support of the original function.  Only then it is
+  ensured that the resulting function is equivalent.
   \param tt Smaller truth table to create
   \param from Larger truth table to copy from
 */
@@ -771,12 +731,10 @@ void shrink_to_inplace( TT& tt, const TTFrom& from )
 }
 
 /*! \brief Shrinks larger truth table to smaller static one
-
   This is an out-of-place version of `shrink_to` that has the truth table as a
   return value.  It only works for creating static truth tables.  The template
   parameter `NumVars` must be equal or smaller to the number of variables in
   `from`.
-
   \param from Smaller truth table to copy from
 */
 template<int NumVars, typename TTFrom>
@@ -788,11 +746,9 @@ inline static_truth_table<NumVars> shrink_to( const TTFrom& from )
 }
 
 /*! \brief Shrinks larger truth table to smaller dynamic one
-
   This is an out-of-place version of `shrink_to` that has the truth table as a
   return value.  It only works for creating dynamic tables.  The parameter
   `num_vars` must be equal or smaller to the number of variables in `from`.
-
   \param from Smaller truth table to copy from
 */
 template<typename TTFrom>
@@ -804,10 +760,8 @@ inline dynamic_truth_table shrink_to( const TTFrom& from, unsigned num_vars )
 }
 
 /*! \brief Left-shift truth table
-
   Drops overflowing most-significant bits and fills up least-significant bits
   with zeroes.
-
   \param tt Truth table
   \param shift Number of bits to shift
 */
@@ -867,9 +821,7 @@ inline void shift_left_inplace( static_truth_table<NumVars, true>& tt, uint64_t 
 /*! \endcond */
 
 /*! \brief Left-shift truth table
-
   Out-of-place variant of `shift_left`.
-
   \param tt Truth table
   \param shift Number of bits to shift
 */
@@ -882,10 +834,8 @@ inline TT shift_left( const TT& tt, uint64_t shift )
 }
 
 /*! \brief Right-shift truth table
-
   Drops overflowing least-significant bits and fills up most-significant bits
   with zeroes.
-
   \param tt Truth table
   \param shift Number of bits to shift
 */
@@ -943,9 +893,7 @@ inline void shift_right_inplace( static_truth_table<NumVars, true>& tt, uint64_t
 /*! \endcond */
 
 /*! \brief Right-shift truth table
-
   Out-of-place variant of `shift_right`.
-
   \param tt Truth table
   \param shift Number of bits to shift
 */

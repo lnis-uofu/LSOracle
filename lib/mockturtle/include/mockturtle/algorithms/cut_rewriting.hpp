@@ -346,13 +346,13 @@ struct has_rewrite_with_dont_cares : std::false_type
 
 template<class Ntk, class RewritingFn, class Iterator>
 struct has_rewrite_with_dont_cares<Ntk,
-                                   RewritingFn, Iterator,
-                                   std::void_t<decltype( std::declval<RewritingFn>()( std::declval<Ntk&>(),
-                                                                                      std::declval<kitty::dynamic_truth_table>(),
-                                                                                      std::declval<kitty::dynamic_truth_table>(),
-                                                                                      std::declval<Iterator const&>(),
-                                                                                      std::declval<Iterator const&>(),
-                                                                                      std::declval<void( signal<Ntk> )>() ) )>> : std::true_type
+  RewritingFn, Iterator,
+  std::void_t<decltype( std::declval<RewritingFn>()( std::declval<Ntk&>(),
+                                                     std::declval<kitty::dynamic_truth_table>(),
+                                                     std::declval<kitty::dynamic_truth_table>(),
+                                                     std::declval<Iterator const&>(),
+                                                     std::declval<Iterator const&>(),
+                                                     std::declval<void( signal<Ntk> )>() ) )>> : std::true_type
 {
 };
 
@@ -375,11 +375,11 @@ class cut_rewriting_impl
 {
 public:
   cut_rewriting_impl( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st, NodeCostFn const& cost_fn )
-      : ntk( ntk ),
-        rewriting_fn( rewriting_fn ),
-        ps( ps ),
-        st( st ),
-        cost_fn( cost_fn ) {}
+    : ntk( ntk ),
+      rewriting_fn( rewriting_fn ),
+      ps( ps ),
+      st( st ),
+      cost_fn( cost_fn ) {}
 
   void run()
   {
@@ -618,7 +618,7 @@ private:
  * some rewriting algorithms in the folder
  * `mockturtle/algorithms/node_resyntesis`, since the resynthesis functions
  * have the same signature.
- * 
+ *
  * In contrast to node resynthesis, cut rewriting uses the same type for the
  * input and output network.  Consequently, the algorithm does not return a
  * new network but applies changes in-place to the input network.
