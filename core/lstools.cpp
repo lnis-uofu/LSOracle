@@ -2956,11 +2956,17 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
 		} );
 	}
 
-ALICE_COMMAND( opt_aig, "Optimization", "Test performing AIG optimization"){
-    auto aig = store<mockturtle::aig_network>().current();
+ALICE_COMMAND( opt_aig, "Optimization", "Test performing AIG db rewriting."){
+	  auto& aig = store<mockturtle::aig_network>().current();
+
+    mockturtle::cut_rewriting_params ps;
+    mockturtle::cut_rewriting_stats st;
+
+    ps.cut_enumeration_ps.cut_size = 4;
+
     mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-    mockturtle::cut_rewriting( aig, resyn);
-    aig = cleanup_dangling( aig );
+    mockturtle::cut_rewriting( aig, resyn, ps, &st);
+    aig = mockturtle::cleanup_dangling( aig );
 	}
 
 class test_part_view_command : public alice::command{
