@@ -74,6 +74,9 @@ public:
 
       num_partitions = part_num;
 
+      for(int i = 0; i<part_num; ++i)
+        _part_scope.push_back(std::set<node>());
+
       uint32_t kahyp_num_hyperedges = 0;
       uint32_t kahyp_num_vertices = 0;
       uint32_t kahyp_num_indeces_hyper = 0;
@@ -146,22 +149,26 @@ public:
           //get rid of circuit PIs
           if(ntk.is_pi(ntk.index_to_node(i)) && !ntk.is_constant(ntk.index_to_node(i))){
               //std::cout << "Node "<< i << " is ckt PI " << std::endl;
-              _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+            _part_scope[partition[i]].insert(ntk.index_to_node(i));
+            _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
 
           //get rid of circuit POs
           else if(ntk.is_po(ntk.index_to_node(i))){
-              _part_pos.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+            _part_scope[partition[i]].insert(ntk.index_to_node(i));
+            _part_pos.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
 
           else if(!ntk.is_constant(ntk.index_to_node(i))){
-              _part_nodes.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+            _part_scope[partition[i]].insert(ntk.index_to_node(i));
+            _part_nodes.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
 
           //look to partition inputs (those that are not circuit PIs)
           ntk.foreach_fanin( ntk.index_to_node(i), [&]( auto const& conn, auto j ) {
             if(partition[ntk._storage->nodes[ntk.index_to_node(i)].children[j].index]!=partition[i]){
-                _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(ntk._storage->nodes[ntk.index_to_node(i)].children[j].index)));
+              _part_scope[partition[i]].insert(ntk.index_to_node(i));
+              _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(ntk._storage->nodes[ntk.index_to_node(i)].children[j].index)));
             }
           });
 
@@ -170,7 +177,8 @@ public:
           fanout.foreach_fanout( ntk.index_to_node(i), [&]( auto const& p ) {
             //if fanout node belongs to another partition it is a partition output
             if(partition[ntk.node_to_index(p)]!=partition[i]){
-                _part_pos.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+              _part_scope[partition[i]].insert(ntk.index_to_node(i));
+              _part_pos.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
             }
           });
       }
@@ -187,7 +195,7 @@ public:
 //          }
 //          std::cout << std::endl;
 //      }
-////
+//
 //      for(int i = 0; i < part_num; ++i){
 //          std::cout << "Printing inputs for partition " << i << std::endl;
 //
@@ -214,14 +222,16 @@ public:
       kahypar_context_free(context);
   }
 private:
+  int num_partitions = 0;
+
   std::multimap<int, node> _part_nodes;
   std::multimap<int, node> _part_pis;
   std::multimap<int, node> _part_pos;
+  std::vector<std::set<node>> _part_scope;
 
   std::vector<node> roots;
   std::vector<node> leaves;
 
-  int num_partitions = 0;
 
 public:
 
@@ -247,7 +257,11 @@ public:
       }
   }
 
-  oracle::partition_view<mockturtle::fanout_view<Ntk>> create_part( Ntk const& ntk, int part_index ){
+  std::set<node> get_part_context (int partition_num){
+    return _part_scope[partition_num];
+  }
+
+oracle::partition_view<mockturtle::fanout_view<Ntk>> create_part( Ntk const& ntk, int part_index ){
     roots.clear();
     leaves.clear();
 

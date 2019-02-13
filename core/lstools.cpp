@@ -2991,9 +2991,11 @@ class test_part_view_command : public alice::command{
 
                 for(int i = 0; i < partitions.get_part_num(); i++){
                     oracle::partition_view<mockturtle::fanout_view<mockturtle::aig_network>> part = partitions.create_part(aig, i);
-                    std::cout << "Nodes in partition " << i << " : " << part.num_gates() << "\n";
-                    std::cout << "PIs in partition " << i << " : " << part.num_pis() << "\n";
-                    std::cout << "POs in partition " << i << " : " << part.num_pos() << "\n";
+                    std::set<mockturtle::aig_network::node> nodes;
+
+                    nodes = partitions.get_part_context(i);
+
+                    std::cout << "Total nodes in partition " << i << " : " << nodes.size() << "\n";
 
 //                    mockturtle::cut_rewriting_params ps;
 //                    mockturtle::cut_rewriting_stats st;
@@ -3014,7 +3016,6 @@ class test_part_view_command : public alice::command{
             else{
                 std::cout << "There is no stored AIG network\n";
             }
-
         }
 
     private:
