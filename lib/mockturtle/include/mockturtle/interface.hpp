@@ -424,7 +424,7 @@ public:
    * then it can interrupt the iteration by returning ``false``.
    */
   template<typename Fn>
-  void foreach_parent( node const& n, Fn&& fn ) const;
+  void foreach_fanout( node const& n, Fn&& fn ) const;
 #pragma endregion
 
 #pragma region Simulate values

@@ -26,7 +26,6 @@
 /*!
   \file cleanup.hpp
   \brief Cleans up networks
-
   \author Mathias Soeken
 */
 
@@ -48,15 +47,15 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
 
   static_assert( is_network_type_v<NtkSource>, "NtkSource is not a network type" );
   static_assert( is_network_type_v<NtkDest>, "NtkDest is not a network type" );
-  
+
   static_assert( has_get_node_v<NtkSource>, "NtkSource does not implement the get_node method" );
   static_assert( has_get_constant_v<NtkSource>, "NtkSource does not implement the get_constant method" );
   static_assert( has_foreach_pi_v<NtkSource>, "NtkSource does not implement the foreach_pi method" );
-  static_assert( has_is_pi_v<NtkSource>, "NtkSource does not implement the is_pi method" );
+  static_assert( has_is_ci_v<NtkSource>, "NtkSource does not implement the is_ci method" );
   static_assert( has_is_constant_v<NtkSource>, "NtkSource does not implement the is_constant method" );
   static_assert( has_is_complemented_v<NtkSource>, "NtkSource does not implement the is_complemented method" );
   static_assert( has_foreach_po_v<NtkSource>, "NtkSource does not implement the foreach_po method" );
-  
+
   static_assert( has_get_constant_v<NtkDest>, "NtkDest does not implement the get_constant method" );
   static_assert( has_create_not_v<NtkDest>, "NtkDest does not implement the create_not method" );
   static_assert( has_clone_node_v<NtkDest>, "NtkDest does not implement the clone_node method" );
