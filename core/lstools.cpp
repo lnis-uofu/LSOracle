@@ -402,13 +402,13 @@ namespace alice{
 
             net_queue.push(output);
             visited[output] = true;
-            
+
             while(!net_queue.empty()){
 
                 int curr_node = net_queue.front();
                 //make sure there are no duplicates added
                 if(!is_in_vector(index, curr_node)){
-                    //Put inputs at the beginning of the index so they are added into the AIG first 
+                    //Put inputs at the beginning of the index so they are added into the AIG first
                     if(is_in_vector(aig._storage->partitionInputs[partition], curr_node))
                         index.insert(index.begin(), curr_node);
                     else
@@ -428,8 +428,8 @@ namespace alice{
                             net_queue.push(childIdx);
                             visited[childIdx] = true;
                         }
-                    }               
-                    
+                    }
+
                 }
             }
         }
@@ -464,8 +464,8 @@ namespace alice{
                 std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(pi)));
                 for(int k = 0; k < output_names.size(); k++){
                     new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                }       
-                    
+                }
+
             }
             //create pi
             else if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
@@ -497,7 +497,7 @@ namespace alice{
                     child2_signal = new_aig.create_not(child2_signal);
                 }
                 auto gate = new_aig.clone_node(aig, aig.get_node(aig.make_signal(node)), {child1_signal, child2_signal});
-                
+
                 //Get truth table logic for each node
                 auto func = new_aig.node_function(new_aig.get_node(gate));
                 new_aig.foreach_fanin( new_aig.get_node(gate), [&]( auto const& conn, auto i ) {
@@ -505,13 +505,13 @@ namespace alice{
                         kitty::flip_inplace( func, i );
                     }
                 });
-                
+
                 if(is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-                    
+
                     if(aig.is_po(nodeIdx)){
                         std::vector<std::string> output_names;
                         std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                        
+
                         for(int k = 0; k < output_name_indeces.size(); k++){
                             output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
                             if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
@@ -524,14 +524,14 @@ namespace alice{
                         for(int k = 0; k < output_names.size(); k++){
                             new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
                         }
-                    }           
-                        
+                    }
+
                     else{
                         std::string output_name = "part_" + std::to_string(nodeIdx);
                         new_aig.create_po(gate);
                         new_aig._storage->outputNames[get_output_index(new_aig, new_aig.node_to_index(new_aig.get_node(gate)))] = output_name;
                     }
-                        
+
                 }
             }
         }
@@ -558,13 +558,13 @@ namespace alice{
 
             net_queue.push(output);
             visited[output] = true;
-            
+
             while(!net_queue.empty()){
 
                 int curr_node = net_queue.front();
                 //make sure there are no duplicates added
                 if(!is_in_vector(index, curr_node)){
-                    //Put inputs at the beginning of the index so they are added into the AIG first 
+                    //Put inputs at the beginning of the index so they are added into the AIG first
                     if(is_in_vector(aig._storage->partitionInputs[partition], curr_node))
                         index.insert(index.begin(), curr_node);
                     else
@@ -584,8 +584,8 @@ namespace alice{
                             net_queue.push(childIdx);
                             visited[childIdx] = true;
                         }
-                    }               
-                    
+                    }
+
                 }
             }
         }
@@ -620,8 +620,8 @@ namespace alice{
                 std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(pi)));
                 for(int k = 0; k < output_names.size(); k++){
                     new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                }       
-                    
+                }
+
             }
             //create pi
             else if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
@@ -653,7 +653,7 @@ namespace alice{
                     child2_signal = new_aig.create_not(child2_signal);
                 }
                 auto gate = new_aig.clone_node(aig, aig.get_node(aig.make_signal(node)), {child1_signal, child2_signal});
-                
+
                 //Get truth table logic for each node
                 auto func = new_aig.node_function(new_aig.get_node(gate));
                 new_aig.foreach_fanin( new_aig.get_node(gate), [&]( auto const& conn, auto i ) {
@@ -661,13 +661,13 @@ namespace alice{
                         kitty::flip_inplace( func, i );
                     }
                 });
-                
+
                 if(is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-                    
+
                     if(aig.is_po(nodeIdx)){
                         std::vector<std::string> output_names;
                         std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                        
+
                         for(int k = 0; k < output_name_indeces.size(); k++){
                             output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
                             if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
@@ -680,14 +680,14 @@ namespace alice{
                         for(int k = 0; k < output_names.size(); k++){
                             new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
                         }
-                    }           
-                        
+                    }
+
                     else{
                         std::string output_name = "part_" + std::to_string(nodeIdx);
                         new_aig.create_po(gate);
                         new_aig._storage->outputNames[get_output_index(new_aig, new_aig.node_to_index(new_aig.get_node(gate)))] = output_name;
                     }
-                        
+
                 }
             }
         }
@@ -851,7 +851,7 @@ namespace alice{
 
     void write_aig(mockturtle::aig_network aig, std::string filename){
 
-        
+
         std::ofstream aigfile;
         aigfile.open (filename);
 
@@ -900,11 +900,11 @@ namespace alice{
         });
         for(int i = 0; i < aig._storage->inputs.size(); i++){
             aigfile << "i" << i << " " << aig._storage->inputNames[aig._storage->inputs.at(i) - 1] << "\n";
-            
+
         }
         for(int i = 0; i < aig._storage->outputs.size(); i++){
             aigfile << "o" << i << " " << aig._storage->outputNames[i] << "\n";
-            
+
         }
         aigfile.close();
     }
@@ -913,7 +913,7 @@ namespace alice{
     //testing
 
 	/* Checks to see if a file has a specified extension
-	 * 
+	 *
 	 * params:
 	 * filename: The name of the file to check the extension of
 	 * ext: The extension that you are checking that filename has
@@ -2552,7 +2552,7 @@ namespace alice{
 		std::cout << "Enter blif filename: ";
 		std::cin >> filename;
 		read_blif(filename, blif());*/
-		/*TODO check to make sure that the file entered is valid and add store*/	
+		/*TODO check to make sure that the file entered is valid and add store*/
 	}//end get_blif
 
 	class get_mig_command : public alice::command{
@@ -2698,8 +2698,8 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
 		}
 		else{
 			std::cout << filename << " is not a valid bench file\n";
-		}	
-		
+		}
+
 	}//end get_bench
 
 	/*Adds the command "write_to_file" where you can specify what store you are writing a file out from*/
@@ -2793,7 +2793,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
             else{
                 std::cout << filename << " is not a valid aig file\n";
             }
-        
+
       }
 
     private:
@@ -2804,7 +2804,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
 
     class get_all_partitions_command : public alice::command{
 
-    
+
     public:
       explicit get_all_partitions_command( const environment::ptr& env )
           : command( env, "Exports every partition to a file format (default is AAG)" ){
@@ -2817,7 +2817,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
       void execute(){
 
         if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current(); 
+            auto aig = store<mockturtle::aig_network>().current();
             std::cout << "\n";
             if(aig._storage->num_partitions != 0){
                 for(int i = 0; i < aig._storage->num_partitions; i++){
@@ -2840,7 +2840,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
                             });
                             int levels = computeLevel(aig, output, partition);
                             std::cout << "Cone[" << j << "]: num inputs = " << num_inputs << " logic depth = " << levels << "\n";
-                            
+
                             mockturtle::aig_network part = create_aig_from_part(aig, partition, output);
                             std::string filename;
                             if(is_set("verilog")){
@@ -2851,7 +2851,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
                             }
                             filenames.push_back(filename);
                             parts.push_back(part);
-                            
+
                         }
 
                     }
@@ -2876,7 +2876,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
                             write_aig(parts.at(j), filenames.at(j));
                         }
                     }
-                    
+
                     std::cout << "\n";
                 }
 
@@ -2888,7 +2888,7 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
         else{
             std::cout << "There is no AIG network stored\n";
         }
-        
+
     }
 
     private:
@@ -2986,42 +2986,27 @@ class test_part_view_command : public alice::command{
                 //reads in the current network in memory
                 auto aig = store<mockturtle::aig_network>().current();
 
-                //create different partitions view for the AIG. Optimize each partition modifying the original network.
-
-                // mockturtle::fanout_view<mockturtle::aig_network> fanout_ntk( aig );
                 aig.clear_visited();
                 oracle::partition_manager<mockturtle::aig_network> partitions(aig, num_parts);
 
                 for(int i = 0; i < partitions.get_part_num(); i++){
-                    oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(aig, i);
-                    std::cout << "\nPartition " << i << "\n";
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "orig majority nodes = " << part.num_gates() << " and orig depth = " << part_depth.depth() << "\n";
-                    // std::cout << "running exact synthesis\n";
-                    // auto part_outputs = part.outputs();
-                    // percy::spec spec;
-                    // percy::chain c;
-                    // for(int j = 0; j < part_outputs.size(); j++){
-                    //     spec[0] = part_outputs.at(j);
-                    // }
-                    // auto result = percy::synthesize( spec, c );
-                    // std::cout << "exact synthesis success = " << (result == percy::success) << "\n";
-                    // mockturtle::akers_resynthesis<mockturtle::partition_view<mockturtle::aig_network>> resyn1;
-                    // mockturtle::cut_rewriting_params ps;
-                    // ps.cut_enumeration_ps.cut_size = 4;
-                    // mockturtle::cut_rewriting(part, resyn1, ps);
-                    // part = mockturtle::cleanup_dangling( part );
+                    oracle::partition_view<mockturtle::fanout_view<mockturtle::aig_network>> part = partitions.create_part(aig, i);
+                    std::cout << "Nodes in partition " << i << " : " << part.num_gates() << "\n";
+                    std::cout << "PIs in partition " << i << " : " << part.num_pis() << "\n";
+                    std::cout << "POs in partition " << i << " : " << part.num_pos() << "\n";
 
-                    // std::cout << "converting to MIG network\n";
-                    // mockturtle::mig_npn_resynthesis resyn;
-                    // auto mig = mockturtle::node_resynthesis<oracle::partition_view<mockturtle::mig_network>>(part, resyn);
-                    // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + ".v");
+//                    mockturtle::cut_rewriting_params ps;
+//                    mockturtle::cut_rewriting_stats st;
+//
+//                    ps.cut_enumeration_ps.cut_size = 4;
+//
+//                    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+//                    mockturtle::cut_rewriting( part, resyn, ps, &st);
+//                    part = mockturtle::cleanup_dangling( part );
+//
+//                    std::cout << "Nodes in partition after opt " << i << " : " << part.num_gates() << "\n";
 
-                    // mockturtle::mig_script migopt;
-                    // mig = migopt.run(mig);
-                    // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + "_opt.v");
-                    // mockturtle::depth_view mig_depth{mig};
-                    // std::cout << "new majority nodes = " << mig.num_gates() << " and new depth = " << mig_depth.depth() << "\n";
+
                 }
                 // mockturtle::depth_view aig_depth2{aig};
                 // std::cout << "new aig size = " << aig.num_gates() << " and depth = " << aig_depth2.depth() << "\n";
@@ -3128,7 +3113,7 @@ class test_part_view_command : public alice::command{
     };
 
     ALICE_ADD_COMMAND(partitioning, "Partitioning");
-    
+
 
     class output_truth_table_command : public alice::command{
 
@@ -5094,7 +5079,7 @@ class test_part_view_command : public alice::command{
 
 							std::map<int,std::vector<int>>::iterator it;
 							for(int j = 0; j < aig._storage->partitionConn[i][nodeIdx].size(); j++){
-																
+
 								if((aig.is_po(node) || (!is_in_map(aig._storage->partitionConn[i], aig._storage->partitionConn[i][nodeIdx].at(j))))
 								 && !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)){
 									aig._storage->partitionOutputs[i].push_back(nodeIdx);

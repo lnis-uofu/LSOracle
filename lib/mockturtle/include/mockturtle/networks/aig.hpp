@@ -33,6 +33,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <stack>
 #include <string>
 
 #include <ez/direct_iterator.hpp>
@@ -40,7 +42,9 @@
 #include <kitty/operators.hpp>
 
 #include "../traits.hpp"
+#include "../utils/algorithm.hpp"
 #include "detail/foreach.hpp"
+#include "events.hpp"
 #include "storage.hpp"
 
 namespace mockturtle
