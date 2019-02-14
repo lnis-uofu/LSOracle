@@ -2984,7 +2984,7 @@ class test_part_view_command : public alice::command{
             //running on AIG now. Fix it (the same way you use to print_stats with the ntk as parameter I guess)
             if(!store<mockturtle::aig_network>().empty()){
                 //reads in the current network in memory
-                auto aig = store<mockturtle::aig_network>().current();
+                auto& aig = store<mockturtle::aig_network>().current();
 
                 aig.clear_visited();
                 oracle::partition_manager<mockturtle::aig_network> partitions(aig, num_parts);
@@ -2994,22 +2994,26 @@ class test_part_view_command : public alice::command{
                     std::set<mockturtle::aig_network::node> nodes;
 
                     nodes = partitions.get_part_context(i);
+                    std::cout << "Nodes size " << nodes.size() << "\n";
+                    std::cout << "Nodes in partition " << "\n";
+                    for (auto n : nodes ){
+                        std::cout << n << " " << std::endl;
+                    }
 
-                    std::cout << "Total nodes in partition " << i << " : " << nodes.size() << "\n";
+                    mockturtle::cut_rewriting_params ps;
+                    mockturtle::cut_rewriting_stats st;
 
-//                    mockturtle::cut_rewriting_params ps;
-//                    mockturtle::cut_rewriting_stats st;
+                    ps.cut_enumeration_ps.cut_size = 4;
+
+                    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+                    mockturtle::part_rewriting(aig, nodes, resyn, ps, &st);
+
+                    //mockturtle::cut_rewriting( aig, nodes, resyn, ps, &st);
 //
-//                    ps.cut_enumeration_ps.cut_size = 4;
-//
-//                    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-//                    mockturtle::cut_rewriting( part, resyn, ps, &st);
-//                    part = mockturtle::cleanup_dangling( part );
-//
-//                    std::cout << "Nodes in partition after opt " << i << " : " << part.num_gates() << "\n";
-
-
                 }
+                aig = mockturtle::cleanup_dangling( aig );
+                std::cout << "Nodes in network after opt " << " : " << aig.size() << "\n";
+
                 // mockturtle::depth_view aig_depth2{aig};
                 // std::cout << "new aig size = " << aig.num_gates() << " and depth = " << aig_depth2.depth() << "\n";
             }
