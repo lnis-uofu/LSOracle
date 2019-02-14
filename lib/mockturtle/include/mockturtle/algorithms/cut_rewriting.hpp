@@ -381,6 +381,14 @@ public:
       st( st ),
       cost_fn( cost_fn ) {}
 
+  cut_rewriting_impl( Ntk& ntk, std::set<node<Ntk>> nodes, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st, NodeCostFn const& cost_fn )
+    : ntk( ntk ),
+      rewriting_fn( rewriting_fn ),
+      ps( ps ),
+      st( st ),
+      cost_fn( cost_fn ),
+      nodes ( nodes ){}
+
   void run()
   {
     stopwatch t( st.time_total );
@@ -535,6 +543,165 @@ public:
     }
   }
 
+  void run_part()
+  {
+    std::cout << "Optimizing partition " << std::endl;
+    stopwatch t( st.time_total );
+
+    /* enumerate cuts */
+    const auto cuts = call_with_stopwatch( st.time_cuts, [&]() { return cut_enumeration<Ntk, true, cut_enumeration_cut_rewriting_cut>( ntk, ps.cut_enumeration_ps ); } );
+
+    /* for cost estimation we use reference counters initialized by the fanout size */
+    ntk.clear_values();
+    ntk.foreach_node( [&]( auto const& n ) {
+      ntk.set_value( n, ntk.fanout_size( n ) );
+    } );
+
+    /* store best replacement for each cut */
+    node_map<std::vector<signal<Ntk>>, Ntk> best_replacements( ntk );
+
+    /* iterate over all original nodes in the network */
+    const auto size = ntk.size();
+    auto max_total_gain = 0u;
+    progress_bar pbar{ntk.size(), "cut_rewriting |{0}| node = {1:>4}@{2:>2} / " + std::to_string( size ) + "   comm. gain = {3}", ps.progress};
+
+    typename std::set<node<Ntk>>::iterator it;
+
+    for ( auto n : nodes ) {
+      std::cout << "Nodes size is " << nodes.size() << std::endl;
+
+      /* stop once all original nodes were visited */
+      if ( n >= size )
+        return false;
+
+      /* do not iterate over constants or PIs */
+      if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+        return true;
+
+      /* skip cuts with small MFFC */
+      if ( mffc_size( ntk, n ) == 1 )
+        return true;
+
+      /* foreach cut */
+      for ( auto& cut : cuts.cuts( n ) )
+      {
+        /* skip trivial cuts */
+        if ( cut->size() <= 2 )
+          continue;
+
+        const auto tt = cuts.truth_table( *cut );
+        assert( cut->size() == static_cast<unsigned>( tt.num_vars() ) );
+
+        pbar( n, n, best_replacements[n].size(), max_total_gain );
+
+        std::vector<signal<Ntk>> children;
+        for ( auto l : *cut )
+        {
+          children.push_back( ntk.make_signal( ntk.index_to_node( l ) ) );
+        }
+
+        int32_t value = recursive_deref( n );
+        {
+          stopwatch t( st.time_rewriting );
+          int32_t best_gain{-1};
+
+          const auto on_signal = [&]( auto const& f_new ) {
+            auto [v, contains] = recursive_ref_contains( ntk.get_node( f_new ), n );
+            recursive_deref( ntk.get_node( f_new ) );
+
+            int32_t gain = contains ? -1 : value - v;
+
+            if ( gain > 0 || ( ps.allow_zero_gain && gain == 0 ) )
+            {
+              if ( best_gain == -1 )
+              {
+                ( *cut )->data.gain = best_gain = gain;
+                best_replacements[n].push_back( f_new );
+              }
+              else if ( gain > best_gain )
+              {
+                ( *cut )->data.gain = best_gain = gain;
+                best_replacements[n].back() = f_new;
+              }
+            }
+
+            return true;
+          };
+
+          if ( ps.use_dont_cares )
+          {
+            if constexpr ( has_rewrite_with_dont_cares_v<Ntk, RewritingFn, decltype( children.begin() )> )
+            {
+              std::vector<node<Ntk>> pivots;
+              for ( auto const& c : children )
+              {
+                pivots.push_back( ntk.get_node( c ) );
+              }
+              rewriting_fn( ntk, cuts.truth_table( *cut ), satisfiability_dont_cares( ntk, pivots ), children.begin(), children.end(), on_signal );
+            }
+            else
+            {
+              rewriting_fn( ntk, cuts.truth_table( *cut ), children.begin(), children.end(), on_signal );
+            }
+          }
+          else
+          {
+            rewriting_fn( ntk, cuts.truth_table( *cut ), children.begin(), children.end(), on_signal );
+          }
+
+          if ( best_gain > 0 )
+          {
+            max_total_gain += best_gain;
+          }
+        }
+
+        recursive_ref( n );
+      }
+      return true;
+    }
+
+    stopwatch t2( st.time_mis );
+    auto [g, map] = network_cuts_graph( ntk, cuts, ps.allow_zero_gain );
+
+    if ( ps.very_verbose )
+    {
+      std::cout << "[i] replacement dependency graph has " << g.num_vertices() << " vertices and " << g.num_edges() << " edges\n";
+    }
+
+    const auto is = ( ps.candidate_selection_strategy == cut_rewriting_params::minimize_weight ) ? maximum_weighted_independent_set_gwmin( g ) : maximal_weighted_independent_set( g );
+
+    if ( ps.very_verbose )
+    {
+      std::cout << "[i] size of independent set is " << is.size() << "\n";
+    }
+
+    for ( const auto v : is )
+    {
+      const auto v_node = map[v].first;
+      const auto v_cut = map[v].second;
+
+      if ( ps.very_verbose )
+      {
+        std::cout << "[i] try to rewrite cut #" << v_cut << " in node #" << v_node << "\n";
+      }
+
+      if ( best_replacements[v_node].empty() )
+        continue;
+
+      const auto replacement = best_replacements[v_node][v_cut];
+
+      if ( ntk.node_to_index( ntk.is_constant( ntk.get_node( replacement ) ) ) || v_node == ntk.get_node( replacement ) )
+        continue;
+
+      if ( ps.very_verbose )
+      {
+        std::cout << "[i] optimize cut #" << v_cut << " in node #" << v_node << " and replace with node " << ntk.get_node( replacement ) << "\n";
+      }
+
+      ntk.substitute_node( v_node, replacement );
+    }
+  }
+
 private:
   uint32_t recursive_deref( node<Ntk> const& n )
   {
@@ -597,6 +764,7 @@ private:
   cut_rewriting_params const& ps;
   cut_rewriting_stats& st;
   NodeCostFn cost_fn;
+  std::set<node<Ntk>> nodes;
 };
 
 } /* namespace detail */
@@ -665,6 +833,39 @@ void cut_rewriting( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params c
   cut_rewriting_stats st;
   detail::cut_rewriting_impl<Ntk, RewritingFn, NodeCostFn> p( ntk, rewriting_fn, ps, st, cost_fn );
   p.run();
+
+  if ( ps.verbose )
+  {
+    st.report();
+  }
+
+  if ( pst )
+  {
+    *pst = st;
+  }
+}
+
+template<class Ntk, typename node = std::set<node<Ntk>>, class RewritingFn, class NodeCostFn = detail::unit_cost<Ntk>>
+void part_rewriting( Ntk& ntk, node& nodes, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps = {}, cut_rewriting_stats* pst = nullptr, NodeCostFn const& cost_fn = {} )
+{
+  static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
+  static_assert( has_fanout_size_v<Ntk>, "Ntk does not implement the fanout_size method" );
+  static_assert( has_foreach_node_v<Ntk>, "Ntk does not implement the foreach_node method" );
+  static_assert( has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
+  static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
+  static_assert( has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
+  static_assert( has_clear_values_v<Ntk>, "Ntk does not implement the clear_values method" );
+  static_assert( has_incr_value_v<Ntk>, "Ntk does not implement the incr_value method" );
+  static_assert( has_decr_value_v<Ntk>, "Ntk does not implement the decr_value method" );
+  static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
+  static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
+  static_assert( has_index_to_node_v<Ntk>, "Ntk does not implement the index_to_node method" );
+  static_assert( has_substitute_node_v<Ntk>, "Ntk does not implement the substitute_node method" );
+  static_assert( has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
+
+  cut_rewriting_stats st;
+  detail::cut_rewriting_impl<Ntk, RewritingFn, NodeCostFn> part( ntk, nodes, rewriting_fn, ps, st, cost_fn );
+  part.run_part();
 
   if ( ps.verbose )
   {
