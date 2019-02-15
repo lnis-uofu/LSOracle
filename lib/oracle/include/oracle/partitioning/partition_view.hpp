@@ -78,6 +78,7 @@ namespace oracle
             static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
             static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
+
             /* constants */
             add_node( this->get_node( this->get_constant( false ) ) );
             this->set_visited( this->get_node( this->get_constant( false ) ), 1 );
@@ -120,82 +121,6 @@ namespace oracle
         }
 
         inline auto size() const { return static_cast<uint32_t>( _nodes.size() ); }
-        inline signal create_pi( std::string const& name = {} )
-          {
-            std::cout << "part_view create pi\n";
-            (void)name;
-            const auto index = _nodes.size();
-            auto& node = _nodes.emplace_back();
-            ++_num_leaves;
-            return {index, 0};
-          } 
-        inline uint32_t create_po( signal const& f, std::string const& name = {} )
-          {
-            (void)name;
-
-            auto const po_index = _roots.size();
-            _roots.emplace_back( f.index, f.complement );
-            return po_index;
-          }
-        inline signal create_not( signal const& a )
-          {
-            return !a;
-          }
-        inline signal get_constant( bool value ) const
-          {
-            return {0, static_cast<uint64_t>( value ? 1 : 0 )};
-          }
-        inline node get_node( signal const& f ) const
-          {
-            return f.index;
-          }
-        inline signal create_and( signal a, signal b )
-          {
-            /* order inputs */
-            if ( a.index > b.index )
-            {
-              std::swap( a, b );
-            }
-
-            /* trivial cases */
-            if ( a.index == b.index )
-            {
-              return ( a.complement == b.complement ) ? a : get_constant( false );
-            }
-            else if ( a.index == 0 )
-            {
-              return a.complement ? b : get_constant( false );
-            }
-
-            node new_node;
-            new_node.children[0] = a;
-            new_node.children[1] = b;
-
-            const auto index = _nodes.size();
-
-            if ( index >= .9 * _nodes.capacity() )
-            {
-              _nodes.reserve( static_cast<uint64_t>( 3.1415f * index ) );
-            }
-
-            _nodes.push_back( new_node );
-
-            return {index, 0};
-          }
-        inline signal clone_node( mockturtle::aig_network const& other, node const& source, std::vector<signal> const& children )
-          {
-            (void)other;
-            (void)source;
-            assert( children.size() == 2u );
-            return create_and( children[0u], children[1u] );
-          }
-        inline signal clone_node( mockturtle::mig_network const& other, node const& source, std::vector<signal> const& children )
-          {
-            (void)other;
-            (void)source;
-            assert( children.size() == 3u );
-            return create_maj( children[0u], children[1u], children[2u] );
-          }
         inline auto num_pis() const { return _num_leaves; }
         inline auto num_pos() const { return _roots.size(); }
         inline auto num_gates() const { return _nodes.size() - _num_leaves - _num_constants; }
@@ -211,15 +136,11 @@ namespace oracle
 
         inline bool is_ci( node const& pi ) const
         {
+
             const auto beg = _nodes.begin() + _num_constants;
             return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;
         }
 
-        inline bool is_constant( node const& c ) const
-        {
-            const auto beg = _nodes.begin();
-            return std::find( beg, beg + _num_constants, c ) != beg + _num_constants;
-        }
 
         template<typename Fn>
         void foreach_pi( Fn&& fn ) const
@@ -245,59 +166,23 @@ namespace oracle
             mockturtle::detail::foreach_element( _nodes.begin() + _num_constants + _num_leaves, _nodes.end(), fn );
         }
 
-        // template<typename Fn>
-        // void foreach_fanin(node const& n, Fn&& fn) const
-        // {
-        //     detail::foreach_element( _children[n].begin(), _children[n].end(), fn );
-        // }
-
         uint32_t fanout_size( node const& n ) const
         {
             return _fanout_size.at( node_to_index(n) );
         }
 
-        // void substitute_node( node const& old_node, signal const& new_signal )
-        // {
-        //     std::cout << "partition view sub node\n";
-        //     /* find all parents from old_node */
-        //     for ( auto& n : _nodes )
-        //     {
-        //         for ( auto& child : n.children )
-        //         {
-        //             if ( child.index == old_node )
-        //             {
-        //                 child.index = new_signal.index;
-        //                 child.weight ^= new_signal.complement;
-
-        //                 // increment fan-in of new node
-        //                 _nodes[new_signal.index].data[0].h1++;
-        //             }
-        //         }
-        //     }
-
-        //     /* check outputs */
-        //     for ( auto& output : _roots )
-        //     {
-        //         if ( output.index == old_node )
-        //         {
-        //             output.index = new_signal.index;
-        //             output.weight ^= new_signal.complement;
-
-        //             // increment fan-in of new node
-        //             _nodes[new_signal.index].data[0].h1++;
-        //         }
-        //     }
-
-        //     // reset fan-in of old node
-        //     _nodes[old_node].data[0].h1 = 0;
-        // }
+        std::vector<signal> get_children( int nodeIdx ) const
+        {
+            return _children[nodeIdx];
+        }
 
 
     private:
-        void add_node( node const& n )
+        signal add_node( node const& n )
         {
             
             _node_to_index[n] = _nodes.size();
+            _visited[_node_to_index[n]] = 0;
             _nodes.push_back( n );
 
             auto fanout_counter = 0;
@@ -309,6 +194,8 @@ namespace oracle
                 }
             }
             _fanout_size.push_back( fanout_counter );
+            std::cout << "added node of index = " << this->make_signal(n).index << "\n";
+            return this->make_signal(n);
         }
 
         void traverse( node const& n )
@@ -317,39 +204,36 @@ namespace oracle
             if ( this->visited( n ) == 1 )
                 return;
 
-            for(int i = 0; i < this->_storage->nodes[n].children.size(); i++){
-                auto f = this->_storage->nodes[n].children[i];
+            this->foreach_fanin( n, [&]( const auto& f ) {
                 traverse( this->get_node( f ) );
-            }
+            } );
 
             add_node( n );
+            // std::cout << "adding node " << this->node_to_index(n) << "\n";
             this->set_visited( n, 1 );
         }
 
-        // void update_fanin( Ntk const& ntk )
-        // {
-        //     std::cout << "update_fanin\n";
-        //     foreach_gate ([&]( auto node ){
-        //         std::vector<signal> children;
-        //         int nodeIdx = node_to_index(node);
-        //         std::cout << "nodeIdx = " << nodeIdx << "\n";
-        //         for(auto const& child : ntk._storage->nodes[node].children){
-        //             std::cout << "original child = " << child.index << "\n";
-        //             std::cout << "original child data = " << child.data << "\n";
-        //             auto orig_node = ntk.index_to_node(child.index);
-        //             auto part_node = node_to_index(orig_node);
-        //             auto sig = ntk.make_signal(part_node);
-        //             if(child.data & 1){
-        //                 std::cout << "orig child inverted\n";
-        //                 sig = ntk.create_not(sig);
-        //             }
-        //             std::cout << "child in partition = " << sig.index << "\n";
-        //             std::cout << "child in partition data = " << sig.data << "\n";
-        //             children.push_back(sig);
-        //         }
-        //         _children[node] = children;
-        //     });
-        // }
+        void update_fanin( Ntk const& ntk )
+        {
+            std::cout << "update_fanin\n";
+            foreach_gate ([&]( auto node ){
+                std::vector<signal> children;
+                int nodeIdx = node_to_index(node);
+                // std::cout << "nodeIdx = " << nodeIdx << "\n";
+                for(auto const& child : ntk._storage->nodes[node].children){
+                    auto orig_node = ntk.index_to_node(child.index);
+                    auto part_node = node_to_index(orig_node);
+                    auto sig = ntk.make_signal(part_node);
+                    if(child.data & 1){
+                        sig = ntk.create_not(sig);
+                    }
+                    children.push_back(sig);
+                }
+                auto s = signal(node, 0);
+                // std::cout << "adding children of " << s.index << "\n";
+                _children[nodeIdx] = children;
+            });
+        }
 
         // void extend( Ntk const& ntk )
         // {
@@ -398,34 +282,102 @@ namespace oracle
             ntk.foreach_po( [&]( auto const& s ){
                 pos.push_back( ntk.get_node( s ) );
             });
-            /* compute partition outputs */
+
+            /* compute window outputs */
             for ( const auto& n : _nodes )
             {
+                // if ( ntk.is_constant( n ) || ntk.is_pi( n ) ) continue;
+                int nodeIdx = node_to_index(n);
                 if ( std::find( pos.begin(), pos.end(), n ) != pos.end() )
                 {
                     auto s = this->make_signal( n );
+                    auto o = signal(nodeIdx, 0);
                     if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                     {
+                        std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
                         _roots.push_back( s );
+                        _outputs.push_back( o );
                     }
                     continue;
                 }
+
                 mockturtle::fanout_view fanout{ntk};
                 fanout.foreach_fanout( n, [&]( auto const& p ){
-                    if(!is_constant(n))
+                    if(!ntk.is_constant(n) && !is_pi(n))
                     {
                         if ( std::find( _nodes.begin(), _nodes.end(), p ) == _nodes.end() )
                         {
+
                             auto s = this->make_signal( n );
+                            auto o = signal(nodeIdx, 0);
                             if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                             {
+                                std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
                                 _roots.push_back( s );
+                                _outputs.push_back( o );
                                 return false;
                             }
                         }
-                        return true;
                     }
+                    return true;
+                });
+            }
+        }
+        // void add_roots( Ntk const& ntk )
+        // {
+        //     // std::cout << "add roots\n";
+        //     /* compute po nodes */
+        //     std::vector<node> pos;
+        //     ntk.foreach_po( [&]( auto const& s ){
+        //         pos.push_back( ntk.get_node( s ) );
+        //     });
+        //     /* compute partition outputs */
+        //     for ( const auto& n : _nodes )
+        //     {
+        //         int nodeIdx = node_to_index(n);
+        //         // std::cout << "nodeIdx = " << node_to_index(n) << "\n";
+        //         if ( std::find( pos.begin(), pos.end(), n ) != pos.end() )
+        //         {
+        //             auto s = this->make_signal( n );
+        //             auto o = signal(nodeIdx, 0);
+        //             if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
+        //             {
+        //                 // std::cout << "pushing " << s.index << " to _roots\n";
+        //                 _roots.push_back( s );
+        //                 // std::cout << "pushing " << o.index << " to _outputs\n";
+        //                 _outputs.push_back( o );
+        //             }
+        //             continue;
+        //         }
+        //         mockturtle::fanout_view fanout{ntk};
+        //         fanout.foreach_fanout( n, [&]( auto const& p ){
+        //             if(!is_constant(n) && !is_pi(n))
+        //             {
+        //                 if ( std::find( _nodes.begin(), _nodes.end(), p ) == _nodes.end() )
+        //                 {
+        //                     auto s = this->make_signal( n );
+        //                     auto o = signal(nodeIdx, 0);
+        //                     if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
+        //                     {
+        //                         // std::cout << "pushing " << s.index << " to _roots\n";
+        //                         _roots.push_back( s );
+        //                         // std::cout << "pushing " << o.index << " to _outputs\n";
+        //                         _outputs.push_back( o );
+        //                         return false;
+        //                     }
+        //                 }
+        //                 return true;
+        //             }
                     
+        //         });
+        //     }
+        // }
+
+        void check_po(){
+            for(int i = 0; i < _outputs.size(); i++){
+                // std::cout << "output = " << _outputs.at(i).index << "\n";
+                foreach_fanin( get_node(_outputs.at(i)), [&]( auto const& f ) {
+                    // std::cout << "fanin = " << f.index << "\n";
                 });
             }
         }
@@ -433,9 +385,12 @@ namespace oracle
     public:
         unsigned _num_constants{1};
         unsigned _num_leaves{0};
+        Ntk const* ntk;
         std::vector<node> _nodes;
-        std::unordered_map<node, std::vector<signal>> _children;
+        std::unordered_map<int, uint32_t> _visited;
+        std::unordered_map<int, std::vector<signal>> _children;
         std::unordered_map<node, uint32_t> _node_to_index;
+        std::vector<signal> _outputs;
         std::vector<signal> _roots;
         std::vector<unsigned> _fanout_size;
     };

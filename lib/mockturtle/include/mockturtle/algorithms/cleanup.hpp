@@ -95,6 +95,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
         children.push_back( f );
       }
     } );
+    // std::cout << "cloning node\n";
     old_to_new[node] = dest.clone_node( ntk, node, children );
   } );
 
@@ -102,6 +103,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
   std::vector<signal<NtkDest>> fs;
   ntk.foreach_po( [&]( auto po ) {
     const auto f = old_to_new[po];
+    // std::cout << "cleanup pushing po\n";
     if ( ntk.is_complemented( po ) )
     {
       fs.push_back( dest.create_not( f ) );
@@ -158,7 +160,7 @@ Ntk cleanup_dangling( Ntk const& ntk )
 
   Ntk dest;
   std::vector<signal<Ntk>> pis;
-
+  // std::cout << "cleaning dangling\n";
   //creates latches in the target network
   for ( auto i = 0u; i < ntk.num_latches(); ++i ){
       dest._storage->data.latches.emplace_back(0);
@@ -167,20 +169,23 @@ Ntk cleanup_dangling( Ntk const& ntk )
   //create PIs
   for ( auto i = 0u; i < ntk.num_pis() - ntk.num_latches(); ++i )
   {
+      // std::cout << "creating pi\n";
       pis.push_back( dest.create_pi() );
   }
-
+  // std::cout << "done with PIs\n";
   //create Registers Outputs
   for ( auto i = ntk.num_pis() - ntk.num_latches(); i < ntk.num_pis(); ++i )
   {
+      // std::cout << "cleanup create_ro\n";
       pis.push_back( dest.create_ro() );
   }
-
+  // std::cout << "done with ROs\n";
   for ( auto f : cleanup_dangling( ntk, dest, pis.begin(), pis.end() ) )
   {
+    // std::cout << "cleanup create_po\n";
     dest.create_po( f );
   }
-
+  // std::cout << "done with POs\n";
   return dest;
 }
 

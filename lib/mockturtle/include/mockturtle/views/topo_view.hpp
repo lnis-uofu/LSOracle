@@ -136,6 +136,10 @@ public:
     update();
   }
 
+  std::vector<node> get_top_view_nodes(){
+    return topo_order;
+  }
+
   /*! \brief Reimplementation of `foreach_node`. */
   template<typename Fn>
   void foreach_node( Fn&& fn ) const
