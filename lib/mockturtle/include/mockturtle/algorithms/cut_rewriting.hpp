@@ -572,15 +572,18 @@ public:
 
       /* stop once all original nodes were visited */
       if ( n >= size )
-        return false;
+        continue;
+        //return false;
 
       /* do not iterate over constants or PIs */
       if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
-        return true;
+        continue;
+        //return true;
 
       /* skip cuts with small MFFC */
       if ( mffc_size( ntk, n ) == 1 )
-        return true;
+        continue;
+        //return true;
 
       /* foreach cut */
       for ( auto& cut : cuts.cuts( n ) )
@@ -657,7 +660,8 @@ public:
 
         recursive_ref( n );
       }
-      return true;
+      continue;
+      //return true;
     }
 
     stopwatch t2( st.time_mis );
