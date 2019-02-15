@@ -151,12 +151,10 @@ private:
   {
     if ( this->visited( n ) )
       return _levels[n];
-
     if ( this->is_constant( n ) || this->is_ci( n )  )
     {
       return _levels[n] = 0;
     }
-
     uint32_t level{0};
     this->foreach_fanin( n, [&]( auto const& f ) {
         auto clevel = compute_levels( this->get_node( f ) );

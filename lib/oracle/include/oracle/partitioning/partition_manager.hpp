@@ -61,7 +61,9 @@ namespace oracle
         using signal = typename Ntk::signal;
 
     public:
-        explicit partition_manager( Ntk const& ntk, /*std::string hmetis_file*/int part_num ) : Ntk( ntk )
+        partition_manager(){}
+
+        partition_manager( Ntk const& ntk, /*std::string hmetis_file*/int part_num ) : Ntk( ntk )
         {
 
             static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
@@ -82,7 +84,7 @@ namespace oracle
             /******************
             Generate HyperGraph
             ******************/
-            oracle::hypergraph<mockturtle::aig_network> t(ntk);
+            oracle::hypergraph<Ntk> t(ntk);
             t.get_hypergraph(ntk);
             t.return_hyperedges(kahypar_connections);
             kahyp_num_hyperedges = t.get_num_edges();
@@ -113,19 +115,19 @@ namespace oracle
 
             for ( int j = 0; j < kahyp_num_sets+1; j++){
               hyperedge_indices[j] = kahyp_set_indeces[j];
-              std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
+              // std::cout << "HyperEdge indices at " << j << " is " << hyperedge_indices[j] << std::endl;
             }
 
             std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges = std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
 
             for ( int i = 0; i < kahyp_num_indeces_hyper; i++){
               hyperedges[i] = kahypar_connections[i];
-              std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
+              // std::cout << "HyperEdges at " << i << " is " << hyperedges[i] << std::endl;
             }
 
-            std::cout << "Number of hyperedges " << num_hyperedges << "\n"
-            << "Number of vertices " << num_vertices << "\n"
-            << "Number of partitions " << num_partitions << "\n";
+            // std::cout << "Number of hyperedges " << num_hyperedges << "\n"
+            // << "Number of vertices " << num_vertices << "\n"
+            // << "Number of partitions " << part_num << "\n";
 
             const double imbalance = 0.03;
             const kahypar_partition_id_t k = part_num;
@@ -139,9 +141,9 @@ namespace oracle
                               hyperedge_indices.get(), hyperedges.get(),
                               &objective, context, partition.data());
 
-            std::cout << "################ Partitions ################" << std::endl;
+            // std::cout << "################ Partitions ################" << std::endl;
             for(int i = 0; i < num_vertices; ++i) {
-              std::cout << partition[i] << std::endl;
+              // std::cout << partition[i] << std::endl;
               add_to_partition(i, partition[i]);
             }
 
@@ -257,10 +259,9 @@ namespace oracle
                     //Check to see if the current node is in the partition
                     if(partitionMap[nodeIdx] == i){
 
-                        //The current node is in the output list and it is a constant
+                        //The current node is not in the output list and it is a constant
                         if(ntk.is_po(node) && ntk.is_constant(node) 
                                 && partitionOutputs[i].find(node) == partitionOutputs[i].end()){
-
                             partitionOutputs[i].insert(node);
                         }
 
@@ -280,8 +281,7 @@ namespace oracle
                                 
                             if( (ntk.is_po(node) || partitionConn[i].find(partitionConn[i][nodeIdx].at(j)) == partitionConn[i].end())
                                  && partitionOutputs[i].find(node) == partitionOutputs[i].end()
-                                    && !ntk.is_pi(nodeIdx) && partitionInputs[i].find(node) == partitionInputs[i].end()){
-                                
+                                    && !ntk.is_pi(nodeIdx) && !ntk.is_constant(nodeIdx) && partitionInputs[i].find(node) == partitionInputs[i].end()){
                                 partitionOutputs[i].insert(node);
                             }
                                 //Primary output is tied directly to a primary input
@@ -294,7 +294,7 @@ namespace oracle
                                 int childIdx = fn.index;
                                 bool child = partitionConn[i].find(childIdx) != partitionConn[i].end();
                                 if(!ntk.is_pi(nodeIdx)){
-                                    if(!child && partitionInputs[i].find(childIdx) == partitionInputs[i].end()){
+                                    if(!ntk.is_constant(childIdx) && !child && partitionInputs[i].find(childIdx) == partitionInputs[i].end()){
                                         partitionInputs[i].insert(ntk.get_node(fn));
                                     }
                                 }
@@ -342,6 +342,32 @@ namespace oracle
         //     }
         // }
 
+        
+          
+        // DFS traversal of the vertices reachable from v. 
+        // It uses recursive DFSUtil() 
+        template<class NtkDFS>
+        void dfs(NtkDFS const& ntk, signal sig,  std::unordered_map<node, int> visited, std::vector<node> &dfs_order) 
+        { 
+            
+            auto node = ntk.get_node(sig);
+            if(!ntk.visited(node)){
+                
+                // std::cout << nodeIdx << " ";
+                dfs_order.push_back(node);
+                ntk.set_visited(node, 1);
+
+                if(!ntk.is_pi(node)){
+                    ntk.foreach_fanin( node, [&] (auto fn){
+                        if(!ntk.is_constant(ntk.get_node(fn)))
+                            dfs(ntk, fn, visited, dfs_order);
+                    });
+                }
+                
+            }
+        } 
+    
+
     public:
 
         oracle::partition_view<Ntk> create_part( Ntk const& ntk, int part ){
@@ -351,6 +377,141 @@ namespace oracle
         int get_part_num(){
             return num_partitions;
         }
+
+        template<class NtkPart, class NtkOpt>
+        void synchronize_part(oracle::partition_view<NtkPart> part, NtkOpt const& opt, Ntk const& ntk){
+
+            std::vector<node> dfs_order;
+            std::unordered_map<node, int> visited;
+            opt.foreach_node( [&](auto node){
+                visited[node] = 0;
+            });
+            opt.foreach_po( [&]( auto po ) {
+                dfs(opt, po, visited, dfs_order);
+                std::cout << "DFS for opt done\n";
+                for(int i = 0; i < dfs_order.size(); i++){
+                    std::cout << dfs_order.at(i) << " ";
+                }
+                std::cout << "\n";
+            });
+            visited.clear();
+            part.foreach_node( [&](auto node){
+                visited[node] = 0;
+            });
+            std::vector<node> dfs_order_part;
+            part.foreach_po( [&]( auto po ) {
+                dfs(part, po, visited, dfs_order_part);
+                std::cout << "DFS for part done\n";
+                for(int i = 0; i < dfs_order_part.size(); i++){
+                    std::cout << dfs_order_part.at(i) << " ";
+                }
+                std::cout << "\n";
+            });
+                
+            // mockturtle::node_map<signal, NtkOpt> old_to_new( opt );
+
+            // opt.foreach_pi( [&]( auto node ) {
+            //     old_to_new[node] = opt.make_signal(node);
+            // });
+
+            // mockturtle::topo_view part_top{part};
+            // mockturtle::topo_view opt_top{opt};
+            // std::vector<node> opt_nodes = opt_top.get_top_view_nodes();
+            // std::cout << "opt_top size = " << opt_nodes.size() << "\n";
+
+            for(int i = 0; i < dfs_order.size(); i++){
+                node opt_node = dfs_order.at(i);
+                node part_node = dfs_order_part.at(i);
+                 if ( opt.is_constant( opt_node ) || opt.is_ci( opt_node ) )
+                    continue;
+
+                /* collect children */
+                std::vector<signal> children;
+                std::cout << "nodeIdx = " << opt.node_to_index(opt_node) << "\n";
+                opt.foreach_fanin( opt_node, [&]( auto child, auto ) {
+                    // const auto f = old_to_new[child];
+                    if ( ntk.is_complemented( child ) )
+                    {
+                        std::cout << "adding child " << child.index << "\n";
+                        children.push_back( ntk.create_not( child ) );
+                    }
+                    else
+                    {
+                        std::cout << "adding child " << child.index << "\n";
+                        children.push_back( child );
+                    }
+                } );
+
+                // std::cout << "cloning node\n";
+                auto clone = ntk.clone_node( opt, opt_node, children );
+                std::cout << "before substitution ntk size = " << ntk.num_gates() << "\n";
+                ntk.foreach_gate( [&](auto node){
+                    std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
+                    std::cout << "child[0] = " << ntk._storage->nodes[node].children[0].index << "\n";
+                    std::cout << "child[1] = " << ntk._storage->nodes[node].children[1].index << "\n";
+                    std::cout << "child[2] = " << ntk._storage->nodes[node].children[2].index << "\n";
+                });
+                std::cout << "substituting node = " << ntk.node_to_index(part_node) << "\n";
+                ntk.foreach_fanin( part_node, [&] (auto fn){
+                    std::cout << "original node child = " << fn.index << "\n";
+                });
+                ntk.substitute_node(part_node, clone);
+                std::cout << "updated ntk size = " << ntk.num_gates() << "\n";
+                ntk.foreach_gate( [&](auto node){
+                    std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
+                    std::cout << "child[0] = " << ntk._storage->nodes[node].children[0].index << "\n";
+                    std::cout << "child[1] = " << ntk._storage->nodes[node].children[1].index << "\n";
+                    std::cout << "child[2] = " << ntk._storage->nodes[node].children[2].index << "\n";
+                });
+            }
+
+            opt.foreach_po( [&]( auto po ) {
+                // const auto f = old_to_new[po];
+                // std::cout << "cleanup pushing po\n";
+                if ( opt.is_complemented( po ) )
+                {
+                    ntk.create_not( po );
+                }
+            } );
+            // std::vector<node> opt_nodes = opt_top.get_top_view_nodes();
+
+            // for(int i = 0; i < opt_nodes.size(); i++){
+            //     node opt_node = opt_nodes.at(i);
+            //     node part_node = part_top._nodes.at(i);
+            //     int ntk_nodeIdx = part_top.node_to_index(part_node);
+            //     std::vector<signal> children;
+            //     if (!opt_top.is_pi(opt_top.node_to_index(opt_node)) && !opt_top.is_ci(opt_top.node_to_index(opt_node))){
+            //         std::cout << "opt_top nodeIdx = " << opt_top.node_to_index(opt_node) << "\n";
+            //         part_top.foreach_fanin( part_node, [&] (auto fn){
+            //             std::cout << "adding child = " << fn.index << "\n";
+            //             children.push_back(fn);
+            //         });
+            //         std::cout << "before substitution ntk size = " << ntk.num_gates() << "\n";
+            //         ntk.foreach_gate( [&](auto node){
+            //             std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
+            //             std::cout << "child[0] = " << ntk._storage->nodes[node].children[0].index << "\n";
+            //             std::cout << "child[1] = " << ntk._storage->nodes[node].children[1].index << "\n";
+            //             std::cout << "child[2] = " << ntk._storage->nodes[node].children[2].index << "\n";
+            //         });
+            //         auto clone = ntk.clone_node(opt_top, opt_node, children);
+            //         std::cout << "updated after clone ntk size = " << ntk.num_gates() << "\n";
+            //         std::cout << "substituting node = " << ntk.node_to_index(part_node) << "\n";
+            //         ntk.foreach_fanin( part_node, [&] (auto fn){
+            //             std::cout << "original node child = " << fn.index << "\n";
+            //         });
+            //         ntk.substitute_node(part_node, clone);
+            //         std::cout << "updated ntk size = " << ntk.num_gates() << "\n";
+            //         ntk.foreach_gate( [&](auto node){
+            //             std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
+            //             std::cout << "child[0] = " << ntk._storage->nodes[node].children[0].index << "\n";
+            //             std::cout << "child[1] = " << ntk._storage->nodes[node].children[1].index << "\n";
+            //             std::cout << "child[2] = " << ntk._storage->nodes[node].children[2].index << "\n";
+            //         });
+            //     }
+                
+                
+            // }
+        }
         
         // template<typename Fn>
         // void foreach_partition( Fn&& fn ) const{
@@ -359,6 +520,7 @@ namespace oracle
         //                      fn );
         // }
         //Map of each node's respective connection indeces in each respective partition
+
         std::unordered_map<int, std::unordered_map<int, std::vector<int>>> partitionConn;
         //The connections coming into a specific partition
         std::unordered_map<int, std::set<node>> partitionInputs;
