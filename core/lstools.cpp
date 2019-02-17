@@ -3055,93 +3055,71 @@ class test_part_view_command : public alice::command{
             if(!store<mockturtle::mig_network>().empty()){
                 
                 auto ntk = store<mockturtle::mig_network>().current();
+
+                std::string filename = ntk._storage->net_name + "_part_" + std::to_string(num_parts) + ".v";
                 
                 mockturtle::depth_view depth{ntk};
                 std::cout << "ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
                 // mockturtle::fanout_view<mockturtle::aig_network> fanout_ntk( aig );
                 ntk.clear_visited();
                 oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_parts);
-
+                std::vector<oracle::partition_view<mockturtle::mig_network>> parts;
+                std::vector<mockturtle::mig_network> opt_nets;
                 for(int i = 0; i < partitions.get_part_num(); i++){
-                    std::cout << "about to create part\n";
                     oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
-                    std::cout << "created part\n";
+                    parts.push_back(part);
                     std::cout << "\nPartition " << i << "\n";
                     mockturtle::depth_view part_depth{part};
                     std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
+                    ntk.foreach_gate( [&] (auto node ){
+                        std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
+                        ntk.foreach_fanin(node, [&]( auto const& conn, auto i ){
+                            std::cout << "child[" << i << "] = " << conn.index << "\n";
+                        });
+                    });
                     mockturtle::mig_npn_resynthesis resyn;
                     auto mig2 = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn );
-                    std::cout << "before optimization\n";
-                    mig2.foreach_node( [&]( auto node ) {
-                        int nodeIdx = mig2.node_to_index(node);
-                        std::cout << "nodeIdx = " << nodeIdx << "\n";
-                        mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
+                    
+                    // std::cout << "before optimization\n";
+                    // mig2.foreach_node( [&]( auto node ) {
+                    //     int nodeIdx = mig2.node_to_index(node);
+                    //     std::cout << "nodeIdx = " << nodeIdx << "\n";
+                    //     mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
+                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
+                    //     });
+                    // });
                     mockturtle::mig_script migopt;
                     mig2 = migopt.run(mig2);
+                    opt_nets.push_back(mig2);
                     mockturtle::depth_view mig_depth2{mig2};
-                    std::cout << "new mig size = " << mig2.num_gates() << " and depth = " << mig_depth2.depth() << "\n";
-                    mig2.foreach_node( [&]( auto node ) {
-                        int nodeIdx = mig2.node_to_index(node);
-                        std::cout << "nodeIdx = " << nodeIdx << "\n";
-                        mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    // part.synchronize_part(mig2);
-                    partitions.synchronize_part(part, mig2, ntk);
-                    // part.foreach_gate( [&](auto node){
-                    //     int nodeIdx = part.node_to_index(node);
+                    // std::cout << "new mig size = " << mig2.num_gates() << " and depth = " << mig_depth2.depth() << "\n";
+                    // mig2.foreach_node( [&]( auto node ) {
+                    //     int nodeIdx = mig2.node_to_index(node);
                     //     std::cout << "nodeIdx = " << nodeIdx << "\n";
-                    //     std::cout << "child[0] = " << part.get_children(nodeIdx).at(0).index << "\n";
-                    //     std::cout << "child[1] = " << part.get_children(nodeIdx).at(1).index << "\n";
-                    //     std::cout << "child[1] = " << part.get_children(nodeIdx).at(2).index << "\n";
+                    //     mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
+                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
+                    //     });
                     // });
-                    // mockturtle::depth_view part_depth{part};
-                    // std::cout << "orig majority nodes = " << part.num_gates() << " and orig depth = " << part_depth.depth() << "\n";
-                    // // std::cout << "running exact synthesis\n";
-                    // // auto part_outputs = part.outputs();
-                    // // percy::spec spec;
-                    // // percy::chain c;
-                    // // for(int j = 0; j < part_outputs.size(); j++){
-                    // //     spec[0] = part_outputs.at(j);
-                    // // }
-                    // // auto result = percy::synthesize( spec, c );
-                    // // std::cout << "exact synthesis success = " << (result == percy::success) << "\n";
-                    // // mockturtle::akers_resynthesis<mockturtle::partition_view<mockturtle::aig_network>> resyn1;
-                    // // mockturtle::cut_rewriting_params ps;
-                    // // ps.cut_enumeration_ps.cut_size = 4;
-                    // // mockturtle::cut_rewriting(part, resyn1, ps);
-                    // // part = mockturtle::cleanup_dangling( part );
-
-                    // std::cout << "mig_algebraic_depth_rewriting\n";
-                    // mockturtle::mig_algebraic_depth_rewriting_params pm;
-                    // pm.selective;
-                    // mockturtle::mig_algebraic_depth_rewriting(part_depth, pm);
-
-                    // part = mockturtle::cleanup_dangling( part );
-
-                    // std::cout << "depth view of part\n";
-                    // mockturtle::depth_view new_part_depth{part};
-                    // // mockturtle::mig_script migopt;
-                    // // mig = migopt.run(mig);
-                    // // mockturtle::write_verilog(mig, aig._storage->net_name + "_" + std::to_string(i) + "_opt.v");
-                    // // mockturtle::depth_view mig_depth{mig};
-                    // std::cout << "new majority nodes = " << part.num_gates() << " and new depth = " << new_part_depth.depth() << "\n";
+                    // part.synchronize_part(mig2);
+                    
+                    
+                    // partitions.synchronize_part(part, mig2, ntk);
+                    
+                    
                 }
+                partitions.connect_outputs(parts, opt_nets, ntk);
+                
                 ntk = mockturtle::cleanup_dangling( ntk );
                 mockturtle::depth_view ntk_depth2{ntk};
-                std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
+                
                 ntk.foreach_gate( [&](auto node){
                     std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
                     std::cout << "child[0] = " << ntk._storage->nodes[node].children[0].index << "\n";
                     std::cout << "child[1] = " << ntk._storage->nodes[node].children[1].index << "\n";
                     std::cout << "child[2] = " << ntk._storage->nodes[node].children[2].index << "\n";
                 });
-                
-                mockturtle::write_verilog(ntk, "optimizeed.v");
+                std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
+                mockturtle::write_verilog(ntk, filename);
             }
             else{
                 std::cout << "There is no stored AIG network\n";
@@ -3828,6 +3806,9 @@ class test_part_view_command : public alice::command{
 
         mockturtle::mig_script migopt;
         opt = migopt.run(opt);
+
+        mockturtle::depth_view new_mig_depth{opt};
+        std::cout << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
 
 	}
 

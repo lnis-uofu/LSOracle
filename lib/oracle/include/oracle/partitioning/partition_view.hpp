@@ -123,7 +123,12 @@ namespace oracle
         inline auto size() const { return static_cast<uint32_t>( _nodes.size() ); }
         inline auto num_pis() const { return _num_leaves; }
         inline auto num_pos() const { return _roots.size(); }
-        inline auto num_gates() const { return _nodes.size() - _num_leaves - _num_constants; }
+        inline auto num_gates() const { 
+            std::cout << "_nodes.size() = " << _nodes.size() << "\n";
+            std::cout << "_num_leaves = " << _num_leaves << "\n";
+            std::cout << "_num_constants = " << _num_constants << "\n";
+            return _nodes.size() - _num_leaves - _num_constants; 
+        }
 
         inline auto node_to_index( const node& n ) const { return _node_to_index.at( n ); }
         inline auto index_to_node( uint32_t index ) const { return _nodes[index]; }
@@ -194,7 +199,7 @@ namespace oracle
                 }
             }
             _fanout_size.push_back( fanout_counter );
-            std::cout << "added node of index = " << this->make_signal(n).index << "\n";
+            std::cout << _nodes.size() << " added node of index = " << this->make_signal(n).index << "\n";
             return this->make_signal(n);
         }
 

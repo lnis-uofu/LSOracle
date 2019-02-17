@@ -216,27 +216,19 @@ private:
     if ( auto cand = associativity_candidate( ocs[0], ocs[1], ocs2[0], ocs2[1], ocs2[2] ); cand )
     {
       const auto& [x, y, z, u, assoc] = *cand;
-      // std::cout << "create_maj\n";
       auto opt = ntk.create_maj( z, assoc ? u : x, ntk.create_maj( x, y, u ) );
-      std::cout << "sub node\n";
-      std::cout << "ntk size = " << ntk.num_gates() << "\n";
       ntk.substitute_node( n, opt );
-      std::cout << "new ntk size = " << ntk.num_gates() << "\n";
       ntk.update_levels();
 
       return true;
     }
 
     /* distributivity */
-    // std::cout << "create_maj\n";
     auto opt = ntk.create_maj( ocs2[2],
                                ntk.create_maj( ocs[0], ocs[1], ocs2[0] ),
                                ntk.create_maj( ocs[0], ocs[1], ocs2[1] ) );
-    // std::cout << "sub node\n";
-    std::cout << "sub node\n";
-      std::cout << "ntk size = " << ntk.num_gates() << "\n";
+
     ntk.substitute_node( n, opt );
-    std::cout << "new ntk size = " << ntk.num_gates() << "\n";
     ntk.update_levels();
     return true;
   }
