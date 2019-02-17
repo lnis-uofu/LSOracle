@@ -3066,48 +3066,26 @@ class test_part_view_command : public alice::command{
                 std::vector<oracle::partition_view<mockturtle::mig_network>> parts;
                 std::vector<mockturtle::mig_network> opt_nets;
                 for(int i = 0; i < partitions.get_part_num(); i++){
+
                     oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
-                    parts.push_back(part);
                     std::cout << "\nPartition " << i << "\n";
                     mockturtle::depth_view part_depth{part};
                     std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                    ntk.foreach_gate( [&] (auto node ){
-                        std::cout << "nodeIdx = " << ntk.node_to_index(node) << "\n";
-                        ntk.foreach_fanin(node, [&]( auto const& conn, auto i ){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
+                    
                     mockturtle::mig_npn_resynthesis resyn;
-                    auto mig2 = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn );
+                    auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn );
                     
-                    // std::cout << "before optimization\n";
-                    // mig2.foreach_node( [&]( auto node ) {
-                    //     int nodeIdx = mig2.node_to_index(node);
-                    //     std::cout << "nodeIdx = " << nodeIdx << "\n";
-                    //     mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
-                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    //     });
-                    // });
+                    
                     mockturtle::mig_script migopt;
-                    mig2 = migopt.run(mig2);
-                    opt_nets.push_back(mig2);
-                    mockturtle::depth_view mig_depth2{mig2};
-                    // std::cout << "new mig size = " << mig2.num_gates() << " and depth = " << mig_depth2.depth() << "\n";
-                    // mig2.foreach_node( [&]( auto node ) {
-                    //     int nodeIdx = mig2.node_to_index(node);
-                    //     std::cout << "nodeIdx = " << nodeIdx << "\n";
-                    //     mig2.foreach_fanin(node, [&]( auto const& conn, auto i ) {
-                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    //     });
-                    // });
-                    // part.synchronize_part(mig2);
+                    opt_mig = migopt.run(opt_mig);
+                    mockturtle::depth_view opt_mig_depth{opt_mig};
+                    std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
                     
-                    
-                    // partitions.synchronize_part(part, mig2, ntk);
+                    partitions.synchronize_part(part, opt_mig, ntk);
                     
                     
                 }
-                partitions.connect_outputs(parts, opt_nets, ntk);
+                partitions.connect_outputs(ntk);
                 
                 ntk = mockturtle::cleanup_dangling( ntk );
                 mockturtle::depth_view ntk_depth2{ntk};
