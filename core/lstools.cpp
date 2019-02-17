@@ -3063,7 +3063,9 @@ class test_part_view_command : public alice::command{
                 oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_parts);
 
                 for(int i = 0; i < partitions.get_part_num(); i++){
+                    std::cout << "about to create part\n";
                     oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
+                    std::cout << "created part\n";
                     std::cout << "\nPartition " << i << "\n";
                     mockturtle::depth_view part_depth{part};
                     std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
