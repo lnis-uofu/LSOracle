@@ -2998,67 +2998,50 @@ class test_part_view_command : public alice::command{
                 mockturtle::depth_view depth{ntk};
                 std::cout << "ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
 
-                // std::vector<int> part_aig_opt = {0, 1, 2};
-                // std::vector<int> part_mig_opt = {3, 4};
+                std::vector<int> part_aig_opt = {};
+                std::vector<int> part_mig_opt = {0, 1, 2};
 
                 oracle::partition_manager<mockturtle::mig_network> partitions_aig(ntk, num_parts);
+                // for(int i = 0; i < part_aig_opt.size(); i++){
+
+                //     oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk, part_aig_opt.at(i));
+                    
+                    
+                //     std::cout << "\nPartition " << part_aig_opt.at(i) << "\n";
+                //     mockturtle::depth_view part_depth{part_aig};
+                //     std::cout << "part size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
+
+                //     mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
+                //     auto aig_opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
+                //     mockturtle::aig_script aigopt;
+                //     aig_opt = aigopt.run(aig_opt);
+                    
+                //     mockturtle::depth_view part_aig_depth{aig_opt};
+                //     std::cout << "new part size = " << aig_opt.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+                //     partitions_aig.synchronize_part(part_aig, aig_opt, ntk);
+                // }
+
+                mockturtle::mig_npn_resynthesis resyn_mig;
+                // auto ntk_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( ntk, resyn_mig );
+
+                // oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
+                //     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
+
                 for(int i = 0; i < num_parts; i++){
 
-                    oracle::partition_view<mockturtle::mig_network> part_aig = partitions_aig.create_part(ntk, i);
-                    
-                    
-                    std::cout << "\nPartition " << i << "\n";
-                    mockturtle::depth_view part_depth{part_aig};
-                    std::cout << "part size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                    mockturtle::mig_npn_resynthesis resyn_mig;
-                    auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+                    oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, part_mig_opt.at(i));
+                    std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
+                    mockturtle::depth_view part_mig_depth{part_mig};
+                    std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+
+                    auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
                     mockturtle::mig_script migopt;
                     mig_opt = migopt.run(mig_opt);
 
                     mockturtle::depth_view opt_mig_depth{mig_opt};
                     std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
-                    partitions_aig.synchronize_part(part_aig, mig_opt, ntk);
-
-                    // std::set<mockturtle::mig_network::node> part_out = partitions_aig.get_part_outputs(i);
-                    // std::set<mockturtle::mig_network::node>::iterator it;
-                    // for(it = part_out.begin(); it != part_out.end(); ++it){
-                    //     std::cout << "output = " << ntk.node_to_index(*it) << "\n";
-                    // }
-
-                    // mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-                    // auto aig_opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                    // mockturtle::cut_rewriting_params ps;
-
-                    // ps.cut_enumeration_ps.cut_size = 4;
-
-                    // mockturtle::cut_rewriting(aig_opt, resyn_aig, ps);
-                    // aig_opt = mockturtle::cleanup_dangling(aig_opt);
-                    
-                    // mockturtle::depth_view part_aig_depth{aig_opt};
-                    // std::cout << "new part size = " << aig_opt.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                    // partitions_aig.synchronize_part(part_aig, aig_opt, ntk);
-                }
-
-                // mockturtle::mig_npn_resynthesis resyn_mig;
-                // auto ntk_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( ntk, resyn_mig );
-
-                // oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_partition_conn(), partitions_aig.get_part_num());
-                // for(int i = 0; i < part_mig_opt.size(); i++){
-
-                //     oracle::partition_view<mockturtle::mig_network> part_mig = partitions_mig.create_part(ntk_mig, part_mig_opt.at(i));
-                //     std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
-                //     mockturtle::depth_view part_mig_depth{part_mig};
-                //     std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-
-                //     auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
-                //     mockturtle::mig_script migopt;
-                //     mig_opt = migopt.run(mig_opt);
-
-                //     mockturtle::depth_view opt_mig_depth{mig_opt};
-                //     std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
-                //     partitions_mig.synchronize_part(part_mig, mig_opt, ntk_mig);
-                // }
-                
+                    partitions_aig.synchronize_part(part_mig, mig_opt, ntk);
+                }                
 
                 partitions_aig.connect_outputs(ntk);
                 
@@ -3072,7 +3055,7 @@ class test_part_view_command : public alice::command{
                 //     std::cout << "child[2] = " << ntk_mig._storage->nodes[node].children[2].index << "\n";
                 // });
                 std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                mockturtle::write_verilog(ntk, filename);
+                // mockturtle::write_verilog(ntk_mig, filename);
             }
             else{
                 std::cout << "There is no stored AIG network\n";
@@ -3169,14 +3152,26 @@ class test_part_view_command : public alice::command{
       void execute(){
 
         if(is_set("mig")){
-            auto ntk = store<mockturtle::mig_network>().current();
-            oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
-            store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
+            if(!store<mockturtle::mig_network>().empty()){
+                std::cout << "Partitioning stored MIG network\n";
+                auto ntk = store<mockturtle::mig_network>().current();
+                oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
+                store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
+            }
+            else{
+                std::cout << "MIG network not stored\n";
+            }
         }
         else{
-            auto ntk = store<mockturtle::aig_network>().current();
-            oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions); 
-            store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+            if(!store<mockturtle::aig_network>().empty()){
+                std::cout << "Partitioning stored AIG network\n";
+                auto ntk = store<mockturtle::aig_network>().current();
+                oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions); 
+                store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+            }
+            else{
+                std::cout << "AIG network not stored\n";
+            }
         }
         
       }
@@ -3765,6 +3760,21 @@ class test_part_view_command : public alice::command{
 
 	}
 
+    // ALICE_COMMAND(aigscript, "Modification", "NPN XAG cut rewriting") {
+    //     auto& opt = store<mockturtle::aig_network>().current();
+    //     mockturtle::depth_view aig_depth{opt};
+
+    //     //DEPTH REWRITING
+    //     std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+
+    //     mockturtle::aig_script aigopt;
+    //     opt = aigopt.run(opt);
+
+    //     mockturtle::depth_view new_aig_depth{opt};
+    //     std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+
+    // }
+
 	ALICE_COMMAND(depthr, "Modification", "Logic depth oriented MIG rewriting"){
 	    auto& mig = store<mockturtle::mig_network>().current();
 		std::cout << "Mig gates " << mig.num_gates() << std::endl;
@@ -4069,189 +4079,19 @@ class test_part_view_command : public alice::command{
 
     }
 
-    // ALICE_COMMAND( generate_truth_tables, "Classification", "Generates Truth Table for every cone algorithm"){
-    //     clock_t start, end;
-    //     if(!store<mockturtle::aig_network>().empty()){
-    //         auto aig = store<mockturtle::aig_network>().current();
-    //         if(aig._storage->num_partitions != 0){              
-    //             for(int i = 0; i < aig._storage->num_partitions; i++){                  
-                    
-    //                 for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-
-    //                     start = clock();
-    //                     int curr_output = aig._storage->partitionOutputs[i].at(j);                      
-    //                     BFS_traversal(aig, curr_output, i);
-    //                     if(aig.is_constant(curr_output)){
-    //                         kitty::dynamic_truth_table tt (0);
-    //                         if(aig._storage->onset[curr_output].size() > aig._storage->offset[curr_output].size()){
-    //                             std::string bin = "1";
-    //                             kitty::create_from_binary_string(tt, bin);
-    //                             aig._storage->output_tt[curr_output] = tt;
-    //                         }
-    //                         else{
-    //                             std::string bin = "0";
-    //                             kitty::create_from_binary_string(tt, bin);
-    //                             aig._storage->output_tt[curr_output] = tt;
-    //                         }
-    //                         aig.foreach_node( [&]( auto node ) {
-    //                             int index = aig.node_to_index(node);
-    //                             aig._storage->nodes[index].data[1].h1 = 0;
-    //                         });
-
-    //                     }
-    //                     else if(aig._storage->logic_cone_inputs[curr_output].size() <= 16 && !aig.is_constant(curr_output)){
-    //                         std::sort(aig._storage->logic_cone_inputs[curr_output].begin(), aig._storage->logic_cone_inputs[curr_output].end());
-    //                         for(int k = 0; k < aig._storage->logic_cone_inputs[curr_output].size(); k++){
-
-
-    //                             int nodeIdx = aig._storage->logic_cone_inputs[curr_output].at(k);
-    //                             kitty::dynamic_truth_table tt( aig._storage->logic_cone_inputs[curr_output].size() );
-
-    //                             kitty::create_nth_var(tt, k);
-                                
-    //                             aig._storage->tt_map[nodeIdx] = tt;
-    //                         }
-    //                         test_tt_build(aig, i, curr_output, curr_output);
-                            
-    //                         aig._storage->output_tt[curr_output] = aig._storage->tt_map[curr_output];
-    //                         float runtime = ((float)clock() - start)/CLOCKS_PER_SEC;
-    //                         aig.foreach_node( [&]( auto node ) {
-    //                             int index = aig.node_to_index(node);
-    //                             aig._storage->nodes[index].data[1].h1 = 0;
-    //                         });
-                            
-    //                     }
-    //                     else{
-    //                         std::cout << "Logic Cone too big at " << aig._storage->logic_cone_inputs[curr_output].size() << " inputs\n";
-    //                     }
-    //                 }
-    //             }
-                
-    //         }
-    //         else{
-    //             std::cout << "Partitions not mapped yet\n";
-    //         }
-    //     }
-    //     else{
-    //         std::cout << "No AIG network stored\n";
-    //     }
-    // }
-
-
-    ALICE_COMMAND( test_partition_size, "Test", "Checks to see if any of the logic cones are too big for a truth table to be generated i.e. inputs >= 25"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            if(aig._storage->num_partitions != 0){
-                for(int i = 0; i < aig._storage->num_partitions; i++){
-                    for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-                        int curr_output = aig._storage->partitionOutputs[i].at(j);
-                        BFS_traversal(aig, curr_output, i);
-                        if(aig._storage->logic_cone_inputs[curr_output].size() >= 25){
-                            std::cout << "Cone for " << curr_output << " is too big with size " << aig._storage->logic_cone_inputs[curr_output].size() << "\n";
-                        }
-                    }
-                }
-            }
-            else{
-                std::cout << "Partitions not mapped yet\n";
-            }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-
-    // ALICE_COMMAND( test_new_tt_algo, "Test", "Test alternative tt generation algorithm"){
-    //     clock_t start, end;
+    // ALICE_COMMAND( test_partition_size, "Test", "Checks to see if any of the logic cones are too big for a truth table to be generated i.e. inputs >= 25"){
     //     if(!store<mockturtle::aig_network>().empty()){
     //         auto aig = store<mockturtle::aig_network>().current();
     //         if(aig._storage->num_partitions != 0){
     //             for(int i = 0; i < aig._storage->num_partitions; i++){
-    //                 // std::cout << "Partition = " << i << "\n";
-    //                 // std::cout << "-----------------------\n";
-    //                 // std::cout << "size = " << aig._storage->partitionInputs[i].size() << "\n";
-
-
     //                 for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-    //                     start = clock();
     //                     int curr_output = aig._storage->partitionOutputs[i].at(j);
     //                     BFS_traversal(aig, curr_output, i);
-    //                     // std::cout << "BFS done at " << ((float)clock() - start)/CLOCKS_PER_SEC << "\n";
-    //                     // std::cout << "curr_output = " << curr_output << "\n";
-    //                     // std::cout << "size = " << aig._storage->logic_cone_inputs[curr_output].size() << "\n";
-    //                     // std::cout << "logic cone inputs: \n";
-    //                     if(aig.is_constant(curr_output)){
-    //                         kitty::dynamic_truth_table tt (0);
-    //                         if(aig._storage->onset[curr_output].size() > aig._storage->offset[curr_output].size()){
-    //                             // std::cout << "set constant to 1\n";
-    //                             std::string bin = "1";
-    //                             kitty::create_from_binary_string(tt, bin);
-    //                             // std::cout << "tt created\n";
-    //                             aig._storage->output_tt[curr_output] = tt;
-    //                             // kitty::print_hex(aig._storage->output_tt[curr_output], std::cout);
-    //                             // std::cout << "\n";
-    //                         }
-    //                         else{
-    //                             // std::cout << "set constant to 0\n";
-    //                             std::string bin = "0";
-    //                             kitty::create_from_binary_string(tt, bin);
-    //                             aig._storage->output_tt[curr_output] = tt;
-    //                             // kitty::print_hex(aig._storage->output_tt[curr_output], std::cout);
-    //                             // std::cout << "\n";
-    //                         }
-    //                         // std::cout << "partition=" << i << " ";
-    //                         // std::cout << "output=" << curr_output << " ";
-    //                         aig.foreach_node( [&]( auto node ) {
-    //                             int index = aig.node_to_index(node);
-    //                             aig._storage->nodes[index].data[1].h1 = 0;
-    //                         });
-    //                         // std::cout << computeLevelPart(aig,curr_output,i) << " ";
-    //                         // std::cout << aig._storage->logic_cone_inputs[curr_output].size() << " ";
-    //                         // float runtime = ((float)clock() - start)/CLOCKS_PER_SEC;
-    //                         // std::cout << std::fixed << std::setprecision(12) << runtime << "\n";
+    //                     if(aig._storage->logic_cone_inputs[curr_output].size() >= 25){
+    //                         std::cout << "Cone for " << curr_output << " is too big with size " << aig._storage->logic_cone_inputs[curr_output].size() << "\n";
     //                     }
-    //                     else if(aig._storage->logic_cone_inputs[curr_output].size() <= 25 && !aig.is_constant(curr_output)){
-    //                         std::sort(aig._storage->logic_cone_inputs[curr_output].begin(), aig._storage->logic_cone_inputs[curr_output].end());
-    //                         // std::cout << "sort done at " << ((float)clock() - start)/CLOCKS_PER_SEC << "\n";
-    //                         for(int k = 0; k < aig._storage->logic_cone_inputs[curr_output].size(); k++){
-
-
-    //                             int nodeIdx = aig._storage->logic_cone_inputs[curr_output].at(k);
-    //                             // std::cout << "input = " << nodeIdx << "\n";
-    //                             kitty::dynamic_truth_table tt( aig._storage->logic_cone_inputs[curr_output].size() );
-
-    //                             kitty::create_nth_var(tt, k);
-    //                             // kitty::print_hex(tt, std::cout);
-    //                             // std::cout << "\n";
-
-    //                             aig._storage->tt_map[nodeIdx] = tt;
-    //                         }
-    //                         // std::cout << "truth table declared at " << ((float)clock() - start)/CLOCKS_PER_SEC << "\n";
-    //                         // std::cout << "\n";
-    //                         test_tt_build(aig, i, curr_output, curr_output);
-
-    //                         aig._storage->output_tt[curr_output] = aig._storage->tt_map[curr_output];
-    //                         // std::cout << "truth table built at " << ((float)clock() - start)/CLOCKS_PER_SEC << "\n";
-    //                         float runtime = ((float)clock() - start)/CLOCKS_PER_SEC;
-    //                         // std::cout << "partition=" << i << " ";
-    //                         // std::cout << "output=" << curr_output << " ";
-    //                         aig.foreach_node( [&]( auto node ) {
-    //                             int index = aig.node_to_index(node);
-    //                             aig._storage->nodes[index].data[1].h1 = 0;
-    //                         });
-    //                         // std::cout << computeLevelPart(aig,curr_output,i) << " ";
-    //                         // std::cout << aig._storage->logic_cone_inputs[curr_output].size() << " ";
-    //                         // std::cout << std::fixed << std::setprecision(12) << runtime << "\n";
-    //                     }
-    //                     else{
-    //                         std::cout << "Logic Cone too big\n";
-    //                     }
-    //                     // kitty::print_hex(aig._storage->output_tt[curr_output], std::cout);
-    //                     // std::cout << "\n";
-    //                     // std::cout << "tt for " << curr_output << " = " << kitty::to_hex(aig._storage->output_tt[curr_output]) << "\n";
     //                 }
     //             }
-
     //         }
     //         else{
     //             std::cout << "Partitions not mapped yet\n";
@@ -4276,11 +4116,11 @@ class test_part_view_command : public alice::command{
             void execute(){
 
                 if(is_set("mig")){
-
-                    std::cout << "MIGs not supported yet\n";
+                    std::cout << "MIG networks not supported yet\n";
                     // if(!store<mockturtle::mig_network>().empty()){
                     //     auto mig = store<mockturtle::mig_network>().current();
                     //     if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
+                    //         std::cout << "Generating truth tables for stored MIG network\n";
                     //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
                     //         partitions.generate_truth_tables(mig);
                     //     }
@@ -4296,6 +4136,7 @@ class test_part_view_command : public alice::command{
                     if(!store<mockturtle::aig_network>().empty()){
                         auto aig = store<mockturtle::aig_network>().current();
                         if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
+                            std::cout << "Generating truth tables for stored AIG network\n";
                             auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
                             partitions.generate_truth_tables(aig);
                         }
@@ -4331,357 +4172,39 @@ class test_part_view_command : public alice::command{
         void execute(){
 
             if(is_set("mig")){
-                std::cout << "MIGs not supported yet\n";
-                    // if(!store<mockturtle::mig_network>().empty()){
-                    //     auto mig = store<mockturtle::mig_network>().current();
-                    //     if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-                    //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
-                    //         partitions.write_karnaugh_maps(mig, directory);
-                    //     }
-                    //     else{
-                    //         std::cout << "MIG not partitioned yet\n";
-                    //     }
-                    // }
-                    // else{
-                    //     std::cout << "MIG network not stored\n";
-                    // }
-                }
-                else{
-                    if(!store<mockturtle::aig_network>().empty()){
-                        auto aig = store<mockturtle::aig_network>().current();
-                        if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-                            auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-                            partitions.write_karnaugh_maps(aig, directory);
-                        }
-                        else{
-                            std::cout << "AIG not partitioned yet\n";
-                        }
+                std::cout << "MIG networks not supported yet\n";
+                // if(!store<mockturtle::mig_network>().empty()){
+                //     auto mig = store<mockturtle::mig_network>().current();
+                //     if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
+                //         std::cout << "Writing k-map images for stored MIG network\n";
+                //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
+                //         partitions.write_karnaugh_maps(mig, directory);
+                //     }
+                //     else{
+                //         std::cout << "MIG not partitioned yet\n";
+                //     }
+                // }
+                // else{
+                //     std::cout << "MIG network not stored\n";
+                // }
+            }
+            else{
+                if(!store<mockturtle::aig_network>().empty()){
+                    auto aig = store<mockturtle::aig_network>().current();
+                    if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
+                        std::cout << "Writing k-map images for stored AIG network\n";
+                        auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
+                        partitions.write_karnaugh_maps(aig, directory);
                     }
                     else{
-                        std::cout << "AIG network not stored\n";
+                        std::cout << "AIG not partitioned yet\n";
                     }
                 }
+                else{
+                    std::cout << "AIG network not stored\n";
+                }
+            }
         }
-
-    
-      // void execute(){
-      //   if(!store<mockturtle::aig_network>().empty()){
-      //       auto aig = store<mockturtle::aig_network>().current();
-      //       if(aig._storage->num_partitions != 0){  
-      //           if(!aig._storage->output_tt.empty()){
-      //               std::string upper_dir = "/home/u0812227/../../research/ece/lnis/USERS/austin/";
-      //               if(is_set("tensor")){
-      //                   std::ifstream input(filename);
-      //                   if(!input){
-      //                       std::cout << "Unable to open file\n";
-      //                   }
-
-      //                   std::string line;
-      //                   while(std::getline(input, line)){
-      //                       // std::cout << "line = " << line << "\n";
-      //                       std::istringstream iss(line);
-      //                       std::vector<std::string> line_parts((std::istream_iterator<std::string>(iss)), std::istream_iterator<std::string>());
-      //                       // std::cout << "line_parts.at(0) = " << line_parts.at(0) << " line_parts.at(1) = " << line_parts.at(1) << "\n";
-      //                       int output = atoi(line_parts.at(0).c_str());
-      //                       int partition = aig._storage->partitionMap[output];
-      //                       BFS_traversal(aig, output, partition);
-      //                       int num_inputs = aig._storage->logic_cone_inputs[output].size();
-      //                       aig.foreach_node( [&]( auto node ) {
-      //                           int index = aig.node_to_index(node);
-      //                           aig._storage->nodes[index].data[1].h1 = 0;
-      //                       });
-      //                       int logic_depth = computeLevel(aig, output, partition);
-      //                       int class_cat = atoi(line_parts.at(1).c_str());
-      //                       std::string file_out = aig._storage->net_name + "_kar_part_" + std::to_string(partition) + "_out_" + 
-      //                               std::to_string(output) + "_in_" + std::to_string(num_inputs) + "_lev_" + std::to_string(logic_depth) + ".txt";
-                            
-      //                       // std::cout << "part " << partition << " output " << output << "\n";
-      //                       std::string dir;
-                            
-      //                       if(class_cat == 1){//AIG optimizer
-      //                           std::size_t found_delay = filename.find("delay");
-      //                           std::size_t found_area = filename.find("area");
-      //                           if(found_delay != std::string::npos){
-      //                               dir = upper_dir + "/LSOracle/build/lstools/tensor/new_dataset/ABC_AIG_DELAY_n/";
-      //                           }
-      //                           else if(found_area != std::string::npos){
-      //                               dir = upper_dir + "LSOracle/build/lstools/tensor/new_dataset/ABC_AIG_AREA_n/";
-      //                           }
-      //                           else{
-      //                               dir = upper_dir + "LSOracle/build/lstools/tensor/new_dataset/ABC_AIG_n/";
-      //                           }
-      //                       }
-      //                       else{//MIG optimizer
-      //                           std::size_t found_delay = filename.find("delay");
-      //                           std::size_t found_area = filename.find("area");
-      //                           if(found_delay != std::string::npos){
-      //                               dir = upper_dir + "/LSOracle/build/lstools/tensor/new_dataset/CIRKIT_MIG_DELAY_n/";
-      //                           }
-      //                           else if(found_area != std::string::npos){
-      //                               dir = upper_dir + "LSOracle/build/lstools/tensor/new_dataset/CIRKIT_MIG_AREA_n/";
-      //                           }
-      //                           else{
-      //                               dir = upper_dir + "LSOracle/build/lstools/tensor/new_dataset/CIRKIT_MIG_n/";
-      //                           }
-      //                       }
-      //                       // std::cout << dir + file_out << "\n";
-      //                       std::ofstream output_file(dir + file_out, std::ios::out | std::ios::binary | std::ios::trunc);
-      //                       std::string tt = kitty::to_binary(aig._storage->output_tt[output]);
-      //                       char* tt_binary = malloc(sizeof(char) * (tt.length() + 1));
-      //                       strcpy(tt_binary, tt.c_str());
-
-
-      //                       std::sort(aig._storage->partitionInputs[partition].begin(), aig._storage->partitionInputs[partition].end());
-                            
-      //                       // std::cout << "\n";
-      //                       std::vector<std::string> onset_indeces;
-      //                       int indx = 0;
-      //                       for(int k = tt.length() - 1; k >= 0; k--){
-      //                           int bit = (int)tt_binary[k] - 48;
-      //                           if(bit == 1){
-      //                               // std::cout << "index for 1 = " << indx << "\n";
-      //                               onset_indeces.push_back(to_binary(indx));
-      //                           }
-      //                           indx++;
-      //                       }
-      //                       for(int k = 0; k < onset_indeces.size(); k++){
-      //                           while(onset_indeces.at(k).length() != aig._storage->logic_cone_inputs[output].size()){
-      //                               onset_indeces.at(k).insert(0, "0");
-      //                           }
-      //                           std::reverse(onset_indeces.at(k).begin(), onset_indeces.at(k).end());
-      //                       } 
-                            
-      //                       int columns = num_inputs / 2;
-      //                       int rows;
-      //                       if(num_inputs <= 16){
-      //                           if(num_inputs % 2 != 0){
-      //                               rows = columns + 1;
-      //                           }
-      //                           else{
-      //                               rows = columns;
-      //                           }
-
-      //                           int row_num = pow(2, rows);
-      //                           int col_num = pow(2, columns);
-      //                           char **k_map = malloc(sizeof(char *) * col_num);
-      //                           for(int y = 0; y < col_num; y++)
-      //                               k_map[y] = malloc(sizeof(char) * row_num); 
-
-      //                           for(int y = 0; y < col_num; y++){
-      //                               for(int x = 0; x < row_num; x++){
-      //                                   k_map[y][x] = 0;
-      //                               }
-      //                           }
-
-      //                           for(int k = 0; k < onset_indeces.size(); k++){
-      //                               std::string row_index_gray = onset_indeces.at(k).substr(0, rows);
-      //                               std::string col_index_gray = onset_indeces.at(k).substr(rows, onset_indeces.at(k).size() - 1);
-      //                               std::string row_index_bin = graytoBinary(row_index_gray);
-      //                               std::string col_index_bin = graytoBinary(col_index_gray);
-      //                               int row_index = std::stoi(row_index_bin,nullptr,2);
-      //                               int col_index = std::stoi(col_index_bin,nullptr,2);
-      //                               k_map[col_index][row_index] = 2;
-      //                           }
-
-      //                           if(num_inputs < 16){
-      //                               int padded_row = 256;
-      //                               int padded_col = 256;
-      //                               char **k_map_pad = malloc(sizeof(char *) * padded_col);
-      //                               for(int k = 0; k < padded_col; k++)
-      //                                   k_map_pad[k] = malloc(sizeof(char) * padded_row); 
-
-      //                               for(int y = 0; y < padded_col; y++){
-      //                                   for(int x = 0; x < padded_row; x++){
-      //                                       k_map_pad[y][x] = 1;
-      //                                   }
-      //                               }
-      //                               int row_offset = (padded_row - row_num);
-      //                               if(row_offset % 2 != 0){
-      //                                   row_offset++;
-      //                               }
-      //                               int col_offset = (padded_col - col_num);
-      //                               if(col_offset % 2 != 0){
-      //                                   col_offset++;
-      //                               }
-      //                               row_offset /= 2;
-      //                               col_offset /= 2;
-      //                               for(int y = 0; y < col_num; y++){
-      //                                   for(int x = 0; x < row_num; x++){
-      //                                       k_map_pad[y + col_offset][x + row_offset] = k_map[y][x];
-      //                                   }
-      //                               }
-      //                               std::vector<char> data_1d(padded_row * padded_col);
-      //                               for(int y = 0; y < padded_col; y++){
-      //                                   for(int x = 0; x < padded_row; x++){
-      //                                       data_1d[x + y*padded_col] = k_map_pad[y][x];
-      //                                   }
-      //                               }
-
-      //                               output_file.write(data_1d.data(), data_1d.size()*sizeof(char));
-      //                           }
-      //                           else{
-      //                               std::vector<char> data_1d(row_num * col_num);
-      //                               for(int y = 0; y < col_num; y++){
-      //                                   for(int x = 0; x < row_num; x++){
-      //                                       data_1d[x + y*col_num] = k_map[y][x];
-      //                                   }
-      //                               }
-      //                               output_file.write(data_1d.data(), data_1d.size()*sizeof(char));
-      //                           }
-      //                           output_file.close();
-      //                       }                   
-      //                   }
-
-      //               }
-      //               else{
-      //                   if(directory == ""){
-      //                       std::cout << "Must specify directory to print k-map images to\n";
-      //                   }
-      //                   else{
-      //                       mkdir(directory.c_str(), 0777);
-      //                       for(int i = 0; i < aig._storage->num_partitions; i++){
-      //                           int partition = i;
-      //                           for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-      //                               int output = aig._storage->partitionOutputs[i].at(j);
-      //                               BFS_traversal(aig, output, partition);
-      //                               int num_inputs = aig._storage->logic_cone_inputs[output].size();
-      //                               aig.foreach_node( [&]( auto node ) {
-      //                                   int index = aig.node_to_index(node);
-      //                                   aig._storage->nodes[index].data[1].h1 = 0;
-      //                               });
-      //                               int logic_depth = computeLevel(aig, output, partition);
-
-      //                               std::string file_out = aig._storage->net_name + "_kar_part_" + std::to_string(partition) + "_out_" + 
-      //                                   std::to_string(output) + "_in_" + std::to_string(num_inputs) + "_lev_" + std::to_string(logic_depth) + ".txt";
-
-                                    
-      //                               std::string tt = kitty::to_binary(aig._storage->output_tt[output]);
-      //                               char* tt_binary = malloc(sizeof(char) * (tt.length() + 1));
-      //                               strcpy(tt_binary, tt.c_str());
-
-
-      //                               std::sort(aig._storage->partitionInputs[partition].begin(), aig._storage->partitionInputs[partition].end());
-                                    
-      //                               // std::cout << "\n";
-      //                               std::vector<std::string> onset_indeces;
-      //                               int indx = 0;
-      //                               for(int k = tt.length() - 1; k >= 0; k--){
-      //                                   int bit = (int)tt_binary[k] - 48;
-      //                                   if(bit == 1){
-      //                                       onset_indeces.push_back(to_binary(indx));
-      //                                   }
-      //                                   indx++;
-      //                               }
-      //                               for(int k = 0; k < onset_indeces.size(); k++){
-      //                                   while(onset_indeces.at(k).length() != aig._storage->logic_cone_inputs[output].size()){
-      //                                       onset_indeces.at(k).insert(0, "0");
-      //                                   }
-      //                                   std::reverse(onset_indeces.at(k).begin(), onset_indeces.at(k).end());
-      //                               } 
-
-      //                               int columns = num_inputs / 2;
-      //                               int rows;
-      //                               if(num_inputs <= 16 && num_inputs >= 2){
-      //                                   std::ofstream output_file(directory + file_out, std::ios::out | std::ios::binary | std::ios::trunc);
-      //                                   if(num_inputs % 2 != 0){
-      //                                       rows = columns + 1;
-      //                                   }
-      //                                   else{
-      //                                       rows = columns;
-      //                                   }
-
-      //                                   int row_num = pow(2, rows);
-      //                                   int col_num = pow(2, columns);
-      //                                   char **k_map = malloc(sizeof(char *) * col_num);
-      //                                   for(int y = 0; y < col_num; y++)
-      //                                       k_map[y] = malloc(sizeof(char) * row_num); 
-
-      //                                   for(int y = 0; y < col_num; y++){
-      //                                       for(int x = 0; x < row_num; x++){
-      //                                           k_map[y][x] = 0;
-      //                                       }
-      //                                   }
-                                            
-      //                                   for(int k = 0; k < onset_indeces.size(); k++){
-                                                
-      //                                       std::string row_index_gray = onset_indeces.at(k).substr(0, rows);
-      //                                       std::string col_index_gray = onset_indeces.at(k).substr(rows, onset_indeces.at(k).size() - 1);
-      //                                       std::string row_index_bin = graytoBinary(row_index_gray);
-      //                                       std::string col_index_bin = graytoBinary(col_index_gray);
-      //                                       int row_index = std::stoi(row_index_bin,nullptr,2);
-      //                                       int col_index = std::stoi(col_index_bin,nullptr,2);
-      //                                       k_map[col_index][row_index] = 2;
-                                                
-      //                                   }
-                                        
-      //                                   if(num_inputs < 16){
-      //                                       int padded_row = 256;
-      //                                       int padded_col = 256;       
-      //                                       char **k_map_pad = malloc(sizeof(char *) * padded_col);
-      //                                       for(int k = 0; k < padded_col; k++){
-      //                                           k_map_pad[k] = malloc(sizeof(char) * padded_row); 
-      //                                       }
-
-      //                                       for(int y = 0; y < padded_col; y++){
-      //                                           for(int x = 0; x < padded_row; x++){
-      //                                               k_map_pad[y][x] = 1;
-      //                                           }
-      //                                       }
-      //                                       int row_offset = (padded_row - row_num);
-      //                                       if(row_offset % 2 != 0){
-      //                                           row_offset++;
-      //                                       }
-      //                                       int col_offset = (padded_col - col_num);
-      //                                       if(col_offset % 2 != 0){
-      //                                           col_offset++;
-      //                                       }
-      //                                       row_offset /= 2;
-      //                                       col_offset /= 2;
-      //                                       for(int y = 0; y < col_num; y++){
-      //                                           for(int x = 0; x < row_num; x++){
-      //                                               k_map_pad[y + col_offset][x + row_offset] = k_map[y][x];
-      //                                           }
-      //                                       }
-      //                                       std::vector<char> data_1d(padded_row * padded_col);
-      //                                       for(int y = 0; y < padded_col; y++){
-      //                                           for(int x = 0; x < padded_row; x++){
-      //                                               data_1d[x + y*padded_col] = k_map_pad[y][x];
-      //                                           }
-      //                                       }
-
-      //                                       output_file.write(data_1d.data(), data_1d.size()*sizeof(char));
-      //                                   }
-      //                                   else{
-      //                                       std::vector<char> data_1d(row_num * col_num);
-      //                                       for(int y = 0; y < col_num; y++){
-      //                                           for(int x = 0; x < row_num; x++){
-      //                                               data_1d[x + y*col_num] = k_map[y][x];
-      //                                           }
-      //                                       }
-      //                                       output_file.write(data_1d.data(), data_1d.size()*sizeof(char));
-      //                                   }
-      //                                   output_file.close();
-      //                               }
-
-      //                           }
-      //                       }
-                        
-      //                   }
-      //               }
-
-      //           }
-      //           else{
-      //               std::cout << "Truth tables not built yet\n";
-      //           }
-      //       }
-      //       else{
-      //           std::cout << "Partitions not mapped yet\n";
-      //       }
-      //   }
-      //   else{
-      //       std::cout << "No AIG network stored\n";
-      //   }
-      // }
 
     private:
       std::string filename{};
@@ -4705,80 +4228,6 @@ class test_part_view_command : public alice::command{
             else{
                 std::cout << "Partitions not mapped yet\n";
             }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-
-    ALICE_COMMAND( test_merge_aigs, "Test", "Merge stored AIG with tiny test AIG"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            std::string filename2 = "test_aig2.aag";
-            std::string str = "10";
-            std::cout << "beginning of str = " << str.at(0) << "\n";
-            std::cout << "isdigit = " << isdigit(str.at(0)) << "\n";
-            mockturtle::aig_network aig2;
-            const auto a = aig2.create_pi();
-            aig2.create_in_name(aig2.node_to_index(aig2.get_node(a)), "10");
-            const auto b = aig2.create_pi();
-            aig2.create_in_name(aig2.node_to_index(aig2.get_node(b)), "b");
-            const auto c = aig2.create_pi();
-            aig2.create_in_name(aig2.node_to_index(aig2.get_node(c)), "c");
-
-            const auto e = aig2.create_pi();
-            aig2.create_in_name(aig2.node_to_index(aig2.get_node(e)), "e");
-            const auto f = aig2.create_pi();
-            aig2.create_in_name(aig2.node_to_index(aig2.get_node(f)), "f");
-
-            const auto f1 = aig2.create_and( b, c );
-            const auto f2 = aig2.create_and( a, f1 );
-            aig2.create_po( f2 );
-            aig2.create_out_name(aig2.node_to_index(aig2.get_node(f2)), "f2");
-
-            const auto f3 =  aig2.create_and( e, f );
-            aig2.create_po(f3);
-            aig2.create_out_name(aig2.node_to_index(aig2.get_node(f3)), "10");
-
-            aig2.substitute_node(aig2.get_node(a), f3);
-            int inputIdx = get_input_index(aig2, aig2.node_to_index(aig2.get_node(a)));
-            int outputIdx = get_output_index(aig2, aig2.node_to_index(aig2.get_node(f3)));
-
-            std::cout << "Inputs = ";
-            for(int i = 0; i < aig2._storage->inputs.size(); i++){
-                std::cout << aig2._storage->inputs.at(i) << " ";
-            }
-            std::cout << "\n";
-
-            std::cout << "Outputs = ";
-            for(int i = 0; i < aig2._storage->outputs.size(); i++){
-                std::cout << aig2._storage->outputs.at(i).index << " ";
-            }
-            std::cout << "\n";
-
-            std::cout << "erasing input\n";
-            aig2._storage->inputs.erase(aig2._storage->inputs.begin() + inputIdx);
-            std::cout << "erasing output\n";
-            aig2._storage->outputs.erase(aig2._storage->outputs.begin() + outputIdx);
-
-            std::cout << "Inputs = ";
-            for(int i = 0; i < aig2._storage->inputs.size(); i++){
-
-                aig2._storage->inputs.at(i) -= 1;
-
-                std::cout << aig2._storage->inputs.at(i) << " ";
-            }
-            std::cout << "\n";
-
-            std::cout << "Outputs = ";
-            for(int i = 0; i < aig2._storage->outputs.size(); i++){
-                std::cout << aig2._storage->outputs.at(i).index << " ";
-            }
-            std::cout << "\n";
-
-
-            write_aig(aig2, filename2);
-
         }
         else{
             std::cout << "No AIG network stored\n";
@@ -4842,428 +4291,428 @@ class test_part_view_command : public alice::command{
 
 
 
-    ALICE_COMMAND( merge_aig, "Test", "Merges partitioned AIGs in the original AIG's respective folder"){
+    // ALICE_COMMAND( merge_aig, "Test", "Merges partitioned AIGs in the original AIG's respective folder"){
 
-        mockturtle::aig_network merged_aig;
+    //     mockturtle::aig_network merged_aig;
 
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            // mockturtle::aig_network
-            if(aig._storage->num_partitions != 0){
+    //     if(!store<mockturtle::aig_network>().empty()){
+    //         auto aig = store<mockturtle::aig_network>().current();
+    //         // mockturtle::aig_network
+    //         if(aig._storage->num_partitions != 0){
 
-                std::string root = aig._storage->net_name;
-                std::string ext = ".aig";
-                std::string path = "./" + root + "_aig_parts_full/" + root + "_" + std::to_string(aig._storage->num_partitions) + "_aig/";
-                std::string filename;
-                std::vector<mockturtle::aig_network> aig_parts;
-                int size_of_merge = 0;
-                for(int i = 0; i < aig._storage->num_partitions; i++){
-                    filename = path + root + "_" + std::to_string(i) + ext;
-                    // for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
+    //             std::string root = aig._storage->net_name;
+    //             std::string ext = ".aig";
+    //             std::string path = "./" + root + "_aig_parts_full/" + root + "_" + std::to_string(aig._storage->num_partitions) + "_aig/";
+    //             std::string filename;
+    //             std::vector<mockturtle::aig_network> aig_parts;
+    //             int size_of_merge = 0;
+    //             for(int i = 0; i < aig._storage->num_partitions; i++){
+    //                 filename = path + root + "_" + std::to_string(i) + ext;
+    //                 // for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
 
-                    mockturtle::aig_network temp;
-                    std::cout << "filename = " << filename << "\n";
-                    lorina::read_aiger(filename, mockturtle::aiger_reader( temp ));
-                    aig_parts.push_back(temp);
-                    temp.foreach_node( [&]( auto node ) {
-                        int nodeIdx = temp.node_to_index(node);
-                        std::cout << "node " << nodeIdx << " child[0] = " << temp._storage->nodes[node].children[0].index << "\n";
-                        std::cout << "node " << nodeIdx << " child[1] = " << temp._storage->nodes[node].children[1].index << "\n";
-                    });
-                    std::cout << "Inputs = ";
-                    for(int i = 0; i < temp._storage->inputs.size(); i++){
-                        std::cout << temp._storage->inputNames[i] << " ";
-                    }
-                    std::cout << "\n";
-                    std::cout << "Outputs = ";
-                    for(int i = 0; i < temp._storage->outputs.size(); i++){
-                        std::cout << temp._storage->outputNames[i] << " ";
-                    }
-                    std::cout << "\n";
-                    size_of_merge += temp._storage->nodes.size();
-                    //}
+    //                 mockturtle::aig_network temp;
+    //                 std::cout << "filename = " << filename << "\n";
+    //                 lorina::read_aiger(filename, mockturtle::aiger_reader( temp ));
+    //                 aig_parts.push_back(temp);
+    //                 temp.foreach_node( [&]( auto node ) {
+    //                     int nodeIdx = temp.node_to_index(node);
+    //                     std::cout << "node " << nodeIdx << " child[0] = " << temp._storage->nodes[node].children[0].index << "\n";
+    //                     std::cout << "node " << nodeIdx << " child[1] = " << temp._storage->nodes[node].children[1].index << "\n";
+    //                 });
+    //                 std::cout << "Inputs = ";
+    //                 for(int i = 0; i < temp._storage->inputs.size(); i++){
+    //                     std::cout << temp._storage->inputNames[i] << " ";
+    //                 }
+    //                 std::cout << "\n";
+    //                 std::cout << "Outputs = ";
+    //                 for(int i = 0; i < temp._storage->outputs.size(); i++){
+    //                     std::cout << temp._storage->outputNames[i] << " ";
+    //                 }
+    //                 std::cout << "\n";
+    //                 size_of_merge += temp._storage->nodes.size();
+    //                 //}
 
-                }
-                merged_aig._storage->nodes.reserve(size_of_merge);
-                std::cout << "size of merged aig = " << size_of_merge << "\n";
-                std::cout << "num_inputs merged_aig = " << aig.num_pis() << "\n";
-                std::cout << "num aigs = " << aig_parts.size() << "\n";
-                int max_index = aig.num_pis();
-                int max_input = 0;
-                std::vector<std::string> node_connection_name;
+    //             }
+    //             merged_aig._storage->nodes.reserve(size_of_merge);
+    //             std::cout << "size of merged aig = " << size_of_merge << "\n";
+    //             std::cout << "num_inputs merged_aig = " << aig.num_pis() << "\n";
+    //             std::cout << "num aigs = " << aig_parts.size() << "\n";
+    //             int max_index = aig.num_pis();
+    //             int max_input = 0;
+    //             std::vector<std::string> node_connection_name;
 
-                // std::vector<std::string> inputs_visited;
-                // std::map<std::string, int> visited_input_indeces;
-                // std::map<std::string, std::vector<std::vector<int>>> connected_input;
+    //             // std::vector<std::string> inputs_visited;
+    //             // std::map<std::string, int> visited_input_indeces;
+    //             // std::map<std::string, std::vector<std::vector<int>>> connected_input;
 
-                std::map<std::string, int> node_connection_index;
-                bool first_gate = true;
-                int index_offset = 0;
+    //             std::map<std::string, int> node_connection_index;
+    //             bool first_gate = true;
+    //             int index_offset = 0;
 
-                int input_offset = 0;
-                int output_offset = 0;
-                for(int idx = 0; idx < aig_parts.size(); idx++){
-                    mockturtle::aig_network curr_aig = aig_parts.at(idx);
-                    int temp_max = 0;
-                    int temp_max_input = 0;
-                    std::cout << "max_input = " << max_input << "\n";
-                    std::vector<int> nodes_to_erase;
+    //             int input_offset = 0;
+    //             int output_offset = 0;
+    //             for(int idx = 0; idx < aig_parts.size(); idx++){
+    //                 mockturtle::aig_network curr_aig = aig_parts.at(idx);
+    //                 int temp_max = 0;
+    //                 int temp_max_input = 0;
+    //                 std::cout << "max_input = " << max_input << "\n";
+    //                 std::vector<int> nodes_to_erase;
 
-                    curr_aig.foreach_node( [&]( auto node ) {
-                        int nodeIdx = curr_aig.node_to_index(node);
+    //                 curr_aig.foreach_node( [&]( auto node ) {
+    //                     int nodeIdx = curr_aig.node_to_index(node);
 
-                        // std::vector<int> erased_node_fanout;
-                        if(nodeIdx + max_index > temp_max)
-                            temp_max = nodeIdx + max_index;
+    //                     // std::vector<int> erased_node_fanout;
+    //                     if(nodeIdx + max_index > temp_max)
+    //                         temp_max = nodeIdx + max_index;
 
-                        //Check if either a primary output or input is shared with another AIG
-                        if(curr_aig.is_po(nodeIdx)){
-                            std::string name = curr_aig._storage->outputNames[get_output_index(curr_aig, nodeIdx)];
-                            std::cout << "name = " << name << "\n";
-                            bool connected_to_other_aig_in = (name.find_first_not_of("0123456789") == std::string::npos);
-                            if(connected_to_other_aig_in){
-                                std::cout << "NUMBER\n";
-                                if(!is_in_string_vector(node_connection_name, name)){/* && connected_input.find(name) == connected_input.end()){*/
-                                    std::cout << "adding " << std::stoi(name) << " to node_connection_name\n";
-                                    std::cout << "adding " << nodeIdx << " to node_connection_index\n";
-                                    node_connection_name.push_back(name);
-                                    if(first_gate){
-                                        index_offset = (aig.num_pis() + 1) - nodeIdx;
-                                        first_gate = false;
-                                    }
-                                    node_connection_index[name] = nodeIdx + index_offset;
-                                }
-                                // else{
-                                // 	std::cout << "Already an input somewhere\n";
-                                // 	for(int i = 0; i < connected_input[name].size(); i++){
-                                // 		std::cout << "connected aig index = " << connected_input[name].at(i).at(0) << "\n";
-                                // 		mockturtle::aig_network conn_aig = aig_parts.at(connected_input[name].at(i).at(0));
-                                // 		std::cout << "fanout size = " << connected_input[name].at(i).size() << "\n";
-                                // 		for(int j = 1; j < connected_input[name].at(i).size(); j++){
-                                // 			std::cout << "fanout index = " << connected_input[name].at(i).at(j) << "\n";
-                                // 			std::cout << "name at child[0] = " << conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[0].index - 1] << "\n";
-                                // 			std::cout << "name at child[1] = " << conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[1].index - 1] << "\n";
-                                // 			auto node = conn_aig.index_to_node(connected_input[name].at(i).at(j));
-                                // 			if(conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[0].index - 1].compare(name) == 0){
-                                // 				std::cout << "updating child [0] of " << connected_input[name].at(i).at(j) << "\n";
-                                // 				conn_aig._storage->nodes[node].children[0].index += nodeIdx + index_offset;
-                                // 			}
-                                // 			else if(conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[1].index - 1].compare(name) == 0){
-                                // 				std::cout << "updating child [1] of " << connected_input[name].at(i).at(j) << "\n";
-                                // 				conn_aig._storage->nodes[node].children[1].index += nodeIdx + index_offset;
-                                // 			}
-                                // 		}
-                                // 	}
-                                // 	node_connection_index[name] = nodeIdx + index_offset;
-                                // }
-                            }
-                        }
-                        if(curr_aig.is_pi(nodeIdx)){
+    //                     //Check if either a primary output or input is shared with another AIG
+    //                     if(curr_aig.is_po(nodeIdx)){
+    //                         std::string name = curr_aig._storage->outputNames[get_output_index(curr_aig, nodeIdx)];
+    //                         std::cout << "name = " << name << "\n";
+    //                         bool connected_to_other_aig_in = (name.find_first_not_of("0123456789") == std::string::npos);
+    //                         if(connected_to_other_aig_in){
+    //                             std::cout << "NUMBER\n";
+    //                             if(!is_in_string_vector(node_connection_name, name)){/* && connected_input.find(name) == connected_input.end()){*/
+    //                                 std::cout << "adding " << std::stoi(name) << " to node_connection_name\n";
+    //                                 std::cout << "adding " << nodeIdx << " to node_connection_index\n";
+    //                                 node_connection_name.push_back(name);
+    //                                 if(first_gate){
+    //                                     index_offset = (aig.num_pis() + 1) - nodeIdx;
+    //                                     first_gate = false;
+    //                                 }
+    //                                 node_connection_index[name] = nodeIdx + index_offset;
+    //                             }
+    //                             // else{
+    //                             // 	std::cout << "Already an input somewhere\n";
+    //                             // 	for(int i = 0; i < connected_input[name].size(); i++){
+    //                             // 		std::cout << "connected aig index = " << connected_input[name].at(i).at(0) << "\n";
+    //                             // 		mockturtle::aig_network conn_aig = aig_parts.at(connected_input[name].at(i).at(0));
+    //                             // 		std::cout << "fanout size = " << connected_input[name].at(i).size() << "\n";
+    //                             // 		for(int j = 1; j < connected_input[name].at(i).size(); j++){
+    //                             // 			std::cout << "fanout index = " << connected_input[name].at(i).at(j) << "\n";
+    //                             // 			std::cout << "name at child[0] = " << conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[0].index - 1] << "\n";
+    //                             // 			std::cout << "name at child[1] = " << conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[1].index - 1] << "\n";
+    //                             // 			auto node = conn_aig.index_to_node(connected_input[name].at(i).at(j));
+    //                             // 			if(conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[0].index - 1].compare(name) == 0){
+    //                             // 				std::cout << "updating child [0] of " << connected_input[name].at(i).at(j) << "\n";
+    //                             // 				conn_aig._storage->nodes[node].children[0].index += nodeIdx + index_offset;
+    //                             // 			}
+    //                             // 			else if(conn_aig._storage->inputNames[conn_aig._storage->nodes[node].children[1].index - 1].compare(name) == 0){
+    //                             // 				std::cout << "updating child [1] of " << connected_input[name].at(i).at(j) << "\n";
+    //                             // 				conn_aig._storage->nodes[node].children[1].index += nodeIdx + index_offset;
+    //                             // 			}
+    //                             // 		}
+    //                             // 	}
+    //                             // 	node_connection_index[name] = nodeIdx + index_offset;
+    //                             // }
+    //                         }
+    //                     }
+    //                     if(curr_aig.is_pi(nodeIdx)){
 
-                            std::string name = curr_aig._storage->inputNames[nodeIdx - 1];
-                            std::cout << "name = " << name << "\n";
+    //                         std::string name = curr_aig._storage->inputNames[nodeIdx - 1];
+    //                         std::cout << "name = " << name << "\n";
 
-                            if(nodeIdx > temp_max_input)
-                                temp_max_input = nodeIdx;
-                            bool connected_to_other_aig_out = (name.find_first_not_of("0123456789") == std::string::npos);
-                            if(connected_to_other_aig_out){
+    //                         if(nodeIdx > temp_max_input)
+    //                             temp_max_input = nodeIdx;
+    //                         bool connected_to_other_aig_out = (name.find_first_not_of("0123456789") == std::string::npos);
+    //                         if(connected_to_other_aig_out){
 
-                                if(!is_in_string_vector(node_connection_name, name)){
-                                    std::cout << "adding " << nodeIdx << " to node_connection_index\n";
-                                    // std::vector<int> temp;
-                                    std::cout << "aig index = " << idx << "\n";
-                                    node_connection_index[name] = nodeIdx;
-                                    node_connection_name.push_back(name);
-                                    // temp.push_back(idx);
-                                    // mockturtle::fanout_view fanout_aig{curr_aig};
-                                    // std::set<mockturtle::node<mockturtle::aig_network>> nodes;
-                                    // fanout_aig.foreach_fanout(curr_aig.index_to_node(nodeIdx), [&](const auto& p){
-                                    // 	nodes.insert(p);
-                                    // });
-                                    // std::cout << "fanout: ";
-                                    // for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-                                    // 	std::cout << curr_aig.node_to_index(*it) - 1 << " ";
-                                    // 	temp.push_back(curr_aig.node_to_index(*it) - 1);
-                                    // }
-                                    // std::cout << "\n";
-                                    // connected_input[name].push_back(temp);
-                                }
-                                //Erase from nodes so the merged AIG does not have duplicate nodes
+    //                             if(!is_in_string_vector(node_connection_name, name)){
+    //                                 std::cout << "adding " << nodeIdx << " to node_connection_index\n";
+    //                                 // std::vector<int> temp;
+    //                                 std::cout << "aig index = " << idx << "\n";
+    //                                 node_connection_index[name] = nodeIdx;
+    //                                 node_connection_name.push_back(name);
+    //                                 // temp.push_back(idx);
+    //                                 // mockturtle::fanout_view fanout_aig{curr_aig};
+    //                                 // std::set<mockturtle::node<mockturtle::aig_network>> nodes;
+    //                                 // fanout_aig.foreach_fanout(curr_aig.index_to_node(nodeIdx), [&](const auto& p){
+    //                                 // 	nodes.insert(p);
+    //                                 // });
+    //                                 // std::cout << "fanout: ";
+    //                                 // for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
+    //                                 // 	std::cout << curr_aig.node_to_index(*it) - 1 << " ";
+    //                                 // 	temp.push_back(curr_aig.node_to_index(*it) - 1);
+    //                                 // }
+    //                                 // std::cout << "\n";
+    //                                 // connected_input[name].push_back(temp);
+    //                             }
+    //                             //Erase from nodes so the merged AIG does not have duplicate nodes
 
-                                std::cout << "marking to erase " << nodeIdx << "\n";
-                                nodes_to_erase.push_back(nodeIdx);
-                                max_input++;
-                                // curr_aig._storage->nodes.erase(curr_aig._storage->nodes.begin() + nodeIdx);
+    //                             std::cout << "marking to erase " << nodeIdx << "\n";
+    //                             nodes_to_erase.push_back(nodeIdx);
+    //                             max_input++;
+    //                             // curr_aig._storage->nodes.erase(curr_aig._storage->nodes.begin() + nodeIdx);
 
-                            }
-                            // else{
-                            // 	// if(!is_in_string_vector(inputs_visited, name)){
-                            // 	// 	inputs_visited.push_back(name);
-                            // 	// 	std::cout << "adding " << nodeIdx << " as input index for " << name << "\n";
-                            // 	// 	visited_input_indeces[name] = nodeIdx + max_input;
-                            // 	// }
-                            // 	// else{
-                            // 	// 	std::cout << "Duplicate Input\n";
-                            // 		if(!is_in_string_vector(node_connection_name, name)){
-                            // 			std::cout << "adding " << name << " to node_connection_name\n";
-                            // 			std::cout << "adding " << nodeIdx << " to node_connection_index\n";
-                            // 			node_connection_index[name] = visited_input_indeces[name];
-                            // 			node_connection_name.push_back(name);
-                            // 		}
+    //                         }
+    //                         // else{
+    //                         // 	// if(!is_in_string_vector(inputs_visited, name)){
+    //                         // 	// 	inputs_visited.push_back(name);
+    //                         // 	// 	std::cout << "adding " << nodeIdx << " as input index for " << name << "\n";
+    //                         // 	// 	visited_input_indeces[name] = nodeIdx + max_input;
+    //                         // 	// }
+    //                         // 	// else{
+    //                         // 	// 	std::cout << "Duplicate Input\n";
+    //                         // 		if(!is_in_string_vector(node_connection_name, name)){
+    //                         // 			std::cout << "adding " << name << " to node_connection_name\n";
+    //                         // 			std::cout << "adding " << nodeIdx << " to node_connection_index\n";
+    //                         // 			node_connection_index[name] = visited_input_indeces[name];
+    //                         // 			node_connection_name.push_back(name);
+    //                         // 		}
 
-                            // 		std::cout << "marking to erase " << nodeIdx << "\n";
-                            // 		nodes_to_erase.push_back(nodeIdx);
-                            // 		max_input++;
+    //                         // 		std::cout << "marking to erase " << nodeIdx << "\n";
+    //                         // 		nodes_to_erase.push_back(nodeIdx);
+    //                         // 		max_input++;
 
-                            // 	//}
-                            // }
-                        }
-                        std::cout << "node " << nodeIdx << " child[0] = " << curr_aig._storage->nodes[node].children[0].index << "\n";
-                        std::cout << "node " << nodeIdx << " child[1] = " << curr_aig._storage->nodes[node].children[1].index << "\n";
-
-
-                        if(!curr_aig.is_pi(nodeIdx) && !curr_aig.is_constant(nodeIdx)){
-
-                            if(first_gate){
-                                std::cout << "num_pis = " << aig.num_pis() + 1 << " nodeIdx " << nodeIdx << "\n";
-                                index_offset = (aig.num_pis() + 1) - nodeIdx;
-                                first_gate = false;
-                            }
-                            std::cout << "index_offset = " << index_offset << "\n";
-                            if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[0].index)
-                               && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]) != node_connection_index.end()){
-                                std::cout << "child 0 is connected with name " << curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1] << "\n";
-                                curr_aig._storage->nodes[node].children[0].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]];
-
-                                // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index)){
-                                // 	int offset = 0;
-                                // 	for(int i = 0; i < nodes_to_erase.size(); i++){
-                                // 		if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
-                                // 			offset++;
-                                // 	}
-                                // 	curr_aig._storage->nodes[node].children[1].index += (max_index - offset);
-                                // }
-                                // else{
-                                if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index))
-                                    curr_aig._storage->nodes[node].children[1].index += index_offset;
-                                else{
-                                    int offset = 0;
-                                    for(int i = 0; i < nodes_to_erase.size(); i++){
-                                        if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
-                                            offset++;
-                                    }
-                                    curr_aig._storage->nodes[node].children[1].index += (max_input - offset);
-                                }
-
-                                //}
-                            }
-                            else if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[1].index)
-                                    && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]) != node_connection_index.end()){
-                                std::cout << "child 1 is connected with name " << curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1] << "\n";
-                                // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index)){
-                                // 	int offset = 0;
-                                // 	for(int i = 0; i < nodes_to_erase.size(); i++){
-                                // 		if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
-                                // 			offset++;
-                                // 	}
-                                // 	curr_aig._storage->nodes[node].children[0].index += (max_index - offset);
-                                // }
-                                // else{
-                                if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index))
-                                    curr_aig._storage->nodes[node].children[0].index += index_offset;
-                                else{
-                                    int offset = 0;
-                                    for(int i = 0; i < nodes_to_erase.size(); i++){
-                                        if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
-                                            offset++;
-                                    }
-                                    curr_aig._storage->nodes[node].children[0].index += (max_input - offset);
-                                }
-
-                                //}
-                                curr_aig._storage->nodes[node].children[1].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]];
-                            }
-                            else if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[0].index) && is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[1].index)
-                                    && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]) != node_connection_index.end()
-                                    && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]) != node_connection_index.end()){
-                                std::cout << "child 0 and 1 is connected\n";
-                                curr_aig._storage->nodes[node].children[0].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]];
-                                curr_aig._storage->nodes[node].children[1].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]];
-                            }
-                            else{
-                                std::cout << "Neither are connected\n";
-                                // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index)){
-                                // 	int offset1 = 0;
-
-                                // 	for(int i = 0; i < nodes_to_erase.size(); i++){
-                                // 		if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
-                                // 			offset1++;
-                                // 	}
-                                // 	curr_aig._storage->nodes[node].children[0].index += (max_index - offset1);
-                                // }
-                                // else{
-                                if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index))
-                                    curr_aig._storage->nodes[node].children[0].index += index_offset;
-                                else{
-                                    int offset = 0;
-                                    for(int i = 0; i < nodes_to_erase.size(); i++){
-                                        if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
-                                            offset++;
-                                    }
-                                    curr_aig._storage->nodes[node].children[0].index += (max_input - offset);
-                                }
-
-                                //}
-                                // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index)){
-                                // 	int offset2 = 0;
-                                // 	for(int i = 0; i < nodes_to_erase.size(); i++){
-                                // 		if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
-                                // 			offset2++;
-                                // 	}
-
-                                // 	curr_aig._storage->nodes[node].children[1].index += (max_index - offset2);
-                                // }
-                                // else{
-                                if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index))
-                                    curr_aig._storage->nodes[node].children[1].index += index_offset;
-                                else{
-                                    int offset = 0;
-                                    for(int i = 0; i < nodes_to_erase.size(); i++){
-                                        if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
-                                            offset++;
-                                    }
-                                    curr_aig._storage->nodes[node].children[1].index += (max_input - offset);
-                                }
-
-                                //}
-                            }
-
-                        }
-
-                        std::cout << "node " << nodeIdx << " child[0] = " << curr_aig._storage->nodes[node].children[0].index << "\n";
-                        std::cout << "node " << nodeIdx << " child[1] = " << curr_aig._storage->nodes[node].children[1].index << "\n";
-
-                    });
-                    int offset = 0;
-                    for(int i = 0; i < nodes_to_erase.size(); i++){
-                        std::cout << "erasing " << nodes_to_erase.at(i) << "\n";
-                        curr_aig._storage->inputs.erase(curr_aig._storage->inputs.begin() + nodes_to_erase.at(i) - offset - 1);
-                        curr_aig._storage->nodes.erase(curr_aig._storage->nodes.begin() + nodes_to_erase.at(i) - offset);
-                        offset++;
-                    }
-                    if(temp_max > max_index)
-                        max_index = temp_max;
-
-                    if(temp_max_input > max_input)
-                        max_input = temp_max_input;
-
-                    std::cout << "Inputs:\n";
-
-                    std::map<int,std::string>::iterator it;
-                    for (it=curr_aig._storage->inputNames.begin(); it!=curr_aig._storage->inputNames.end(); ++it){
-                        std::cout << it->first << ": " << it->second << "\n";
-
-                        // bool exists = false;
-                        // std::map<int,std::string>::iterator it_merge;
-                        // for (it_merge=merged_aig._storage->inputNames.begin(); it_merge!=merged_aig._storage->inputNames.end(); ++it_merge){
-                        // 	if(it_merge->second == it->second)
-                        // 		exists = true;
-
-                        // }
-                        if((!is_in_vector(nodes_to_erase, it->first + 1))){
-                            merged_aig._storage->inputNames[input_offset] = it->second;
-                            merged_aig._storage->inputs.emplace_back( input_offset + 1 );
-                            std::cout << "merged_aig = " << merged_aig._storage->inputNames[input_offset + 1] << "\n";
-                            input_offset++;
-                        }
+    //                         // 	//}
+    //                         // }
+    //                     }
+    //                     std::cout << "node " << nodeIdx << " child[0] = " << curr_aig._storage->nodes[node].children[0].index << "\n";
+    //                     std::cout << "node " << nodeIdx << " child[1] = " << curr_aig._storage->nodes[node].children[1].index << "\n";
 
 
-                    }
+    //                     if(!curr_aig.is_pi(nodeIdx) && !curr_aig.is_constant(nodeIdx)){
 
-                    std::cout << "Outputs:\n";
+    //                         if(first_gate){
+    //                             std::cout << "num_pis = " << aig.num_pis() + 1 << " nodeIdx " << nodeIdx << "\n";
+    //                             index_offset = (aig.num_pis() + 1) - nodeIdx;
+    //                             first_gate = false;
+    //                         }
+    //                         std::cout << "index_offset = " << index_offset << "\n";
+    //                         if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[0].index)
+    //                            && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]) != node_connection_index.end()){
+    //                             std::cout << "child 0 is connected with name " << curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1] << "\n";
+    //                             curr_aig._storage->nodes[node].children[0].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]];
 
-                    for (it=curr_aig._storage->outputNames.begin(); it!=curr_aig._storage->outputNames.end(); ++it){
-                        std::cout << it->first << ": " << it->second << "\n";
+    //                             // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index)){
+    //                             // 	int offset = 0;
+    //                             // 	for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                             // 		if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
+    //                             // 			offset++;
+    //                             // 	}
+    //                             // 	curr_aig._storage->nodes[node].children[1].index += (max_index - offset);
+    //                             // }
+    //                             // else{
+    //                             if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index))
+    //                                 curr_aig._storage->nodes[node].children[1].index += index_offset;
+    //                             else{
+    //                                 int offset = 0;
+    //                                 for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                                     if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
+    //                                         offset++;
+    //                                 }
+    //                                 curr_aig._storage->nodes[node].children[1].index += (max_input - offset);
+    //                             }
 
-                    }
+    //                             //}
+    //                         }
+    //                         else if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[1].index)
+    //                                 && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]) != node_connection_index.end()){
+    //                             std::cout << "child 1 is connected with name " << curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1] << "\n";
+    //                             // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index)){
+    //                             // 	int offset = 0;
+    //                             // 	for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                             // 		if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
+    //                             // 			offset++;
+    //                             // 	}
+    //                             // 	curr_aig._storage->nodes[node].children[0].index += (max_index - offset);
+    //                             // }
+    //                             // else{
+    //                             if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index))
+    //                                 curr_aig._storage->nodes[node].children[0].index += index_offset;
+    //                             else{
+    //                                 int offset = 0;
+    //                                 for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                                     if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
+    //                                         offset++;
+    //                                 }
+    //                                 curr_aig._storage->nodes[node].children[0].index += (max_input - offset);
+    //                             }
 
-                }
+    //                             //}
+    //                             curr_aig._storage->nodes[node].children[1].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]];
+    //                         }
+    //                         else if(is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[0].index) && is_in_vector(nodes_to_erase, curr_aig._storage->nodes[node].children[1].index)
+    //                                 && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]) != node_connection_index.end()
+    //                                 && node_connection_index.find(curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]) != node_connection_index.end()){
+    //                             std::cout << "child 0 and 1 is connected\n";
+    //                             curr_aig._storage->nodes[node].children[0].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[0].index - 1]];
+    //                             curr_aig._storage->nodes[node].children[1].index = node_connection_index[curr_aig._storage->inputNames[curr_aig._storage->nodes[node].children[1].index - 1]];
+    //                         }
+    //                         else{
+    //                             std::cout << "Neither are connected\n";
+    //                             // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index)){
+    //                             // 	int offset1 = 0;
 
-                for(int i = 0; i < aig_parts.size(); i++){
-                    mockturtle::aig_network curr_aig = aig_parts.at(i);
-                    std::cout << "num pi = " << curr_aig.num_pis() << "\n";
+    //                             // 	for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                             // 		if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
+    //                             // 			offset1++;
+    //                             // 	}
+    //                             // 	curr_aig._storage->nodes[node].children[0].index += (max_index - offset1);
+    //                             // }
+    //                             // else{
+    //                             if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[0].index))
+    //                                 curr_aig._storage->nodes[node].children[0].index += index_offset;
+    //                             else{
+    //                                 int offset = 0;
+    //                                 for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                                     if(curr_aig._storage->nodes[node].children[0].index > nodes_to_erase.at(i))
+    //                                         offset++;
+    //                                 }
+    //                                 curr_aig._storage->nodes[node].children[0].index += (max_input - offset);
+    //                             }
 
-                    merged_aig._storage->nodes.insert(merged_aig._storage->nodes.end(), curr_aig._storage->nodes.begin() + 1, curr_aig._storage->nodes.begin() + curr_aig.num_pis() + 1);
-                }
-                for(int i = 0; i < aig_parts.size(); i++){
-                    mockturtle::aig_network curr_aig = aig_parts.at(i);
-                    merged_aig._storage->nodes.insert(merged_aig._storage->nodes.end(), curr_aig._storage->nodes.begin() + curr_aig.num_pis() + 1, curr_aig._storage->nodes.end());
-                }
+    //                             //}
+    //                             // if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index)){
+    //                             // 	int offset2 = 0;
+    //                             // 	for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                             // 		if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
+    //                             // 			offset2++;
+    //                             // 	}
 
-                merged_aig._storage->outputs = aig._storage->outputs;
-                merged_aig._storage->outputNames = aig._storage->outputNames;
+    //                             // 	curr_aig._storage->nodes[node].children[1].index += (max_index - offset2);
+    //                             // }
+    //                             // else{
+    //                             if(!curr_aig.is_pi(curr_aig._storage->nodes[node].children[1].index))
+    //                                 curr_aig._storage->nodes[node].children[1].index += index_offset;
+    //                             else{
+    //                                 int offset = 0;
+    //                                 for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                                     if(curr_aig._storage->nodes[node].children[1].index > nodes_to_erase.at(i))
+    //                                         offset++;
+    //                                 }
+    //                                 curr_aig._storage->nodes[node].children[1].index += (max_input - offset);
+    //                             }
 
-                std::cout << "MERGED\n";
-                merged_aig.foreach_node( [&]( auto node ) {
-                    int nodeIdx = merged_aig.node_to_index(node);
-                    std::cout << "node " << nodeIdx << " child[0] = " << merged_aig._storage->nodes[node].children[0].index << "\n";
-                    std::cout << "node " << nodeIdx << " child[1] = " << merged_aig._storage->nodes[node].children[1].index << "\n";
+    //                             //}
+    //                         }
 
-                });
-                std::cout << "Inputs:\n";
+    //                     }
 
-                for(int i = 0; i < merged_aig._storage->inputs.size(); i++){
-                    std::cout << merged_aig._storage->inputs.at(i) << ": " << merged_aig._storage->inputNames[merged_aig._storage->inputs.at(i) - 1] << "\n";
-                }
+    //                     std::cout << "node " << nodeIdx << " child[0] = " << curr_aig._storage->nodes[node].children[0].index << "\n";
+    //                     std::cout << "node " << nodeIdx << " child[1] = " << curr_aig._storage->nodes[node].children[1].index << "\n";
 
-                std::cout << "Outputs:\n";
+    //                 });
+    //                 int offset = 0;
+    //                 for(int i = 0; i < nodes_to_erase.size(); i++){
+    //                     std::cout << "erasing " << nodes_to_erase.at(i) << "\n";
+    //                     curr_aig._storage->inputs.erase(curr_aig._storage->inputs.begin() + nodes_to_erase.at(i) - offset - 1);
+    //                     curr_aig._storage->nodes.erase(curr_aig._storage->nodes.begin() + nodes_to_erase.at(i) - offset);
+    //                     offset++;
+    //                 }
+    //                 if(temp_max > max_index)
+    //                     max_index = temp_max;
 
-                for(int i = 0; i < merged_aig._storage->outputs.size(); i++){
-                    std::cout << merged_aig._storage->outputs.at(i).index << ": " << merged_aig._storage->outputNames[i] << "\n";
-                }
-                write_aig(merged_aig, path + "../" + root + "_merged.aag");
+    //                 if(temp_max_input > max_input)
+    //                     max_input = temp_max_input;
 
-                mockturtle::aig_network merged_aig_simp = simplify_merged(merged_aig);
+    //                 std::cout << "Inputs:\n";
 
-                std::cout << "SIMPLIFIED MERGED\n";
-                merged_aig_simp.foreach_node( [&]( auto node ) {
-                    int nodeIdx = merged_aig_simp.node_to_index(node);
-                    std::cout << "node " << nodeIdx << " child[0] = " << merged_aig_simp._storage->nodes[node].children[0].index << "\n";
-                    std::cout << "node " << nodeIdx << " child[1] = " << merged_aig_simp._storage->nodes[node].children[1].index << "\n";
+    //                 std::map<int,std::string>::iterator it;
+    //                 for (it=curr_aig._storage->inputNames.begin(); it!=curr_aig._storage->inputNames.end(); ++it){
+    //                     std::cout << it->first << ": " << it->second << "\n";
 
-                });
-                std::cout << "Inputs:\n";
+    //                     // bool exists = false;
+    //                     // std::map<int,std::string>::iterator it_merge;
+    //                     // for (it_merge=merged_aig._storage->inputNames.begin(); it_merge!=merged_aig._storage->inputNames.end(); ++it_merge){
+    //                     // 	if(it_merge->second == it->second)
+    //                     // 		exists = true;
 
-                for(int i = 0; i < merged_aig_simp._storage->inputs.size(); i++){
-                    std::cout << merged_aig_simp._storage->inputs.at(i) << ": " << merged_aig_simp._storage->inputNames[merged_aig_simp._storage->inputs.at(i) - 1] << "\n";
-                }
+    //                     // }
+    //                     if((!is_in_vector(nodes_to_erase, it->first + 1))){
+    //                         merged_aig._storage->inputNames[input_offset] = it->second;
+    //                         merged_aig._storage->inputs.emplace_back( input_offset + 1 );
+    //                         std::cout << "merged_aig = " << merged_aig._storage->inputNames[input_offset + 1] << "\n";
+    //                         input_offset++;
+    //                     }
 
-                std::cout << "Outputs:\n";
 
-                for(int i = 0; i < merged_aig_simp._storage->outputs.size(); i++){
-                    std::cout << merged_aig_simp._storage->outputs.at(i).index << ": " << merged_aig_simp._storage->outputNames[i] << "\n";
-                }
-                write_aig(merged_aig_simp, path + "../" + root + "_merged_simp.aag");
-            }
-            else{
-                std::cout << "Partitions not mapped yet\n";
-            }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-    ALICE_COMMAND( aig_in_size, "Stat", "Returns the number of inputs in an AIG network" ){
+    //                 }
 
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            std::cout << aig.num_pis() << "\n";
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
+    //                 std::cout << "Outputs:\n";
 
-    }
+    //                 for (it=curr_aig._storage->outputNames.begin(); it!=curr_aig._storage->outputNames.end(); ++it){
+    //                     std::cout << it->first << ": " << it->second << "\n";
+
+    //                 }
+
+    //             }
+
+    //             for(int i = 0; i < aig_parts.size(); i++){
+    //                 mockturtle::aig_network curr_aig = aig_parts.at(i);
+    //                 std::cout << "num pi = " << curr_aig.num_pis() << "\n";
+
+    //                 merged_aig._storage->nodes.insert(merged_aig._storage->nodes.end(), curr_aig._storage->nodes.begin() + 1, curr_aig._storage->nodes.begin() + curr_aig.num_pis() + 1);
+    //             }
+    //             for(int i = 0; i < aig_parts.size(); i++){
+    //                 mockturtle::aig_network curr_aig = aig_parts.at(i);
+    //                 merged_aig._storage->nodes.insert(merged_aig._storage->nodes.end(), curr_aig._storage->nodes.begin() + curr_aig.num_pis() + 1, curr_aig._storage->nodes.end());
+    //             }
+
+    //             merged_aig._storage->outputs = aig._storage->outputs;
+    //             merged_aig._storage->outputNames = aig._storage->outputNames;
+
+    //             std::cout << "MERGED\n";
+    //             merged_aig.foreach_node( [&]( auto node ) {
+    //                 int nodeIdx = merged_aig.node_to_index(node);
+    //                 std::cout << "node " << nodeIdx << " child[0] = " << merged_aig._storage->nodes[node].children[0].index << "\n";
+    //                 std::cout << "node " << nodeIdx << " child[1] = " << merged_aig._storage->nodes[node].children[1].index << "\n";
+
+    //             });
+    //             std::cout << "Inputs:\n";
+
+    //             for(int i = 0; i < merged_aig._storage->inputs.size(); i++){
+    //                 std::cout << merged_aig._storage->inputs.at(i) << ": " << merged_aig._storage->inputNames[merged_aig._storage->inputs.at(i) - 1] << "\n";
+    //             }
+
+    //             std::cout << "Outputs:\n";
+
+    //             for(int i = 0; i < merged_aig._storage->outputs.size(); i++){
+    //                 std::cout << merged_aig._storage->outputs.at(i).index << ": " << merged_aig._storage->outputNames[i] << "\n";
+    //             }
+    //             write_aig(merged_aig, path + "../" + root + "_merged.aag");
+
+    //             mockturtle::aig_network merged_aig_simp = simplify_merged(merged_aig);
+
+    //             std::cout << "SIMPLIFIED MERGED\n";
+    //             merged_aig_simp.foreach_node( [&]( auto node ) {
+    //                 int nodeIdx = merged_aig_simp.node_to_index(node);
+    //                 std::cout << "node " << nodeIdx << " child[0] = " << merged_aig_simp._storage->nodes[node].children[0].index << "\n";
+    //                 std::cout << "node " << nodeIdx << " child[1] = " << merged_aig_simp._storage->nodes[node].children[1].index << "\n";
+
+    //             });
+    //             std::cout << "Inputs:\n";
+
+    //             for(int i = 0; i < merged_aig_simp._storage->inputs.size(); i++){
+    //                 std::cout << merged_aig_simp._storage->inputs.at(i) << ": " << merged_aig_simp._storage->inputNames[merged_aig_simp._storage->inputs.at(i) - 1] << "\n";
+    //             }
+
+    //             std::cout << "Outputs:\n";
+
+    //             for(int i = 0; i < merged_aig_simp._storage->outputs.size(); i++){
+    //                 std::cout << merged_aig_simp._storage->outputs.at(i).index << ": " << merged_aig_simp._storage->outputNames[i] << "\n";
+    //             }
+    //             write_aig(merged_aig_simp, path + "../" + root + "_merged_simp.aag");
+    //         }
+    //         else{
+    //             std::cout << "Partitions not mapped yet\n";
+    //         }
+    //     }
+    //     else{
+    //         std::cout << "No AIG network stored\n";
+    //     }
+    // }
+    // ALICE_COMMAND( aig_in_size, "Stat", "Returns the number of inputs in an AIG network" ){
+
+    //     if(!store<mockturtle::aig_network>().empty()){
+    //         auto aig = store<mockturtle::aig_network>().current();
+    //         std::cout << aig.num_pis() << "\n";
+    //     }
+    //     else{
+    //         std::cout << "No AIG network stored\n";
+    //     }
+
+    // }
 
     ALICE_COMMAND( tt_algo_stats, "Stat", "Returns various statistics for the truth table generation algorithm" ){
 
