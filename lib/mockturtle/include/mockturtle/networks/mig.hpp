@@ -240,6 +240,11 @@ public:
       return (_storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data && _storage->nodes[n].children[0].data == _storage->nodes[n].children[2].data);
   }
 
+  bool is_ro( node const& n ) const
+  {
+    return (_storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data && _storage->nodes[n].children[0].data == _storage->nodes[n].children[2].data && _storage->nodes[n].children[0].data >= (_storage->inputs.size() - _storage->data.latches.size()) && _storage->nodes[n].children[0].data < _storage->inputs.size());
+  }
+
   bool is_po( node const& n ) const{
 
     int nodeIdx = node_to_index(n);

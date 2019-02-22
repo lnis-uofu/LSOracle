@@ -21,7 +21,7 @@ public:
   hypergraph(Ntk const& ntk) : ntk(ntk) {};
 
   void get_hypergraph(Ntk const& ntk);
-
+  void dump();
   void return_hyperedges(std::vector<uint32_t> &connections);
 
   int get_num_edges();
@@ -55,7 +55,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
     int nodeNdx = ntk.node_to_index(node);
 
-    if(!ntk.is_po(node)) {
+    if(!ntk.is_po(node) && !ntk.is_constant(node)) {
 
       fanout.foreach_fanout(node, [&](const auto &p) {
         nodes.insert(p);
@@ -68,7 +68,8 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
     else if (ntk.is_po(node)) {
       ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
-        connections.push_back(ntk._storage->nodes[node].children[i].index);
+        if(!ntk.is_constant(node))
+          connections.push_back(ntk._storage->nodes[node].children[i].index);
       });
     }
 
@@ -79,6 +80,20 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
       hyperEdges.push_back(connection_to_add);
     }
   });
+}
+
+template<class Ntk>
+void hypergraph<Ntk>::dump() {
+  ofstream myfile;
+  myfile.open ("hypergraph.txt");
+  myfile << hyperEdges.size() << " " << ntk.size() << "\n";
+  for (int i = 0; i < hyperEdges.size(); i++) {
+    for (int j = 0; j < hyperEdges.at(i).size(); j++) {
+      connections.push_back(hyperEdges.at(i).at(j) );
+      myfile << hyperEdges.at(i).at(j) << " ";
+    }
+    myfile << "\n";
+  }
 }
 
 template<class Ntk>

@@ -78,7 +78,6 @@ namespace oracle
             static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
             static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
-
             /* constants */
             add_node( this->get_node( this->get_constant( false ) ) );
             this->set_visited( this->get_node( this->get_constant( false ) ), 1 );
@@ -124,9 +123,9 @@ namespace oracle
         inline auto num_pis() const { return _num_leaves; }
         inline auto num_pos() const { return _roots.size(); }
         inline auto num_gates() const { 
-            std::cout << "_nodes.size() = " << _nodes.size() << "\n";
-            std::cout << "_num_leaves = " << _num_leaves << "\n";
-            std::cout << "_num_constants = " << _num_constants << "\n";
+            //std::cout << "_nodes.size() = " << _nodes.size() << "\n";
+            //std::cout << "_num_leaves = " << _num_leaves << "\n";
+            //std::cout << "_num_constants = " << _num_constants << "\n";
             return _nodes.size() - _num_leaves - _num_constants; 
         }
 
@@ -141,7 +140,6 @@ namespace oracle
 
         inline bool is_ci( node const& pi ) const
         {
-
             const auto beg = _nodes.begin() + _num_constants;
             return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;
         }
@@ -299,7 +297,7 @@ namespace oracle
                     auto o = signal(nodeIdx, 0);
                     if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                     {
-                        std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+                        //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
                         _roots.push_back( s );
                         _outputs.push_back( o );
                     }
@@ -308,7 +306,7 @@ namespace oracle
 
                 mockturtle::fanout_view fanout{ntk};
                 fanout.foreach_fanout( n, [&]( auto const& p ){
-                    if(!ntk.is_constant(n) && !is_pi(n))
+                    if(!ntk.is_constant(n) && !is_pi(n) && !ntk.is_ro(n))
                     {
                         if ( std::find( _nodes.begin(), _nodes.end(), p ) == _nodes.end() )
                         {
@@ -317,7 +315,7 @@ namespace oracle
                             auto o = signal(nodeIdx, 0);
                             if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                             {
-                                std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+                                //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
                                 _roots.push_back( s );
                                 _outputs.push_back( o );
                                 return false;
