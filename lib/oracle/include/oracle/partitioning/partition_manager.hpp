@@ -126,6 +126,7 @@ namespace oracle
         kahyp_num_vertices = t.get_num_vertices();
         kahyp_num_indeces_hyper = t.get_num_indeces();
         kahyp_num_sets = t.get_num_sets();
+        t.dump();
         t.get_indeces(kahyp_set_indeces);
         /******************
         Partition with kahypar
@@ -175,17 +176,18 @@ namespace oracle
         for(int i = 0; i < num_vertices; ++i) {
           //get rid of circuit PIs
           if(ntk.is_pi(ntk.index_to_node(i)) && !ntk.is_constant(ntk.index_to_node(i))){
-            //std::cout << "Node "<< i << " is ckt PI " << std::endl;
             _part_scope[partition[i]].insert(ntk.index_to_node(i));
             _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
 
-          if(i > ntk.num_pis() && i <= ntk.num_pis() + ntk.num_latches()){
+          else if( ntk.is_ro(ntk.index_to_node(i))){
+            _part_scope[partition[i]].insert(ntk.index_to_node(i));
             _part_ros.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
 
           //get rid of circuit POs
           else if(ntk.is_po(ntk.index_to_node(i))){
+            //std::cout << "Adding partition output " << std::endl;
             _part_scope[partition[i]].insert(ntk.index_to_node(i));
             _part_pos.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
@@ -216,19 +218,37 @@ namespace oracle
 
         for(int i = 0; i < part_num; i++){
           partitionInputs[i] = create_part_inputs(i);
-          std::cout << "Partition " << i << " Inputs: {";
+          //std::cout << "Partition " << i << " Inputs: {";
           typename std::set<node>::iterator it;
           for(it = partitionInputs[i].begin(); it != partitionInputs[i].end(); ++it){
-            std::cout << ntk.node_to_index(*it) << " ";
+            //std::cout << ntk.node_to_index(*it) << " ";
           }
-          std::cout << "}\n";
+          //std::cout << "}\n";
           partitionOutputs[i] = create_part_outputs(i);
-          std::cout << "Partition " << i << " Outputs: {";
+          //std::cout << "Partition " << i << " Outputs: {";
           for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
-            std::cout << ntk.node_to_index(*it) << " ";
+            //std::cout << ntk.node_to_index(*it) << " ";
           }
-          std::cout << "}\n";
+          //std::cout << "}\n";
         }
+
+        for(int i = 0; i < part_num; i++){
+         std::cout << "Partition " << i << " scope: \n";
+         for (auto node : _part_scope[i])
+           std::cout << "Node " << node << std::endl;
+//          typename std::set<node>::iterator it;
+//          for(it = partitionInputs[i].begin(); it != partitionInputs[i].end(); ++it){
+//            std::cout << ntk.node_to_index(*it) << " ";
+//          }
+//          std::cout << "}\n";
+//          partitionOutputs[i] = create_part_outputs(i);
+//          std::cout << "Partition " << i << " Outputs: {";
+//          for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
+//            std::cout << ntk.node_to_index(*it) << " ";
+//          }
+//          std::cout << "}\n";
+        }
+
         kahypar_context_free(context);
       }
     }
@@ -285,18 +305,14 @@ namespace oracle
             if(childIdx < 0){
               is_valid = false;
             }
-
             if(!visited[childIdx]){
-
               if(is_valid){
 
                 net_queue.push(childIdx);
                 visited[childIdx] = true;
 
               }
-
             }
-
           }
         }
         else{
@@ -304,7 +320,6 @@ namespace oracle
         }
       }
       logic_cone_inputs[output] = inputs;
-
     }//BFS_traversal()
 
     int computeLevel( Ntk const& ntk, node curr_node, int partition ) {
@@ -338,8 +353,6 @@ namespace oracle
         int level = 1 + std::max(levelNode0, levelNode1);
         return level;
       }
-
-
     }
 
     std::string to_binary(int dec){
@@ -469,17 +482,17 @@ namespace oracle
   public:
 
     oracle::partition_view<Ntk> create_part( Ntk const& ntk, int part ){
-      std::cout << "Partition " << part << " Inputs: {";
+      //std::cout << "Partition " << part << " Inputs: {";
           typename std::set<node>::iterator it;
           for(it = partitionInputs[part].begin(); it != partitionInputs[part].end(); ++it){
-            std::cout << ntk.node_to_index(*it) << " ";
+            //std::cout << ntk.node_to_index(*it) << " ";
           }
-          std::cout << "}\n";
-          std::cout << "Partition " << part << " Outputs: {";
+          //std::cout << "}\n";
+          //std::cout << "Partition " << part << " Outputs: {";
           for(it = partitionOutputs[part].begin(); it != partitionOutputs[part].end(); ++it){
-            std::cout << ntk.node_to_index(*it) << " ";
+            //std::cout << ntk.node_to_index(*it) << " ";
           }
-          std::cout << "}\n";
+          //std::cout << "}\n";
       oracle::partition_view<Ntk> partition(ntk, partitionInputs[part], partitionOutputs[part], false);
       return partition;
     }
