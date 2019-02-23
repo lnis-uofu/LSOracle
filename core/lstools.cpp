@@ -2998,8 +2998,8 @@ class test_part_view_command : public alice::command{
                 mockturtle::depth_view depth{ntk};
                 std::cout << "ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
 
-                std::vector<int> part_aig_opt = {};
-                std::vector<int> part_mig_opt = {0, 1, 2};
+                //std::vector<int> part_aig_opt = {};
+                //std::vector<int> part_mig_opt = {0, 1, 2};
 
                 oracle::partition_manager<mockturtle::mig_network> partitions_aig(ntk, num_parts);
                 // for(int i = 0; i < part_aig_opt.size(); i++){
@@ -3029,17 +3029,17 @@ class test_part_view_command : public alice::command{
 
                 for(int i = 0; i < num_parts; i++){
 
-                    oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, part_mig_opt.at(i));
+                    oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, i);
                     //std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
                     mockturtle::depth_view part_mig_depth{part_mig};
-                    //std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+                    std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
 
                     auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
                     mockturtle::mig_script migopt;
                     mig_opt = migopt.run(mig_opt);
 
                     mockturtle::depth_view opt_mig_depth{mig_opt};
-                    //std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
+                    std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
                     partitions_aig.synchronize_part(part_mig, mig_opt, ntk);
                 }                
 

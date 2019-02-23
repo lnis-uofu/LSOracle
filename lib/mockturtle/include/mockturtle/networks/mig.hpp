@@ -197,7 +197,6 @@ public:
 
     /* increase ref-count to children */
     _storage->nodes[f.index].data[0].h1++;
-
     _storage->outputs.emplace_back( f.index, f.complement );
   }
 
