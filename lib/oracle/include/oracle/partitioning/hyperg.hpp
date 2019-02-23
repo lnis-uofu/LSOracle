@@ -21,12 +21,14 @@ public:
   hypergraph(Ntk const& ntk) : ntk(ntk) {};
 
   void get_hypergraph(Ntk const& ntk);
-  void dump();
+
   void return_hyperedges(std::vector<uint32_t> &connections);
 
   int get_num_edges();
 
   int get_num_vertices();
+
+  void dump();
 
   uint64_t get_num_sets();
 
@@ -41,7 +43,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
   static_assert(mockturtle::has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method");
   static_assert(mockturtle::has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method");
   static_assert(mockturtle::has_size_v<Ntk>, "Ntk does not implement the size method");
-
+  std::cout << "HERE\n";
   //fanout view to iterate over fanouts and generate hyper edges
   mockturtle::fanout_view fanout{ntk};
 
@@ -55,7 +57,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
     int nodeNdx = ntk.node_to_index(node);
 
-    if(!ntk.is_po(node) && !ntk.is_constant(node)) {
+    if(!ntk.is_po(node)) {
 
       fanout.foreach_fanout(node, [&](const auto &p) {
         nodes.insert(p);
@@ -68,8 +70,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
     else if (ntk.is_po(node)) {
       ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
-        if(!ntk.is_constant(node))
-          connections.push_back(ntk._storage->nodes[node].children[i].index);
+        connections.push_back(ntk._storage->nodes[node].children[i].index);
       });
     }
 
@@ -86,7 +87,7 @@ template<class Ntk>
 void hypergraph<Ntk>::dump() {
   ofstream myfile;
   myfile.open ("hypergraph.txt");
-  myfile << hyperEdges.size() << " " << ntk.size() << "\n";
+  myfile << hyperEdges.size() << " " << ntk.size()-1 << "\n";
   for (int i = 0; i < hyperEdges.size(); i++) {
     for (int j = 0; j < hyperEdges.at(i).size(); j++) {
       connections.push_back(hyperEdges.at(i).at(j) );

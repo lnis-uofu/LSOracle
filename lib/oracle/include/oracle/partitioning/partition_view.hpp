@@ -197,7 +197,7 @@ namespace oracle
                 }
             }
             _fanout_size.push_back( fanout_counter );
-            // std::cout << _nodes.size() << " added node of index = " << this->make_signal(n).index << "\n";
+            //std::cout << _nodes.size() << " added node of index = " << this->make_signal(n).index << "\n";
             return this->make_signal(n);
         }
 
