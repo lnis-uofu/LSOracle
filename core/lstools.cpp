@@ -26,6 +26,7 @@
 #include <iomanip>
 // #include <../mockturtle/include/mockturtle/networks/storage.hpp>
 #include <ot/timer/timer.hpp>
+#include "gts.hpp"
 
 namespace alice{
 
