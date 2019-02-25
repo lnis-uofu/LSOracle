@@ -283,13 +283,13 @@ namespace oracle
             /* compute po nodes */
             std::vector<node> pos;
             ntk.foreach_po( [&]( auto const& s ){
-                pos.push_back( ntk.get_node( s ) );
+              pos.push_back( ntk.get_node( s ) );
             });
 
             /* compute window outputs */
             for ( const auto& n : _nodes )
             {
-                // if ( ntk.is_constant( n ) || ntk.is_pi( n ) ) continue;
+                if ( ntk.is_constant( n ) || ntk.is_pi( n ) || ntk.is_ro(n)) continue;
                 int nodeIdx = node_to_index(n);
                 if ( std::find( pos.begin(), pos.end(), n ) != pos.end() )
                 {
@@ -297,9 +297,9 @@ namespace oracle
                     auto o = signal(nodeIdx, 0);
                     if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                     {
-                        //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
-                        _roots.push_back( s );
-                        _outputs.push_back( o );
+                      //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+                      _roots.push_back(s);
+                      _outputs.push_back(o);
                     }
                     continue;
                 }
@@ -315,10 +315,10 @@ namespace oracle
                             auto o = signal(nodeIdx, 0);
                             if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
                             {
-                                //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
-                                _roots.push_back( s );
-                                _outputs.push_back( o );
-                                return false;
+                              //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+                              _roots.push_back(s);
+                              _outputs.push_back(o);
+                              return false;
                             }
                         }
                     }

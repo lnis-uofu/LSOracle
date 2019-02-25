@@ -58,7 +58,6 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
     int nodeNdx = ntk.node_to_index(node);
 
     if(!ntk.is_po(node)) {
-
       fanout.foreach_fanout(node, [&](const auto &p) {
         nodes.insert(p);
       });
@@ -68,7 +67,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
       }
     }
 
-    else if (ntk.is_po(node)) {
+    else if (ntk.is_po(node) && !ntk.is_ro(node)) {
       ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
         connections.push_back(ntk._storage->nodes[node].children[i].index);
       });

@@ -19,7 +19,6 @@ namespace mockturtle{
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
