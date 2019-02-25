@@ -3030,7 +3030,7 @@ class test_part_view_command : public alice::command{
                 for(int i = 0; i < num_parts; i++){
 
                     oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, i);
-                    //std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
+                    std::cout << "\nPartition " << i << "\n";
                     mockturtle::depth_view part_mig_depth{part_mig};
                     std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
 
@@ -3697,29 +3697,71 @@ class test_part_view_command : public alice::command{
           : command( env, "Writes the Boolean network into structural verilog" ){
 
         opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
+        opts.add_option( "--type,type", choice, "Type of network to write from. 0 for AIG and 1 for MIG" )->required();
       }
 
     protected:
         void execute(){
             if(checkExt(filename, "v")){
-                if(!store<mockturtle::mig_network>().empty()){
-                    auto& mig = store<mockturtle::mig_network>().current();
-                    mockturtle::write_verilog(mig, filename);
+                if(choice) {
+                    if (!store<mockturtle::mig_network>().empty()) {
+                        auto &mig = store<mockturtle::mig_network>().current();
+                        mockturtle::write_verilog(mig, filename);
+                    } else {
+                        std::cout << "There is not an MIG network stored.\n";
+                    }
                 }
                 else{
-                    std::cout << "There is not an MIG network stored.\n";
+                    if (!store<mockturtle::aig_network>().empty()) {
+                        auto &aig = store<mockturtle::aig_network>().current();
+                        mockturtle::write_verilog(aig, filename);
+                    } else {
+                        std::cout << "There is not an AIG network stored.\n";
+                    }
                 }
             }
             else{
-                std::cout << filename << " is not a valid verilog file\n";
+                std::cout << filename << "Extension not compatible with a verilog file.\n";
             }
         }
 
     private:
       std::string filename{};
+      bool choice;
     };
 
     ALICE_ADD_COMMAND(write_verilog, "Output");
+
+class write_dot_command : public alice::command{
+
+public:
+  explicit write_dot_command( const environment::ptr& env )
+    : command( env, "Writes the Boolean network into dot" ){
+
+      opts.add_option( "--filename,filename", filename, "Dot file to write out to" )->required();
+  }
+
+protected:
+  void execute(){
+      if(checkExt(filename, "dot")){
+          if(!store<mockturtle::mig_network>().empty()){
+              auto& mig = store<mockturtle::mig_network>().current();
+              mockturtle::write_dot(mig, filename);
+          }
+          else{
+              std::cout << "There is not an MIG network stored.\n";
+          }
+      }
+      else{
+          std::cout << filename << " is not a valid dot file\n";
+      }
+  }
+
+private:
+  std::string filename{};
+};
+
+ALICE_ADD_COMMAND(write_dot, "Output");
 
 	ALICE_COMMAND(tmap, "Transformation", "Performs LUT techmapping") {
 		auto mig = store<mockturtle::mig_network>().current();;
@@ -3760,20 +3802,33 @@ class test_part_view_command : public alice::command{
 
 	}
 
-    // ALICE_COMMAND(aigscript, "Modification", "NPN XAG cut rewriting") {
-    //     auto& opt = store<mockturtle::aig_network>().current();
-    //     mockturtle::depth_view aig_depth{opt};
+     ALICE_COMMAND(aigscript, "Modification", "NPN XAG cut rewriting") {
+         auto& opt = store<mockturtle::aig_network>().current();
+         mockturtle::depth_view aig_depth{opt};
 
-    //     //DEPTH REWRITING
-    //     std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+         //DEPTH REWRITING
+         std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
 
-    //     mockturtle::aig_script aigopt;
-    //     opt = aigopt.run(opt);
+         mockturtle::aig_script aigopt;
+         opt = aigopt.run(opt);
 
-    //     mockturtle::depth_view new_aig_depth{opt};
-    //     std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+         mockturtle::depth_view new_aig_depth{opt};
+         std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
 
-    // }
+     }
+
+ALICE_COMMAND( opt_aig, "Optimization", "Test performing AIG db rewriting."){
+    auto& aig = store<mockturtle::aig_network>().current();
+
+    mockturtle::cut_rewriting_params ps;
+    mockturtle::cut_rewriting_stats st;
+
+    ps.cut_enumeration_ps.cut_size = 4;
+
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    mockturtle::cut_rewriting( aig, resyn, ps, &st);
+    aig = mockturtle::cleanup_dangling( aig );
+}
 
 	ALICE_COMMAND(depthr, "Modification", "Logic depth oriented MIG rewriting"){
 	    auto& mig = store<mockturtle::mig_network>().current();

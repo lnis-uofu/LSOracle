@@ -55,6 +55,7 @@
 #include "io/bench_reader.hpp"
 #include "io/write_bench.hpp"
 #include "io/write_verilog.hpp"
+#include "io/write_dot.hpp"
 #include "networks/aig.hpp"
 #include "networks/klut.hpp"
 #include "networks/mig.hpp"
