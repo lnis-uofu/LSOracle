@@ -26,7 +26,6 @@
 /*!
   \file cleanup.hpp
   \brief Cleans up networks
-
   \author Mathias Soeken
 */
 
@@ -48,15 +47,15 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
 
   static_assert( is_network_type_v<NtkSource>, "NtkSource is not a network type" );
   static_assert( is_network_type_v<NtkDest>, "NtkDest is not a network type" );
-  
+
   static_assert( has_get_node_v<NtkSource>, "NtkSource does not implement the get_node method" );
   static_assert( has_get_constant_v<NtkSource>, "NtkSource does not implement the get_constant method" );
   static_assert( has_foreach_pi_v<NtkSource>, "NtkSource does not implement the foreach_pi method" );
-  static_assert( has_is_pi_v<NtkSource>, "NtkSource does not implement the is_pi method" );
+  static_assert( has_is_ci_v<NtkSource>, "NtkSource does not implement the is_ci method" );
   static_assert( has_is_constant_v<NtkSource>, "NtkSource does not implement the is_constant method" );
   static_assert( has_is_complemented_v<NtkSource>, "NtkSource does not implement the is_complemented method" );
   static_assert( has_foreach_po_v<NtkSource>, "NtkSource does not implement the foreach_po method" );
-  
+
   static_assert( has_get_constant_v<NtkDest>, "NtkDest does not implement the get_constant method" );
   static_assert( has_create_not_v<NtkDest>, "NtkDest does not implement the create_not method" );
   static_assert( has_clone_node_v<NtkDest>, "NtkDest does not implement the clone_node method" );
@@ -95,7 +94,6 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
         children.push_back( f );
       }
     } );
-    // std::cout << "cloning node\n";
     old_to_new[node] = dest.clone_node( ntk, node, children );
   } );
 
@@ -103,7 +101,6 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
   std::vector<signal<NtkDest>> fs;
   ntk.foreach_po( [&]( auto po ) {
     const auto f = old_to_new[po];
-    // std::cout << "cleanup pushing po\n";
     if ( ntk.is_complemented( po ) )
     {
       fs.push_back( dest.create_not( f ) );
@@ -160,32 +157,29 @@ Ntk cleanup_dangling( Ntk const& ntk )
 
   Ntk dest;
   std::vector<signal<Ntk>> pis;
-  // std::cout << "cleaning dangling\n";
+
   //creates latches in the target network
   for ( auto i = 0u; i < ntk.num_latches(); ++i ){
-      dest._storage->data.latches.emplace_back(0);
+    dest._storage->data.latches.emplace_back(0);
   }
 
   //create PIs
   for ( auto i = 0u; i < ntk.num_pis() - ntk.num_latches(); ++i )
   {
-      // std::cout << "creating pi\n";
-      pis.push_back( dest.create_pi() );
+    pis.push_back( dest.create_pi() );
   }
-  // std::cout << "done with PIs\n";
+
   //create Registers Outputs
   for ( auto i = ntk.num_pis() - ntk.num_latches(); i < ntk.num_pis(); ++i )
   {
-      // std::cout << "cleanup create_ro\n";
-      pis.push_back( dest.create_ro() );
+    pis.push_back( dest.create_ro() );
   }
-  // std::cout << "done with ROs\n";
+
   for ( auto f : cleanup_dangling( ntk, dest, pis.begin(), pis.end() ) )
   {
-    // std::cout << "cleanup create_po\n";
     dest.create_po( f );
   }
-  // std::cout << "done with POs\n";
+
   return dest;
 }
 
