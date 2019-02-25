@@ -2998,8 +2998,8 @@ class test_part_view_command : public alice::command{
                 mockturtle::depth_view depth{ntk};
                 std::cout << "ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
 
-                std::vector<int> part_aig_opt = {};
-                std::vector<int> part_mig_opt = {0, 1, 2};
+                //std::vector<int> part_aig_opt = {};
+                //std::vector<int> part_mig_opt = {0, 1, 2};
 
                 oracle::partition_manager<mockturtle::mig_network> partitions_aig(ntk, num_parts);
                 // for(int i = 0; i < part_aig_opt.size(); i++){
