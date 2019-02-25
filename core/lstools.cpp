@@ -3026,24 +3026,40 @@ class test_part_view_command : public alice::command{
 
                 // oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                 //     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-
+                
                 for(int i = 0; i < num_parts; i++){
 
-                    oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, part_mig_opt.at(i));
-                    //std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
-                    mockturtle::depth_view part_mig_depth{part_mig};
-                    //std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+                    std::set<mockturtle::mig_network::node> outputs = partitions_aig.get_part_outputs(i);
+                    typename std::set<mockturtle::mig_network::node>::iterator it;
+                    for(it = outputs.begin(); it != outputs.end(); ++it){
+                        auto output = *it;
+                        std::cout << "cone for " << ntk.node_to_index(output) << "\n";
 
-                    auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
-                    mockturtle::mig_script migopt;
-                    mig_opt = migopt.run(mig_opt);
+                        auto mig_opt = partitions_aig.create_ntk_from_part(ntk, i, output);
+                        mockturtle::depth_view mig_depth{mig_opt};
+                        std::cout << "cone size = " << mig_opt.num_gates() << " and depth = " << mig_depth.depth() << "\n";
+                        // mockturtle::aig_script aigopt;
+                        // mig_opt = aigopt.run(mig_opt);
+                        mockturtle::mig_script migopt;
+                        mig_opt = migopt.run(mig_opt);
+                        mockturtle::depth_view new_mig_depth{mig_opt};
+                        std::cout << "new cone size = " << mig_opt.num_gates() << " and depth = " << new_mig_depth.depth() << "\n";
+                    }
+                    // oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, part_mig_opt.at(i));
+                    // std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
+                    // mockturtle::depth_view part_mig_depth{part_mig};
+                    // std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
 
-                    mockturtle::depth_view opt_mig_depth{mig_opt};
-                    //std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
-                    partitions_aig.synchronize_part(part_mig, mig_opt, ntk);
+                    // auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
+                    // mockturtle::mig_script migopt;
+                    // mig_opt = migopt.run(mig_opt);
+
+                    // mockturtle::depth_view opt_mig_depth{mig_opt};
+                    // std::cout << "new part size = " << mig_opt.num_gates() << " and depth = " << opt_mig_depth.depth() << "\n";
+                    // partitions_aig.synchronize_part(part_mig, mig_opt, ntk);
                 }                
 
-                partitions_aig.connect_outputs(ntk);
+                // partitions_aig.connect_outputs(ntk);
                 
                 ntk = mockturtle::cleanup_dangling( ntk );
                 mockturtle::depth_view ntk_depth2{ntk};
@@ -3055,7 +3071,7 @@ class test_part_view_command : public alice::command{
                 //     std::cout << "child[2] = " << ntk_mig._storage->nodes[node].children[2].index << "\n";
                 // });
                 std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                mockturtle::write_verilog(ntk, filename);
+                // mockturtle::write_verilog(ntk_mig, filename);
             }
             else{
                 std::cout << "There is no stored AIG network\n";

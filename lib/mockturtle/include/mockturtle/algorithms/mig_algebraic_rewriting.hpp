@@ -55,7 +55,7 @@ struct mig_algebraic_depth_rewriting_params
      * Applies depth rewriting once to all output cones whose drivers have
      * maximum levels
      */
-    dfs,
+      dfs,
     /*! \brief Aggressive rewriting strategy.
      *
      * Applies depth reduction multiple times until the number of nodes, which
@@ -63,13 +63,13 @@ struct mig_algebraic_depth_rewriting_params
      * network; or the new network size is larger than the initial size w.r.t.
      * to an `overhead`.
      */
-    aggressive,
+      aggressive,
     /*! \brief Selective rewriting strategy.
      *
      * Like `aggressive`, but only applies rewriting to nodes on critical paths
      * and without `overhead`.
      */
-    selective
+      selective
   } strategy = dfs;
 
   /*! \brief Overhead factor in aggressive rewriting strategy.
@@ -91,7 +91,7 @@ class mig_algebraic_depth_rewriting_impl
 {
 public:
   mig_algebraic_depth_rewriting_impl( Ntk& ntk, mig_algebraic_depth_rewriting_params const& ps )
-      : ntk( ntk ), ps( ps )
+    : ntk( ntk ), ps( ps )
   {
   }
 
@@ -99,15 +99,15 @@ public:
   {
     switch ( ps.strategy )
     {
-    case mig_algebraic_depth_rewriting_params::dfs:
-      run_dfs();
-      break;
-    case mig_algebraic_depth_rewriting_params::selective:
-      run_selective();
-      break;
-    case mig_algebraic_depth_rewriting_params::aggressive:
-      run_aggressive();
-      break;
+      case mig_algebraic_depth_rewriting_params::dfs:
+        run_dfs();
+        break;
+      case mig_algebraic_depth_rewriting_params::selective:
+        run_selective();
+        break;
+      case mig_algebraic_depth_rewriting_params::aggressive:
+        run_aggressive();
+        break;
     }
   }
 
@@ -155,12 +155,12 @@ private:
 
   void run_aggressive()
   {
-      uint32_t counter{0}, init_size{ntk.size()};
+    uint32_t counter{0}, init_size{ntk.size()};
     while ( true )
     {
       topo_view topo{ntk};
       topo.foreach_node( [this, &counter]( auto n ) {
-          return;
+        return;
 
         if ( !reduce_depth( n ) )
         {
@@ -227,7 +227,6 @@ private:
     auto opt = ntk.create_maj( ocs2[2],
                                ntk.create_maj( ocs[0], ocs[1], ocs2[0] ),
                                ntk.create_maj( ocs[0], ocs[1], ocs2[1] ) );
-
     ntk.substitute_node( n, opt );
     ntk.update_levels();
     return true;

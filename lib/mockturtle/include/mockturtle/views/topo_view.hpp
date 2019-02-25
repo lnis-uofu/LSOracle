@@ -120,8 +120,8 @@ public:
    * from a given start signal.
    */
   topo_view( Ntk const& ntk, typename Ntk::signal const& start_signal )
-      : immutable_view<Ntk>( ntk ),
-        start_signal( start_signal )
+    : immutable_view<Ntk>( ntk ),
+      start_signal( start_signal )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( has_size_v<Ntk>, "Ntk does not implement the size method" );
