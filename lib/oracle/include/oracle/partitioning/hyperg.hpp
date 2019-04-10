@@ -43,7 +43,6 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
   static_assert(mockturtle::has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method");
   static_assert(mockturtle::has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method");
   static_assert(mockturtle::has_size_v<Ntk>, "Ntk does not implement the size method");
-
   //fanout view to iterate over fanouts and generate hyper edges
   mockturtle::fanout_view fanout{ntk};
 
