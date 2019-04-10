@@ -1,0 +1,68 @@
+language: generic
+
+dist: trusty
+sudo: required
+
+matrix:
+    include:
+    - os: linux
+      compiler: gcc
+      env: GCC_VERSION=7
+        - CC=gcc-7
+        - CXX=g++-7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'deadsnakes']
+          packages: ['g++-7', 'python3.5']
+          addons:
+
+before_install:
+  - export CXX="g++-${GCC_VERSION}" CC="gcc-${GCC_VERSION}"
+  - |
+    set -e
+    set -x
+
+  - curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+  - sudo python3 get-pip.py
+  - sudo pip install conan
+  - sudo pip install conan_package_tools
+  - conan user
+
+install:
+  # system libs
+  - sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+  # python libs
+  - sudo pip3 install --upgrade pip
+  - sudo pip3 install numpy scipy tensorflow==1.7.1 h5py keras
+  # FunctionalPlus
+  - git clone https://github.com/Dobiasd/FunctionalPlus
+  - cd FunctionalPlus
+  - mkdir build && cd build && cmake .. && make && sudo make install
+  - cd ../..
+  # Eigen
+  - git clone https://github.com/eigenteam/eigen-git-mirror
+  - cd eigen-git-mirror
+  - git checkout tags/3.3.5
+  - mkdir -p build && cd build && cmake .. && make && sudo make install
+  - sudo ln -s /usr/local/include/eigen3/Eigen /usr/local/include/Eigen
+  - cd ../..
+  # Doctest
+  - git clone https://github.com/onqtam/doctest
+  - cd doctest
+  - mkdir -p build && cd build && cmake .. -DDOCTEST_WITH_TESTS=off -DDOCTEST_WITH_MAIN_IN_STATIC_LIB=OFF && make && sudo make install
+  - cd ../..
+  # json
+  - git clone https://github.com/nlohmann/json
+  - cd json
+  - git checkout v3.1.2
+  - mkdir -p build && cd build && cmake .. && make && sudo make install
+  - cd ../..
+  # run CMake
+  - mkdir -p build && cd build
+  - cmake .. -DFDEEP_BUILD_UNITTEST=ON
+
+script:
+  - which $CXX
+  - $CXX --version
+  - cmake --build . --target unittest --config Release --
+  - cd .. && python3 conan_build.py
