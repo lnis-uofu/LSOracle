@@ -96,9 +96,9 @@ public:
    * \param count_complements Count inverters as 1
    */
   explicit depth_view( Ntk const& ntk, bool count_complements = false )
-    : Ntk( ntk ),
-      _count_complements( count_complements ),
-      _levels( ntk )
+      : Ntk( ntk ),
+        _count_complements( count_complements ),
+        _levels( ntk )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( has_size_v<Ntk>, "Ntk does not implement the size method" );
@@ -109,7 +109,9 @@ public:
     static_assert( has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_po method" );
     static_assert( has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
 
+    this->clear_visited();
     update_levels();
+
   }
 
   uint32_t depth() const
@@ -132,6 +134,7 @@ public:
     _levels.reset( 0 );
 
     this->incr_trav_id();
+
     compute_levels();
   }
 
@@ -147,7 +150,9 @@ private:
     {
       return _levels[n];
     }
+
     this->set_visited( n, this->trav_id() );
+    //aux.insert(n);
 
     if ( this->is_constant( n ) || this->is_pi( n ) )
     {
@@ -156,6 +161,7 @@ private:
 
     uint32_t level{0};
     this->foreach_fanin( n, [&]( auto const& f ) {
+      // std::cout << "fanin = " << f.index << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
       if ( _count_complements && this->is_complemented( f ) )
       {
@@ -163,7 +169,6 @@ private:
       }
       level = std::max( level, clevel );
     } );
-
     return _levels[n] = level + 1;
   }
 
@@ -171,7 +176,9 @@ private:
   {
     _depth = 0;
     this->foreach_po( [&]( auto const& f ) {
+      //std::cout << "Foreach PO " << f.index << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
+
       if ( _count_complements && this->is_complemented( f ) )
       {
         clevel++;
@@ -183,6 +190,7 @@ private:
   bool _count_complements{false};
   node_map<uint32_t, Ntk> _levels;
   uint32_t _depth;
+  std::unordered_set<node> aux;
 };
 
 template<class T>

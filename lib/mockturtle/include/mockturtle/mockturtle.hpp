@@ -53,6 +53,7 @@
 #include "generators/arithmetic.hpp"
 #include "io/aiger_reader.hpp"
 #include "io/bench_reader.hpp"
+#include "io/verilog_reader.hpp"
 #include "io/write_bench.hpp"
 #include "io/write_verilog.hpp"
 #include "io/write_dot.hpp"

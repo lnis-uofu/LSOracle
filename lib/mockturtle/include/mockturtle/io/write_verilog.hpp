@@ -263,9 +263,11 @@ namespace mockturtle
         } );
 
         if(ntk.num_latches() > 0) {
+            //std::cout << "There is " << ntk.num_latches() << " latches!" << std::endl;
             os << " always @ (posedge clock) begin\n";
 
             ntk.foreach_ri([&](auto const &f, auto i) {
+                //std::cout << "I value in RI is " << i << std::endl;
                 if (i > 0 && i <= ntk.num_latches())
                     os << fmt::format("    lo{} <= li{};\n", i, i);
             });
@@ -274,11 +276,12 @@ namespace mockturtle
 
             os << " initial begin\n";
             ntk.foreach_ro([&](auto const &f, auto i) {
-                if (i > 0 && i <= ntk.num_latches())
+              //std::cout << "I value in RO is " << i << std::endl;
+              if (i > 0 && i <= ntk.num_latches())
                     os << fmt::format("    lo{} <= 1'b0;\n", i);
             });
 
-            os << "end\n";
+            os << " end\n";
         }
 
         os << "endmodule\n"

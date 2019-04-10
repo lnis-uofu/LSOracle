@@ -5,6 +5,9 @@ target_compile_definitions(libabc PUBLIC "LIN64")
 add_subdirectory(kahypar EXCLUDE_FROM_ALL)
 target_compile_definitions(kahypar PUBLIC "LIN64")
 
+#add_subdirectory(darknet EXCLUDE_FROM_ALL)
+#target_compile_definitions(darknet PUBLIC "LIN64")
+
 add_subdirectory(alice)
 target_include_directories(alice INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/alice)
 target_compile_definitions(alice INTERFACE "-DREADLINE_USE_READLINE=1")

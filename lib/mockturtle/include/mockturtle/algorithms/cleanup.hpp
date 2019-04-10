@@ -71,20 +71,24 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
   /* create inputs in same order */
   auto it = begin;
   ntk.foreach_pi( [&]( auto node ) {
+    // std::cout << "cleanup pi = " << node << "\n";
     old_to_new[node] = *it++;
   } );
   assert( it == end );
 
   /* foreach node in topological order */
   topo_view topo{ntk};
+  // std::cout << "got topo view\n";
   topo.foreach_node( [&]( auto node ) {
-    if ( ntk.is_constant( node ) || ntk.is_ci( node ) )
+    //std::cout << "There is a node in the new ntk" << std::endl;
+    if ( ntk.is_constant( node ) || ntk.is_ci( node ) || ntk.is_ro( node ) )
       return;
-
+    // std::cout << "cleanup node = " << node << "\n";
     /* collect children */
     std::vector<signal<NtkDest>> children;
     ntk.foreach_fanin( node, [&]( auto child, auto ) {
       const auto f = old_to_new[child];
+      // std::cout << "cleanup fanin = " << child.index << " and data = " << child.data << "\n";
       if ( ntk.is_complemented( child ) )
       {
         children.push_back( dest.create_not( f ) );
@@ -94,13 +98,18 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
         children.push_back( f );
       }
     } );
+    // std::cout << "cleanup cloning node " << ntk.node_to_index(node) << std::endl;
     old_to_new[node] = dest.clone_node( ntk, node, children );
+    // std::cout << "old_to_new = " << old_to_new[node].index << std::endl;
   } );
 
   /* create outputs in same order */
   std::vector<signal<NtkDest>> fs;
   ntk.foreach_po( [&]( auto po ) {
     const auto f = old_to_new[po];
+    // std::cout << "PO " << po.index << " connected to " << po.data << std::endl;
+    // std::cout << "cleanup po on " << po.index << " complemented = " << ntk.is_complemented(po) << "\n";
+    // std::cout << "old_to_new[po] on " << old_to_new[po].index << " complemented = " << ntk.is_complemented(old_to_new[po]) << "\n";
     if ( ntk.is_complemented( po ) )
     {
       fs.push_back( dest.create_not( f ) );
@@ -158,25 +167,35 @@ Ntk cleanup_dangling( Ntk const& ntk )
   Ntk dest;
   std::vector<signal<Ntk>> pis;
 
+  // std::cout << "Current number of POs " << ntk.num_pos() << std::endl;
+  // std::cout << "Current number of latches " << ntk.num_latches() << std::endl;
+  // std::cout << "Current number of ANDS " << ntk.num_gates() << std::endl;
+  // std::cout << "Current number of PIs " << ntk.num_pis() << std::endl;
+  
+
   //creates latches in the target network
   for ( auto i = 0u; i < ntk.num_latches(); ++i ){
+    // std::cout << "creating latches on dest ntk" << std::endl;
     dest._storage->data.latches.emplace_back(0);
   }
 
   //create PIs
   for ( auto i = 0u; i < ntk.num_pis() - ntk.num_latches(); ++i )
   {
+    // std::cout << "creating PI on dest ntk" << std::endl;
     pis.push_back( dest.create_pi() );
   }
 
   //create Registers Outputs
   for ( auto i = ntk.num_pis() - ntk.num_latches(); i < ntk.num_pis(); ++i )
   {
+    // std::cout << "creating RO on dest ntk" << std::endl;
     pis.push_back( dest.create_ro() );
   }
 
   for ( auto f : cleanup_dangling( ntk, dest, pis.begin(), pis.end() ) )
   {
+    // std::cout << "creating PO on dest ntk" << std::endl;
     dest.create_po( f );
   }
 
