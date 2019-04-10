@@ -15,7 +15,7 @@ The current version has been tested on Red Hat 7.5 and MacOS Yosemite 10.10.
 1. git clone https://github.com/LNIS-Projects/LSOracle.git
 2. mkdir build
 3. cd build
-4. cmake .. 
+4. cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
 5. make 
 
 ## MIG Sequential Support Example: 
