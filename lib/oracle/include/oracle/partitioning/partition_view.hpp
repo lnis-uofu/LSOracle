@@ -36,6 +36,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <cassert>
 
 #include <mockturtle/traits.hpp>
@@ -78,6 +79,7 @@ namespace oracle
             static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
             static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
+            this->clear_visited();
             /* constants */
             add_node( this->get_node( this->get_constant( false ) ) );
             this->set_visited( this->get_node( this->get_constant( false ) ), 1 );
@@ -89,6 +91,7 @@ namespace oracle
             }
 
             /* primary inputs */
+            //std::cout << "Window view: Computing PIs\n";
             for ( auto const& leaf : leaves )
             {
                 if ( this->visited( leaf ) == 1 )
@@ -110,13 +113,24 @@ namespace oracle
             // }
 
             // update_fanin( ntk );
-            add_roots( ntk );
+           // add_roots( ntk );
+
+            for (auto n : pivots){
+
+                auto sig = this->make_signal(n);
+                if(ntk.is_complemented(sig)){
+                    sig = ntk.create_not(sig);
+                }
+                _roots.push_back(sig);
+            }
 
             /* restore visited */
+            //std::cout << "Window view: Restoring\n";
             for ( auto const& n : _nodes )
             {
                 this->set_visited( n, 0 );
             }
+            //std::cout << "Window view done\n";
         }
 
         inline auto size() const { return static_cast<uint32_t>( _nodes.size() ); }
@@ -126,7 +140,7 @@ namespace oracle
             //std::cout << "_nodes.size() = " << _nodes.size() << "\n";
             //std::cout << "_num_leaves = " << _num_leaves << "\n";
             //std::cout << "_num_constants = " << _num_constants << "\n";
-            return _nodes.size() - _num_leaves - _num_constants; 
+            return _nodes.size() - _num_leaves - _num_constants;
         }
 
         inline auto node_to_index( const node& n ) const { return _node_to_index.at( n ); }
@@ -181,29 +195,47 @@ namespace oracle
 
 
     private:
-        signal add_node( node const& n )
-        {
-            
-            _node_to_index[n] = _nodes.size();
-            _visited[_node_to_index[n]] = 0;
-            _nodes.push_back( n );
+//        signal add_node( node const& n )
+//        {
+//            std::cout << "Window view: Adding node\n";
+//            _node_to_index[n] = _nodes.size();
+//            _visited[_node_to_index[n]] = 0;
+//            _nodes.push_back( n );
+//            _nodes_lut.insert(n);
+//
+//            auto fanout_counter = 0;
+//            for(int i = 0; i < this->_storage->nodes[n].children.size(); i++){
+//                auto f = this->_storage->nodes[n].children[i];
+//                auto search = _nodes_lut.find(n);
+//                if ( search != _nodes_lut.end() )
+//                {
+//                    fanout_counter++;
+//                }
+//            }
+//            _fanout_size.push_back( fanout_counter );
+//            //std::cout << _nodes.size() << " added node of index = " << this->make_signal(n).index << "\n";
+//            return this->make_signal(n);
+//        }
 
-            auto fanout_counter = 0;
-            for(int i = 0; i < this->_storage->nodes[n].children.size(); i++){
-                auto f = this->_storage->nodes[n].children[i];
-                if ( std::find( _nodes.begin(), _nodes.end(), this->get_node( f ) ) != _nodes.end() )
-                {
-                    fanout_counter++;
-                }
+      void add_node( node const& n )
+      {
+          _node_to_index[n] = _nodes.size();
+          _nodes.push_back( n );
+          _nodes_lut.insert(n);
+
+          auto fanout_counter = 0;
+          this->foreach_fanin( n, [&]( const auto& f ) {
+            if ( _nodes_lut.find(this->get_node( f ) ) != _nodes_lut.end() )
+            {
+                fanout_counter++;
             }
-            _fanout_size.push_back( fanout_counter );
-            //std::cout << _nodes.size() << " added node of index = " << this->make_signal(n).index << "\n";
-            return this->make_signal(n);
-        }
+          });
+          _fanout_size.push_back( fanout_counter );
+      }
 
         void traverse( node const& n )
         {
-            
+            //std::cout << "Window view: Traversing graph\n";
             if ( this->visited( n ) == 1 )
                 return;
 
@@ -218,7 +250,6 @@ namespace oracle
 
         void update_fanin( Ntk const& ntk )
         {
-            std::cout << "update_fanin\n";
             foreach_gate ([&]( auto node ){
                 std::vector<signal> children;
                 int nodeIdx = node_to_index(node);
@@ -278,54 +309,59 @@ namespace oracle
         //     } while ( !new_nodes.empty() );
         // }
 
-        void add_roots( Ntk const& ntk )
-        {
+        //void add_roots( Ntk const& ntk )
+        //{
+
+         //   for (auto n : pivots)
+           //     _roots.push_back(n);
             /* compute po nodes */
-            std::vector<node> pos;
-            ntk.foreach_po( [&]( auto const& s ){
-              pos.push_back( ntk.get_node( s ) );
-            });
-
-            /* compute window outputs */
-            for ( const auto& n : _nodes )
-            {
-                if ( ntk.is_constant( n ) || ntk.is_pi( n ) || ntk.is_ro(n)) continue;
-                int nodeIdx = node_to_index(n);
-                if ( std::find( pos.begin(), pos.end(), n ) != pos.end() )
-                {
-                    auto s = this->make_signal( n );
-                    auto o = signal(nodeIdx, 0);
-                    if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
-                    {
-                      //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
-                      _roots.push_back(s);
-                      _outputs.push_back(o);
-                    }
-                    continue;
-                }
-
-                mockturtle::fanout_view fanout{ntk};
-                fanout.foreach_fanout( n, [&]( auto const& p ){
-                    if(!ntk.is_constant(n) && !is_pi(n) && !ntk.is_ro(n))
-                    {
-                        if ( std::find( _nodes.begin(), _nodes.end(), p ) == _nodes.end() )
-                        {
-
-                            auto s = this->make_signal( n );
-                            auto o = signal(nodeIdx, 0);
-                            if ( std::find( _roots.begin(), _roots.end(), s ) == _roots.end() )
-                            {
-                              //std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
-                              _roots.push_back(s);
-                              _outputs.push_back(o);
-                              return false;
-                            }
-                        }
-                    }
-                    return true;
-                });
-            }
-        }
+//            std::vector<node> pos;
+//            std::unordered_set<node> _pos_lut;
+//            ntk.foreach_po( [&]( auto const& s ){
+//              _pos_lut.insert(ntk.get_node( s ));
+//              pos.push_back( ntk.get_node( s ) );
+//            });
+//
+//            std::cout << "Window view: Compute window outputs\n";
+//            /* compute window outputs */
+//            for ( const auto& n : _nodes )
+//            {
+//                //if ( ntk.is_constant( n ) || ntk.is_pi( n ) || ntk.is_ro(n)) continue;
+//                if(ntk.is_ro(n)) continue;
+//                int nodeIdx = node_to_index(n);
+//                auto s = this->make_signal( n );
+//                auto o = signal(nodeIdx, 0);
+//                //std::cout << "First search\n";
+//                if ( _pos_lut.find(n) != _pos_lut.end() && _roots_lut.find(s) == _roots_lut.end())
+//                {
+//                    std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+//                    _roots_lut.insert(s);
+//                    _roots.push_back(s);
+//                    continue;
+//                }
+//
+//                mockturtle::fanout_view fanout{ntk};
+//                //std::cout << "Foreach fanout\n";
+//                fanout.foreach_fanout(n, [&](auto const &p) {
+//                    if (!ntk.is_constant(n) && !is_pi(n) && !ntk.is_ro(n)) {
+//                        auto s = this->make_signal(n);
+//                        auto o = signal(nodeIdx, 0);
+//                        //std::cout << "Second search\n";
+//                        if (_nodes_lut.find(p) == _nodes_lut.end() && _roots_lut.find(s) == _roots_lut.end()) {
+//                            //if (  )
+//                            //{
+//                            std::cout << "root at " << _roots.size() << " = " << s.index << "\n";
+//                            _roots.push_back(s);
+//                            _roots_lut.insert(s);
+//                            //_outputs.push_back(o);
+//                            return false;
+//                            //}
+//                        }
+//                    }
+//                    return true;
+//                });
+//            }
+        //}
         // void add_roots( Ntk const& ntk )
         // {
         //     // std::cout << "add roots\n";
@@ -376,14 +412,15 @@ namespace oracle
         //     }
         // }
 
-        void check_po(){
-            for(int i = 0; i < _outputs.size(); i++){
-                // std::cout << "output = " << _outputs.at(i).index << "\n";
-                foreach_fanin( get_node(_outputs.at(i)), [&]( auto const& f ) {
-                    // std::cout << "fanin = " << f.index << "\n";
-                });
-            }
-        }
+//        void check_po(){
+//            for(int i = 0; i < _outputs.size(); i++){
+//                // std::cout << "o
+//                utput = " << _outputs.at(i).index << "\n";
+//                foreach_fanin( get_node(_outputs.at(i)), [&]( auto const& f ) {
+//                    // std::cout << "fanin = " << f.index << "\n";
+//                });
+//            }
+//        }
 
     public:
         unsigned _num_constants{1};
@@ -396,6 +433,9 @@ namespace oracle
         std::vector<signal> _outputs;
         std::vector<signal> _roots;
         std::vector<unsigned> _fanout_size;
+
+        std::unordered_set<node>   _nodes_lut;
+        std::unordered_set<signal> _roots_lut;
     };
 
 } /* namespace oracle */
