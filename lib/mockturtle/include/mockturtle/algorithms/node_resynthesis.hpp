@@ -78,10 +78,10 @@ class node_resynthesis_impl
 {
 public:
   node_resynthesis_impl( NtkSource const& ntk, ResynthesisFn&& resynthesis_fn, node_resynthesis_params const& ps, node_resynthesis_stats& st )
-      : ntk( ntk ),
-        resynthesis_fn( resynthesis_fn ),
-        ps( ps ),
-        st( st )
+    : ntk( ntk ),
+      resynthesis_fn( resynthesis_fn ),
+      ps( ps ),
+      st( st )
   {
   }
 
@@ -91,7 +91,7 @@ public:
 
     NtkDest ntk_dest;
     node_map<signal<NtkDest>, NtkSource> node2new( ntk );
-
+    // std::cout << "node2new size = " << node2new.size() << "\n";
     /* map constants */
     node2new[ntk.get_node( ntk.get_constant( false ) )] = ntk_dest.get_constant( false );
     if ( ntk.get_node( ntk.get_constant( true ) ) != ntk.get_node( ntk.get_constant( false ) ) )
@@ -101,13 +101,19 @@ public:
 
     /* map primary inputs */
     ntk.foreach_pi( [&]( auto n ) {
+      //if(ntk.num_latches() > 0 && ntk.node_to_index( n ) > ntk.num_pis() - ntk.num_latches()) {
+      //  std::cout << "Creating RO in resynthesis " << std::endl;
+      //  node2new[n] = ntk_dest.create_ro();
+      //}
+      //else if (ntk.node_to_index( n ) <= ntk.num_pis() - ntk.num_latches()){
       node2new[n] = ntk_dest.create_pi();
+      //}
     } );
 
     /* map nodes */
     topo_view ntk_topo{ntk};
     ntk_topo.foreach_node( [&]( auto n ) {
-      if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+      if ( ntk.is_constant( n ) || ntk.is_pi( n ) || ntk.is_ci( n ) || ntk.is_ro( n ))
         return;
 
       std::vector<signal<NtkDest>> children;
@@ -125,7 +131,12 @@ public:
     ntk.foreach_po( [&]( auto const& f ) {
       ntk_dest.create_po( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
     } );
-
+//    ntk.foreach_po( [&]( auto const& f, auto i ) {
+//      if (i < ntk.num_pos() - ntk.num_latches())
+//        ntk_dest.create_po( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
+//      else if(ntk.num_latches()>0)
+//        ntk_dest.create_ri( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
+//    });
     return ntk_dest;
   }
 
@@ -164,7 +175,7 @@ private:
  * - `foreach_fanin`
  * - `node_function`
  * - `foreach_po`
- * 
+ *
  * **Required network functions for return value (type NtkDest):**
  * - `get_constant`
  * - `create_pi`

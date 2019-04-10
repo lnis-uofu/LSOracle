@@ -26,7 +26,6 @@
 /*!
   \file topo_view.hpp
   \brief Reimplements foreach_node to guarantee topological order
-
   \author Mathias Soeken
 */
 
@@ -69,15 +68,11 @@ namespace mockturtle
  * Example
  *
    \verbatim embed:rst
-
    .. code-block:: c++
-
       // create network somehow; aig may not be in topological order
       aig_network aig = ...;
-
       // create a topological view on the network
       topo_view aig_topo{aig};
-
       // call algorithm that requires topological order
       cut_enumeration( aig_topo );
    \endverbatim
@@ -120,8 +115,8 @@ public:
    * from a given start signal.
    */
   topo_view( Ntk const& ntk, typename Ntk::signal const& start_signal )
-    : immutable_view<Ntk>( ntk ),
-      start_signal( start_signal )
+      : immutable_view<Ntk>( ntk ),
+        start_signal( start_signal )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( has_size_v<Ntk>, "Ntk does not implement the size method" );
@@ -134,10 +129,6 @@ public:
     static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
 
     update();
-  }
-
-  std::vector<node> get_top_view_nodes(){
-    return topo_order;
   }
 
   /*! \brief Reimplementation of `foreach_node`. */
@@ -209,7 +200,7 @@ public:
         /* node was already visited */
         if ( this->value( this->get_node( f ) ) == 2 )
           return;
-
+        // std::cout << "TOPO PO = " << f.index << "\n";
         create_topo_rec( this->get_node( f ) );
       } );
     }
@@ -218,6 +209,11 @@ public:
 private:
   void create_topo_rec( node const& n )
   {
+    // std::cout << "node = " << n << "\n";
+    // this->foreach_fanin( n, [this]( auto f, auto i) {
+    //   std::cout << "child[" << i << "] = " << f.index << "\n";
+    // } );
+
     /* is permanently marked? */
     if ( this->value( n ) == 2 )
       return;
@@ -230,6 +226,7 @@ private:
 
     /* mark children */
     this->foreach_fanin( n, [this]( auto f, auto ) {
+      // std::cout << "fanin = " << f.index << "\n";
       create_topo_rec( this->get_node( f ) );
     } );
 
