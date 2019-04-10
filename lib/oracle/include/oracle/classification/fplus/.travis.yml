@@ -1,0 +1,182 @@
+language: generic
+dist: trusty
+sudo: required
+
+matrix:
+    include:
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: gcc
+      env: GCC_VERSION=8
+        - CC=gcc-8
+        - CXX=g++-8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-8']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: gcc
+      env: GCC_VERSION=7
+        - CC=gcc-7
+        - CXX=g++-7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-7']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: gcc
+      env: GCC_VERSION=6
+        - CC=gcc-6
+        - CXX=g++-6
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-6']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: gcc
+      env: GCC_VERSION=5
+        - CC=gcc-5
+        - CXX=g++-5
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-5']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=7
+        - CC=clang-7
+        - CXX=clang++-7
+      addons:
+        apt:
+          sources: ['llvm-toolchain-trusty', 'llvm-toolchain-trusty-7', 'ubuntu-toolchain-r-test']
+          packages: ['clang-7', 'libc++-7-dev', 'libc++abi-7-dev']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=6.0 LIBCXX=On
+        - CC=clang-6.0
+        - CXX=clang++-6.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
+          packages: ['clang-6.0', 'g++-6']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=5.0 LIBCXX=On
+        - CC=clang-5.0
+        - CXX=clang++-5.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-5.0']
+          packages: ['clang-5.0', 'g++-6']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=4.0 LIBCXX=On
+        - CC=clang-4.0
+        - CXX=clang++-4.0
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-4.0']
+          packages: ['clang-4.0', 'g++-6']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=3.9 LIBCXX=On
+        - CC=clang-3.9
+        - CXX=clang++-3.9
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
+          packages: ['clang-3.9', 'g++-6']
+
+    - os: linux
+      language: python
+      python: 3.6
+      compiler: clang
+      env: CLANG_VERSION=3.8 LIBCXX=On
+        - CC=clang-3.8
+        - CXX=clang++-3.8
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.8']
+          packages: ['clang-3.8', 'g++-6']
+
+    - os: osx
+      osx_image: xcode10
+      env: OSX="On"
+        - CC=clang
+        - CXX=clang++
+
+    - os: osx
+      osx_image: xcode9.4
+      env: OSX="On"
+        - CC=clang
+        - CXX=clang++
+
+before_install:
+  - |
+    if [ "$OSX" == "On" ]; then # force python 3 on OSX
+      sudo rm /usr/local/bin/python
+      sudo ln -s /usr/local/bin/python3 /usr/local/bin/python
+      sudo rm /usr/local/bin/pip
+      sudo ln -s /usr/local/bin/pip3 /usr/local/bin/pip
+    fi
+  - git clone https://github.com/onqtam/doctest
+  - (cd doctest && mkdir -p build && cd build && cmake .. -DDOCTEST_WITH_TESTS=off -DDOCTEST_WITH_MAIN_IN_STATIC_LIB=OFF && make && sudo make install)
+  - |
+    if [ "$LIBCXX" == "On" ]; then
+      ./cmake/install_libcxx.sh
+      export CXXFLAGS="-stdlib=libc++"
+    fi
+    if [ "${CLANG_VERSION}" == "7" ]; then
+      export CXXFLAGS="-stdlib=libc++"
+    fi
+    if [ ! "$OSX" == "On" ]; then
+      if [ ! `locale -a | grep ru_RU.cp1251` ]; then
+        sudo localedef -c -i ru_RU -f CP1251 ru_RU.CP1251
+      fi
+      if [ ! `locale -a | grep el_GR.cp1253` ]; then
+        sudo localedef -c -i el_GR -f CP1253 el_GR.CP1253
+      fi
+    fi
+  - |
+    python --version
+    pip --version
+    pip install conan --upgrade
+    pip install conan_package_tools
+    conan user
+
+
+install:
+  - mkdir -p build && cd build
+  - cmake .. -DFPLUS_BUILD_UNITTEST=ON
+
+script:
+  - which $CXX
+  - $CXX --version
+  - cmake --version
+  - cmake --build . --target unittest --config Release -- -j4
+  - cd .. && python conan_build.py
