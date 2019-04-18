@@ -53,7 +53,7 @@ class get_all_partitions_command : public alice::command{
                         
                         std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";;
                         filenames.push_back(filename);
-                        parts.push_back(part);
+                        parts.push_back(part_ntk);
                         
                         assert(parts.size() == filenames.size());
                         for(int j = 0; j < parts.size(); j++){
@@ -90,7 +90,7 @@ class get_all_partitions_command : public alice::command{
                         
                         std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";
                         filenames.push_back(filename);
-                        parts.push_back(part);
+                        parts.push_back(part_ntk);
                         
                         assert(parts.size() == filenames.size());
                         for(int j = 0; j < parts.size(); j++){
