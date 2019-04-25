@@ -429,6 +429,49 @@ public:
     return {index, 0};
   }
 
+  signal create_and_part( signal a, signal b )
+  {
+    /* order inputs */
+    if ( a.index > b.index )
+    {
+      std::swap( a, b );
+    }
+
+    /* trivial cases */
+    if ( a.index == b.index )
+    {
+      return ( a.complement == b.complement ) ? a : get_constant( false );
+    }
+    else if ( a.index == 0 )
+    {
+      return a.complement ? b : get_constant( false );
+    }
+
+    storage::element_type::node_type node;
+    node.children[0] = a;
+    node.children[1] = b;
+
+    const auto index = _storage->nodes.size();
+
+    if ( index >= .9 * _storage->nodes.capacity() )
+    {
+      _storage->nodes.reserve( static_cast<uint64_t>( 3.1415f * index ) );
+    }
+
+    _storage->nodes.push_back( node );
+
+    /* increase ref-count to children */
+    _storage->nodes[a.index].data[0].h1++;
+    _storage->nodes[b.index].data[0].h1++;
+
+    for ( auto const& fn : _events->on_add )
+    {
+      fn( index );
+    }
+
+    return {index, 0};
+  }
+
   signal create_nand( signal const& a, signal const& b )
   {
     return !create_and( a, b );
@@ -497,6 +540,14 @@ public:
     (void)source;
     assert( children.size() == 2u );
     return create_and( children[0u], children[1u] );
+  }
+
+  signal clone_node_part( aig_network const& other, node const& source, std::vector<signal> const& children )
+  {
+    (void)other;
+    (void)source;
+    assert( children.size() == 2u );
+    return create_and_part( children[0u], children[1u] );
   }
 #pragma endregion
 
@@ -623,6 +674,41 @@ public:
 
 
         void substitute_node( node const& old_node, signal const& new_signal )
+        {
+            /* find all parents from old_node */
+            for ( auto& n : _storage->nodes )
+            {
+                for ( auto& child : n.children )
+                {
+                    if ( child.index == old_node )
+                    {
+                        child.index = new_signal.index;
+                        child.weight ^= new_signal.complement;
+
+                        // increment fan-in of new node
+                        _storage->nodes[new_signal.index].data[0].h1++;
+                    }
+                }
+            }
+
+            /* check outputs */
+            for ( auto& output : _storage->outputs )
+            {
+                if ( output.index == old_node )
+                {
+                    output.index = new_signal.index;
+                    output.weight ^= new_signal.complement;
+
+                    // increment fan-in of new node
+                    _storage->nodes[new_signal.index].data[0].h1++;
+                }
+            }
+
+            // reset fan-in of old node
+            _storage->nodes[old_node].data[0].h1 = 0;
+        }
+
+        void substitute_node_part( node const& old_node, signal const& new_signal )
         {
             /* find all parents from old_node */
             for ( auto& n : _storage->nodes )

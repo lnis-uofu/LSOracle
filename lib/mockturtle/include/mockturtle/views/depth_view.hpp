@@ -109,9 +109,7 @@ public:
     static_assert( has_foreach_po_v<Ntk>, "Ntk does not implement the foreach_po method" );
     static_assert( has_foreach_fanin_v<Ntk>, "Ntk does not implement the foreach_fanin method" );
 
-    this->clear_visited();
     update_levels();
-
   }
 
   uint32_t depth() const
@@ -134,7 +132,6 @@ public:
     _levels.reset( 0 );
 
     this->incr_trav_id();
-
     compute_levels();
   }
 
@@ -150,9 +147,7 @@ private:
     {
       return _levels[n];
     }
-
     this->set_visited( n, this->trav_id() );
-    //aux.insert(n);
 
     if ( this->is_constant( n ) || this->is_pi( n ) )
     {
@@ -169,6 +164,7 @@ private:
       }
       level = std::max( level, clevel );
     } );
+
     return _levels[n] = level + 1;
   }
 
@@ -176,9 +172,8 @@ private:
   {
     _depth = 0;
     this->foreach_po( [&]( auto const& f ) {
-      //std::cout << "Foreach PO " << f.index << "\n";
+      // std::cout << "PO = " << f.index << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
-
       if ( _count_complements && this->is_complemented( f ) )
       {
         clevel++;
@@ -190,7 +185,6 @@ private:
   bool _count_complements{false};
   node_map<uint32_t, Ntk> _levels;
   uint32_t _depth;
-  std::unordered_set<node> aux;
 };
 
 template<class T>

@@ -26,26 +26,32 @@
 /*!
   \file klut.hpp
   \brief k-LUT logic network implementation
-
   \author Mathias Soeken
   \author Heinz Riener
 */
 
 #pragma once
 
-#include <memory>
+#include "../traits.hpp"
+#include "../utils/truth_table_cache.hpp"
+#include "detail/foreach.hpp"
+#include "events.hpp"
+#include "storage.hpp"
 
 #include <ez/direct_iterator.hpp>
 #include <kitty/constructors.hpp>
 #include <kitty/dynamic_truth_table.hpp>
 
-#include "../traits.hpp"
-#include "../utils/truth_table_cache.hpp"
-#include "detail/foreach.hpp"
-#include "storage.hpp"
+#include <memory>
 
 namespace mockturtle
 {
+
+struct klut_storage_data
+{
+  truth_table_cache<kitty::dynamic_truth_table> cache;
+  uint32_t trav_id = 0u;
+};
 
 /*! \brief k-LUT node
  *
@@ -63,10 +69,9 @@ struct klut_storage_node : mixed_fanin_node<2>
 };
 
 /*! \brief k-LUT storage container
-
   ...
 */
-using klut_storage = storage<klut_storage_node, truth_table_cache<kitty::dynamic_truth_table>>;
+using klut_storage = storage<klut_storage_node, klut_storage_data>;
 
 class klut_network
 {
@@ -75,16 +80,21 @@ public:
   static constexpr auto min_fanin_size = 1;
   static constexpr auto max_fanin_size = 32;
 
+  using base_type = klut_network;
   using storage = std::shared_ptr<klut_storage>;
-  using node = std::size_t;
-  using signal = std::size_t;
+  using node = uint64_t;
+  using signal = uint64_t;
 
-  klut_network() : _storage( std::make_shared<klut_storage>() )
+  klut_network()
+      : _storage( std::make_shared<klut_storage>() ),
+        _events( std::make_shared<decltype( _events )::element_type>() )
   {
     _init();
   }
 
-  klut_network( std::shared_ptr<klut_storage> storage ) : _storage( storage )
+  klut_network( std::shared_ptr<klut_storage> storage )
+      : _storage( storage ),
+        _events( std::make_shared<decltype( _events )::element_type>() )
   {
     _init();
   }
@@ -97,17 +107,17 @@ private:
 
     /* reserve some truth tables for nodes */
     kitty::dynamic_truth_table tt_zero( 0 );
-    _storage->data.insert( tt_zero );
+    _storage->data.cache.insert( tt_zero );
 
     static uint64_t _not = 0x1;
     kitty::dynamic_truth_table tt_not( 1 );
     kitty::create_from_words( tt_not, &_not, &_not + 1 );
-    _storage->data.insert( tt_not );
+    _storage->data.cache.insert( tt_not );
 
     static uint64_t _and = 0x8;
     kitty::dynamic_truth_table tt_and( 2 );
     kitty::create_from_words( tt_and, &_and, &_and + 1 );
-    _storage->data.insert( tt_and );
+    _storage->data.cache.insert( tt_and );
 
     /* truth tables for constants */
     _storage->nodes[0].data[1].h1 = 0;
@@ -203,18 +213,23 @@ public:
 
     set_value( index, 0 );
 
+    for ( auto const& fn : _events->on_add )
+    {
+      fn( index );
+    }
+
     return index;
   }
 
   signal create_node( std::vector<signal> const& children, kitty::dynamic_truth_table const& function )
   {
-    return _create_node( children, _storage->data.insert( function ) );
+    return _create_node( children, _storage->data.cache.insert( function ) );
   }
 
   signal clone_node( klut_network const& other, node const& source, std::vector<signal> const& children )
   {
     assert( !children.empty() );
-    const auto tt = other._storage->data[other._storage->nodes[source].data[1].h1];
+    const auto tt = other._storage->data.cache[other._storage->nodes[source].data[1].h1];
     return create_node( children, tt );
   }
 #pragma endregion
@@ -223,16 +238,24 @@ public:
   void substitute_node( node const& old_node, signal const& new_signal )
   {
     /* find all parents from old_node */
-    for ( auto& n : _storage->nodes )
+    for ( auto i = 0u; i < _storage->nodes.size(); ++i )
     {
+      auto& n = _storage->nodes[i];
       for ( auto& child : n.children )
       {
         if ( child == old_node )
         {
+          std::vector<signal> old_children( n.children.size() );
+          std::transform( n.children.begin(), n.children.end(), old_children.begin(), []( auto c ) { return c.index; } );
           child = new_signal;
 
           // increment fan-in of new node
           _storage->nodes[new_signal].data[0].h1++;
+
+          for ( auto const& fn : _events->on_modified )
+          {
+            fn( i, old_children );
+          }
         }
       }
     }
@@ -255,29 +278,29 @@ public:
 #pragma endregion
 
 #pragma region Structural properties
-  std::size_t size() const
+  auto size() const
   {
-    return _storage->nodes.size();
+    return static_cast<uint32_t>( _storage->nodes.size() );
   }
 
-  std::size_t num_pis() const
+  auto num_pis() const
   {
-    return _storage->inputs.size();
+    return static_cast<uint32_t>(_storage->inputs.size() );
   }
 
-  std::size_t num_pos() const
+  auto num_pos() const
   {
-    return _storage->outputs.size();
+    return static_cast<uint32_t>(_storage->outputs.size() );
   }
 
-  std::size_t num_gates() const
+  auto num_gates() const
   {
-    return _storage->nodes.size() - _storage->inputs.size() - 2;
+    return static_cast<uint32_t>(_storage->nodes.size() - _storage->inputs.size() - 2 );
   }
 
   uint32_t fanin_size( node const& n ) const
   {
-    return _storage->nodes[n].children.size();
+    return static_cast<uint32_t>( _storage->nodes[n].children.size() );
   }
 
   uint32_t fanout_size( node const& n ) const
@@ -289,7 +312,7 @@ public:
 #pragma region Functional properties
   kitty::dynamic_truth_table node_function( const node& n ) const
   {
-    return _storage->data[_storage->nodes[n].data[1].h1];
+    return _storage->data.cache[_storage->nodes[n].data[1].h1];
   }
 #pragma endregion
 
@@ -312,7 +335,7 @@ public:
 
   uint32_t node_to_index( node const& n ) const
   {
-    return n;
+    return static_cast<uint32_t>( n );
   }
 
   node index_to_node( uint32_t index ) const
@@ -325,8 +348,8 @@ public:
   template<typename Fn>
   void foreach_node( Fn&& fn ) const
   {
-    detail::foreach_element( ez::make_direct_iterator<std::size_t>( 0 ),
-                             ez::make_direct_iterator<std::size_t>( _storage->nodes.size() ),
+    detail::foreach_element( ez::make_direct_iterator<uint64_t>( 0 ),
+                             ez::make_direct_iterator<uint64_t>( _storage->nodes.size() ),
                              fn );
   }
 
@@ -346,8 +369,8 @@ public:
   template<typename Fn>
   void foreach_gate( Fn&& fn ) const
   {
-    detail::foreach_element_if( ez::make_direct_iterator<std::size_t>( 2 ), /* start from 2 to avoid constants */
-                                ez::make_direct_iterator<std::size_t>( _storage->nodes.size() ),
+    detail::foreach_element_if( ez::make_direct_iterator<uint64_t>( 2 ), /* start from 2 to avoid constants */
+                                ez::make_direct_iterator<uint64_t>( _storage->nodes.size() ),
                                 [this]( auto n ) { return !is_pi( n ); },
                                 fn );
   }
@@ -372,9 +395,9 @@ public:
     while ( begin != end )
     {
       index <<= 1;
-      index ^= *begin++ ? 1 : 0; 
+      index ^= *begin++ ? 1 : 0;
     }
-    return kitty::get_bit( _storage->data[_storage->nodes[n].data[1].h1], index );
+    return kitty::get_bit( _storage->data.cache[_storage->nodes[n].data[1].h1], index );
   }
 
   template<typename Iterator>
@@ -389,7 +412,7 @@ public:
 
     /* resulting truth table has the same size as any of the children */
     auto result = tts.front().construct();
-    const auto gate_tt = _storage->data[_storage->nodes[n].data[1].h1];
+    const auto gate_tt = _storage->data.cache[_storage->nodes[n].data[1].h1];
 
     for ( auto i = 0u; i < result.num_bits(); ++i )
     {
@@ -426,12 +449,12 @@ public:
 
   uint32_t incr_value( node const& n ) const
   {
-    return _storage->nodes[n].data[0].h2++;
+    return static_cast<uint32_t>( _storage->nodes[n].data[0].h2++ );
   }
 
   uint32_t decr_value( node const& n ) const
   {
-    return --_storage->nodes[n].data[0].h2;
+    return static_cast<uint32_t>( --_storage->nodes[n].data[0].h2 );
   }
 #pragma endregion
 
@@ -441,7 +464,7 @@ public:
     std::for_each( _storage->nodes.begin(), _storage->nodes.end(), []( auto& n ) { n.data[1].h2 = 0; } );
   }
 
-  uint32_t visited( node const& n ) const
+  auto visited( node const& n ) const
   {
     return _storage->nodes[n].data[1].h2;
   }
@@ -450,16 +473,28 @@ public:
   {
     _storage->nodes[n].data[1].h2 = v;
   }
+
+  uint32_t trav_id() const
+  {
+    return _storage->data.trav_id;
+  }
+
+  void incr_trav_id() const
+  {
+    ++_storage->data.trav_id;
+  }
 #pragma endregion
 
 #pragma region General methods
-  void update()
+  auto& events() const
   {
+    return *_events;
   }
 #pragma endregion
 
 public:
   std::shared_ptr<klut_storage> _storage;
+  std::shared_ptr<network_events<base_type>> _events;
 };
 
 } // namespace mockturtle

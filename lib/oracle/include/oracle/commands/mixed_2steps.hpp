@@ -23,8 +23,10 @@ class mixed_command : public alice::command{
 public:
   explicit mixed_command( const environment::ptr& env )
     : command( env, "Optimize partitions with AIG based-optimizer." ){
-    opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" )->required();
+    opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
     opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
+    opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
+    add_flag("--brute,-b", "Uses a brute force approach instead of classification");
   }
 
 protected:
@@ -37,24 +39,63 @@ protected:
       mockturtle::depth_view depth{ntk};
       std::cout << "AIG initial size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
 
-      std::string folder = ntk._storage->net_name + "_final_" + std::to_string(num_parts);
-
-      //char final [256];
-      std::string final = ntk._storage->net_name + "/" + folder;
-
-      mkdir(final.c_str(),0775);
-      std::string filename = ntk._storage->net_name + "/" +  folder  + "/" + ntk._storage->net_name + "_mix_final_" + std::to_string(num_parts) + ".v";
-      std::string filename2 = ntk._storage->net_name + "/" +  folder  + "/" + ntk._storage->net_name + "_mix_first_" + std::to_string(num_parts) + ".v";
-      std::string filename4 = ntk._storage->net_name + "/" +  folder  + "/" + ntk._storage->net_name + "_mix_final_stats_" + std::to_string(num_parts)+ ".txt";
+      mockturtle::mig_npn_resynthesis resyn_mig;
+      mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
 
       oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk, num_parts);
-      partitions_aig.run_classification(ntk, cnn_model);
-      std::vector<int> aig_parts1 = partitions_aig.get_aig_parts();
-      std::vector<int> mig_parts1 = partitions_aig.get_mig_parts();
 
-      std::vector<pair<int, int>> pre_opt_nodes_depth;
-      std::vector<pair<int, int>> post_opt_nodes_depth;
+      std::vector<int> aig_parts1;
+      std::vector<int> mig_parts1;
 
+      if(is_set("brute")){
+
+        for(int i = 0; i < num_parts; i++){
+          oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk, i);
+
+          auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
+          mockturtle::depth_view part_aig_depth{opt_aig};
+          std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+          mockturtle::aig_script aigopt;
+          opt_aig = aigopt.run(opt_aig);
+          mockturtle::depth_view part_aig_opt_depth{opt_aig};
+          int aig_opt_size = opt_aig.num_gates();
+          int aig_opt_depth = part_aig_opt_depth.depth();
+          std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
+
+          auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+          mockturtle::depth_view part_mig_depth{opt_mig};
+          std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+          mockturtle::mig_script migopt;
+          opt_mig = migopt.run(opt_mig);
+          mockturtle::depth_view part_mig_opt_depth{opt_mig};
+          int mig_opt_size = opt_mig.num_gates();
+          int mig_opt_depth = part_mig_opt_depth.depth();
+          std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
+
+          if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
+            std::cout << "AIG wins\n";
+            aig_parts1.push_back(i);
+          }
+          else{
+            std::cout << "MIG wins\n";
+            mig_parts1.push_back(i);
+          }
+        }
+
+      }
+      else{
+        if(!cnn_model.empty()){
+          partitions_aig.run_classification(ntk, cnn_model);
+
+          aig_parts1 = partitions_aig.get_aig_parts();
+          mig_parts1 = partitions_aig.get_mig_parts();
+        }
+        else{
+          std::cout << "Must include CNN model json file\n";
+        }
+
+      }
+      
       //Deal with AIG partitions
       std::cout << "Total number of partitions for AIG 1 " << aig_parts1.size() << std::endl;
       std::cout << "Total number of partitions for MIG 1 " << mig_parts1.size() << std::endl;
@@ -65,10 +106,6 @@ protected:
         std::cout << "\nPartition " << i << "\n";
         mockturtle::depth_view part_depth{part_aig};
         std::cout << "Partition size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
-        pre_opt_nodes_depth.push_back(std::make_pair<int, int>(part_aig.num_gates(), part_depth.depth()));
-
-
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
 
         auto aig_opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
 
@@ -77,8 +114,6 @@ protected:
 
         mockturtle::depth_view part_aig_depth{aig};
         std::cout << "Post optimization part size = " << aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-
-        post_opt_nodes_depth.push_back(std::make_pair<int, int>(aig.num_gates(), part_aig_depth.depth()));
 
         partitions_aig.synchronize_part(part_aig, aig, ntk);
       }
@@ -93,7 +128,56 @@ protected:
 
       oracle::partition_manager<mockturtle::aig_network> tmp(ntk_final, num_parts);
 
-      tmp.run_classification(ntk_final, cnn_model);
+      std::vector<int> aig_parts2;
+      std::vector<int> mig_parts2;
+      if(is_set("brute")){
+
+        for(int i = 0; i < num_parts; i++){
+          oracle::partition_view<mockturtle::aig_network> part_aig = tmp.create_part(ntk_final, i);
+
+          auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
+          mockturtle::depth_view part_aig_depth{opt_aig};
+          std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+          mockturtle::aig_script aigopt;
+          opt_aig = aigopt.run(opt_aig);
+          mockturtle::depth_view part_aig_opt_depth{opt_aig};
+          int aig_opt_size = opt_aig.num_gates();
+          int aig_opt_depth = part_aig_opt_depth.depth();
+          std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
+
+          auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+          mockturtle::depth_view part_mig_depth{opt_mig};
+          std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+          mockturtle::mig_script migopt;
+          opt_mig = migopt.run(opt_mig);
+          mockturtle::depth_view part_mig_opt_depth{opt_mig};
+          int mig_opt_size = opt_mig.num_gates();
+          int mig_opt_depth = part_mig_opt_depth.depth();
+          std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
+
+          if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
+            std::cout << "AIG wins\n";
+            aig_parts2.push_back(i);
+          }
+          else{
+            std::cout << "MIG wins\n";
+            mig_parts2.push_back(i);
+          }
+        }
+
+      }
+      else{
+        if(!cnn_model.empty()){
+          tmp.run_classification(ntk_final, cnn_model);
+
+          aig_parts2 = tmp.get_aig_parts();
+          mig_parts2 = tmp.get_mig_parts();
+        }
+        else{
+          std::cout << "Must include CNN model json file\n";
+        }
+
+      }
 
       mockturtle::direct_resynthesis<mockturtle::mig_network> convert_mig;
 
@@ -102,21 +186,15 @@ protected:
 
       oracle::partition_manager<mockturtle::mig_network> partitions_mig(mig, num_parts);
 
-      std::vector<int> aig_parts2 = tmp.get_aig_parts();
-      std::vector<int> mig_parts2 = tmp.get_mig_parts();
-
       //Deal with AIG partitions
       std::cout << "Total number of partitions for AIG 2 " << aig_parts2.size() << std::endl;
       std::cout << "Total number of partitions for MIG 2 " << mig_parts2.size() << std::endl;
       for (int i = 0; i < mig_parts2.size(); i++) {
         oracle::partition_view<mockturtle::mig_network> part_mig = partitions_mig.create_part(mig, mig_parts2.at(i));
-        mockturtle::mig_npn_resynthesis resyn_mig;
 
         std::cout << "\nPartition " << i << "\n";
         mockturtle::depth_view part_depth{part_mig};
         std::cout << "Partition size = " << part_mig.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-        pre_opt_nodes_depth.push_back(std::make_pair<int, int>(part_mig.num_gates(), part_depth.depth()));
 
         auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part_mig, resyn_mig);
         mockturtle::mig_script migopt;
@@ -124,8 +202,6 @@ protected:
         mig_opt = migopt.run(mig_opt);
 
         mockturtle::depth_view opt_mig_depth{mig_opt};
-
-        post_opt_nodes_depth.push_back(std::make_pair<int, int>(mig_opt.num_gates(), opt_mig_depth.depth()));
 
         std::cout << "Post optimization part size = " << mig_opt.num_gates() << " and depth = "
                   << opt_mig_depth.depth()
@@ -139,55 +215,10 @@ protected:
 
       mockturtle::depth_view final_mig{mig};
 
-      std::cout << "Final MIG size = " << mig.num_gates() << " and depth = " << final_mig.depth() << "\n";
+      std::cout << "new ntk size = " << mig.num_gates() << " and depth = " << final_mig.depth() << "\n";
+      std::cout << "Finished optimization\n";
 
-      mockturtle::write_verilog(mig, filename);
-
-      std::string mix_final_stats = ntk._storage->net_name + "/" +  folder + "/" + "mix_final_stats.txt";
-      std::ofstream stats(mix_final_stats.c_str());
-      if(stats.is_open()){
-         stats << mig.num_gates() << " " << final_mig.depth();
-         stats.close();
-      }
-
-      //save no-optimized partitions info
-      std::string no_opt_nodes_depth_name = ntk._storage->net_name + "/" +  folder + "/" + "no_opt_nodes_depth_mix.txt";
-      std::ofstream myfile(no_opt_nodes_depth_name.c_str());
-
-      if(myfile.is_open()){
-        for (auto const &part : pre_opt_nodes_depth) {
-          std::cout << "No opt size and depth: " << part.first << " " << part.second << std::endl;
-          myfile << part.first
-                 << " "
-                 << part.second
-                 << "\n";
-        }
-          myfile.close();
-      } else std::cout << "Error opening file " << std::endl;
-
-        //save optimized partitions info
-        std::string opt_nodes_depth_name = ntk._storage->net_name + "/" +  folder + "/" + "opt_nodes_depth_mix.txt";
-        std::ofstream file(opt_nodes_depth_name.c_str());
-        if (file.is_open()) {
-          for (auto const &part : post_opt_nodes_depth) {
-            std::cout << "Opt size and depth: " << part.first << " " << part.second << std::endl;
-
-            file << part.first
-                 << " "
-                 << part.second
-                 << "\n";
-          }
-
-          file.close();
-        }
-
-        else std::cout << "Error opening second file " << std::endl;
-
-        final.clear();
-        folder.clear();
-        filename.clear();
-        no_opt_nodes_depth_name.clear();
-        opt_nodes_depth_name.clear();
+      mockturtle::write_verilog(mig, out_file);
     }
     else{
       std::cout << "There is no stored AIG network\n";
@@ -195,9 +226,9 @@ protected:
   }
 
 private:
-  std::string filename{};
   int num_parts = 0;
   std::string cnn_model{};
+  std::string out_file{};
 };
 
 ALICE_ADD_COMMAND(mixed, "Optimization");

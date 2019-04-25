@@ -47,6 +47,7 @@ class partitioning_command : public alice::command{
                 std::cout << "Partitioning stored AIG network\n";
                 auto ntk = store<mockturtle::aig_network>().current();
                 oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions); 
+                std::cout << "created part manager\n";
                 store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
             }
             else{
