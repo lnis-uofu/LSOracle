@@ -362,6 +362,78 @@ public:
     return {index, node_complement};
   }
 
+  signal create_maj_part( signal a, signal b, signal c )
+  {
+    /* order inputs */
+    if ( a.index > b.index )
+    {
+      std::swap( a, b );
+      if ( b.index > c.index )
+        std::swap( b, c );
+      if ( a.index > b.index )
+        std::swap( a, b );
+    }
+    else
+    {
+      if ( b.index > c.index )
+        std::swap( b, c );
+      if ( a.index > b.index )
+        std::swap( a, b );
+    }
+
+    /* trivial cases */
+    if ( a.index == b.index )
+    {
+      return ( a.complement == b.complement ) ? a : c;
+    }
+    else if ( b.index == c.index )
+    {
+      return ( b.complement == c.complement ) ? b : a;
+    }
+    else if ( a.index == b.index == c.index )
+    {
+      return ( a.complement == b.complement ) ? a : c;
+    }
+
+    /*  complemented edges minimization */
+    auto node_complement = false;
+    if ( static_cast<unsigned>( a.complement ) + static_cast<unsigned>( b.complement ) +
+             static_cast<unsigned>( c.complement ) >=
+         2u )
+    {
+      node_complement = true;
+      a.complement = !a.complement;
+      b.complement = !b.complement;
+      c.complement = !c.complement;
+    }
+
+    storage::element_type::node_type node;
+    node.children[0] = a;
+    node.children[1] = b;
+    node.children[2] = c;
+
+    const auto index = _storage->nodes.size();
+
+    if ( index >= .9 * _storage->nodes.capacity() )
+    {
+      _storage->nodes.reserve( static_cast<uint64_t>( 3.1415f * index ) );
+    }
+
+    _storage->nodes.push_back( node );
+
+    /* increase ref-count to children */
+    _storage->nodes[a.index].data[0].h1++;
+    _storage->nodes[b.index].data[0].h1++;
+    _storage->nodes[c.index].data[0].h1++;
+
+    for ( auto const& fn : _events->on_add )
+    {
+      fn( index );
+    }
+
+    return {index, node_complement};
+  }
+
   signal create_and( signal const& a, signal const& b )
   {
     return create_maj( get_constant( false ), a, b );
@@ -433,6 +505,14 @@ public:
     (void)source;
     assert( children.size() == 3u );
     return create_maj( children[0u], children[1u], children[2u] );
+  }
+
+  signal clone_node_part( mig_network const& other, node const& source, std::vector<signal> const& children )
+  {
+    (void)other;
+    (void)source;
+    assert( children.size() == 3u );
+    return create_maj_part( children[0u], children[1u], children[2u] );
   }
 #pragma endregion
 
@@ -525,6 +605,81 @@ public:
     return std::nullopt;
   }
 
+  std::optional<std::pair<node, signal>> replace_in_node_part( node const& n, node const& old_node, signal new_signal )
+  {
+    auto& node = _storage->nodes[n];
+
+    uint32_t fanin = 0u;
+    for ( auto i = 0u; i < 4u; ++i )
+    {
+      if ( i == 3u )
+      {
+        return std::nullopt;
+      }
+
+      if ( node.children[i].index == old_node )
+      {
+        fanin = i;
+        new_signal.complement ^= node.children[i].weight;
+        break;
+      }
+    }
+
+    // determine potential new children of node n
+    signal child2 = new_signal;
+    signal child1 = node.children[(fanin + 1 ) % 3];
+    signal child0 = node.children[(fanin + 2 ) % 3];
+
+    if ( child0.index > child1.index )
+    {
+      std::swap( child0, child1 );
+    }
+    if ( child1.index > child2.index )
+    {
+      std::swap( child1, child2 );
+    }
+    if ( child0.index > child1.index )
+    {
+      std::swap( child0, child1 );
+    }
+
+    assert( child0.index <= child1.index );
+    assert( child1.index <= child2.index );
+
+    // check for trivial cases?
+    if ( child0.index == child1.index )
+    {
+      const auto diff_pol = child0.complement != child1.complement;
+      return std::make_pair( n, diff_pol ? child2 : child0 );
+    }
+    else if ( child1.index == child2.index )
+    {
+      const auto diff_pol = child1.complement != child2.complement;
+      return std::make_pair( n, diff_pol ? child0 : child1 );
+    }
+
+    // remember before
+    const auto old_child0 = signal{node.children[0]};
+    const auto old_child1 = signal{node.children[1]};
+    const auto old_child2 = signal{node.children[2]};
+
+    // insert updated node into hash table
+    node.children[0] = child0;
+    node.children[1] = child1;
+    node.children[2] = child2;
+    _storage->hash[node] = n;
+
+    // update the reference counter of the new signal
+    _storage->nodes[new_signal.index].data[0].h1++;
+
+    for ( auto const& fn : _events->on_modified )
+    {
+      fn( n, {old_child0, old_child1, old_child2} );
+    }
+
+    return std::nullopt;
+  }
+
   void replace_in_outputs( node const& old_node, signal const& new_signal )
   {
     for ( auto& output : _storage->outputs )
@@ -589,6 +744,35 @@ public:
           continue; /* ignore PIs */
 
         if ( const auto repl = replace_in_node( idx, _old, _new ); repl )
+        {
+          to_substitute.push( *repl );
+        }
+      }
+
+      /* check outputs */
+      replace_in_outputs( _old, _new );
+
+      // reset fan-in of old node
+      take_out_node( _old );
+    }
+  }
+
+  void substitute_node_part( node const& old_node, signal const& new_signal )
+  {
+    std::stack<std::pair<node, signal>> to_substitute;
+    to_substitute.push( {old_node, new_signal} );
+
+    while ( !to_substitute.empty() )
+    {
+      const auto [_old, _new] = to_substitute.top();
+      to_substitute.pop();
+
+      for ( auto idx = 1u; idx < _storage->nodes.size(); ++idx )
+      {
+        if ( is_pi( idx ) )
+          continue; /* ignore PIs */
+
+        if ( const auto repl = replace_in_node_part( idx, _old, _new ); repl )
         {
           to_substitute.push( *repl );
         }

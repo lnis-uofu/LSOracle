@@ -12,14 +12,15 @@ namespace mockturtle{
     class aig_script{
     public:
         mockturtle::aig_network run(mockturtle::aig_network& aig){
-
+            // std::cout << "HERE\n";
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::cut_rewriting_params ps;
             ps.cut_enumeration_ps.cut_size = 4;
 
             mockturtle::cut_rewriting(aig, resyn, ps);
+            // std::cout << "done cut rewriting\n";
             aig = mockturtle::cleanup_dangling(aig);
-
+            // std::cout << "done cleaning up\n";
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
@@ -71,7 +72,7 @@ namespace mockturtle{
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "Majority nodes " << mig.num_gates() << " MIG depth " << mig_depth3.depth() << std::endl;
+            // std::cout << "AND nodes " << aig.num_gates() << " AIG depth " << mig_depth3.depth() << std::endl;
 
             return aig;
         }

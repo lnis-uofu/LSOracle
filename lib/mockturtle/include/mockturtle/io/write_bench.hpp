@@ -74,6 +74,9 @@ void write_bench( Ntk const& ntk, std::ostream& os )
   static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
   static_assert( has_node_function_v<Ntk>, "Ntk does not implement the node_function method" );
 
+  // auto digitsIn  = std::to_string(ntk.num_pis()).length();
+  // auto digitsOut = std::to_string(ntk.num_pos()).length();
+  
   ntk.foreach_pi( [&]( auto const& n ) {
     os << fmt::format( "INPUT(n{})\n", ntk.node_to_index( n ) );
   } );
@@ -83,11 +86,20 @@ void write_bench( Ntk const& ntk, std::ostream& os )
     os << fmt::format( "OUTPUT(po{})\n", i );
   }
 
-  os << fmt::format( "n{} = gnd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( false ) ) ) );
-  if ( ntk.get_node( ntk.get_constant( false ) ) != ntk.get_node( ntk.get_constant( true ) ) )
-  {
-    os << fmt::format( "n{} = vdd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( true ) ) ) );
-  }
+  // ntk.foreach_pi( [&]( auto const& n ) {
+  //   os << fmt::format( "INPUT(pi{0:0{1}})\n", ntk.node_to_index( n ), digitsIn );
+  // } );
+
+  // for ( auto i = 0u; i < ntk.num_pos(); ++i )
+  // {
+  //   os << fmt::format( "INPUT(po{0:0{1}})\n", i, digitsOut );
+  // }
+
+  // os << fmt::format( "pi{0:0{1}} = gnd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( false ) ) ), digitsIn );
+  // if ( ntk.get_node( ntk.get_constant( false ) ) != ntk.get_node( ntk.get_constant( true ) ) )
+  // {
+  //   os << fmt::format( "pi{0:0{1}} = vdd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( true ) ) ), digitsIn );
+  // }
 
   ntk.foreach_node( [&]( auto const& n ) {
     if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
@@ -110,7 +122,15 @@ void write_bench( Ntk const& ntk, std::ostream& os )
         children += ", ";
       }
 
-      children += fmt::format( "n{}", ntk.node_to_index( ntk.get_node( c ) ) );
+      // if(ntk.is_pi( ntk.get_node( c ) ))
+      // {
+      //   children += fmt::format( "pi{0:0{1}}", ntk.node_to_index( ntk.get_node( c ) ), digitsIn );
+      // }
+      // else
+      // {
+        children += fmt::format( "n{}", ntk.node_to_index( ntk.get_node( c ) ) );
+      // }
+      
     } );
 
     os << fmt::format( "n{} = LUT 0x{} ({})\n",

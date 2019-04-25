@@ -83,6 +83,7 @@ namespace oracle
       static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
       static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
+      // std::cout << "HERE\n";
       num_partitions = part_num;
 
       for(int i = 0; i<part_num; ++i)
@@ -119,18 +120,26 @@ namespace oracle
         /******************
         Generate HyperGraph
         ******************/
-        //std::cout << "Generating hypergraph! " << std::endl;
+        // std::cout << "Generating hypergraph! " << std::endl;
 
         oracle::hypergraph<Ntk> t(ntk);
+        // std::cout << "HyperGraph instantitated\n";
         t.get_hypergraph(ntk);
+        // std::cout << "get_hypergraph done\n";
         t.return_hyperedges(kahypar_connections);
+        // std::cout << "return_hyperedges done\n";
         kahyp_num_hyperedges = t.get_num_edges();
+        // std::cout << "get_num_edges done\n";
         kahyp_num_vertices = t.get_num_vertices();
+        // std::cout << "get_num_vertices done\n";
         kahyp_num_indeces_hyper = t.get_num_indeces();
+        // std::cout << "get_num_indeces done\n";
         kahyp_num_sets = t.get_num_sets();
+        // std::cout << "get_num_sets done\n";
         t.get_indeces(kahyp_set_indeces);
+        // std::cout << "get_indeces done\n";
         t.dump();
-        //std::cout << "Hypergraph done! " << std::endl;
+        // std::cout << "Hypergraph done! " << std::endl;
 
         /******************
         Partition with kahypar
@@ -171,29 +180,29 @@ namespace oracle
 
         std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
 
-        //std::cout << "Generating partitions! " << std::endl;
+        // std::cout << "Generating partitions! " << std::endl;
         kahypar_partition(num_vertices, num_hyperedges,
                           imbalance, k, nullptr, hyperedge_weights.get(),
                           hyperedge_indices.get(), hyperedges.get(),
                           &objective, context, partition.data());
-        //std::cout << "Partitions done! " << std::endl;
+        // std::cout << "Partitions done! " << std::endl;
 
-        for(int i = 0; i != num_vertices; ++i) {
-          std::cout << i << ":" << partition[i] << std::endl;
-        }
+        // for(int i = 0; i != num_vertices; ++i) {
+        //   std::cout << i << ":" << partition[i] << std::endl;
+        // }
 
         
 
         ntk.foreach_node( [&](auto curr_node){
           //get rid of circuit PIs
           if (ntk.is_pi(curr_node) /*&& !ntk.is_constant(ntk.index_to_node(i))*/) {
-            //std::cout << "Is PI done! " << std::endl;
+            // std::cout << "Is PI done! " << std::endl;
             _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
             _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], curr_node));
           }
 
           if (ntk.is_ro(curr_node) /*&& !ntk.is_constant(ntk.index_to_node(i))*/) {
-            //std::cout << "Is RO done! " << std::endl;
+            // std::cout << "Is RO done! " << std::endl;
             _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
             _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], curr_node));
             //_part_ros.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
@@ -205,8 +214,8 @@ namespace oracle
           //get rid of circuit POs
 
           else if (ntk.is_po(curr_node) /*&& !ntk.is_constant(ntk.index_to_node(i))*/ ) {
-            //std::cout << "Is PO done! " << std::endl;
-            //std::cout << "Adding partition output " << std::endl;
+            // std::cout << "Is PO done! " << std::endl;
+            // std::cout << "Adding partition output " << std::endl;
             _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
             _part_pos.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], curr_node));
           }
@@ -222,7 +231,7 @@ namespace oracle
             ntk.foreach_fanin(curr_node, [&](auto const &conn, auto j) {
               if (partition[conn.index] != partition[ntk.node_to_index(curr_node)] && !ntk.is_constant(ntk.index_to_node(conn.index))) {
                 //if(!ntk.is_constant(ntk.index_to_node(ntk._storage->nodes[ntk.index_to_node(i)].children[j].index))) {
-                  //std::cout << "Looking partition inputs! " << std::endl;
+                  // std::cout << "Looking partition inputs! " << std::endl;
                   _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
                   _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], ntk.index_to_node(conn.index)));
                   _part_pos.insert(std::pair<int, node>(partition[conn.index],ntk.index_to_node(conn.index)));
@@ -314,6 +323,7 @@ namespace oracle
           //  std::cout << ntk.node_to_index(*it) << " ";
           //}
           //std::cout << "}\n";
+          update_io(i);
         }
         kahypar_context_free(context);
       }
@@ -633,6 +643,8 @@ namespace oracle
         }
         std::cout << "}\n";
         old_to_new[node] = ntk.clone_node( opt, node, children );
+        std::cout << "old node = " << node << "\n";
+        std::cout << "new node = " << old_to_new[node].index << "\n";
       });
 
       for(int i = 0; i < opt._storage->outputs.size(); i++){
@@ -875,7 +887,7 @@ namespace oracle
 
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
-          std::cout << "Partitions outputs " << std::endl;
+          // std::cout << "Partitions outputs " << std::endl;
           auto output = *it;
           total_depth += computeLevel(ntk, output, partition);
           total_outputs++;
@@ -884,7 +896,7 @@ namespace oracle
         if(total_outputs>0) {
            average_nodes = _num_nodes_cone / total_outputs;
            average_depth = total_depth / total_outputs;
-          std::cout << "Calculated averages " << std::endl;
+          // std::cout << "Calculated averages " << std::endl;
         }
 
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
@@ -902,7 +914,7 @@ namespace oracle
             weight_nodes = 1;
 
             if(result == 0){
-              std::cout << "output = " << ntk.node_to_index(output) << "\n";
+              // std::cout << "output = " << ntk.node_to_index(output) << "\n";
               int num_inputs = logic_cone_inputs[output].size();
 
               int depth = computeLevel(ntk, output, partition);
@@ -920,12 +932,12 @@ namespace oracle
                 weight_nodes = 1.5;
               }
 
-              std::cout << "num_inputs = " << num_inputs << " depth = " << depth << " and nodes " << _num_nodes_cone << "\n";
+              // std::cout << "num_inputs = " << num_inputs << " depth = " << depth << " and nodes " << _num_nodes_cone << "\n";
               aig_score += ((weight_nodes*_num_nodes_cone)+(weight*depth));
             }
 
             else{
-              std::cout << "output = " << ntk.node_to_index(output) << "\n";
+              // std::cout << "output = " << ntk.node_to_index(output) << "\n";
               int num_inputs = logic_cone_inputs[output].size();
 
               int depth = computeLevel(ntk, output, partition);
@@ -942,7 +954,7 @@ namespace oracle
                 weight_nodes = 1.5;
               }
 
-              std::cout << "num_inputs = " << num_inputs << " depth = " << depth << " and nodes " << _num_nodes_cone << "\n";
+              // std::cout << "num_inputs = " << num_inputs << " depth = " << depth << " and nodes " << _num_nodes_cone << "\n";
               mig_score += ( (weight_nodes*_num_nodes_cone)+(weight*depth));
             }
           }
@@ -952,7 +964,7 @@ namespace oracle
             _num_nodes_cone = 0;
             int big_depth = computeLevel(ntk, output, partition);
 
-            std::cout << "Cone inputs " << logic_cone_inputs[output].size() << std::endl;
+            // std::cout << "Cone inputs " << logic_cone_inputs[output].size() << std::endl;
 
             if (big_depth > 0.4 * ntk_depth.depth())
               mig_score += ( (weight_nodes*_num_nodes_cone)+(3*big_depth));
@@ -961,15 +973,16 @@ namespace oracle
 
           }
         }
-        std::cout << "aig_score = " << aig_score << " mig_score = " << mig_score << "\n";
+        // std::cout << "aig_score = " << aig_score << " mig_score = " << mig_score << "\n";
         if(aig_score > mig_score){
           std::cout << "Optimize partition " << partition << " with AIG\n";
           aig_parts.push_back(partition);
-          std::cout << "AIG pushed " << partition << " with AIG\n";
+          // std::cout << "AIG pushed " << partition << " with AIG\n";
 
         }
         else{
-          std::cout << "MIG pushed " << partition << " with MIG\n";
+          std::cout << "Optimize partition " << partition << " with MIG\n";
+          // std::cout << "MIG pushed " << partition << " with MIG\n";
           mig_parts.push_back(partition);
         }
       }
@@ -1296,6 +1309,109 @@ namespace oracle
       return inputs;
     }
 
+    void update_io(int part_index){
+      typename std::set<node>::iterator it;
+      for(it = partitionInputs[part_index].begin(); it != partitionInputs[part_index].end(); ++it){
+        input_partition[*it].push_back(part_index);
+      }
+      for(it = partitionOutputs[part_index].begin(); it != partitionOutputs[part_index].end(); ++it){
+        output_partition[*it].push_back(part_index);
+      }
+    }
+
+    std::set<node> get_shared_io(int part_1, int part_2){
+      std::set<node> part_1_inputs = partitionInputs[part_1];
+      std::set<node> part_1_outputs = partitionOutputs[part_1];
+
+      std::set<node> part_2_inputs = partitionInputs[part_2];
+      std::set<node> part_2_outputs = partitionOutputs[part_2];
+
+      std::set<node> shared_io;
+      typename std::set<node>::iterator it_i;
+      typename std::set<node>::iterator it_j;
+      for(it_i = part_1_inputs.begin(); it_i != part_1_inputs.end(); ++it_i){
+        for(it_j = part_2_outputs.begin(); it_j != part_2_outputs.end(); ++it_j){
+          if(*it_i == *it_j){
+            shared_io.insert(*it_i);
+          }
+        }
+      }
+      std::cout << "shared_io size = " << shared_io.size() << "\n";
+      for(it_i = part_1_outputs.begin(); it_i != part_1_outputs.end(); ++it_i){
+        for(it_j = part_2_inputs.begin(); it_j != part_2_inputs.end(); ++it_j){
+          if(*it_i == *it_j){
+            shared_io.insert(*it_i);
+          }
+        }
+      }
+      std::cout << "shared_io size = " << shared_io.size() << "\n";
+      return shared_io;
+    }
+
+    std::vector<std::set<node>> combine_partitions(Ntk const& ntk, int part_1, int part_2){
+      std::set<node> shared_io = get_shared_io(part_1, part_2);
+      std::set<node> shared_history;
+
+      std::set_union(shared_io.begin(), shared_io.end(),
+                     combined_deleted_nodes.begin(), combined_deleted_nodes.end(),
+                     std::inserter(shared_history, shared_history.end()));
+      typename std::set<node>::iterator it;
+      std::cout << "Shared IO = {";
+      for(it = shared_history.begin(); it != shared_history.end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+      std::set<node> merged_inputs;
+      std::set<node> merged_outputs;
+      std::vector<std::set<node>> result_io;
+      std::cout << "Part " << part_1 << " Inputs = {";
+      
+      for(it = partitionInputs[part_1].begin(); it != partitionInputs[part_1].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+      std::cout << "Part " << part_1 << " Outputs = {";
+      for(it = partitionOutputs[part_1].begin(); it != partitionOutputs[part_1].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+      std::cout << "Part " << part_2 << " Inputs = {";
+      for(it = partitionInputs[part_2].begin(); it != partitionInputs[part_2].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+      std::cout << "Part " << part_2 << " Outputs = {";
+      for(it = partitionOutputs[part_2].begin(); it != partitionOutputs[part_2].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+
+      std::set_union(partitionInputs[part_1].begin(), partitionInputs[part_1].end(),
+                     partitionInputs[part_2].begin(), partitionInputs[part_2].end(),
+                     std::inserter(merged_inputs, merged_inputs.end()));
+
+      std::set_union(partitionOutputs[part_1].begin(), partitionOutputs[part_1].end(),
+                     partitionOutputs[part_2].begin(), partitionOutputs[part_2].end(),
+                     std::inserter(merged_outputs, merged_outputs.end()));
+
+      for(it = shared_history.begin(); it != shared_history.end(); ++it){
+        node shared_node = *it;
+        if(!ntk.is_pi(shared_node)){
+          merged_inputs.erase(shared_node);
+        }
+        
+        merged_outputs.erase(shared_node);
+
+        if(combined_deleted_nodes.find(shared_node) == combined_deleted_nodes.end())
+          combined_deleted_nodes.insert(shared_node);
+        
+      }
+      result_io.push_back(merged_inputs);
+      result_io.push_back(merged_outputs);
+
+      return result_io;
+    }
+
     int get_part_num(){
       return num_partitions;
     }
@@ -1304,8 +1420,16 @@ namespace oracle
       return partitionOutputs[partition];
     }
 
+    void set_part_outputs(int partition, std::set<node> new_outputs){
+      partitionOutputs[partition] = new_outputs;
+    }
+
     std::set<node> get_part_inputs(int partition){
       return partitionInputs[partition];
+    }
+
+    void set_part_inputs(int partition, std::set<node> new_inputs){
+      partitionInputs[partition] = new_inputs;
     }
 
     std::vector<std::set<node>> get_all_part_connections (){
@@ -1331,29 +1455,11 @@ namespace oracle
       return mig_parts;
     }
 
-    std::unordered_map<node, std::vector<int>> get_out_sub(){
-      std::unordered_map<node, std::vector<int>> result;
-      for(auto it = output_substitutions.begin(); it != output_substitutions.end(); ++it){
-        std::vector<int> signal_info;
-        signal_info.push_back(it->second.index);
-        signal_info.push_back(it->second.data);
-        signal_info.push_back(it->second.complement);
-        std::cout << "signal index " << it->second.index << " data " << it->second.data << " and complement " << it->second.complement << "\n";
-        result[it->first] = signal_info;
-      }
-      return result;
+    std::vector<int> get_input_part(node curr_node){
+      return input_partition[curr_node];
     }
-    
-    void set_out_sub(std::unordered_map<node, std::vector<int>> new_out_sub){
-      for(auto it = new_out_sub.begin(); it != new_out_sub.end(); ++it){
-        
-        signal ntk_signal;
-        ntk_signal.index = it->second.at(0);
-        ntk_signal.data = it->second.at(1);
-        ntk_signal.complement = it->second.at(2);
-        std::cout << "signal index " << ntk_signal.index << " data " << ntk_signal.data << " and complement " << ntk_signal.complement << "\n";
-        output_substitutions[it->first] = ntk_signal;
-      }
+    std::vector<int> get_output_part(node curr_node){
+      return output_partition[curr_node];
     }
 
   private:
@@ -1366,8 +1472,13 @@ namespace oracle
     std::vector<std::set<node>> _part_scope;
     int _num_nodes_cone;
 
+    std::set<node> combined_deleted_nodes;
+
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
+
+    std::unordered_map<node, std::vector<int>> input_partition;
+    std::unordered_map<node, std::vector<int>> output_partition;
 
     std::unordered_map<int, std::set<node>> partitionOutputs;
     std::unordered_map<int, std::set<node>> partitionInputs;
