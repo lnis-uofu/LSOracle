@@ -18,7 +18,7 @@
 
 namespace alice
 {
-class print_karnaugh_command : public alice::command{
+  class print_karnaugh_command : public alice::command{
 
     public:
       explicit print_karnaugh_command( const environment::ptr& env )
@@ -32,47 +32,33 @@ class print_karnaugh_command : public alice::command{
       }
 
     protected:
-        void execute(){
+      void execute(){
 
-            if(is_set("mig")){
-                std::cout << "MIG networks not supported yet\n";
-                // if(!store<mockturtle::mig_network>().empty()){
-                //     auto mig = store<mockturtle::mig_network>().current();
-                //     if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-                //         std::cout << "Writing k-map images for stored MIG network\n";
-                //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
-                //         partitions.write_karnaugh_maps(mig, directory);
-                //     }
-                //     else{
-                //         std::cout << "MIG not partitioned yet\n";
-                //     }
-                // }
-                // else{
-                //     std::cout << "MIG network not stored\n";
-                // }
+        if(is_set("mig")){
+          std::cout << "MIG networks not supported yet\n";
+        }
+        else{
+          if(!store<mockturtle::aig_network>().empty()){
+            auto aig = store<mockturtle::aig_network>().current();
+            if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
+              std::cout << "Writing k-map images for stored AIG network\n";
+              auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
+              partitions.write_karnaugh_maps(aig, directory);
             }
             else{
-                if(!store<mockturtle::aig_network>().empty()){
-                    auto aig = store<mockturtle::aig_network>().current();
-                    if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-                        std::cout << "Writing k-map images for stored AIG network\n";
-                        auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-                        partitions.write_karnaugh_maps(aig, directory);
-                    }
-                    else{
-                        std::cout << "AIG not partitioned yet\n";
-                    }
-                }
-                else{
-                    std::cout << "AIG network not stored\n";
-                }
+              std::cout << "AIG not partitioned yet\n";
             }
+          }
+          else{
+            std::cout << "AIG network not stored\n";
+          }
         }
+      }
 
     private:
       std::string filename{};
       std::string directory{};
-    };
+  };
 
-    ALICE_ADD_COMMAND(print_karnaugh, "IO");
+  ALICE_ADD_COMMAND(print_karnaugh, "IO");
 }

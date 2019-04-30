@@ -41,3 +41,4 @@
 #include "commands/partitioning.hpp"
 #include "commands/generate_truth_tables.hpp"
 #include "commands/print_karnaugh_map.hpp"
+#include "commands/utility.hpp"
