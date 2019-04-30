@@ -26,2706 +26,363 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <iomanip>
-// #include <../mockturtle/include/mockturtle/networks/storage.hpp>
 #include <ot/timer/timer.hpp>
 
 namespace alice{
 
-    //object to hold STA configuration
-    STA sta_cfg;
-
-    // Helper function to flip the bit
-    char flip(char c){
-        return (c == '0') ? '1' : '0';
-    }
-
-    std::string graytoBinary(std::string gray){
-        std::string binary = "";
-
-        // MSB of binary code is same as gray code
-        binary += gray[0];
-
-        // Compute remaining bits
-        for (int i = 1; i < gray.length(); i++) {
-            // If current bit is 0, concatenate
-            // previous bit
-            if (gray[i] == '0')
-                binary += binary[i - 1];
-
-                // Else, concatenate invert of
-                // previous bit
-            else
-                binary += flip(binary[i - 1]);
-        }
-
-        return binary;
-    }
-
-    // Function to convert binary to decimal
-    int binaryToDecimal(int n){
-
-        int num = n;
-        int dec_value = 0;
-
-        // Initializing base value to 1, i.e 2^0
-        int base = 1;
-
-        int temp = num;
-        while (temp)
-        {
-            int last_digit = temp % 10;
-            temp = temp/10;
-
-            dec_value += last_digit*base;
-
-            base = base*2;
-        }
-
-        return dec_value;
-    }
-
-    int get_output_index(mockturtle::aig_network aig, int nodeIdx){
-
-        // std::cout << "output nodeIdx = " << nodeIdx << "\n";
-        assert(aig.is_po(nodeIdx));
-        // std::cout << "Outputs = ";
-        // for(int i = 0; i < aig._storage->outputs.size(); i++){
-        // 	std::cout << aig._storage->outputs.at(i).index << " ";
-        // }
-        // std::cout << "\n";
-
-        for(int i = 0; i < aig._storage->outputs.size(); i++){
-            if(aig._storage->outputs.at(i).index == nodeIdx){
-                // std::cout << "index = " << i << "\n";
-                return i;
-
-            }
-        }
-    }
-
-    std::vector<int> get_output_indeces(mockturtle::aig_network aig, int nodeIdx){
-
-        assert(aig.is_po(nodeIdx));
-        std::vector<int> indeces;
-        for(int i = 0; i < aig._storage->outputs.size(); i++){
-            if(aig._storage->outputs.at(i).index == nodeIdx){
-                indeces.push_back(i);
-            }
-        }
-        return indeces;
-    }//get_output_indeces()
-
-    std::vector<int> get_output_indeces_mig(mockturtle::mig_network mig, int nodeIdx){
-
-        assert(mig.is_po(nodeIdx));
-        std::vector<int> indeces;
-        for(int i = 0; i < mig._storage->outputs.size(); i++){
-            if(mig._storage->outputs.at(i).index == nodeIdx){
-                indeces.push_back(i);
-            }
-        }
-        return indeces;
-    }//get_output_indeces_mig()
-
-    int get_index(std::vector<int> index, int nodeIdx){
-
-        std::vector<int>::iterator it = find(index.begin(), index.end(), nodeIdx);
-        return std::distance(index.begin(), it);
-    }
-
-    int get_input_index(mockturtle::aig_network aig, int nodeIdx){
-
-        // std::cout << "input nodeIdx = " << nodeIdx << "\n";
-        // std::cout << "Inputs = ";
-        // for(int i = 0; i < aig._storage->inputs.size(); i++){
-        // 	std::cout << aig._storage->inputs.at(i) << " ";
-        // }
-        // std::cout << "\n";
-        assert(aig.is_pi(nodeIdx));
-
-        for(int i = 0; i < aig._storage->inputs.size(); i++){
-            if(aig._storage->inputs.at(i) == nodeIdx){
-                // std::cout << "index = " << i << "\n";
-                return i;
-            }
-        }
-    }
-
-    bool is_in_vector(std::vector<int> vec, int nodeIdx){
-
-        if(std::find(vec.begin(),vec.end(),nodeIdx) != vec.end())
-            return true;
-        else
-            return false;
-    }
-
-    bool is_in_string_vector(std::vector<std::string> vec, std::string name){
-
-        if(std::find(vec.begin(),vec.end(),name) != vec.end())
-            return true;
-        else
-            return false;
-    }
-
-    bool is_in_map(std::map<int, std::vector<int>> _map, int nodeIdx){
-
-        if(_map.find(nodeIdx) != _map.end())
-            return true;
-        else
-            return false;
-    }
-
-    std::string to_binary(int dec){
-
-        std::string bin;
-        while(dec != 0){
-            bin = (dec % 2 == 0 ? "0":"1") + bin;
-            dec /= 2;
-        }
-        return bin;
-    }
-
-    void new_tt_blif(mockturtle::aig_network aig){
-
-
-        std::string filename = aig._storage->net_name + "_test.blif";
-        time_t rawtime;
-        struct tm * timeinfo;
-
-        time (&rawtime);
-        timeinfo = localtime (&rawtime);
-        std::ofstream output;
-        output.open(filename);
-        output << "# Blif file written by lstools on " << asctime(timeinfo);
-        output << ".model " << aig._storage->net_name << "\n";
-
-        output << ".inputs ";
-        for(int i = 0; i < aig.num_pis(); i++){
-            output << aig._storage->inputNames[i] << " ";
-        }
-        output << "\n";
-        output << ".outputs ";
-        for(int i = 0; i < aig.num_pos(); i++){
-            output << aig._storage->outputNames[i] << " ";
-        }
-        output << "\n";
-
-        for(int idx = 0; idx < aig._storage->num_partitions; idx++){
-            int partition = idx;
-            std::cout << "\npartition = " << partition << "\n\n";
-            for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-
-                int curr_output = aig._storage->partitionOutputs[partition].at(i);
-                std::cout << "curr_output = " << curr_output << "\n";
-                // std::cout << "tt hex = " << kitty::to_hex(aig._storage->output_tt[curr_output]) << "\n";
-                std::string tt = kitty::to_binary(aig._storage->output_tt[curr_output]);
-                // std::cout << "got binary\n";
-                // std::cout << "tt binary = " << tt << "\n";
-                // std::cout << "tt.length = " << tt.length() << "\n";
-                char* tt_binary = malloc(sizeof(char)*(tt.length() + 1));
-                // std::cout << "declared char array\n";
-                strcpy(tt_binary, tt.c_str());
-                // std::cout << "copied bits of binary\n";
-                // std::cout << "curr_output = " << curr_output << "\n";
-                std::string output_str;
-                if(aig.is_po(curr_output)){
-                    // std::cout << "PO\n";
-                    output_str = aig._storage->outputNames[get_output_index(aig, curr_output)];
-                    // std::cout << "output_str = " << output_str << "\n";
-                }
-                else {
-
-                    output_str = std::to_string(curr_output);
-                    // std::cout << "output_str = " << output_str << "\n";
-                }
-
-                output << ".names ";
-
-                //primary output is connected directly to a primary input
-                // if (aig.is_pi(curr_output) && aig.is_po(curr_output)){
-                // 	output << aig._storage->inputNames[curr_output] << " " << output_str << "\n";
-                // 	output << output_wanted << " " << output_wanted << "\n";
-
-                // }
-
-                //else{
-                // std::cout << "partition = " << idx << "\n";
-                // std::cout << "curr_output = " << curr_output << "\n";
-                // std::cout << "index = {";
-                // for(int j = 0; j < aig._storage->index[curr_output].size(); j++){
-                // 	std::cout << aig._storage->index[curr_output].at(j) << " ";
-                // }
-                // std::cout << "}\n";
-                if(aig.is_constant(curr_output)){
-                    // std::cout << "constant\n";
-                    if(aig.is_po(curr_output))
-                        output << aig._storage->outputNames[get_output_index(aig, curr_output)] << "\n";
-                    else
-                        output << curr_output << "\n";
-                }
-                else{
-                    // std::cout << "not constant\n";
-                    for(int j = 0; j < aig._storage->logic_cone_inputs[curr_output].size(); j++){
-                        int curr_index = aig._storage->logic_cone_inputs[curr_output].at(j);
-                        // std::cout << "curr_index = " << curr_index << "\n";
-                        std::string index;
-                        if(aig.is_pi(curr_index))
-                            index = aig._storage->inputNames[curr_index - 1];
-                        else if(aig.is_po(curr_index)){
-
-                            index = aig._storage->outputNames[get_output_index(aig, curr_index)];
-                        }
-                        else
-                            index = std::to_string(curr_index);
-
-                        output << index << " ";
-                    }
-
-                    if(aig.is_po(curr_output))
-                        output << aig._storage->outputNames[get_output_index(aig, curr_output)];
-                    else
-                        output << curr_output;
-
-                    output << "\n";
-                }
-                // std::cout << "got names\n";
-
-                std::vector<std::string> onset_indeces;
-                int indx = 0;
-                for(int j = tt.length() - 1; j >= 0; j--){
-                    int bit = (int)tt_binary[j] - 48;
-                    if(bit == 1){
-                        // std::cout << "index for 1 = " << indx << "\n";
-                        onset_indeces.push_back(to_binary(indx));
-                    }
-                    indx++;
-                }
-                for(int j = 0; j < onset_indeces.size(); j++){
-                    // std::cout << "number of inputs in partition " << partition << " = " << aig._storage->partitionInputs[partition].size() << "\n";
-                    // std::cout << "orig binary = " << onset_indeces.at(j) << "\n";
-                    while(onset_indeces.at(j).length() != aig._storage->logic_cone_inputs[curr_output].size()){
-                        onset_indeces.at(j).insert(0, "0");
-                    }
-                    std::reverse(onset_indeces.at(j).begin(), onset_indeces.at(j).end());
-                    output << onset_indeces.at(j) + " 1\n";
-                }
-                // std::cout << "got tt\n";
-                //}
-            }
-        }
-
-
-        output << ".end\n";
-        output.close();
-    }
-
-    
-
-    mockturtle::aig_network create_aig_from_part(mockturtle::aig_network aig, int partition){
-
-        mockturtle::aig_network new_aig;
-        new_aig._storage->net_name = aig._storage->net_name + "_" + std::to_string(partition);
-        std::vector<int> index;
-
-        //BFS Traversal of all outputs
-        for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-            std::queue<int> net_queue;
-            std::map<int, bool> visited;
-            int output = aig._storage->partitionOutputs[partition].at(i);
-            //Set all nodes to be unvisited
-            aig.foreach_node( [&]( auto node ) {
-                visited[aig.node_to_index(node)] = false;
-            });
-
-            net_queue.push(output);
-            visited[output] = true;
-            
-            while(!net_queue.empty()){
-
-                int curr_node = net_queue.front();
-                //make sure there are no duplicates added
-                if(!is_in_vector(index, curr_node)){
-                    //Put inputs at the beginning of the index so they are added into the AIG first 
-                    if(is_in_vector(aig._storage->partitionInputs[partition], curr_node))
-                        index.insert(index.begin(), curr_node);
-                    else
-                        index.push_back(curr_node);
-                }
-                net_queue.pop();
-                auto node = aig.index_to_node(curr_node);
-
-                //Make sure that the BFS traversal does not go past the inputs of the partition
-                if(!is_in_vector(aig._storage->partitionInputs[partition],curr_node)){
-
-                    for(int i = 0; i < aig._storage->nodes[aig.index_to_node(curr_node)].children.size(); i++){
-
-                        int childIdx = aig._storage->nodes[aig.index_to_node(curr_node)].children[i].index;
-
-                        if(!visited[childIdx]){
-                            net_queue.push(childIdx);
-                            visited[childIdx] = true;
-                        }
-                    }               
-                    
-                }
-            }
-        }
-
-        for(int i = 0; i < index.size(); i++){
-            int nodeIdx = index.at(i);
-            auto node = aig.index_to_node(nodeIdx);
-
-            //outputs tied directly to output
-            if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx) && is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-
-                auto pi = new_aig.create_pi();
-                std::string input_name;
-                if(aig.is_pi(node)){
-                    input_name = aig._storage->inputNames[nodeIdx - 1];
-                }
-                else
-                    input_name = "part_" + std::to_string(nodeIdx);
-
-                new_aig._storage->inputNames[new_aig.node_to_index(new_aig.get_node(pi) - 1)] = input_name;
-
-
-                std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                std::vector<std::string> output_names;
-                for(int k = 0; k < output_name_indeces.size(); k++){
-                    output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
-                    if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
-                        pi = aig.create_not(pi);
-                    }
-                    new_aig.create_po(pi);
-                }
-                std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(pi)));
-                for(int k = 0; k < output_names.size(); k++){
-                    new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                }       
-                    
-            }
-            //create pi
-            else if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
-
-                auto pi = new_aig.create_pi();
-                std::string input_name;
-                if(aig.is_pi(node)){
-                    input_name = aig._storage->inputNames[nodeIdx - 1];
-                }
-                else if(aig.is_po(node)){
-                    input_name = "PO_" + aig._storage->outputNames[get_output_index(aig, nodeIdx)];
-                }
-                else
-                    input_name = "part_" + std::to_string(nodeIdx);
-
-                new_aig._storage->inputNames[new_aig.node_to_index(new_aig.get_node(pi) - 1)] = input_name;
-            }
-            else{
-                std::vector<int>::iterator c1_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[0].index);
-                std::vector<int>::iterator c2_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[1].index);
-                int child1Idx = std::distance(index.begin(), c1_it);
-                int child2Idx = std::distance(index.begin(), c2_it);
-                auto child1_signal = aig.make_signal(aig.index_to_node(child1Idx + 1));
-                auto child2_signal = aig.make_signal(aig.index_to_node(child2Idx + 1));
-                if(aig._storage->nodes[node].children[0].data & 1){
-                    child1_signal = new_aig.create_not(child1_signal);
-                }
-                if(aig._storage->nodes[node].children[1].data & 1){
-                    child2_signal = new_aig.create_not(child2_signal);
-                }
-                auto gate = new_aig.clone_node(aig, aig.get_node(aig.make_signal(node)), {child1_signal, child2_signal});
-                
-                //Get truth table logic for each node
-                auto func = new_aig.node_function(new_aig.get_node(gate));
-                new_aig.foreach_fanin( new_aig.get_node(gate), [&]( auto const& conn, auto i ) {
-                    if ( new_aig.is_complemented( conn ) ) {
-                        kitty::flip_inplace( func, i );
-                    }
-                });
-                
-                if(is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-                    
-                    if(aig.is_po(nodeIdx)){
-                        std::vector<std::string> output_names;
-                        std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                        
-                        for(int k = 0; k < output_name_indeces.size(); k++){
-                            output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
-                            if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
-                                gate = aig.create_not(gate);
-                            }
-                            new_aig.create_po(gate);
-
-                        }
-                        std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(gate)));
-                        for(int k = 0; k < output_names.size(); k++){
-                            new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                        }
-                    }           
-                        
-                    else{
-                        std::string output_name = "part_" + std::to_string(nodeIdx);
-                        new_aig.create_po(gate);
-                        new_aig._storage->outputNames[get_output_index(new_aig, new_aig.node_to_index(new_aig.get_node(gate)))] = output_name;
-                    }
-                        
-                }
-            }
-        }
-
-        return new_aig;
-
-    }//create_aig_from_part()
-
-    mockturtle::aig_network create_aig_from_part(mockturtle::aig_network aig, int partition, int output){
-
-        mockturtle::aig_network new_aig;
-        new_aig._storage->net_name = aig._storage->net_name + "_" + std::to_string(partition);
-        std::vector<int> index;
-
-        //BFS Traversal of all outputs
-        for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-            std::queue<int> net_queue;
-            std::map<int, bool> visited;
-            int output = aig._storage->partitionOutputs[partition].at(i);
-            //Set all nodes to be unvisited
-            aig.foreach_node( [&]( auto node ) {
-                visited[aig.node_to_index(node)] = false;
-            });
-
-            net_queue.push(output);
-            visited[output] = true;
-            
-            while(!net_queue.empty()){
-
-                int curr_node = net_queue.front();
-                //make sure there are no duplicates added
-                if(!is_in_vector(index, curr_node)){
-                    //Put inputs at the beginning of the index so they are added into the AIG first 
-                    if(is_in_vector(aig._storage->partitionInputs[partition], curr_node))
-                        index.insert(index.begin(), curr_node);
-                    else
-                        index.push_back(curr_node);
-                }
-                net_queue.pop();
-                auto node = aig.index_to_node(curr_node);
-
-                //Make sure that the BFS traversal does not go past the inputs of the partition
-                if(!is_in_vector(aig._storage->partitionInputs[partition],curr_node)){
-
-                    for(int i = 0; i < aig._storage->nodes[aig.index_to_node(curr_node)].children.size(); i++){
-
-                        int childIdx = aig._storage->nodes[aig.index_to_node(curr_node)].children[i].index;
-
-                        if(!visited[childIdx]){
-                            net_queue.push(childIdx);
-                            visited[childIdx] = true;
-                        }
-                    }               
-                    
-                }
-            }
-        }
-
-        for(int i = 0; i < index.size(); i++){
-            int nodeIdx = index.at(i);
-            auto node = aig.index_to_node(nodeIdx);
-
-            //outputs tied directly to output
-            if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx) && is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-
-                auto pi = new_aig.create_pi();
-                std::string input_name;
-                if(aig.is_pi(node)){
-                    input_name = aig._storage->inputNames[nodeIdx - 1];
-                }
-                else
-                    input_name = "part_" + std::to_string(nodeIdx);
-
-                new_aig._storage->inputNames[new_aig.node_to_index(new_aig.get_node(pi) - 1)] = input_name;
-
-
-                std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                std::vector<std::string> output_names;
-                for(int k = 0; k < output_name_indeces.size(); k++){
-                    output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
-                    if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
-                        pi = aig.create_not(pi);
-                    }
-                    new_aig.create_po(pi);
-                }
-                std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(pi)));
-                for(int k = 0; k < output_names.size(); k++){
-                    new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                }       
-                    
-            }
-            //create pi
-            else if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
-
-                auto pi = new_aig.create_pi();
-                std::string input_name;
-                if(aig.is_pi(node)){
-                    input_name = aig._storage->inputNames[nodeIdx - 1];
-                }
-                else if(aig.is_po(node)){
-                    input_name = "PO_" + aig._storage->outputNames[get_output_index(aig, nodeIdx)];
-                }
-                else
-                    input_name = "part_" + std::to_string(nodeIdx);
-
-                new_aig._storage->inputNames[new_aig.node_to_index(new_aig.get_node(pi) - 1)] = input_name;
-            }
-            else{
-                std::vector<int>::iterator c1_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[0].index);
-                std::vector<int>::iterator c2_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[1].index);
-                int child1Idx = std::distance(index.begin(), c1_it);
-                int child2Idx = std::distance(index.begin(), c2_it);
-                auto child1_signal = aig.make_signal(aig.index_to_node(child1Idx + 1));
-                auto child2_signal = aig.make_signal(aig.index_to_node(child2Idx + 1));
-                if(aig._storage->nodes[node].children[0].data & 1){
-                    child1_signal = new_aig.create_not(child1_signal);
-                }
-                if(aig._storage->nodes[node].children[1].data & 1){
-                    child2_signal = new_aig.create_not(child2_signal);
-                }
-                auto gate = new_aig.clone_node(aig, aig.get_node(aig.make_signal(node)), {child1_signal, child2_signal});
-                
-                //Get truth table logic for each node
-                auto func = new_aig.node_function(new_aig.get_node(gate));
-                new_aig.foreach_fanin( new_aig.get_node(gate), [&]( auto const& conn, auto i ) {
-                    if ( new_aig.is_complemented( conn ) ) {
-                        kitty::flip_inplace( func, i );
-                    }
-                });
-                
-                if(is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-                    
-                    if(aig.is_po(nodeIdx)){
-                        std::vector<std::string> output_names;
-                        std::vector<int> output_name_indeces = get_output_indeces(aig, nodeIdx);
-                        
-                        for(int k = 0; k < output_name_indeces.size(); k++){
-                            output_names.push_back(aig._storage->outputNames[output_name_indeces.at(k)]);
-                            if(aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
-                                gate = aig.create_not(gate);
-                            }
-                            new_aig.create_po(gate);
-
-                        }
-                        std::vector<int> new_output_name_indeces = get_output_indeces(new_aig, new_aig.node_to_index(new_aig.get_node(gate)));
-                        for(int k = 0; k < output_names.size(); k++){
-                            new_aig._storage->outputNames[new_output_name_indeces.at(k)] = output_names.at(k);
-                        }
-                    }           
-                        
-                    else{
-                        std::string output_name = "part_" + std::to_string(nodeIdx);
-                        new_aig.create_po(gate);
-                        new_aig._storage->outputNames[get_output_index(new_aig, new_aig.node_to_index(new_aig.get_node(gate)))] = output_name;
-                    }
-                        
-                }
-            }
-        }
-
-        return new_aig;
-
-    }//create_aig_from_part()
-
-    mockturtle::aig_network create_aig_from_part_test(mockturtle::aig_network aig, int partition){
-
-        mockturtle::aig_network new_aig;
-        new_aig._storage->net_name = aig._storage->net_name + "_" + std::to_string(partition);
-        std::vector<int> index;
-
-        //BFS Traversal of all outputs
-        for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-            std::queue<int> net_queue;
-            std::map<int, bool> visited;
-            int output = aig._storage->partitionOutputs[partition].at(i);
-            //Set all nodes to be unvisited
-            aig.foreach_node( [&]( auto node ) {
-                visited[aig.node_to_index(node)] = false;
-            });
-
-            net_queue.push(output);
-            visited[output] = true;
-
-            while(!net_queue.empty()){
-
-                int curr_node = net_queue.front();
-                // std::cout << "curr_node = " << curr_node << "\n";
-                //make sure there are no duplicates added
-                if(!is_in_vector(index, curr_node)){
-                    //Put inputs at the beginning of the index so they are added into the AIG first
-                    if(is_in_vector(aig._storage->partitionInputs[partition], curr_node))
-                        index.insert(index.begin(), curr_node);
-                    else
-                        index.push_back(curr_node);
-                }
-                net_queue.pop();
-                auto node = aig.index_to_node(curr_node);
-
-                //Make sure that the BFS traversal does not go past the inputs of the partition
-                if(!is_in_vector(aig._storage->partitionInputs[partition],curr_node)){
-                    //if(!is_in_vector(aig._storage->partitionInputs[partition], curr_node)){
-
-                    for(int i = 0; i < aig._storage->nodes[aig.index_to_node(curr_node)].children.size(); i++){
-
-                        int childIdx = aig._storage->nodes[aig.index_to_node(curr_node)].children[i].index;
-
-                        if(!visited[childIdx]){
-                            // std::cout << "childIdx = " << childIdx << "\n";
-                            net_queue.push(childIdx);
-                            visited[childIdx] = true;
-                        }
-                    }
-
-                }
-            }
-        }
-        std::cout << "index = {";
-        for(int i = 0; i < index.size(); i++){
-            std::cout << index.at(i) << " ";
-        }
-        std::cout << "}\n";
-
-        for(int i = 0; i < index.size(); i++){
-            int nodeIdx = index.at(i);
-            // std::cout << "current node = " << nodeIdx << "\n";
-            auto node = aig.index_to_node(nodeIdx);
-
-            if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
-                //if(is_in_vector(aig._storage->partitionInputs[partition], nodeIdx)){
-                auto pi = new_aig.create_pi();
-                // std::cout << "create pi\n";
-                std::string input_name;
-                if(aig.is_pi(node)){
-                    input_name = aig._storage->inputNames[nodeIdx - 1];
-                }
-                else
-                    input_name = std::to_string(nodeIdx);
-
-                std::cout << "input_name " << input_name << "\n";
-                std::cout << "input index = " << new_aig.node_to_index(new_aig.get_node(pi) - 1) << "\n";
-
-                // std::cout << "adding " << input_name << " as name for " << nodeIdx << "\n";
-                new_aig.create_in_name(new_aig.node_to_index(new_aig.get_node(pi) - 1), input_name);
-            }
-            else{
-                std::vector<int>::iterator c1_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[0].index);
-                std::vector<int>::iterator c2_it = std::find (index.begin(), index.end(), aig._storage->nodes[node].children[1].index);
-                int child1Idx = std::distance(index.begin(), c1_it);
-                // std::cout << "child1Idx = " << child1Idx << "\n";
-                int child2Idx = std::distance(index.begin(), c2_it);
-                // std::cout << "child2Idx = " << child2Idx << "\n";
-                auto child1_signal = aig.make_signal(aig.index_to_node(child1Idx + 1));
-                auto child2_signal = aig.make_signal(aig.index_to_node(child2Idx + 1));
-                if(aig._storage->nodes[node].children[0].data & 1){
-                    child1_signal = new_aig.create_not(child1_signal);
-                }
-                if(aig._storage->nodes[node].children[1].data & 1){
-                    child2_signal = new_aig.create_not(child2_signal);
-                }
-                auto gate = new_aig.clone_node(aig, aig.get_node(aig.make_signal(node)), {child1_signal, child2_signal});
-                // auto gate = new_aig.create_and(aig.make_signal(aig.index_to_node(child1Idx + 1)), aig.make_signal(aig.index_to_node(child2Idx + 1)));
-                // std::cout << "create gate with children " << child1Idx + 1 << " and " << child2Idx + 1 << "\n";
-
-                //Get truth table logic for each node
-                auto func = new_aig.node_function(new_aig.get_node(gate));
-                new_aig.foreach_fanin( new_aig.get_node(gate), [&]( auto const& conn, auto i ) {
-                    if ( new_aig.is_complemented( conn ) ) {
-                        kitty::flip_inplace( func, i );
-                    }
-                });
-
-                // if(nodeIdx == output){
-                if(is_in_vector(aig._storage->partitionOutputs[partition], nodeIdx)){
-
-                    if(aig.is_po(nodeIdx) && aig._storage->outputs[get_output_index(aig, nodeIdx)].data & 1){
-                        // std::cout << "HERE\n";
-                        gate = aig.create_not(gate);
-                    }
-                    new_aig.create_po(gate);
-                    std::string output_name;
-
-                    if(aig.is_po(nodeIdx)){
-                        std::cout << "nodeIdx " << nodeIdx << " output name = " << aig._storage->outputNames[get_output_index(aig, nodeIdx)] << "\n";
-                        output_name = aig._storage->outputNames[get_output_index(aig, nodeIdx)];
-                    }
-
-                    else
-                        output_name = std::to_string(nodeIdx);
-
-                    std::cout << "output_name " << output_name << "\n";
-                    std::cout << "output index = " << new_aig.node_to_index(new_aig.get_node(gate)) << "\n";
-                    // std::cout << "adding " << std::to_string(nodeIdx) << " as output name for " << nodeIdx << "\n";
-                    new_aig.create_out_name(new_aig.node_to_index(new_aig.get_node(gate)), output_name);
-                }
-            }
-        }
-        // std::cout << "Inputs:\n";
-
-        // for(int i = 0; i < new_aig._storage->inputs.size(); i++){
-        // 	std::cout << new_aig._storage->inputs.at(i) << ": " << new_aig._storage->inputNames[new_aig._storage->inputs.at(i)] << "\n";
-        // }
-
-        // std::cout << "Outputs:\n";
-
-        // for(int i = 0; i < new_aig._storage->outputs.size(); i++){
-        // 	std::cout << new_aig._storage->outputs.at(i).index << ": " << new_aig._storage->outputNames[new_aig._storage->outputs.at(i).index] << "\n";
-        // }
-
-        // new_aig.foreach_node( [&] (auto node){
-        // 	std::cout << "node: " << new_aig.node_to_index(node) << " child[0] = " << new_aig._storage->nodes[node].children[0].index << "\n";
-        // 	std::cout << "node: " << new_aig.node_to_index(node) << " child[1] = " << new_aig._storage->nodes[node].children[1].index << "\n";
-        // });
-
-        return new_aig;
-
-    }
-
-    void write_aig(mockturtle::aig_network aig, std::string filename){
-
-        
-        std::ofstream aigfile;
-        aigfile.open (filename);
-
-        // header info - MILOA
-        auto _num_inputs = aig.num_pis();
-        // auto _num_latches = aig.num_latches();
-        auto _num_latches = 0;
-
-        auto _num_outputs = aig.num_pos();
-        auto _num_ands = aig.num_gates();
-        auto _num_vertices = aig.num_pis() + aig.num_gates();
-
-        //write aig header
-        aigfile << "aag " << _num_vertices << " " << _num_inputs - _num_latches << " " << _num_latches << " " << (_num_outputs - _num_latches) << " " << _num_ands << std::endl;
-
-        aig.foreach_pi([&] (auto node)
-        {
-            auto index = aig.node_to_index(node);
-            aigfile << index * 2 << "\n";
-        });
-
-        //write aig latches
-        auto lineIdx = ((aig.num_pis()-_num_latches)*2)+2;
-        for(int i=0; i<_num_latches; i++){
-            auto regIdx = aig.num_pos() - _num_latches + i;
-            aigfile << lineIdx << " " << aig._storage->outputs[regIdx].data << "\n";
-            lineIdx += 2;
-        }
-
-        //write aig outputs
-        for(int i=0; i<aig.num_pos()- _num_latches; i++){
-            aigfile << aig._storage->outputs[i].data << "\n";
-        }
-
-        auto skipLatches = 0;
-        aig.foreach_gate([&] (auto node)
-        {
-            //skip latches in the nodes vector
-            if(skipLatches>=_num_latches) {
-                auto index = aig.node_to_index(node);
-                auto left = aig._storage->nodes[index].children[0].data;
-                auto right = aig._storage->nodes[index].children[1].data;
-                aigfile << index*2 << " " << left << " " << right << "\n";
-            }
-            skipLatches+=1;
-        });
-        for(int i = 0; i < aig._storage->inputs.size(); i++){
-            aigfile << "i" << i << " " << aig._storage->inputNames[aig._storage->inputs.at(i) - 1] << "\n";
-            
-        }
-        for(int i = 0; i < aig._storage->outputs.size(); i++){
-            aigfile << "o" << i << " " << aig._storage->outputNames[i] << "\n";
-            
-        }
-        aigfile.close();
-    }
-
-
-    //testing
-
-	/* Checks to see if a file has a specified extension
-	 * 
-	 * params:
-	 * filename: The name of the file to check the extension of
-	 * ext: The extension that you are checking that filename has
-	 *
-	 */
-	bool checkExt(std::string filename, std::string ext){
-
-		if(filename.substr(filename.find_last_of(".") + 1) == ext) {
-    		return true;
-  		} else {
-    		return false;
-  		}
-	}//end checkExt
-
-    int computeLevelPart( mockturtle::aig_network aig, int index, int partition ) {
-        //if node not visited
-        if(aig._storage->nodes[index].data[1].h1==0) {
-
-            //set node as visited
-            aig._storage->nodes[index].data[1].h1=1;
-
-            //if is input
-            if (is_in_vector(aig._storage->partitionInputs[partition], index)) {
-                return 0;
-            }
-
-            auto inIdx2 = aig._storage->nodes[index].children[1].data;
-            if (inIdx2 & 1)
-                inIdx2 = inIdx2 - 1;
-
-            //calculate input node index
-            auto inNode1 = inIdx2 >> 1;
-            int levelNode1 = computeLevelPart(aig, inNode1, partition);
-
-            auto inIdx = aig._storage->nodes[index].children[0].data;
-            if (inIdx & 1)
-                inIdx = inIdx - 1;
-
-            //calculate input node index
-            auto inNode0 = inIdx >> 1;
-            int levelNode0 = computeLevelPart(aig, inNode0, partition);
-
-            int level = 1 + std::max(levelNode0, levelNode1);
-            return level;
-        }
-    }
-
-    std::vector<std::vector<int>> get_logic_from_hex(std::string hex){
-
-        //std::cout << "Logic Hex VAlue = " << hex << "\n";
-        int hexValue = atoi(hex.c_str());
-        switch(hexValue){
-            case 8:
-                return {{1, 1}};
-                break;
-
-            case 1:
-                return {{0, 0}};
-                break;
-
-            case 4:
-                return {{0, 1}};
-                break;
-
-            case 2:
-                return {{1, 0}};
-                break;
-
-            default:
-                std::cout << "Error in gate logic\n";
-
-        }
-    }
-
-    std::vector<std::vector<int>> other_possible_outputs(std::vector<std::vector<int>> out){
-        std::vector<std::vector<int>> possibles = {{0,0},{0,1},{1,0},{1,1}};
-
-        for(int i = 0; i < out.size(); i++){
-            for(int j = 0; j < possibles.size(); j++){
-
-                if(possibles.at(j) == out.at(i)){
-                    possibles.erase(possibles.begin() + j);
-                }
-            }
-        }
-
-        return possibles;
-
-    }
-    int computeLevel( mockturtle::aig_network aig, int index ) {
-		//if node not visited
-        if(aig._storage->nodes[index].data[1].h1==0) {
-
-            //set node as visited
-            aig._storage->nodes[index].data[1].h1=1;
-
-            //if is input
-            if (aig.is_ci(index)) {
-                return 0;
-            }
-
-			auto inIdx2 = aig._storage->nodes[index].children[1].data;
-			if (inIdx2 & 1)
-				inIdx2 = inIdx2 - 1;
-
-			//calculate input node index
-			auto inNode1 = inIdx2 >> 1;
-			int levelNode1 = computeLevel(aig, inNode1);
-
-            auto inIdx = aig._storage->nodes[index].children[0].data;
-            if (inIdx & 1)
-                inIdx = inIdx - 1;
-
-            //calculate input node index
-            auto inNode0 = inIdx >> 1;
-            int levelNode0 = computeLevel(aig, inNode0);
-
-            int level = 1 + std::max(levelNode0, levelNode1);
-            return level;
-        }
-	}
-
-    int computeLevel( mockturtle::aig_network aig, int index, int partition ) {
-        //if node not visited
-        if(aig._storage->nodes[index].data[1].h1==0) {
-
-            //set node as visited
-            aig._storage->nodes[index].data[1].h1=1;
-
-            //if is input
-            if (is_in_vector(aig._storage->partitionInputs[partition], index)) {
-                return 0;
-            }
-
-            auto inIdx2 = aig._storage->nodes[index].children[1].data;
-            if (inIdx2 & 1)
-                inIdx2 = inIdx2 - 1;
-
-            //calculate input node index
-            auto inNode1 = inIdx2 >> 1;
-            int levelNode1 = computeLevel(aig, inNode1, partition);
-
-            auto inIdx = aig._storage->nodes[index].children[0].data;
-            if (inIdx & 1)
-                inIdx = inIdx - 1;
-
-            //calculate input node index
-            auto inNode0 = inIdx >> 1;
-            int levelNode0 = computeLevel(aig, inNode0, partition);
-
-            int level = 1 + std::max(levelNode0, levelNode1);
-            return level;
-        }
-    }
-
-    /* add_to_truth
-     *
-     * @param aig: AIG network that the truth table is being made for
-     * @param nodeIdx: The index of the gate that you are adding the truth table of
-     * @param wantedOut: The output that you want the gate at nodeIdx to be
-     * @param output: The node that the truth table is being made for
-     * @param fork_flag: Can be one of four (4) values that are used to determine if a connection
-     *					 is forked and logic being added to the truth table needs to be restricted.
-     *					 0: No connection is forked
-     *					 1: The left child is forked
-     *					 2: The right child is forked
-     *					 3: Both children are forked
-     *
-     * Adds to a truth table for the output by adding the truth table needed for the logic output
-     * wanted for a given node(nodeIdx)
-     */
-    void add_to_truth(mockturtle::aig_network aig, int nodeIdx, int wantedOut, int output, int fork_flag, clock_t start){
-
-        auto node = aig.index_to_node(nodeIdx);
-        aig._storage->test_timeout = false;
-        // std::cout << "\noutput node = " << nodeIdx << "\n\n";
-        // std::cout << "child[0] = " << aig._storage->nodes[node].children[0].index << "\n";
-        // std::cout << "child[1] = " << aig._storage->nodes[node].children[1].index << "\n";
-        // std::cout << "wantedOut = " << wantedOut << " fork_flag = " << fork_flag << "\n\n";
-
-        int child1Idx = aig._storage->nodes[node].children[0].index;
-
-        int child2Idx = aig._storage->nodes[node].children[1].index ;
-
-
-        // std::cout << "index = {";
-        // for(int i = 0; i < aig._storage->index[output].size(); i++){
-        // 	std::cout << aig._storage->index[output].at(i) << " ";
-        // }
-        // std::cout << "}\n";
-
-        //Values that a forked connection MUST be for the truth table to be valid i.e. you can't have 2 different
-        //values for the same wire at the same time
-        int critical_val1;
-        int critical_val2;
-
-        if(!aig.is_constant(node)){
-            if(wantedOut == 0){
-
-                std::vector<std::vector<int>> offset_cpy;;
-                int i = 0;
-
-                while(i < aig._storage->tt[output].size() && !aig._storage->test_timeout){
-                    float current_time = ((float)clock() - start)/CLOCKS_PER_SEC;
-                    // std::cout << "check time " << current_time << "\n";
-                    // std::cout << "fork_flag = " << fork_flag << "\n";
-                    if(current_time >= 180){
-                        std::cout << "TIMEOUT at " << current_time << " seconds\n";
-                        aig._storage->test_timeout = true;
-                        break;
-                    }
-                    //Copy the offset list so the original is not changed
-                    offset_cpy = aig._storage->offset[nodeIdx];
-                    //Check to make sure that you only affect rows of the truth table where the node's wanted output
-                    //matches in order to merge its onset or offset truth table to the respevtive output
-                    if(aig._storage->tt[output].at(i).at(get_index(aig._storage->index[output], nodeIdx)) == wantedOut){
-
-                        if(fork_flag == 1){
-                            //Checks the value already stored for the child index
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val1 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx));
-
-                            //Erase from the offset truth table, logic combinations that don't match the critical value
-                            for(int j = 0; j < offset_cpy.size(); j++){
-                                if(offset_cpy.at(j).at(0) != critical_val1){
-                                    //std::cout << "Erasing at " << std::distance(offset_cpy.begin(), offset_cpy.begin() + j) << "\n";
-                                    offset_cpy.erase(offset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new offset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(offset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-                                //Only add values for the right child since the left child is already taken care of
-                                aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx)) = offset_cpy.at(0).at(1);
-
-                                int idx = i + 1;
-                                //Copy the truth table down to add more combinations for the wanted output if needed
-                                for(int j = 1; j < offset_cpy.size(); j++){
-
-                                    aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                    aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child2Idx)) = offset_cpy.at(j).at(1);
-
-                                    idx++;
-                                }
-                                i += offset_cpy.size();
-                            }
-                        }
-                        else if(fork_flag == 2){
-                            //Checks the value already stored for the child index
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val2 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx));
-
-                            //Erase from the offset truth table, logic combinations that don't match the critical value
-                            for(int j = 0; j < offset_cpy.size(); j++){
-                                if(offset_cpy.at(j).at(1) != critical_val2){
-                                    offset_cpy.erase(offset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new offset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(offset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-                                //Only add values for the left child since the right child is already taken care of
-                                aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx)) = offset_cpy.at(0).at(0);
-
-                                int idx = i + 1;
-                                //Copy the truth table down to add more combinations for the wanted output if needed
-                                for(int j = 1; j < offset_cpy.size(); j++){
-
-                                    aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                    aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child1Idx)) = offset_cpy.at(j).at(0);
-
-                                    idx++;
-                                }
-                                i += offset_cpy.size();
-                            }
-                        }
-                        else if(fork_flag == 3){
-                            //Checks the value already stored for both of the children
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val1 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx));
-                            critical_val2 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx));
-
-                            //Erase from the offset truth table, logic combinations that don't match both of the critical values
-                            for(int j = 0; j < offset_cpy.size(); j++){
-                                if(!((offset_cpy.at(j).at(0) == critical_val1) && (offset_cpy.at(j).at(1) == critical_val2))){
-                                    offset_cpy.erase(offset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new offset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(offset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-                                i++;
-                            }
-                        }
-
-                        else{
-
-                            aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx)) = offset_cpy.at(0).at(0);
-                            aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx)) = offset_cpy.at(0).at(1);
-                            int idx = i + 1;
-                            //Copy the truth table down to add more combinations for the wanted output if needed
-                            for(int j = 1; j < offset_cpy.size(); j++){
-
-                                aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child1Idx)) = offset_cpy.at(j).at(0);
-                                aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child2Idx)) = offset_cpy.at(j).at(1);
-
-                                idx++;
-                            }
-                            i += offset_cpy.size();
-                        }
-
-                    }
-                    else{
-                        i++;
-                    }
-
-                    //Update the wanted outputs for the children of the node
-                    for(int i = 0; i < offset_cpy.size(); i++){
-                        // std::cout << "offset row: ";
-                        // for(int j = 0; j < offset_cpy.at(i).size(); j++){
-                        // 	std::cout << offset_cpy.at(i).at(j) << " ";
-                        // }
-                        // std::cout << "\n";
-                        if(fork_flag == 1){
-                            if(!is_in_vector(aig._storage->wantedOut[child2Idx], offset_cpy.at(i).at(1))){
-                                //std::cout << "1) Offset adding " << offset_cpy.at(i).at(1) << " as wantedOut for " << child2Idx << "\n";
-                                aig._storage->wantedOut[child2Idx].push_back(offset_cpy.at(i).at(1));
-                            }
-                        }
-                        else if(fork_flag == 2){
-                            if(!is_in_vector(aig._storage->wantedOut[child1Idx], offset_cpy.at(i).at(0))){
-                                //std::cout << "2) Offset adding " << offset_cpy.at(i).at(0) << " as wantedOut for " << child1Idx << "\n";
-                                aig._storage->wantedOut[child1Idx].push_back(offset_cpy.at(i).at(0));
-                            }
-                        }
-                        else{
-                            if(!is_in_vector(aig._storage->wantedOut[child1Idx], offset_cpy.at(i).at(0))){
-                                //std::cout << "ELSE) Offset adding " << offset_cpy.at(i).at(0) << " as wantedOut for " << child1Idx << "\n";
-                                aig._storage->wantedOut[child1Idx].push_back(offset_cpy.at(i).at(0));
-                            }
-                            if(!is_in_vector(aig._storage->wantedOut[child2Idx], offset_cpy.at(i).at(1))){
-                                //std::cout << "ELSE) Offset adding " << offset_cpy.at(i).at(1) << " as wantedOut for " << child2Idx << "\n";
-                                aig._storage->wantedOut[child2Idx].push_back(offset_cpy.at(i).at(1));
-                            }
-                        }
-                    }
-
-                }//while
-
-
-            }
-            else{
-
-                //Copy the onset list so the original is not changed
-                std::vector<std::vector<int>> onset_cpy;
-                int i = 0;
-                while(i < aig._storage->tt[output].size() && !aig._storage->test_timeout){
-
-                    float current_time = ((float)clock() - start)/CLOCKS_PER_SEC;
-                    // std::cout << "check time " << current_time << "\n";
-                    // std::cout << "fork_flag = " << fork_flag << "\n";
-                    if(current_time >= 180){
-                        std::cout << "TIMEOUT at " << current_time << " seconds\n";
-                        aig._storage->test_timeout = true;
-                        break;
-                    }
-                    onset_cpy = aig._storage->onset[nodeIdx];
-                    //Check to make sure that you only affect rows of the truth table where the node's wanted output
-                    //matches in order to merge its onset or offset truth table to the respevtive output
-                    if(aig._storage->tt[output].at(i).at(get_index(aig._storage->index[output], nodeIdx)) == wantedOut){
-
-                        if(fork_flag == 1){
-                            //Checks the value already stored for the child index
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val1 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx));
-                            //Erase from the onset truth table, logic combinations that don't match the critical value
-                            for(int j = 0; j < onset_cpy.size(); j++){
-                                if(onset_cpy.at(j).at(0) != critical_val1){
-                                    onset_cpy.erase(onset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new onset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(onset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-                                //Only add values for the right child since the left child is already taken care of
-                                aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx)) = onset_cpy.at(0).at(1);
-
-                                int idx = i + 1;
-                                //Copy the truth table down to add more combinations for the wanted output if needed
-                                for(int j = 1; j < onset_cpy.size(); j++){
-
-                                    aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                    aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child2Idx)) = onset_cpy.at(j).at(1);
-
-                                    idx++;
-                                }
-                                i += onset_cpy.size();
-                            }
-                        }
-                        else if(fork_flag == 2){
-
-                            //Checks the value already stored for the child index
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val2 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx));
-                            //Erase from the offset truth table, logic combinations that don't match the critical value
-                            for(int j = 0; j < onset_cpy.size(); j++){
-                                if(onset_cpy.at(j).at(1) != critical_val2){
-                                    onset_cpy.erase(onset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new onset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(onset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-
-                                //Only add values for the left child since the right child is already taken care of
-                                aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx)) = onset_cpy.at(0).at(0);
-
-                                int idx = i + 1;
-                                //Copy the truth table down to add more combinations for the wanted output if needed
-                                for(int j = 1; j < onset_cpy.size(); j++){
-
-                                    aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                    aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child1Idx)) = onset_cpy.at(j).at(0);
-
-                                    idx++;
-                                }
-                                i += onset_cpy.size();
-                            }
-
-                        }
-                        else if(fork_flag == 3){
-
-                            //Checks the value already stored for both of the children
-                            //Since these values are added during a BFS, the value already there is more critical
-                            //to the output and therefore needs to be matched
-                            critical_val1 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx));
-                            critical_val2 = aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx));
-                            //Erase from the onset truth table, logic combinations that don't match both of the critical values
-                            for(int j = 0; j < onset_cpy.size(); j++){
-                                if(!((onset_cpy.at(j).at(0) == critical_val1) && (onset_cpy.at(j).at(1) == critical_val2))){
-                                    onset_cpy.erase(onset_cpy.begin() + j);
-                                    j--;
-                                }
-                            }
-                            //If the new onset truth table is empty now, the current node's is not valid and should
-                            //be erased from the truth table
-                            if(onset_cpy.size() == 0){
-                                aig._storage->tt[output].erase(aig._storage->tt[output].begin() + i);
-                            }
-                            else{
-                                i++;
-                            }
-                        }
-                        else{
-
-                            aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child1Idx)) = onset_cpy.at(0).at(0);
-                            aig._storage->tt[output].at(i).at( get_index(aig._storage->index[output], child2Idx)) = onset_cpy.at(0).at(1);
-                            int idx = i + 1;
-                            //Copy the truth table down to add more combinations for the wanted output if needed
-                            for(int j = 1; j < onset_cpy.size(); j++){
-
-                                aig._storage->tt[output].insert(aig._storage->tt[output].begin() + idx, aig._storage->tt[output].at(i));
-
-                                aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child1Idx)) = onset_cpy.at(j).at(0);
-                                aig._storage->tt[output].at(idx).at(get_index(aig._storage->index[output], child2Idx)) = onset_cpy.at(j).at(1);
-
-                                idx++;
-                            }
-                            i += onset_cpy.size();
-                        }
-                    }
-                    else{
-                        i++;
-                    }
-
-                    //Update the wanted outputs for the children of the node
-                    for(int i = 0; i < onset_cpy.size(); i++){
-                        // std::cout << "onset row: ";
-                        // for(int j = 0; j < onset_cpy.at(i).size(); j++){
-                        // 	std::cout << onset_cpy.at(i).at(j) << " ";
-                        // }
-                        // std::cout << "\n";
-                        if(fork_flag == 1){
-                            if(!is_in_vector(aig._storage->wantedOut[child2Idx], onset_cpy.at(i).at(1))){
-                                //std::cout << "1) Onset adding " << onset_cpy.at(i).at(1) << " as wantedOut for " << child2Idx << "\n";
-                                aig._storage->wantedOut[child2Idx].push_back(onset_cpy.at(i).at(1));
-                            }
-                        }
-                        else if(fork_flag == 2){
-                            if(!is_in_vector(aig._storage->wantedOut[child1Idx], onset_cpy.at(i).at(0))){
-                                //std::cout << "2) Onset adding " << onset_cpy.at(i).at(0) << " as wantedOut for " << child1Idx << "\n";
-                                aig._storage->wantedOut[child1Idx].push_back(onset_cpy.at(i).at(0));
-                            }
-                        }
-                        else{
-                            if(!is_in_vector(aig._storage->wantedOut[child1Idx], onset_cpy.at(i).at(0))){
-                                //std::cout << "ELSE) Onset adding " << onset_cpy.at(i).at(0) << " as wantedOut for " << child1Idx << "\n";
-                                aig._storage->wantedOut[child1Idx].push_back(onset_cpy.at(i).at(0));
-                            }
-                            if(!is_in_vector(aig._storage->wantedOut[child2Idx], onset_cpy.at(i).at(1))){
-                                //std::cout << "ELSE) Onset adding " << onset_cpy.at(i).at(1) << " as wantedOut for " << child2Idx << "\n";
-                                aig._storage->wantedOut[child2Idx].push_back(onset_cpy.at(i).at(1));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        else{//output is constant
-            if(aig._storage->onset[nodeIdx].size() > aig._storage->offset[nodeIdx].size())
-                aig._storage->tt[output].at(0).at(0) = 1;
-            else
-                aig._storage->tt[output].at(0).at(0) = 0;
-
-            // std::cout << "constant\n";
-
-        }
-        // std::cout << "index = {";
-        // for(int i = 0; i < aig._storage->index[output].size(); i++){
-        // 	std::cout << aig._storage->index[output].at(i) << " ";
-        // }
-        // std::cout << "}\n";
-
-        // for(int i = 0; i < aig._storage->tt[output].size(); i++){
-        // 	for(int j = 0; j < aig._storage->tt[output].at(i).size(); j++){
-        // 		std::cout << aig._storage->tt[output].at(i).at(j) << " ";
-        // 	}
-        // 	std::cout << "\n";
-        // }
-    }//add_to_truth()
-
-
-    /* genTruthBFS
-     *
-     * @param aig: AIG network that is being traversed
-     * @param output: Root node to begin traversal at (output that the truth table is being created for)
-     * @param wantedOut: The outputs wanted for a node to make the output high or low
-     * @param partition: The partition that the root node belongs to
-     *
-     * Performs a breadth first search of the network in order to keep nodes visited in topological order and merges
-     * each node's truth table to create a truth table for the specified output.
-     */
-    void genTruthBFS(mockturtle::aig_network aig, int output, std::vector<int> wantedOut, int partition){
-
-        clock_t start = clock();
-        std::queue<int> net_queue;
-        std::map<int, bool> visited;
-        //Set all nodes to be unvisited
-        aig.foreach_node( [&]( auto node ) {
-            visited[aig.node_to_index(node)] = false;
-        });
-
-        net_queue.push(output);
-        visited[output] = true;
-
-        while(!net_queue.empty() && !aig._storage->test_timeout){
-
-            int curr_node = net_queue.front();
-
-            wantedOut = aig._storage->wantedOut[curr_node];
-            net_queue.pop();
-            auto node = aig.index_to_node(curr_node);
-
-            //Flag to make sure that children are not added to the truth table more than once
-            bool add_to_truth_flag = true;
-
-            //Make sure that the BFS traversal does not go past the inputs of the partition
-            if(!is_in_vector(aig._storage->partitionInputs[partition], curr_node)){
-
-
-                for(int i = 0; i < aig._storage->nodes[node].children.size(); i++){
-
-                    int childIdx = aig._storage->nodes[node].children[i].index;
-                    bool is_valid = true;
-
-                    //Adjust the child index if it is a primary input
-                    // if(childIdx < (aig.num_pis() + aig.num_pos())){
-                    // 			childIdx--;
-                    // }
-
-                    //Make sure a valid child index is found
-                    if(childIdx < 0){
-                        is_valid = false;
-                    }
-
-                    if(!visited[childIdx]){
-
-                        if(is_valid){
-
-                            net_queue.push(childIdx);
-                            visited[childIdx] = true;
-
-                            if(add_to_truth_flag && !is_in_vector(aig._storage->partitionInputs[partition], curr_node)){
-
-                                //Add both children of a node to the truth table at once
-                                int child1Idx = aig._storage->nodes[node].children[0].index;
-                                int child2Idx = aig._storage->nodes[node].children[1].index;
-
-                                int fork_flag;
-
-                                //The first child has not been visited but the second one has
-                                //The RIGHT child has a forked connection
-                                if(visited[child2Idx]){
-                                    aig._storage->index[output].push_back(child1Idx);
-                                    fork_flag = 2;
-                                }
-                                else{//Neither of the children have a forked connection
-                                    aig._storage->index[output].push_back(child1Idx);
-                                    aig._storage->index[output].push_back(child2Idx);
-                                    fork_flag = 0;
-                                }
-
-                                for(int j = 0; j < wantedOut.size(); j++){
-
-                                    add_to_truth(aig, curr_node, wantedOut.at(j), output, fork_flag, start);
-                                    //Make sure that no node and its children are added to the truth table more than
-                                    //once
-                                    add_to_truth_flag = false;
-
-                                }
-                            }
-                        }
-
-                    }
-                    else{
-
-                        if(add_to_truth_flag && !is_in_vector(aig._storage->partitionInputs[partition], curr_node)){
-
-                            int child1Idx = aig._storage->nodes[node].children[0].index;
-                            int child2Idx = aig._storage->nodes[node].children[1].index;
-
-                            int fork_flag;
-
-                            //If both children have been visited before
-                            //BOTH children have forked connections
-                            if(visited[child2Idx]){
-                                fork_flag = 3;
-                            }
-                            else{//Only the first (LEFT) child has a forked connection
-                                aig._storage->index[output].push_back(child2Idx);
-                                fork_flag = 1;
-                            }
-
-                            for(int j = 0; j < wantedOut.size(); j++){
-                                add_to_truth(aig, curr_node, wantedOut.at(j), output, fork_flag, start);
-                                //Make sure that a node and its children are not added to the truth table more than once
-                                add_to_truth_flag = false;
-
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        aig._storage->test_runtime[output] = ((float)clock() - start)/CLOCKS_PER_SEC;
-
-    }//genTruthBFS()
-
-    void map_part_io(mockturtle::aig_network aig){
-        if(aig._storage-> num_partitions != 0){
-            for(int i = 0; i < aig._storage->num_partitions; i++){
-                // std::cout << "partition = " << i << "\n";
-                aig.foreach_node( [&]( auto node ) {
-
-                    int nodeIdx = aig.node_to_index(node);
-
-                    //Check to see if the current node is in the partition
-                    if(aig._storage->partitionMap[nodeIdx] == i){
-
-                        // std::cout << "nodeIdx = " << nodeIdx << "\n";
-
-                        //The current node is in the output list and it is a constant
-                        if(aig.is_po(node) && aig.is_constant(node)
-                           && !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)){
-
-                            //std::cout << "OUTPUT\n";
-                            aig._storage->partitionOutputs[i].push_back(nodeIdx);
-                        }
-
-                        //The current node is connected directly to one primary input
-                        // if(aig.is_pi(node) && aig.is_po(node)
-                        // 	&& !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)){
-                        // 	// std::cout << "partition = " << i << "\n";
-                        // 	// std::cout << "nodeIdx " << nodeIdx << " is po and pi\n";
-                        // 	aig._storage->partitionOutputs[i].push_back(nodeIdx);
-                        // }
-
-                        if(aig.is_po(node) && aig.is_pi(node)){
-                            if(!is_in_vector(aig._storage->partitionInputs[i],nodeIdx))
-                                aig._storage->partitionInputs[i].push_back(nodeIdx);
-                            if(!is_in_vector(aig._storage->partitionOutputs[i],nodeIdx))
-                                aig._storage->partitionOutputs[i].push_back(nodeIdx);
-                        }
-                        for(int j = 0; j < aig._storage->partitionConn[i][nodeIdx].size(); j++){
-
-
-                            //Add to the output list for the partition if (the node is a primary output OR (if output connections go to nodes
-                            //that are not located in the partition AND it is not already included in the output list)) AND (the node is
-                            //not an input to the partition)
-
-                            if( (aig.is_po(node) || !is_in_map(aig._storage->partitionConn[i], aig._storage->partitionConn[i][nodeIdx].at(j)))
-                                && !is_in_vector(aig._storage->partitionOutputs[i],nodeIdx)
-                                && !aig.is_pi(nodeIdx) && !is_in_vector(aig._storage->partitionInputs[i],nodeIdx)){
-
-                                aig._storage->partitionOutputs[i].push_back(nodeIdx);
-                            }
-                            //Primary output is tied directly to a primary input
-
-                            int child1Idx = aig._storage->nodes[node].children[0].index;
-                            int child2Idx = aig._storage->nodes[node].children[1].index;
-
-                            bool child1 = is_in_map(aig._storage->partitionConn[i], child1Idx);
-                            bool child2 = is_in_map(aig._storage->partitionConn[i], child2Idx);
-
-                            // std::cout << "nodeIdx = " << nodeIdx << "\n";
-                            //If the node has children, check if either of its children are in the partition but the other one is not
-                            //add the child that is not in the partition to the list of inputs
-                            if(!aig.is_pi(nodeIdx) && ((child1 && !child2) || (!child1 && child2))){
-
-                                if(!child1 && !is_in_vector(aig._storage->partitionInputs[i],child1Idx)){
-                                    // std::cout << "1) child1Idx = " << child1Idx << "\n";
-                                    //std::cout << "INPUT\n";
-                                    aig._storage->partitionInputs[i].push_back(child1Idx);
-                                }
-                                else if(!child2 && !is_in_vector(aig._storage->partitionInputs[i],child2Idx)){
-                                    // std::cout << "1) child2Idx = " << child2Idx << "\n";
-                                    //std::cout << "INPUT\n";
-                                    aig._storage->partitionInputs[i].push_back(child2Idx);
-                                }
-                            }
-                            //If the node is a primary input and it is not already in the list of inputs, add
-                            //the node to the input list
-                            if(aig.is_pi(nodeIdx) && !is_in_vector(aig._storage->partitionInputs[i],nodeIdx)){
-                                // std::cout << "2) nodeIdx = " << nodeIdx << "\n";
-                                //std::cout << "INPUT\n";
-                                aig._storage->partitionInputs[i].push_back(nodeIdx);
-                            }
-                            //If the node is not a primary input and NEITHER children are in the partition,
-                            //add both to the input list if they are not already there
-                            if (!aig.is_pi(nodeIdx) && !child1 && !child2){
-
-                                if(!is_in_vector(aig._storage->partitionInputs[i],child1Idx)){
-                                    // std::cout << "3) child1Idx = " << child1Idx << "\n";
-                                    //std::cout << "INPUT\n";
-                                    aig._storage->partitionInputs[i].push_back(child1Idx);
-                                }
-                                if(!is_in_vector(aig._storage->partitionInputs[i],child2Idx)){
-                                    // std::cout << "3) child2Idx = " << child2Idx << "\n";
-                                    //std::cout << "INPUT\n";
-                                    aig._storage->partitionInputs[i].push_back(child2Idx);
-                                }
-
-                            }
-
-
-                            //If neither of the children of a node are in the partition or the node is a primary input and is not yet in
-                            //the list of inputs, add to the list of inputs
-                            // if( ( (!child1 && !child2) || aig.is_pi(node) ) && !is_in_vector(aig._storage->partitionInputs[i],nodeIdx)){
-
-                            // 	aig._storage->partitionInputs[i].push_back(nodeIdx);
-                            // }
-                        }
-                    }
-                });
-
-                std::cout << "Partition " << i << " Inputs: {";
-                for(int j = 0; j < aig._storage->partitionInputs[i].size(); j++){
-                    std::cout << aig._storage->partitionInputs[i].at(j) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "Partition " << i << " Outputs: {";
-                for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-                    std::cout << aig._storage->partitionOutputs[i].at(j) << " ";
-                }
-                std::cout << "}\n";
-            }
-
-        }
-        else{
-            std::cout << "Partitions not mapped yet\n";
-        }
-    }
-
-    //Simple BFS Traversal to optain the depth of an output's logic cone before the truth table is built
-    void BFS_traversal(mockturtle::aig_network aig, int output, int partition){
-        std::queue<int> net_queue;
-        std::queue<int> depth_queue;
-        std::map<int, bool> visited;
-        //Set all nodes to be unvisited
-        aig.foreach_node( [&]( auto node ) {
-            visited[aig.node_to_index(node)] = false;
-        });
-
-        net_queue.push(output);
-        visited[output] = true;
-
-        depth_queue.push(0);
-
-        while(!net_queue.empty()){
-
-            int curr_node = net_queue.front();
-            int depth = depth_queue.front();
-            net_queue.pop();
-            depth_queue.pop();
-            auto node = aig.index_to_node(curr_node);
-
-            //Make sure that the BFS traversal does not go past the inputs of the partition
-            if(!is_in_vector(aig._storage->partitionInputs[partition], curr_node)){
-
-                for(int i = 0; i < aig._storage->nodes[node].children.size(); i++){
-
-                    int childIdx = aig._storage->nodes[node].children[i].index;
-                    bool is_valid = true;
-                    //Make sure a valid child index is found
-                    if(childIdx < 0){
-                        is_valid = false;
-                    }
-
-                    if(!visited[childIdx]){
-
-                        if(is_valid){
-
-                            net_queue.push(childIdx);
-                            depth_queue.push(depth + 1);
-                            aig._storage->output_cone_depth[output] = depth + 1;
-                            visited[childIdx] = true;
-
-                        }
-
-                    }
-
-                }
-            }
-            else{
-                aig._storage->logic_cone_inputs[output].push_back(curr_node);
-            }
-        }
-
-    }//BFS_traversal()
-
-    /*
-     * Makes the stored truth table for a given output ready for writing to
-     * a blif file by deleting columns that don't correspond to inputs of
-     * the given partition
-     */
-    void finalize_truth(mockturtle::aig_network aig, int output, int partition){
-
-        // std::cout << "partition inputs = ";
-        // for(int i = 0; i < aig._storage->partitionInputs[partition].size(); i++){
-        // 	std::cout << aig._storage->partitionInputs[partition].at(i) << " ";
-        // }
-        // std::cout << "\n";
-
-        // std::cout << "tt size = " << aig._storage->tt[output].at(0).size() << "\n";
-        // std::cout << "index size = " << aig._storage->index[output].size() << "\n";
-        if(aig._storage->tt[output].at(0).size() > aig._storage->index[output].size()){
-            for(int i = 0; i < aig._storage->tt[output].size(); i++){
-                for(int j = aig._storage->index[output].size(); j < aig._storage->tt[output].at(i).size(); j++){
-                    aig._storage->tt[output].at(i).erase(aig._storage->tt[output].at(i).begin() + j);
-                    j--;
-
-                }
-
-            }
-        }
-
-        for(int i = 0; i < aig._storage->index[output].size(); i++){
-
-
-            if(!aig.is_constant(aig._storage->index[output].at(i)) && !is_in_vector(aig._storage->partitionInputs[partition], aig._storage->index[output].at(i))){
-
-                for(int j = 0; j < aig._storage->tt[output].size(); j++){
-                    aig._storage->tt[output].at(j).erase(aig._storage->tt[output].at(j).begin() + i);
-
-                }
-                aig._storage->index[output].erase(aig._storage->index[output].begin() + i);
-                i--;
-            }
-        }
-
-        // for(int idx = 0; idx < aig._storage->tt[output].size(); idx++){
-        // 	std::cout << "tt.at(" << idx << ") ";
-        // 	for(int jdx = 0; jdx < aig._storage->tt[output].at(idx).size(); jdx++){
-        // 		 std::cout << aig._storage->tt[output].at(idx).at(jdx);
-        // 	}
-        // 	std::cout << "\n";
-        // }
-
-        for(int i = 0; i < aig._storage->tt[output].size(); i++){
-            for(int j = (i + 1); j < aig._storage->tt[output].size(); j++){
-                if(aig._storage->tt[output].at(i) == aig._storage->tt[output].at(j)){
-                    aig._storage->tt[output].erase(aig._storage->tt[output].begin() + j);
-                    j--;
-                }
-            }
-        }
-        // std::cout << "deleting duplicates\n";
-        // for(int idx = 0; idx < aig._storage->tt[output].size(); idx++){
-        // 	std::cout << "tt.at(" << idx << ") ";
-        // 	for(int jdx = 0; jdx < aig._storage->tt[output].at(idx).size(); jdx++){
-        // 		 std::cout << aig._storage->tt[output].at(idx).at(jdx);
-        // 	}
-        // 	std::cout << "\n";
-        // }
-    }//finalize_truth()
-
-
-
-    void blif_write(mockturtle::aig_network aig, int partition, int output_wanted, int output_num){
-
-        time_t rawtime;
-        struct tm * timeinfo;
-
-        time (&rawtime);
-        timeinfo = localtime (&rawtime);
-
-        std::string filename = aig._storage->net_name;
-        filename.append("_part_" + std::to_string(partition) + ".blif");
-
-        std::ofstream output("./" + aig._storage->net_name + "_part/" + filename);
-        output << "# Blif file written by lstools on " << asctime(timeinfo);
-        output << ".model " << aig._storage->net_name << "\n";
-        output << ".inputs ";
-
-        for(int i = 0; i < aig._storage->partitionInputs[partition].size(); i++){
-            int curr_input = aig._storage->partitionInputs[partition].at(i);
-            int corrected_input = curr_input;
-            std::string index = std::to_string(curr_input);
-            if(aig.is_pi(curr_input)){
-                index = aig._storage->inputNames[curr_input - 1];
-            }
-
-            output << index << " ";
-        }
-        output << "\n";
-        output << ".outputs ";
-
-        // std::cout << "partition inputs = ";
-        // for(int i = 0; i < aig._storage->partitionInputs[partition].size(); i++){
-        // 	std::cout << aig._storage->partitionInputs[partition].at(i) << " ";
-        // }
-        // std::cout << "\n";
-        // std::cout << "partition outputs = ";
-        // for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-        // 	std::cout << aig._storage->partitionOutputs[partition].at(i) << " ";
-        // }
-        // std::cout << "\n";
-
-        for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-
-            int curr_output = aig._storage->partitionOutputs[partition].at(i);
-            std::string output_str = std::to_string(curr_output);
-            int corrected_output_num = curr_output;
-            // std::cout << "curr_output = " << curr_output << "\n";
-            if(aig.is_po(curr_output)){
-
-                output_str = aig._storage->outputNames[get_output_index(aig, curr_output)];
-            }
-            else {
-                if(curr_output < (aig.num_pis() + aig.num_pos()))
-                    curr_output++;
-                output_str = std::to_string(curr_output);
-
-
-            }
-            output << output_str << " ";
-            // std::cout << "output_str = " << output_str << "\n";
-
-        }
-        output << "\n";
-
-
-        for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-            int curr_output = aig._storage->partitionOutputs[partition].at(i);
-
-            std::string output_str = std::to_string(curr_output);
-            int corrected_output_num = curr_output;
-            // std::cout << "curr_output = " << curr_output << "\n";
-            if(aig.is_po(curr_output)){
-                output_str = aig._storage->outputNames[get_output_index(aig, curr_output)];
-            }
-            else if(is_in_vector(aig._storage->partitionInputs[partition], curr_output)){
-                corrected_output_num++;
-                output_str = std::to_string(corrected_output_num);
-            }
-            // std::cout << "output_str = " << output_str << "\n";
-
-            output << ".names ";
-
-            for(int j = 0; j < aig._storage->index[curr_output].size(); j++){
-                int curr_index = aig._storage->index[curr_output].at(j);
-                std::string index;
-                if(aig.is_pi(curr_index))
-                    index = aig._storage->inputNames[curr_index - 1];
-                else if(aig.is_po(curr_index)){
-                    index = aig._storage->outputNames[get_output_index(aig, curr_index)];
-                }
-                else
-                    index = std::to_string(curr_index);
-
-                output << index << " ";
-            }
-
-            output << output_str << "\n";
-
-            for(int j = 0; j < aig._storage->tt[curr_output].size(); j++){
-
-                for(int k = 0; k < aig._storage->tt[curr_output].at(j).size(); k++){
-                    output << aig._storage->tt[curr_output].at(j).at(k);
-                }
-
-                output << " " << output_wanted << "\n";
-
-            }
-        }
-        output << ".end\n";
-
-        output.close();
-
-
-
-    }
-
-    void blif_test(mockturtle::aig_network aig, int output_wanted){
-
-        time_t rawtime;
-        struct tm * timeinfo;
-
-        time (&rawtime);
-        timeinfo = localtime (&rawtime);
-
-        std::vector<int> outputs_defined;
-        std::string filename = aig._storage->net_name;
-        filename.append("_test.blif");
-
-        std::ofstream output;
-        output.open (filename);
-        output << "# Blif file written by lstools on " << asctime(timeinfo);
-        output << ".model " << aig._storage->net_name << "\n";
-
-        output << ".inputs ";
-        for(int i = 0; i < aig.num_pis(); i++){
-            output << aig._storage->inputNames[i] << " ";
-        }
-        output << "\n";
-
-        output << ".outputs ";
-        for(int i = 0; i < aig.num_pos(); i++){
-            output << aig._storage->outputNames[i] << " ";
-        }
-        output << "\n";
-
-        for(int idx = 0; idx < aig._storage->num_partitions; idx++){
-            int partition = idx;
-            //std::cout << "\npartition = " << partition << "\n\n";
-            for(int i = 0; i < aig._storage->partitionOutputs[partition].size(); i++){
-                int curr_output = aig._storage->partitionOutputs[partition].at(i);
-                // std::cout << "curr_output = " << curr_output << "\n";
-                std::string output_str;
-                if(aig.is_po(curr_output)){
-                    output_str = aig._storage->outputNames[get_output_index(aig, curr_output)];
-                }
-                else {
-                    output_str = std::to_string(curr_output);
-                }
-
-                output << ".names ";
-
-                //primary output is connected directly to a primary input
-                // if (aig.is_pi(curr_output) && aig.is_po(curr_output)){
-                // 	output << aig._storage->inputNames[curr_output] << " " << output_str << "\n";
-                // 	output << output_wanted << " " << output_wanted << "\n";
-
-                // }
-
-                //else{
-                // std::cout << "partition = " << idx << "\n";
-                // std::cout << "curr_output = " << curr_output << "\n";
-                // std::cout << "index = {";
-                // for(int j = 0; j < aig._storage->index[curr_output].size(); j++){
-                // 	std::cout << aig._storage->index[curr_output].at(j) << " ";
-                // }
-                // std::cout << "}\n";
-                for(int j = 0; j < aig._storage->index[curr_output].size(); j++){
-                    int curr_index = aig._storage->index[curr_output].at(j);
-                    //std::cout << "curr_index = " << curr_index << "\n";
-                    std::string index;
-                    if(aig.is_pi(curr_index))
-                        index = aig._storage->inputNames[curr_index - 1];
-                    else if(aig.is_po(curr_index)){
-
-                        index = aig._storage->outputNames[get_output_index(aig, curr_index)];
-                    }
-                        //primary output connected directly to primary input
-                        // else if(aig.is_po(curr_index) && aig.is_pi(curr_index)){
-                        // 	//guaranteed to have 2 items in the index
-                        // }
-                    else
-                        index = std::to_string(curr_index);
-
-                    output << index << " ";
-                }
-                if(!aig.is_constant(curr_output))
-                    output << output_str << "\n";
-                else
-                    output << "\n";
-
-                for(int j = 0; j < aig._storage->tt[curr_output].size(); j++){
-
-                    for(int k = 0; k < aig._storage->tt[curr_output].at(j).size(); k++){
-                        output << aig._storage->tt[curr_output].at(j).at(k);
-                    }
-
-                    if(!aig.is_constant(curr_output))
-                        output << " " << output_wanted << "\n";
-                    else
-                        output << "\n";
-
-                }
-                //}
-            }
-        }
-
-
-
-        output << ".end\n";
-
-        output.close();
-
-    }
-
-    mockturtle::aig_network simplify_merged(mockturtle::aig_network merged_aig){
-
-        std::vector<std::string> unique_inputs;
-        std::map<std::string, int> unique_inputs_indeces;
-        std::vector<int> duplicate_inputs_indeces;
-        std::map<int, std::string> duplicate_inputs;
-        std::vector<int> orig_input_indeces;
-        mockturtle::aig_network simplified;
-        merged_aig._storage->nodes.reserve(merged_aig.size());
-
-        for(int i = 0; i < merged_aig._storage->inputs.size(); i++){
-            int nodeIdx = i;
-            std::string name = merged_aig._storage->inputNames[nodeIdx];
-            if(!is_in_string_vector(unique_inputs, name)){
-                std::cout << merged_aig._storage->inputNames[nodeIdx] << " with index " << nodeIdx << " is unique\n";
-                std::cout << "updated index = " << nodeIdx - duplicate_inputs.size() << "\n";
-                unique_inputs.push_back(name);
-                orig_input_indeces.push_back(nodeIdx);
-                unique_inputs_indeces[name] = nodeIdx - duplicate_inputs.size();
-            }
-            else{
-                std::cout << merged_aig._storage->inputNames[nodeIdx] << " with index " << nodeIdx << " is duplicated\n";
-                duplicate_inputs_indeces.push_back(nodeIdx);
-                duplicate_inputs[nodeIdx] = name;
-            }
-        }
-
-        for(int i = 0; i < duplicate_inputs_indeces.size(); i++){
-            int dup_idx = duplicate_inputs_indeces.at(i);
-            std::string dup_name = duplicate_inputs[dup_idx];
-            int new_idx = unique_inputs_indeces[dup_name];
-
-            std::cout << dup_name << " at " << dup_idx << " -> " << new_idx + 1 << "\n";
-
-            mockturtle::fanout_view fanout_aig{merged_aig};
-            std::set<mockturtle::node<mockturtle::aig_network>> nodes;
-            fanout_aig.foreach_fanout(merged_aig.index_to_node(dup_idx), [&](const auto& p){
-                nodes.insert(p);
-            });
-
-            for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-                std::cout << merged_aig.node_to_index(*it) << " child[0]: " << merged_aig._storage->nodes[*it].children[0].index << "\n";
-                std::cout << merged_aig.node_to_index(*it) << " child[1]: " << merged_aig._storage->nodes[*it].children[1].index << "\n";
-                if(merged_aig._storage->nodes[*it].children[0].index == dup_idx){
-                    merged_aig._storage->nodes[*it].children[0].index = new_idx + 1;
-                }
-                else if(merged_aig._storage->nodes[*it].children[1].index == dup_idx){
-                    merged_aig._storage->nodes[*it].children[1].index = new_idx + 1;
-                }
-            }
-
-
-        }
-        std::cout << "UNIQUE\n";
-        for(int i = 0; i < unique_inputs.size(); i++){
-            std::string name = unique_inputs.at(i);
-            int old_idx = orig_input_indeces.at(i);
-            int new_idx = unique_inputs_indeces[name];
-
-            std::cout << name << " at " << old_idx << " -> " << new_idx + 1 << "\n";
-
-            mockturtle::fanout_view fanout_aig{merged_aig};
-            std::set<mockturtle::node<mockturtle::aig_network>> nodes;
-            fanout_aig.foreach_fanout(merged_aig.index_to_node(old_idx), [&](const auto& p){
-                nodes.insert(p);
-            });
-
-            for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-                std::cout << merged_aig.node_to_index(*it) << " child[0]: " << merged_aig._storage->nodes[*it].children[0].index << "\n";
-                std::cout << merged_aig.node_to_index(*it) << " child[1]: " << merged_aig._storage->nodes[*it].children[1].index << "\n";
-                if(merged_aig._storage->nodes[*it].children[0].index == old_idx){
-                    merged_aig._storage->nodes[*it].children[0].index = new_idx + 1;
-                }
-                else if(merged_aig._storage->nodes[*it].children[1].index == old_idx){
-                    merged_aig._storage->nodes[*it].children[1].index = new_idx + 1;
-                }
-            }
-
-
-        }
-
-        std::map<int, std::string> orig_inputNames = merged_aig._storage->inputNames;
-        int erase_offset = 0;
-        for(int i = 0; i < duplicate_inputs_indeces.size(); i++){
-            int dup_idx = duplicate_inputs_indeces.at(i);
-            std::cout << "erasing " << duplicate_inputs[dup_idx] << " at " << dup_idx - erase_offset << "\n";
-
-            merged_aig._storage->nodes.erase(merged_aig._storage->nodes.begin() + dup_idx - erase_offset);
-            erase_offset++;
-        }
-        merged_aig._storage->inputNames.clear();
-        std::vector<std::size_t> new_inputs;
-        for(int i = 0; i < unique_inputs.size(); i++){
-            std::string name = unique_inputs.at(i);
-            int nodeIdx = unique_inputs_indeces[name];
-            std::cout << "unique name = " << name << " at index " << nodeIdx << "\n";
-
-            new_inputs.push_back(i + 1);
-            simplified._storage->inputNames[i] = name;
-        }
-        simplified._storage->inputs = new_inputs;
-        simplified._storage->nodes = merged_aig._storage->nodes;
-        simplified._storage->outputs = merged_aig._storage->outputs;
-        simplified._storage->outputNames = merged_aig._storage->outputNames;
-        return simplified;
-
-    }
-
-    bool check_for_duplicates(std::vector<int> vec, int nodeIdx){
-
-        std::vector<int>::iterator first_occurance = std::find(vec.begin(),vec.end(),nodeIdx);
-        if(first_occurance != vec.end()){
-            if(std::find(first_occurance,vec.end(),nodeIdx) != vec.end())
-                return true;
-            else
-                return false;
-        }
-        else
-            return false;
-    }
-
-    int computeLevelMig( mockturtle::mig_network mig, int index ) {
-        //if node not visited
-        if(mig._storage->nodes[index].data[1].h1==0) {
-
-            //set node as visited
-            mig._storage->nodes[index].data[1].h1=1;
-
-            //if is input
-            if (mig.is_ci(index)) {
-                return 0;
-            }
-
-			auto inIdx3 = mig._storage->nodes[index].children[2].data;
-			if (inIdx3 & 1)
-				inIdx3 = inIdx3 - 1;
-
-			//calculate input node index
-			auto inNode3 = inIdx3 >> 1;
-			int levelNode3 = computeLevelMig(mig, inNode3);
-
-            auto inIdx2 = mig._storage->nodes[index].children[1].data;
-            if (inIdx2 & 1)
-                inIdx2 = inIdx2 - 1;
-
-            //calculate input node index
-            auto inNode1 = inIdx2 >> 1;
-            int levelNode1 = computeLevelMig(mig, inNode1);
-
-            auto inIdx = mig._storage->nodes[index].children[0].data;
-            if (inIdx & 1)
-                inIdx = inIdx - 1;
-
-            //calculate input node index
-            auto inNode0 = inIdx >> 1;
-            int levelNode0 = computeLevelMig(mig, inNode0);
-
-            int maximo = std::max(levelNode0, levelNode1);
-            int max = std::max(maximo, levelNode3);
-
-            int level = 1 + max;
-            return level;
-        }
-    }
-
-    void dfs (mockturtle::aig_network aig, uint64_t index, UnionFind uf){
-        if(aig._storage->nodes[index].data[1].h1==0){
-			//set node as visited
-            aig._storage->nodes[index].data[1].h1=1;
-
-            //traverse the left nodes to the PIs
-            if(!aig.is_pi(aig._storage->nodes[index].children[0].index) && index > aig.num_pis() ){
-            	auto inData0 = aig._storage->nodes[index].children[0].data;
-            	//treat inverted and inputs
-				if( inData0 & 1)
-					inData0 = aig._storage->nodes[index].children[0].data - 1;
-
-                //calculate input node index
-                auto inIndex = inData0 >> 1;
-
-                //ignores latches and PIs
-                if(inIndex > aig.num_pis()) {
-					uf.merge(index, inIndex);
-					dfs(aig, inIndex, uf);
-				}
-            }
-
-			//traverse the right nodes to the PIs
-			if(!aig.is_pi(aig._storage->nodes[index].children[1].index) && index > aig.num_pis() ){
-				auto inData1 = aig._storage->nodes[index].children[1].data;
-				if( inData1 & 1)
-					inData1 = aig._storage->nodes[index].children[1].data - 1;
-
-				//calculate input node index
-				auto inIndex = inData1 >> 1;
-
-				//im ignoring latches
-				if(inIndex > aig.num_pis()) {
-					uf.merge(index, inIndex);
-					dfs(aig, inIndex, uf);
-				}
-			}
-        }
-    }
-
-	void stats (mockturtle::aig_network aig, uint64_t index, UnionFind uf, std::unordered_map<int, int> &numb_nodes){
-		if(aig._storage->nodes[index].data[1].h1==0) {
-			//set node as visited
-			aig._storage->nodes[index].data[1].h1 = 1;
-
-			std::unordered_map<int, int>::iterator it = numb_nodes.find(uf.find(index));
-			if (it != numb_nodes.end()) {
-				//std::cout << "Incrementing " << uf.find(index) << " for node index " << index << std::endl;
-				it->second++;
-			} else {
-				numb_nodes.insert(std::make_pair(uf.find(index), 1));
-			}
-
-			//traverse the left nodes to the PIs
-			if (!aig.is_pi(aig._storage->nodes[index].children[0].index) ) {
-				if (aig._storage->nodes[index].children[0].data & 1)
-					aig._storage->nodes[index].children[0].data = aig._storage->nodes[index].children[0].data - 1;
-
-				//calculate input node index
-				auto inIndex = aig._storage->nodes[index].children[0].data >> 1;
-
-				//im ignoring latches
-				if (inIndex > aig.num_pis()) {
-					stats(aig, inIndex, uf, numb_nodes);
-				}
-			}
-
-			//traverse the right nodes to the PIs
-			if (!aig.is_pi(aig._storage->nodes[index].children[1].index) ) {
-				if (aig._storage->nodes[index].children[1].data & 1)
-					aig._storage->nodes[index].children[1].data = aig._storage->nodes[index].children[1].data - 1;
-				//calculate input node index
-				auto inIndex = aig._storage->nodes[index].children[1].data >> 1;
-				//im ignoring latches
-				if (inIndex > aig.num_pis()) {
-					stats(aig, inIndex, uf, numb_nodes);
-				}
-			}
-		}
-	}
-
-	void compute_cone(mockturtle::aig_network aig, uint64_t index, std::unordered_map<int, int> &nodes, int outindex, std::unordered_map<int, int> &ins){
-		if(aig._storage->nodes[index].data[1].h1==0){
-
-			//increment number of nodes in this cone
-			std::unordered_map<int, int>::iterator it = nodes.find(outindex);
-
-			if(it!=nodes.end() && index > aig.num_pis()) {
-				//increment the number of nodes
-				it->second++;
-			}
-
-			//set node as visited
-			aig._storage->nodes[index].data[1].h1=1;
-
-			//traverse one side to the PIs
-			if(!aig.is_pi(aig._storage->nodes[index].children[0].index) && index > aig.num_pis() ){
-				if(aig._storage->nodes[index].children[0].data & 1)
-					aig._storage->nodes[index].children[0].data = aig._storage->nodes[index].children[0].data - 1;
-
-				//calculate input node index
-				auto inIndex = aig._storage->nodes[index].children[0].data >> 1;
-
-				//im ignoring latches
-				if(inIndex > aig.num_pis()) {
-					//call recursion
-					compute_cone(aig, inIndex, nodes, outindex, ins);
-				}
-			}
-
-			//traverse the other side to the PIs
-			if(!aig.is_pi(aig._storage->nodes[index].children[1].index)&& index > aig.num_pis() ){
-				if(aig._storage->nodes[index].children[1].data & 1)
-					aig._storage->nodes[index].children[1].data = aig._storage->nodes[index].children[1].data - 1;
-
-				//calculate input node index
-				auto inIndex = aig._storage->nodes[index].children[1].data >> 1;
-
-				//im ignoring latches
-				if(inIndex > aig.num_pis()) {
-					//call recursion
-					compute_cone(aig, inIndex, nodes, outindex, ins);
-				}
-			}
-
-			//if my child is PI and was not visited yet, I increase the input counter
-			if(aig.is_ci(aig._storage->nodes[index].children[0].index) && aig._storage->nodes[aig._storage->nodes[index].children[0].index].data[1].h1 == 0 ){
-				aig._storage->nodes[aig._storage->nodes[index].children[0].index].data[1].h1 = 1;
-
-				std::unordered_map<int, int>::iterator it = ins.find(outindex);
-				if(it!=ins.end()) {
-					//increment the number of inputs
-					it->second++;
-				}
-			}
-
-			//if my other child is PI and was not visited yet, I also increase the input counter
-			if(aig.is_ci(aig._storage->nodes[index].children[1].index) && aig._storage->nodes[aig._storage->nodes[index].children[1].index].data[1].h1 == 0){
-				aig._storage->nodes[aig._storage->nodes[index].children[1].index].data[1].h1 = 1;
-
-				std::unordered_map<int, int>::iterator it = ins.find(outindex);
-				if(it!=ins.end()) {
-					//increment the number of inputs
-					it->second++;
-				}
-			}
-		}
-	}
-
-    mockturtle::aig_network part_to_aig(oracle::partition_view<mockturtle::mig_network> part){
-        mockturtle::aig_network aig;
-
-        mockturtle::node_map<mockturtle::aig_network::signal, oracle::partition_view<mockturtle::mig_network>> node2new( part );
-
-        node2new[part.get_node( part.get_constant( false ) )] = aig.get_constant( false );
-        if ( part.get_node( part.get_constant( true ) ) != part.get_node( part.get_constant( false ) ) ){
-
-            node2new[part.get_node( part.get_constant( true ) )] = aig.get_constant( true );
-        }
-
-        part.foreach_pi( [&]( auto n ) {
-          node2new[n] = aig.create_pi();
-        } );
-        
-        part.foreach_node( [&]( auto n ) {
-            if ( part.is_constant( n ) || part.is_pi( n ) || part.is_ci( n ) || part.is_ro( n ))
-                return;
-
-            std::cout << "node = " << n << "\n";
-            std::vector<mockturtle::aig_network::signal> children;
-            part.foreach_fanin( n, [&]( auto const& f ) {
-                std::cout << "fanin = " << f.index << "\n";
-                children.push_back( part.is_complemented( f ) ? aig.create_not( node2new[f] ) : node2new[f] );
-                std::cout << "fanin node2new = " << node2new[f].index << "\n";
-                std::cout << "fanin node2new data = " << node2new[f].data << "\n";
-            } );
-
-            std::cout << "creating maj with " << children.at(0).index << " and " << children.at(1).index << " and " << children.at(2).index << "\n";
-            std::cout << "aig size = " << aig.size() << "\n";
-            node2new[n] = aig.create_maj(children.at(0), children.at(1), children.at(2));
-            std::cout << "after maj aig size = " << aig.size() << "\n";
-            std::cout << "node2new = " << node2new[n].index << "\n";
-            // if(aig.fanout_size(n) == 0 && aig.is_complemented(aig.make_signal(n))){
-            //     std::cout << "here\n";
-            //     node2new[n] = mig.create_not(node2new[n]);
-            // }
-          
-        } );
-
-        /* map primary outputs */
-        part.foreach_po( [&]( auto const& f ) {
-          aig.create_po( part.is_complemented( f ) ? aig.create_not( node2new[f] ) : node2new[f] );
-        } );
-
-        std::cout << "final part aig\n";
-        aig.foreach_node([&](auto node){
-            std::cout << "node = " << node << "\n";
-            aig.foreach_fanin(node, [&](auto conn, auto i){
-                std::cout << "child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-            });
-        });
-        return aig;
-    }
-
-    mockturtle::mig_network aig_to_mig(mockturtle::aig_network aig){
-        mockturtle::mig_network mig;
-
-        mockturtle::node_map<mockturtle::mig_network::signal, mockturtle::aig_network> node2new( aig );
-
-        node2new[aig.get_node( aig.get_constant( false ) )] = mig.get_constant( false );
-        if ( aig.get_node( aig.get_constant( true ) ) != aig.get_node( aig.get_constant( false ) ) ){
-
-            node2new[aig.get_node( aig.get_constant( true ) )] = mig.get_constant( true );
-        }
-
-        aig.foreach_pi( [&]( auto n ) {
-          node2new[n] = mig.create_pi();
-        } );
-        
-        aig.foreach_node( [&]( auto n ) {
-            if ( aig.is_constant( n ) || aig.is_pi( n ) || aig.is_ci( n ) || aig.is_ro( n ))
-                return;
-
-            // std::cout << "node = " << n << "\n";
-            std::vector<mockturtle::mig_network::signal> children;
-            aig.foreach_fanin( n, [&]( auto const& f ) {
-                // std::cout << "fanin = " << f.index << "\n";
-                children.push_back( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
-            } );
-
-            // std::cout << "fanout = " << aig.fanout_size(n) << "\n";
-            // std::cout << "creating maj with " << children.at(0).index << " and " << children.at(1).index << "\n";
-            node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
-            // std::cout << "complemented = " << aig.is_complemented(aig.make_signal(n)) << "\n";
-            // std::cout << "data = " << aig.make_signal(n).data << "\n";
-            // if(aig.fanout_size(n) == 0 && aig.is_complemented(aig.make_signal(n))){
-            //     std::cout << "here\n";
-            //     node2new[n] = mig.create_not(node2new[n]);
-            // }
-          
-        } );
-
-        /* map primary outputs */
-        aig.foreach_po( [&]( auto const& f ) {
-            // std::cout << "po = " << f.index << "\n";
-          mig.create_po( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
-        } );
-
-        return mig;
-    }
-
-
-	/* Adds And-inverter graphs (Mockturtle type aig_network) as store element type to
-	 * alice.
-	 *
-	 * One can access AIGs in general store commands using the long --aig flag or
-	 * the short -a flag.
-	 */
-	ALICE_ADD_STORE( mockturtle::aig_network, "aig", "a", "aig", "AIGs" )
-
-	/* Implements the short string to describe a store element in store -a */
-	ALICE_DESCRIBE_STORE( mockturtle::aig_network, aig ){
-
-	  const auto name = "aig_placeholder";
-	  const auto pi_num = aig.num_pis();
-	  const auto po_num = aig.num_pos();
-	  return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
-	}//end aig_network describe store
-
-	ALICE_LOG_STORE_STATISTICS( mockturtle::aig_network, aig){
-
-	  return {
-	  	{"nodes", aig.size()},
-	  	{"inputs", aig.num_pis() - aig.num_latches()},
-	  	{"latches", aig.num_latches()},
-	  	{"outputs", aig.num_pos() - aig.num_latches()},
-	  	{"AIG nodes", aig.num_gates()}};
-	}//end aig_network log store statistics
-
-	/* Implements the functionality of ps -b */
-	ALICE_PRINT_STORE_STATISTICS( mockturtle::aig_network, os, aig ){
-		os << "nodes: " << aig.size() << std::endl;
-	  	os << "inputs: " << aig.num_pis() - aig.num_latches() << std::endl;
-		os << "latches: " << aig.num_latches() << std::endl;
-		os << "outputs: " << aig.num_pos() - aig.num_latches() << std::endl;
-	  	os << "AIG nodes: " << aig.num_gates() << std::endl;
-
-	}//end aig_network print store statistics
-
-	ALICE_ADD_STORE( mockturtle::mig_network, "mig", "m", "mig", "MIGs" )
-
-	/* Implements the short string to describe a store element in store -a */
-	ALICE_DESCRIBE_STORE( mockturtle::mig_network, mig ){
-
-		const auto name = "mig_placeholder";
-		const auto pi_num = mig.num_pis();
-		const auto po_num = mig.num_pos();
-
-		return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
-	}//end aig_network describe store
-
-	ALICE_LOG_STORE_STATISTICS( mockturtle::mig_network, mig){
-
-		return {
-				{"nodes", mig.size()},
-				{"inputs", mig.num_pis() - mig.num_latches()},
-				{"latches", mig.num_latches()},
-				{"outputs", mig.num_pos() - mig.num_latches()},
-				{"MAJ nodes", mig.num_gates()}};
-	}//end aig_network log store statistics
-
-	/* Implements the functionality of ps -b */
-	ALICE_PRINT_STORE_STATISTICS( mockturtle::mig_network, os, mig ){
-		os << "nodes: " << mig.size() << std::endl;
-		os << "inputs: " << mig.num_pis() - mig.num_latches() << std::endl;
-		os << "latches: " << mig.num_latches() << std::endl;
-		os << "outputs: " << mig.num_pos() - mig.num_latches()<< std::endl;
-		os << "MAJ nodes: " << mig.num_gates() << std::endl;
-	}//end aig_network print store statistics
-
-    ALICE_ADD_STORE( oracle::partition_manager<mockturtle::mig_network>, "part_man_mig", "pm_m", "part_man_mig", "PART_MAN_MIGs")
-
-    /* Implements the short string to describe a store element in store -a */
-    ALICE_DESCRIBE_STORE( oracle::partition_manager<mockturtle::mig_network>, part_man ){
-
-        const auto name = "partition manager for MIG networks";
-        const auto part_num = part_man.get_part_num();
-
-        return fmt::format( "{} # partitions = {}", name, part_num );
-    }//end partition manager<mig_network> describe store
-
-    ALICE_LOG_STORE_STATISTICS( oracle::partition_manager<mockturtle::mig_network>, part_man){
-
-        return {
-                {"partition number", part_man.get_part_num()}};
-    }//end partition manager<mig_network> log store statistics
-
-    /* Implements the functionality of ps -b */
-    ALICE_PRINT_STORE_STATISTICS( oracle::partition_manager<mockturtle::mig_network>, os, part_man ){
-        os << "partition number: " << part_man.get_part_num() << std::endl;
-    }//end partition manager<mig_network> print store statistics
-
-    ALICE_ADD_STORE( oracle::partition_manager<mockturtle::aig_network>, "part_man_aig", "pm_a", "part_man_aig", "PART_MAN_AIGs")
-
-    /* Implements the short string to describe a store element in store -a */
-    ALICE_DESCRIBE_STORE( oracle::partition_manager<mockturtle::aig_network>, part_man ){
-
-        const auto name = "partition manager for AIG networks";
-        const auto part_num = part_man.get_part_num();
-
-        return fmt::format( "{} # partitions = {}", name, part_num );
-    }//end partition manager<aig_network> describe store
-
-    ALICE_LOG_STORE_STATISTICS( oracle::partition_manager<mockturtle::aig_network>, part_man){
-
-        return {
-                {"partition number", part_man.get_part_num()}};
-    }//end partition manager<aig_network> log store statistics
-
-    /* Implements the functionality of ps -b */
-    ALICE_PRINT_STORE_STATISTICS( oracle::partition_manager<mockturtle::aig_network>, os, part_man ){
-        os << "partition number: " << part_man.get_part_num() << std::endl;
-    }//end partition manager<aig_network> print store statistics
-
-	ALICE_ADD_STORE(mockturtle::klut_network, "bench", "b", "BENCH", "BENCHes")
-
-	ALICE_DESCRIBE_STORE(mockturtle::klut_network, bench){
-	  const auto name = "bench_placeholder";
-	  const auto pi_num = bench.num_pis();
-	  const auto po_num = bench.num_pos();
-	  return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
-	}//end klut_network describe store
-
-	ALICE_LOG_STORE_STATISTICS( mockturtle::klut_network, bench){
-
-	  return {
-	      {"inputs", bench.num_pis()},
-	      {"outputs", bench.num_pos()},
-	      {"nodes", bench.size()},
-	      {"gates", bench.num_gates()}};
-	}//end klut_network log store statistics
-
-	/* Implements the functionality of ps -b */
-	ALICE_PRINT_STORE_STATISTICS( mockturtle::klut_network, os, bench ){
-
-	  os << "inputs: " << bench.num_pis() << std::endl;
-	  os << "outputs: " << bench.num_pos() << std::endl;
-	  os << "nodes: " << bench.size() << std::endl;
-	  os << "gates: " << bench.num_gates() << std::endl;
-	}//end klut_network print store statistics
-
-	ALICE_ADD_STORE(abc::Gia_Man_t*, "gia", "g", "AIG", "AIGs")
-
-    /* Implements the short string to describe a store element in store -a */
-    ALICE_DESCRIBE_STORE( abc::Gia_Man_t*, gia )
-    {
-        const auto name = abc::Gia_ManName( gia );
-        const auto pi_num = abc::Gia_ManPiNum( gia );
-        const auto po_num = abc::Gia_ManPoNum( gia );
-        return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
-    }
-
-    /* Implements the functionality of ps -a */
-    ALICE_PRINT_STORE_STATISTICS( abc::Gia_Man_t*, os, gia )
-    {
-        abc::Gps_Par_t Pars{};
-        abc::Gia_ManPrintStats( gia, &Pars );
-    }
-
-    /* Implements the log returned by ps -a */
-    ALICE_LOG_STORE_STATISTICS( abc::Gia_Man_t*, gia )
-    {
-        return {
-                {"name", abc::Gia_ManName( gia )},
-                {"inputs", abc::Gia_ManPiNum( gia )},
-                {"outputs", abc::Gia_ManPoNum( gia )},
-                {"nodes", abc::Gia_ManAndNum( gia )},
-                {"latches"}, abc::Gia_ManRegNum(gia),
-                {"levels", abc::Gia_ManLevelNum( gia )}};
-    }
-
-    ALICE_ADD_FILE_TYPE( aiger, "Aiger" )
-
-/* Implements the functionality of read_aiger -a */
-    ALICE_READ_FILE( abc::Gia_Man_t*, aiger, filename, cmd )
-    {
-        return abc::Gia_AigerRead( (char*)filename.c_str(), 0, 0, 0 );
-    }
-
-/* Implements the functionality of write_aiger -a */
-    ALICE_WRITE_FILE( abc::Gia_Man_t*, aiger, gia, filename, cmd )
-    {
-        abc::Gia_AigerWrite( gia, (char*)filename.c_str(), 1, 0 );
-    }
-
-/* Implements the command syn3 */
-    ALICE_COMMAND( syn3, "Optimization", "Performs AIG optimization" )
-    {
-        auto& gia = store<abc::Gia_Man_t*>().current();
-
-        auto aig_new = abc::Gia_ManAigSyn3( gia, 0, 0 );
-        abc::Gia_ManStop( gia );
-        gia = aig_new;
-    }
-
-	/*Reads an blif file and stores the CBA network in a store*/
-	ALICE_COMMAND( get_blif, "Input", "Uses the lorina library to read in a blif file" ){
-
-		std::cout << "Not yet fully implemented\n";
-
-		/*std::string filename = "";
-		std::cout << "Enter blif filename: ";
-		std::cin >> filename;
-		read_blif(filename, blif());*/
-		/*TODO check to make sure that the file entered is valid and add store*/	
-	}//end get_blif
-
-    ALICE_COMMAND( convert_aig, "Input", "Uses the lorina library to read in a blif file" ){
-
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            mockturtle::mig_network mig = aig_to_mig(aig);
-            mockturtle::write_verilog(mig, aig._storage->net_name + "_convert.v");
-        }  
-    }//end get_blif
-
-	class get_mig_command : public alice::command{
-
-    public:
-      explicit get_mig_command( const environment::ptr& env )
-          : command( env, "Uses the lorina library to read in an aig file into a mig network" ){
-
-        opts.add_option( "--filename,filename", filename, "AIG file to read in as an MIG" )->required();
+  //object to hold STA configuration
+  STA sta_cfg;
+
+  int computeLevel( mockturtle::aig_network aig, int index ) {
+	 //if node not visited
+    if(aig._storage->nodes[index].data[1].h1==0) {
+
+      //set node as visited
+      aig._storage->nodes[index].data[1].h1=1;
+
+      //if is input
+      if (aig.is_ci(index)) {
+          return 0;
       }
 
-    protected:
-        void execute(){
+  		auto inIdx2 = aig._storage->nodes[index].children[1].data;
+  		if (inIdx2 & 1)
+  			inIdx2 = inIdx2 - 1;
 
-            if(checkExt(filename, "aig")){
-                mockturtle::mig_network mig;
-                lorina::read_aiger(filename, mockturtle::aiger_reader( mig ));
-                // std::cout << "AIG file = " << filename << " stored" << std::endl;
-                store<mockturtle::mig_network>().extend() = mig;
-                // mig.foreach_gate( [&](auto node){
-                //     std::cout << "nodeIdx = " << mig.node_to_index(node) << "\n";
-                //     std::cout << "child[0] = " << mig._storage->nodes[node].children[0].index << "\n";
-                //     std::cout << "child[1] = " << mig._storage->nodes[node].children[1].index << "\n";
-                //     std::cout << "child[2] = " << mig._storage->nodes[node].children[2].index << "\n";
-                // });
+  		//calculate input node index
+  		auto inNode1 = inIdx2 >> 1;
+  		int levelNode1 = computeLevel(aig, inNode1);
 
-                if(mig._storage->inputNames.size() == 0){
+      auto inIdx = aig._storage->nodes[index].children[0].data;
+      if (inIdx & 1)
+          inIdx = inIdx - 1;
 
-                    for(int i = 0; i < mig.num_pis(); i++){
-                        std::string input_name = "pi";
-                        input_name.append(std::to_string(i));
-                        mig._storage->inputNames[i] = input_name;
-                    }
-                }
-                if(mig._storage->outputNames.size() == 0){
+      //calculate input node index
+      auto inNode0 = inIdx >> 1;
+      int levelNode0 = computeLevel(aig, inNode0);
 
-                    for(int i = 0; i < mig.num_pos(); i++){
-                        std::string output_name = "po";
-                        output_name.append(std::to_string(i));
-                        mig._storage->outputNames[i] = output_name;
-                    }
-                }
+      int level = 1 + std::max(levelNode0, levelNode1);
+      return level;
+    } 
+  }
 
-                // std::cout << "Inputs:\n";
+  void dfs (mockturtle::aig_network aig, uint64_t index, UnionFind uf){
+    if(aig._storage->nodes[index].data[1].h1==0){
+		  //set node as visited
+      aig._storage->nodes[index].data[1].h1=1;
 
-                // for(int i = 0; i < mig._storage->inputs.size(); i++){
-                //     std::cout << mig._storage->inputs.at(i) << ": " << mig._storage->inputNames[i] << "\n";
-                // }
+      //traverse the left nodes to the PIs
+      if(!aig.is_pi(aig._storage->nodes[index].children[0].index) && index > aig.num_pis() ){
+      	auto inData0 = aig._storage->nodes[index].children[0].data;
+      	//treat inverted and inputs
+  			if( inData0 & 1)
+  				inData0 = aig._storage->nodes[index].children[0].data - 1;
 
-                // std::cout << "Outputs:\n";
+        //calculate input node index
+        auto inIndex = inData0 >> 1;
 
-                // for(int i = 0; i < mig._storage->outputs.size(); i++){
-                //     std::cout << mig._storage->outputs.at(i).index << ": " << mig._storage->outputNames[i] << "\n";
-                // }
+        //ignores latches and PIs
+        if(inIndex > aig.num_pis()) {
+  				uf.merge(index, inIndex);
+  				dfs(aig, inIndex, uf);
+  			}
+      }
 
-                filename.erase(filename.end() - 4, filename.end());
-                mig._storage->net_name = filename;
+  		//traverse the right nodes to the PIs
+  		if(!aig.is_pi(aig._storage->nodes[index].children[1].index) && index > aig.num_pis() ){
+  			auto inData1 = aig._storage->nodes[index].children[1].data;
+  			if( inData1 & 1)
+  				inData1 = aig._storage->nodes[index].children[1].data - 1;
 
-            }
-            else{
-                std::cout << "Not a valid AIG file\n";
-            }
-        }
-    private:
-      std::string filename{};
-    };
+  			//calculate input node index
+  			auto inIndex = inData1 >> 1;
 
-    ALICE_ADD_COMMAND(get_mig, "Input");
-
-ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig file" ){
-	  std::string filename = "";
-    std::cout << "Enter aig filename: ";
-    std::cin >> filename;
-
-    if(checkExt(filename, "aig")){
-        mockturtle::aig_network aig;
-        lorina::read_aiger(filename, mockturtle::aiger_reader( aig ));
-        std::cout << "AIG file = " << filename << " stored" << std::endl;
-        store<mockturtle::aig_network>().extend() = aig;
+  			//im ignoring latches
+  			if(inIndex > aig.num_pis()) {
+  				uf.merge(index, inIndex);
+  				dfs(aig, inIndex, uf);
+  			}
+  		}
     }
-}
+  }
 
-    class write_aig_command : public alice::command{
+  void compute_cone(mockturtle::aig_network aig, uint64_t index, std::unordered_map<int, int> &nodes, int outindex, std::unordered_map<int, int> &ins){
+  	if(aig._storage->nodes[index].data[1].h1==0){
+
+  		//increment number of nodes in this cone
+  		std::unordered_map<int, int>::iterator it = nodes.find(outindex);
+
+  		if(it!=nodes.end() && index > aig.num_pis()) {
+  			//increment the number of nodes
+  			it->second++;
+  		}
+
+  		//set node as visited
+  		aig._storage->nodes[index].data[1].h1=1;
+
+  		//traverse one side to the PIs
+  		if(!aig.is_pi(aig._storage->nodes[index].children[0].index) && index > aig.num_pis() ){
+  			if(aig._storage->nodes[index].children[0].data & 1)
+  				aig._storage->nodes[index].children[0].data = aig._storage->nodes[index].children[0].data - 1;
+
+  			//calculate input node index
+  			auto inIndex = aig._storage->nodes[index].children[0].data >> 1;
+
+  			//im ignoring latches
+  			if(inIndex > aig.num_pis()) {
+  				//call recursion
+  				compute_cone(aig, inIndex, nodes, outindex, ins);
+  			}
+  		}
+
+  		//traverse the other side to the PIs
+  		if(!aig.is_pi(aig._storage->nodes[index].children[1].index)&& index > aig.num_pis() ){
+  			if(aig._storage->nodes[index].children[1].data & 1)
+  				aig._storage->nodes[index].children[1].data = aig._storage->nodes[index].children[1].data - 1;
+
+  			//calculate input node index
+  			auto inIndex = aig._storage->nodes[index].children[1].data >> 1;
+
+  			//im ignoring latches
+  			if(inIndex > aig.num_pis()) {
+  				//call recursion
+  				compute_cone(aig, inIndex, nodes, outindex, ins);
+  			}
+  		}
+
+  		//if my child is PI and was not visited yet, I increase the input counter
+  		if(aig.is_ci(aig._storage->nodes[index].children[0].index) && aig._storage->nodes[aig._storage->nodes[index].children[0].index].data[1].h1 == 0 ){
+  			aig._storage->nodes[aig._storage->nodes[index].children[0].index].data[1].h1 = 1;
+
+  			std::unordered_map<int, int>::iterator it = ins.find(outindex);
+  			if(it!=ins.end()) {
+  				//increment the number of inputs
+  				it->second++;
+  			}
+  		}
+
+  		//if my other child is PI and was not visited yet, I also increase the input counter
+  		if(aig.is_ci(aig._storage->nodes[index].children[1].index) && aig._storage->nodes[aig._storage->nodes[index].children[1].index].data[1].h1 == 0){
+  			aig._storage->nodes[aig._storage->nodes[index].children[1].index].data[1].h1 = 1;
+
+  			std::unordered_map<int, int>::iterator it = ins.find(outindex);
+  			if(it!=ins.end()) {
+  				//increment the number of inputs
+  				it->second++;
+  			}
+  		}
+  	}
+  }
+
+  /* Adds And-inverter graphs (Mockturtle type aig_network) as store element type to
+   * alice.
+   *
+   * One can access AIGs in general store commands using the long --aig flag or
+   * the short -a flag.
+   */
+  ALICE_ADD_STORE( mockturtle::aig_network, "aig", "a", "aig", "AIGs" )
+
+  /* Implements the short string to describe a store element in store -a */
+  ALICE_DESCRIBE_STORE( mockturtle::aig_network, aig ){
+
+    const auto name = "aig_placeholder";
+    const auto pi_num = aig.num_pis();
+    const auto po_num = aig.num_pos();
+    return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+  }//end aig_network describe store
+
+  ALICE_LOG_STORE_STATISTICS( mockturtle::aig_network, aig){
+
+    return {
+    	{"nodes", aig.size()},
+    	{"inputs", aig.num_pis() - aig.num_latches()},
+    	{"latches", aig.num_latches()},
+    	{"outputs", aig.num_pos() - aig.num_latches()},
+    	{"AIG nodes", aig.num_gates()}};
+  }//end aig_network log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( mockturtle::aig_network, os, aig ){
+  	os << "nodes: " << aig.size() << std::endl;
+  	os << "inputs: " << aig.num_pis() - aig.num_latches() << std::endl;
+  	os << "latches: " << aig.num_latches() << std::endl;
+  	os << "outputs: " << aig.num_pos() - aig.num_latches() << std::endl;
+  	os << "AIG nodes: " << aig.num_gates() << std::endl;
+
+  }//end aig_network print store statistics
+
+  ALICE_ADD_STORE( mockturtle::mig_network, "mig", "m", "mig", "MIGs" )
+
+  /* Implements the short string to describe a store element in store -a */
+  ALICE_DESCRIBE_STORE( mockturtle::mig_network, mig ){
+
+  	const auto name = "mig_placeholder";
+  	const auto pi_num = mig.num_pis();
+  	const auto po_num = mig.num_pos();
+
+  	return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+  }//end aig_network describe store
+
+  ALICE_LOG_STORE_STATISTICS( mockturtle::mig_network, mig){
+
+  	return {
+  			{"nodes", mig.size()},
+  			{"inputs", mig.num_pis() - mig.num_latches()},
+  			{"latches", mig.num_latches()},
+  			{"outputs", mig.num_pos() - mig.num_latches()},
+  			{"MAJ nodes", mig.num_gates()}};
+  }//end aig_network log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( mockturtle::mig_network, os, mig ){
+  	os << "nodes: " << mig.size() << std::endl;
+  	os << "inputs: " << mig.num_pis() - mig.num_latches() << std::endl;
+  	os << "latches: " << mig.num_latches() << std::endl;
+  	os << "outputs: " << mig.num_pos() - mig.num_latches()<< std::endl;
+  	os << "MAJ nodes: " << mig.num_gates() << std::endl;
+  }//end aig_network print store statistics
+
+  ALICE_ADD_STORE( oracle::partition_manager<mockturtle::mig_network>, "part_man_mig", "pm_m", "part_man_mig", "PART_MAN_MIGs")
+
+  /* Implements the short string to describe a store element in store -a */
+  ALICE_DESCRIBE_STORE( oracle::partition_manager<mockturtle::mig_network>, part_man ){
+
+    const auto name = "partition manager for MIG networks";
+    const auto part_num = part_man.get_part_num();
+
+    return fmt::format( "{} # partitions = {}", name, part_num );
+  }//end partition manager<mig_network> describe store
+
+  ALICE_LOG_STORE_STATISTICS( oracle::partition_manager<mockturtle::mig_network>, part_man){
+
+    return {
+            {"partition number", part_man.get_part_num()}};
+  }//end partition manager<mig_network> log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( oracle::partition_manager<mockturtle::mig_network>, os, part_man ){
+    os << "partition number: " << part_man.get_part_num() << std::endl;
+  }//end partition manager<mig_network> print store statistics
+
+  ALICE_ADD_STORE( oracle::partition_manager<mockturtle::aig_network>, "part_man_aig", "pm_a", "part_man_aig", "PART_MAN_AIGs")
+
+  /* Implements the short string to describe a store element in store -a */
+  ALICE_DESCRIBE_STORE( oracle::partition_manager<mockturtle::aig_network>, part_man ){
+
+    const auto name = "partition manager for AIG networks";
+    const auto part_num = part_man.get_part_num();
+
+    return fmt::format( "{} # partitions = {}", name, part_num );
+  }//end partition manager<aig_network> describe store
+
+  ALICE_LOG_STORE_STATISTICS( oracle::partition_manager<mockturtle::aig_network>, part_man){
+
+    return {
+            {"partition number", part_man.get_part_num()}};
+  }//end partition manager<aig_network> log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( oracle::partition_manager<mockturtle::aig_network>, os, part_man ){
+    os << "partition number: " << part_man.get_part_num() << std::endl;
+  }//end partition manager<aig_network> print store statistics
+
+  ALICE_ADD_STORE(mockturtle::klut_network, "bench", "b", "BENCH", "BENCHes")
+
+  ALICE_DESCRIBE_STORE(mockturtle::klut_network, bench){
+    const auto name = "bench_placeholder";
+    const auto pi_num = bench.num_pis();
+    const auto po_num = bench.num_pos();
+    return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+  }//end klut_network describe store
+
+  ALICE_LOG_STORE_STATISTICS( mockturtle::klut_network, bench){
+
+    return {
+        {"inputs", bench.num_pis()},
+        {"outputs", bench.num_pos()},
+        {"nodes", bench.size()},
+        {"gates", bench.num_gates()}};
+  }//end klut_network log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( mockturtle::klut_network, os, bench ){
+
+    os << "inputs: " << bench.num_pis() << std::endl;
+    os << "outputs: " << bench.num_pos() << std::endl;
+    os << "nodes: " << bench.size() << std::endl;
+    os << "gates: " << bench.num_gates() << std::endl;
+  }//end klut_network print store statistics
+
+  ALICE_ADD_STORE(abc::Gia_Man_t*, "gia", "g", "AIG", "AIGs")
+
+  /* Implements the short string to describe a store element in store -a */
+  ALICE_DESCRIBE_STORE( abc::Gia_Man_t*, gia ){
+
+    const auto name = abc::Gia_ManName( gia );
+    const auto pi_num = abc::Gia_ManPiNum( gia );
+    const auto po_num = abc::Gia_ManPoNum( gia );
+    return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+  }
+
+  /* Implements the functionality of ps -a */
+  ALICE_PRINT_STORE_STATISTICS( abc::Gia_Man_t*, os, gia ){
+
+    abc::Gps_Par_t Pars{};
+    abc::Gia_ManPrintStats( gia, &Pars );
+  }
+
+  /* Implements the log returned by ps -a */
+  ALICE_LOG_STORE_STATISTICS( abc::Gia_Man_t*, gia ){
+
+    return {
+            {"name", abc::Gia_ManName( gia )},
+            {"inputs", abc::Gia_ManPiNum( gia )},
+            {"outputs", abc::Gia_ManPoNum( gia )},
+            {"nodes", abc::Gia_ManAndNum( gia )},
+            {"latches"}, abc::Gia_ManRegNum(gia),
+            {"levels", abc::Gia_ManLevelNum( gia )}};
+  }
+
+  ALICE_ADD_FILE_TYPE( aiger, "Aiger" )
+
+  /* Implements the functionality of read_aiger -a */
+  ALICE_READ_FILE( abc::Gia_Man_t*, aiger, filename, cmd ){
+
+    return abc::Gia_AigerRead( (char*)filename.c_str(), 0, 0, 0 );
+  }
+
+  /* Implements the functionality of write_aiger -a */
+  ALICE_WRITE_FILE( abc::Gia_Man_t*, aiger, gia, filename, cmd ){
+
+    abc::Gia_AigerWrite( gia, (char*)filename.c_str(), 1, 0 );
+  }
+
+  /* Implements the command syn3 */
+  ALICE_COMMAND( syn3, "Optimization", "Performs AIG optimization" ){
+
+    auto& gia = store<abc::Gia_Man_t*>().current();
+
+    auto aig_new = abc::Gia_ManAigSyn3( gia, 0, 0 );
+    abc::Gia_ManStop( gia );
+    gia = aig_new;
+  }
+
+  /*Reads an blif file and stores the CBA network in a store*/
+  ALICE_COMMAND( get_blif, "Input", "Uses the lorina library to read in a blif file" ){
+
+  	std::cout << "Not yet fully implemented\n";	
+  }//end get_blif
+
+  ALICE_COMMAND( convert_aig, "Input", "Converts the stored AIG to MIG and writes out to verilog" ){
+
+    if(!store<mockturtle::aig_network>().empty()){
+        auto aig = store<mockturtle::aig_network>().current();
+        mockturtle::mig_network mig = aig_to_mig(aig);
+        mockturtle::write_verilog(mig, aig._storage->net_name + "_convert.v");
+    }  
+  }//end get_blif
+
+  class write_aig_command : public alice::command{
 
     public:
       explicit write_aig_command( const environment::ptr& env )
@@ -2737,131 +394,108 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
     protected:
       void execute(){
         if(checkExt(filename, "aag")){
-            if(!store<mockturtle::aig_network>().empty()){
-                auto aig = store<mockturtle::aig_network>().current();
+          if(!store<mockturtle::aig_network>().empty()){
+            auto aig = store<mockturtle::aig_network>().current();
 
-                std::ofstream aigfile;
-                aigfile.open (filename);
+            std::ofstream aigfile;
+            aigfile.open (filename);
 
-                // header info - MILOA
-                auto _num_inputs = aig.num_pis();
-                auto _num_latches = aig.num_latches();
-                auto _num_outputs = aig.num_pos();
-                auto _num_ands = aig.num_gates();
-                auto _num_vertices = aig.num_pis() + aig.num_gates();
+            // header info - MILOA
+            auto _num_inputs = aig.num_pis();
+            auto _num_latches = aig.num_latches();
+            auto _num_outputs = aig.num_pos();
+            auto _num_ands = aig.num_gates();
+            auto _num_vertices = aig.num_pis() + aig.num_gates();
 
-                //write aig header
-                aigfile << "aag " << _num_vertices << " " << _num_inputs - _num_latches << " " << _num_latches << " " << (_num_outputs - _num_latches) << " " << _num_ands << std::endl;
+            //write aig header
+            aigfile << "aag " << _num_vertices << " " << _num_inputs - _num_latches << " " << _num_latches << " " << (_num_outputs - _num_latches) << " " << _num_ands << std::endl;
 
-                aig.foreach_pi([&] (auto node){
-                    auto index = aig.pi_index(node);
-                    aigfile << (index+1)*2 << "\n";
-                });
+            aig.foreach_pi([&] (auto node){
+              auto index = aig.pi_index(node);
+              aigfile << (index+1)*2 << "\n";
+            });
 
-                //write aig latches
-                auto lineIdx = ((aig.num_pis()-aig.num_latches())*2)+2;
-                for(int i=0; i<aig.num_latches(); i++){
-                    auto regIdx = aig.num_pos() - aig.num_latches() + i;
-                    aigfile << lineIdx << " " << aig._storage->outputs[regIdx].data << "\n";
-                    lineIdx += 2;
-                }
-
-                //write aig outputs
-                for(int i=0; i<aig.num_pos()- aig.num_latches(); i++){
-                    aigfile << aig._storage->outputs[i].data << "\n";
-                }
-
-                auto skipLatches = 0;
-                aig.foreach_gate([&] (auto node){
-                    //skip latches in the nodes vector
-                    if(skipLatches>=aig.num_latches()) {
-                        auto index = aig.node_to_index(node);
-                        auto left = aig._storage->nodes[index].children[0].data;
-                        auto right = aig._storage->nodes[index].children[1].data;
-                        aigfile << index*2 << " " << left << " " << right << "\n";
-                    }
-                    skipLatches+=1;
-                });
-
-                for(int i = 0; i < aig._storage->inputs.size(); i++){
-                    aigfile << "i" << i << " " << aig._storage->inputNames[aig._storage->inputs.at(i) - 1] << "\n";
-                }
-                for(int i = 0; i < aig._storage->outputs.size(); i++){
-                    aigfile << "o" << i << " " << aig._storage->outputNames[i] << "\n";
-                }
-
-                aigfile.close();
+            //write aig latches
+            auto lineIdx = ((aig.num_pis()-aig.num_latches())*2)+2;
+            for(int i=0; i<aig.num_latches(); i++){
+              auto regIdx = aig.num_pos() - aig.num_latches() + i;
+              aigfile << lineIdx << " " << aig._storage->outputs[regIdx].data << "\n";
+              lineIdx += 2;
             }
-            else{
-                std::cout << "No AIG stored\n";
+
+            //write aig outputs
+            for(int i=0; i<aig.num_pos()- aig.num_latches(); i++){
+              aigfile << aig._storage->outputs[i].data << "\n";
             }
+
+            auto skipLatches = 0;
+            aig.foreach_gate([&] (auto node){
+              //skip latches in the nodes vector
+              if(skipLatches>=aig.num_latches()) {
+                auto index = aig.node_to_index(node);
+                auto left = aig._storage->nodes[index].children[0].data;
+                auto right = aig._storage->nodes[index].children[1].data;
+                aigfile << index*2 << " " << left << " " << right << "\n";
+              }
+              skipLatches+=1;
+            });
+
+            for(int i = 0; i < aig._storage->inputs.size(); i++){
+              aigfile << "i" << i << " " << aig._storage->inputNames[aig._storage->inputs.at(i) - 1] << "\n";
+            }
+            for(int i = 0; i < aig._storage->outputs.size(); i++){
+              aigfile << "o" << i << " " << aig._storage->outputNames[i] << "\n";
+            }
+
+            aigfile.close();
+          }
+          else{
+              std::cout << "No AIG stored\n";
+          }
         }
         else{
-            std::cout << "File not a vlid aag file\n";
+          std::cout << "File not a vlid aag file\n";
         }
       }
-
     private:
       std::string filename{};
     };
 
-    ALICE_ADD_COMMAND(write_aig, "Output");
+  ALICE_ADD_COMMAND(write_aig, "Output");
 
-	/*Reads a bench file and store the k-LUT network in a store*/
-/*
-	ALICE_COMMAND( get_bench, "Input", "Uses the lorina library to read in a bench file" ){
+  class write_to_bench_command : public alice::command{
 
-		std::string filename = "";
-		std::cout << "Enter bench filename: ";
-		std::cin >> filename;
+    public:
+      explicit write_to_bench_command( const environment::ptr& env )
+          : command( env, "Writes a stored file to an external bench file" ){
 
-		if(checkExt(filename, "bench")){
-			mockturtle::klut_network bench;
-			lorina::read_bench(filename, mockturtle::bench_reader( bench ));
-			std::cout << "Bench file = " << filename << " stored" << std::endl;
-			store<mockturtle::klut_network>().extend() = bench;
-		}
-		else{
-			std::cout << filename << " is not a valid bench file\n";
-		}	
-		
-	}//end get_bench
+        opts.add_option( "--filename,filename", filename, "bench file to write to" )->required();
+        add_flag("--mig,-m", "Write the stored MIG file to a bench file");
+        add_flag("--bench,-b", "Write the stored bench file to a bench file");
+      }
 
-	/*Adds the command "write_to_file" where you can specify what store you are writing a file out from*/
-	class write_to_bench_command : public alice::command{
+    protected:
+      void execute(){
 
-	public:
-	  explicit write_to_bench_command( const environment::ptr& env )
-	      : command( env, "Writes a stored file to an external bench file" ){
+        if(is_set("mig")){
+        	mockturtle::mig_network mig = store<mockturtle::mig_network>().current();
+    	    mockturtle::write_bench(mig, filename);
+      	}
+      	else if(is_set("bench")){
+      		mockturtle::klut_network bench = store<mockturtle::klut_network>().current();
+      		mockturtle::write_bench(bench, filename);
+      	}
+      	else{
+      		std::cout << "Store to write out wasn't specified\n";
+      	}
+      }
+    private:
+      std::string filename{};
+    };
 
-	    opts.add_option( "--filename,filename", filename, "bench file to write to" )->required();
-	    add_flag("--mig,-m", "Write the stored AIG file to a bench file");
-	    add_flag("--bench,-b", "Write the stored bench file to a bench file");
-	  }
+  ALICE_ADD_COMMAND(write_to_bench, "Output");
 
-	protected:
-	  void execute(){
-
-	    if(is_set("mig")){
-	    	mockturtle::mig_network mig = store<mockturtle::mig_network>().current();
-		    mockturtle::write_bench(mig, filename);
-		}
-		else if(is_set("bench")){
-			mockturtle::klut_network bench = store<mockturtle::klut_network>().current();
-			mockturtle::write_bench(bench, filename);
-		}
-		else{
-			std::cout << "Store to write out wasn't specified\n";
-		}
-	  }
-
-	private:
-	  std::string filename{};
-	};
-
-	ALICE_ADD_COMMAND(write_to_bench, "Output");
-
-    class read_verilog_command : public alice::command{
+  class read_verilog_command : public alice::command{
 
     public:
       explicit read_verilog_command( const environment::ptr& env )
@@ -2875,182 +509,153 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
       void execute(){
 
         if(checkExt(filename, "v")){
-            if(is_set("mig")){
-                mockturtle::mig_network mig;
-                lorina::read_verilog(filename, mockturtle::verilog_reader( mig ));
-                std::cout << "MIG network stored" << std::endl;
-                store<mockturtle::mig_network>().extend() = mig;
+          if(is_set("mig")){
+            mockturtle::mig_network mig;
+            lorina::read_verilog(filename, mockturtle::verilog_reader( mig ));
+            std::cout << "MIG network stored" << std::endl;
+            store<mockturtle::mig_network>().extend() = mig;
 
-                // mig.foreach_gate( [&](auto node){
-                //     std::cout << "nodeIdx = " << mig.node_to_index(node) << "\n";
-                //     std::cout << "child[0] = " << mig._storage->nodes[node].children[0].index << "\n";
-                //     std::cout << "child[1] = " << mig._storage->nodes[node].children[1].index << "\n";
-                // });
 
-                if(mig._storage->inputNames.size() == 0){
-
-                    for(int i = 0; i < mig.num_pis(); i++){
-                        std::string input_name = "pi";
-                        input_name.append(std::to_string(i));
-                        mig._storage->inputNames[i] = input_name;
-                    }
-                }
-                if(mig._storage->outputNames.size() == 0){
-
-                    for(int i = 0; i < mig.num_pos(); i++){
-                        std::string output_name = "po";
-                        output_name.append(std::to_string(i));
-                        mig._storage->outputNames[i] = output_name;
-                    }
-                }
-
-                // std::cout << "Inputs:\n";
-
-                // for(int i = 0; i < mig._storage->inputs.size(); i++){
-                //     std::cout << mig._storage->inputs.at(i) << ": " << mig._storage->inputNames[i] << "\n";
-                // }
-
-                // std::cout << "Outputs:\n";
-
-                // for(int i = 0; i < mig._storage->outputs.size(); i++){
-                //     std::cout << mig._storage->outputs.at(i).index << ": " << mig._storage->outputNames[i] << "\n";
-                // }
-
-                filename.erase(filename.end() - 4, filename.end());
-                mig._storage->net_name = filename;
+            if(mig._storage->inputNames.size() == 0){
+              for(int i = 0; i < mig.num_pis(); i++){
+                std::string input_name = "pi";
+                input_name.append(std::to_string(i));
+                mig._storage->inputNames[i] = input_name;
+              }
             }
-            else{
-
-                mockturtle::aig_network aig;
-                lorina::read_verilog(filename, mockturtle::verilog_reader( aig ));
-                std::cout << "AIG network stored" << std::endl;
-                store<mockturtle::aig_network>().extend() = aig;
-
-                // aig.foreach_gate( [&](auto node){
-                //     std::cout << "nodeIdx = " << aig.node_to_index(node) << "\n";
-                //     std::cout << "child[0] = " << aig._storage->nodes[node].children[0].index << "\n";
-                //     std::cout << "child[1] = " << aig._storage->nodes[node].children[1].index << "\n";
-                // });
-
-                if(aig._storage->inputNames.size() == 0){
-
-                    for(int i = 0; i < aig.num_pis(); i++){
-                        std::string input_name = "pi";
-                        input_name.append(std::to_string(i));
-                        aig._storage->inputNames[i] = input_name;
-                    }
-                }
-                if(aig._storage->outputNames.size() == 0){
-
-                    for(int i = 0; i < aig.num_pos(); i++){
-                        std::string output_name = "po";
-                        output_name.append(std::to_string(i));
-                        aig._storage->outputNames[i] = output_name;
-                    }
-                }
-
-                // std::cout << "Inputs:\n";
-
-                // for(int i = 0; i < aig._storage->inputs.size(); i++){
-                //     std::cout << aig._storage->inputs.at(i) << ": " << aig._storage->inputNames[i] << "\n";
-                // }
-
-                // std::cout << "Outputs:\n";
-
-                // for(int i = 0; i < aig._storage->outputs.size(); i++){
-                //     std::cout << aig._storage->outputs.at(i).index << ": " << aig._storage->outputNames[i] << "\n";
-                // }
-
-                filename.erase(filename.end() - 2, filename.end());
-                aig._storage->net_name = filename;
+            if(mig._storage->outputNames.size() == 0){
+              for(int i = 0; i < mig.num_pos(); i++){
+                std::string output_name = "po";
+                output_name.append(std::to_string(i));
+                mig._storage->outputNames[i] = output_name;
+              }
             }
+
+            filename.erase(filename.end() - 4, filename.end());
+            mig._storage->net_name = filename;
+          }
+          else{
+            mockturtle::aig_network aig;
+            lorina::read_verilog(filename, mockturtle::verilog_reader( aig ));
+            std::cout << "AIG network stored" << std::endl;
+            store<mockturtle::aig_network>().extend() = aig;
+
+            if(aig._storage->inputNames.size() == 0){
+              for(int i = 0; i < aig.num_pis(); i++){
+                std::string input_name = "pi";
+                input_name.append(std::to_string(i));
+                aig._storage->inputNames[i] = input_name;
+              }
+            }
+            if(aig._storage->outputNames.size() == 0){
+              for(int i = 0; i < aig.num_pos(); i++){
+                std::string output_name = "po";
+                output_name.append(std::to_string(i));
+                aig._storage->outputNames[i] = output_name;
+              }
+            }
+
+            filename.erase(filename.end() - 2, filename.end());
+            aig._storage->net_name = filename;
+
+            std::cout << "Verilog file written\n";
+          }
 
         }
         else{
-            std::cout << filename << " is not a valid Verilog file\n";
+          std::cout << filename << " is not a valid Verilog file\n";
         }
         
       }
-
     private:
       std::string filename{};
     };
 
-    ALICE_ADD_COMMAND(read_verilog, "Input");
+  ALICE_ADD_COMMAND(read_verilog, "Input");
 
-	//Max get AIG
-    /*Reads an aig file and stores the AIG network in a store*/
-    class get_aig_command : public alice::command{
+
+  /*Reads an aig file and stores the AIG network in a store*/
+  class read_aig_command : public alice::command{
 
     public:
-      explicit get_aig_command( const environment::ptr& env )
+      explicit read_aig_command( const environment::ptr& env )
           : command( env, "Uses the lorina library to read in an aig file" ){
 
         opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
+        add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
       }
 
     protected:
       void execute(){
 
         if(checkExt(filename, "aig")){
-                mockturtle::aig_network aig;
-                lorina::read_aiger(filename, mockturtle::aiger_reader( aig ));
-                // std::cout << "AIG file = " << filename << " stored" << std::endl;
-                store<mockturtle::aig_network>().extend() = aig;
-
-                // aig.foreach_gate( [&](auto node){
-                //     std::cout << "nodeIdx = " << aig.node_to_index(node) << "\n";
-                //     std::cout << "child[0] = " << aig._storage->nodes[node].children[0].index << "\n";
-                //     std::cout << "child[1] = " << aig._storage->nodes[node].children[1].index << "\n";
-                // });
-
-                if(aig._storage->inputNames.size() == 0){
-
-                    for(int i = 0; i < aig.num_pis(); i++){
-                        std::string input_name = "pi";
-                        input_name.append(std::to_string(i));
-                        aig._storage->inputNames[i] = input_name;
-                    }
-                }
-                if(aig._storage->outputNames.size() == 0){
-
-                    for(int i = 0; i < aig.num_pos(); i++){
-                        std::string output_name = "po";
-                        output_name.append(std::to_string(i));
-                        aig._storage->outputNames[i] = output_name;
-                    }
-                }
-
-                // std::cout << "Inputs:\n";
-
-                // for(int i = 0; i < aig._storage->inputs.size(); i++){
-                //     std::cout << aig._storage->inputs.at(i) << ": " << aig._storage->inputNames[i] << "\n";
-                // }
-
-                // std::cout << "Outputs:\n";
-
-                // for(int i = 0; i < aig._storage->outputs.size(); i++){
-                //     std::cout << aig._storage->outputs.at(i).index << ": " << aig._storage->outputNames[i] << "\n";
-                // }
-
-                filename.erase(filename.end() - 4, filename.end());
-                aig._storage->net_name = filename;
+          if(is_set("mig")){
+            mockturtle::mig_network ntk;
+            lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
+                
+            store<mockturtle::mig_network>().extend() = ntk;
 
 
+            if(ntk._storage->inputNames.size() == 0){
+              for(int i = 0; i < ntk.num_pis(); i++){
+                std::string input_name = "pi";
+                input_name.append(std::to_string(i));
+                ntk._storage->inputNames[i] = input_name;
+              }
             }
-            else{
-                std::cout << filename << " is not a valid aig file\n";
+            if(ntk._storage->outputNames.size() == 0){
+
+              for(int i = 0; i < ntk.num_pos(); i++){
+                std::string output_name = "po";
+                output_name.append(std::to_string(i));
+                ntk._storage->outputNames[i] = output_name;
+              }
             }
+
+            filename.erase(filename.end() - 4, filename.end());
+            ntk._storage->net_name = filename;
+          }
+          else{
+            mockturtle::aig_network ntk;
+            lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
+                
+            store<mockturtle::aig_network>().extend() = ntk;
+
+
+            if(ntk._storage->inputNames.size() == 0){
+
+              for(int i = 0; i < ntk.num_pis(); i++){
+                std::string input_name = "pi";
+                input_name.append(std::to_string(i));
+                ntk._storage->inputNames[i] = input_name;
+              }
+            }
+            if(ntk._storage->outputNames.size() == 0){
+
+              for(int i = 0; i < ntk.num_pos(); i++){
+                std::string output_name = "po";
+                output_name.append(std::to_string(i));
+                ntk._storage->outputNames[i] = output_name;
+              }
+            }
+
+            filename.erase(filename.end() - 4, filename.end());
+            ntk._storage->net_name = filename;
+          }
+
+        }
+        else{
+            std::cout << filename << " is not a valid aig file\n";
+        }
         
       }
-
     private:
       std::string filename{};
     };
 
-    ALICE_ADD_COMMAND(get_aig, "Input");
+  ALICE_ADD_COMMAND(read_aig, "Input");
 
-    class lut_map_command : public alice::command{
+  class lut_map_command : public alice::command{
 
     public:
       explicit lut_map_command( const environment::ptr& env )
@@ -3065,1744 +670,550 @@ ALICE_COMMAND( read_aig, "Input", "Uses the lorina library to read in an aig fil
     protected:
         void execute(){
             
-            if(is_set("mig")){
-                if(!store<mockturtle::mig_network>().empty()){
-                    auto& mig = store<mockturtle::mig_network>().current();
-                    std::string filename = mig._storage->net_name + "_lut.bench";
-                    mockturtle::mapping_view<mockturtle::mig_network, true> mapped{mig};
+          if(is_set("mig")){
+            if(!store<mockturtle::mig_network>().empty()){
+                auto& mig = store<mockturtle::mig_network>().current();
+                std::string filename = mig._storage->net_name + "_lut.bench";
+                mockturtle::mapping_view<mockturtle::mig_network, true> mapped{mig};
 
-                    mockturtle::lut_mapping_params ps;
-                    ps.cut_enumeration_ps.cut_size = lut_size;
-                    ps.cut_enumeration_ps.cut_limit = cut_size;
+                mockturtle::lut_mapping_params ps;
+                ps.cut_enumeration_ps.cut_size = lut_size;
+                ps.cut_enumeration_ps.cut_limit = cut_size;
 
-                    mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped, ps );
+                mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped, ps );
 
-                    const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
-                    auto const& klut = *klut_opt;
+                const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
+                auto const& klut = *klut_opt;
 
-                    mockturtle::depth_view klut_depth{klut};
-                    std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-                    std::cout << "Finshed LUT mapping\n";
-                    if(is_set("out")){
-                        std::cout << "filename = " << filename << "\n";
-                        mockturtle::write_bench(klut, filename);
-                    }
-                }
-                else{
-                    std::cout << "There is not an MIG network stored.\n";
+                mockturtle::depth_view klut_depth{klut};
+                std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+                std::cout << "Finshed LUT mapping\n";
+                if(is_set("out")){
+                  std::cout << "filename = " << filename << "\n";
+                  mockturtle::write_bench(klut, filename);
                 }
             }
             else{
-                if(!store<mockturtle::aig_network>().empty()){
-                    auto& aig = store<mockturtle::aig_network>().current();
-                    std::string filename = aig._storage->net_name + "_lut.bench";
-                    mockturtle::mapping_view<mockturtle::aig_network, true> mapped{aig};
-
-                    mockturtle::lut_mapping_params ps;
-                    ps.cut_enumeration_ps.cut_size = lut_size;
-                    ps.cut_enumeration_ps.cut_limit = cut_size;
-
-                    mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped, ps );
-
-                    const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
-                    auto const& klut = *klut_opt;
-
-                    mockturtle::depth_view klut_depth{klut};
-                    std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-                    std::cout << "Finshed LUT mapping\n";
-                    if(is_set("out")){
-                        std::cout << "filename = " << filename << "\n";
-                        mockturtle::write_bench(klut, filename);
-                    }
-                }
-                else{
-                     std::cout << "There is not an AIG network stored.\n";
-                }
+              std::cout << "There is not an MIG network stored.\n";
             }
-        }
-            
+          }
+          else{
+            if(!store<mockturtle::aig_network>().empty()){
+              auto& aig = store<mockturtle::aig_network>().current();
+              std::string filename = aig._storage->net_name + "_lut.bench";
+              mockturtle::mapping_view<mockturtle::aig_network, true> mapped{aig};
+
+              mockturtle::lut_mapping_params ps;
+              ps.cut_enumeration_ps.cut_size = lut_size;
+              ps.cut_enumeration_ps.cut_limit = cut_size;
+
+              mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped, ps );
+
+              const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
+              auto const& klut = *klut_opt;
+
+              mockturtle::depth_view klut_depth{klut};
+              std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+              std::cout << "Finshed LUT mapping\n";
+              if(is_set("out")){
+                std::cout << "filename = " << filename << "\n";
+                mockturtle::write_bench(klut, filename);
+              }
+            }
+            else{
+              std::cout << "There is not an AIG network stored.\n";
+            }
+          }
+        }    
     private:
       int lut_size = 6;
       int cut_size = 8;
     };
 
-    ALICE_ADD_COMMAND(lut_map, "LUT");
-	
+  ALICE_ADD_COMMAND(lut_map, "LUT");
 
-	ALICE_COMMAND( cut_e, "Optimization", "Performs Cut Enumeration on a stored AIG network"){
-		auto aig = store<mockturtle::aig_network>().current();
-		const mockturtle::network_cuts cuts = cut_enumeration( aig );
-		//store<mockturtle::network_cuts>().extend() = cuts;
-		aig.foreach_node( [&]( auto node ) {
+
+  ALICE_COMMAND( cut_e, "Optimization", "Performs Cut Enumeration on a stored AIG network"){
+  	auto aig = store<mockturtle::aig_network>().current();
+  	const mockturtle::network_cuts cuts = cut_enumeration( aig );
+  	//store<mockturtle::network_cuts>().extend() = cuts;
+  	aig.foreach_node( [&]( auto node ) {
   			std::cout << cuts.cuts( aig.node_to_index( node ) ) << "\n";
-		} );
-	}
+  	} );
+  }
 
-class test_classification_command : public alice::command{
-
-    public:
-        explicit test_classification_command( const environment::ptr& env )
-                : command( env, "Test classification of partitions" ){
-
-                opts.add_option( "--cnn_model,c", cnn_model, "Trained CNN model for classification" )->required();
-                add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
-        }
-
-    protected:
-        void execute(){
-
-            int row_num = 256;
-            int col_num = 256;
-            int chann_num = 1;
-            std::vector<std::string> labels = {"AIG", "MIG"};
-
-            if(is_set("mig")){
-                std::cout << "MIG networks not supported yet\n";
-                // if(!store<mockturtle::mig_network>().empty()){
-                //     auto ntk = store<mockturtle::mig_network>().current();
-                //     if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-
-                //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
-                //         std::vector<std::vector<float>> images = partitions.get_km_images(ntk);
-                //         std::cout << "Number of images = " << images.size() << "\n";
-
-                //         const auto model = fdeep::load_model("../../lib/oracle/include/oracle/classification/fdeep_model.json");
-                //         for(int i = 0; i < images.size(); i++){
-                //             std::vector<float> curr_image = images.at(i);
-                //             const fdeep::shared_float_vec sv(fplus::make_shared_ref<fdeep::float_vec>(std::move(curr_image)));
-                //             fdeep::tensor5 input(fdeep::shape5(1, 1, row_num, col_num, chann_num), sv);
-                //             const auto result = model.predict_class({input});
-                //             std::cout << "Result\n";
-                //             std::cout << labels.at(result) << "\n";
-                //         }
-                //     }
-                //     else{
-                //         std::cout << "MIG not partitioned yet\n";
-                //     }
-                // }
-                // else{
-                //     std::cout << "No MIG stored\n";
-                // }
-                
-            }
-            else{
-                if(!store<mockturtle::aig_network>().empty()){
-                    auto ntk = store<mockturtle::aig_network>().current();
-                    if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-                        auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-                        partitions.run_classification(ntk, cnn_model);
-                    
-                    }
-                    else{
-                        std::cout << "AIG not partitioned yet\n";
-                    }
-                }
-                else{
-                    std::cout << "No AIG stored\n";
-                }
-            }
-        }
-    private:
-        std::string cnn_model{};
-    };
-
-    ALICE_ADD_COMMAND(test_classification, "Test");
-
-class optimization_command : public alice::command{
+  class optimization_command : public alice::command{
 
     public:
         explicit optimization_command( const environment::ptr& env )
                 : command( env, "Classify partitions and perform corresponding optimization" ){
 
-                opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-                add_flag("--brute,-b", "Uses a brute force approach instead of classification");
+            opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
+            opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
+            add_flag("--brute,-b", "Uses a brute force approach instead of classification");
+            add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
+            add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
         }
 
     protected:
-        void execute(){
+      void execute(){
 
-            mockturtle::mig_npn_resynthesis resyn_mig;
-            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-            std::vector<int> aig_parts;
-            std::vector<int> mig_parts;
-            if(!store<mockturtle::aig_network>().empty()){
+        mockturtle::mig_npn_resynthesis resyn_mig;
+        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
+        std::vector<int> aig_parts;
+        std::vector<int> mig_parts;
+        if(!store<mockturtle::aig_network>().empty()){
 
-                auto ntk_aig = store<mockturtle::aig_network>().current();
-                std::string file_base = ntk_aig._storage->net_name;
-                std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
-                std::string net_name = ntk_aig._storage->net_name;
+          auto ntk_aig = store<mockturtle::aig_network>().current();
+          std::string file_base = ntk_aig._storage->net_name;
+          std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
+          std::string net_name = ntk_aig._storage->net_name;
 
-                if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
+          if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
 
-                    auto partitions_aig = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-                    int num_parts = partitions_aig.get_part_num();
-                    if(is_set("brute")){
-                        for(int i = 0; i < num_parts; i++){
-                            oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-
-                            auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                            mockturtle::depth_view part_aig_depth{opt_aig};
-                            std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                            mockturtle::aig_script aigopt;
-                            opt_aig = aigopt.run(opt_aig);
-                            mockturtle::depth_view part_aig_opt_depth{opt_aig};
-                            int aig_opt_size = opt_aig.num_gates();
-                            int aig_opt_depth = part_aig_opt_depth.depth();
-                            std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
-
-                            auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-                            mockturtle::depth_view part_mig_depth{opt_mig};
-                            std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-                            mockturtle::mig_script migopt;
-                            opt_mig = migopt.run(opt_mig);
-                            mockturtle::depth_view part_mig_opt_depth{opt_mig};
-                            int mig_opt_size = opt_mig.num_gates();
-                            int mig_opt_depth = part_mig_opt_depth.depth();
-                            std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
-
-                            if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                                std::cout << "AIG wins\n";
-                                aig_parts.push_back(i);
-                            }
-                            else{
-                                std::cout << "MIG wins\n";
-                                mig_parts.push_back(i);
-                            }
-                        }
-
-                    }
-                    else{
-                        if(!cnn_model.empty()){
-                            partitions_aig.run_classification(ntk_aig, cnn_model);
-
-                            aig_parts = partitions_aig.get_aig_parts();
-                            mig_parts = partitions_aig.get_mig_parts();
-                        }
-                        else{
-                            std::cout << "Must include CNN model json file\n";
-                        }
-
-                    }
-                    
-                    // aig_parts = {12};
-                    // mig_parts = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19};
-                    mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig); //mockturtle::node_resynthesis<mockturtle::mig_network>( ntk_aig, resyn_mig );
-                    oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                            partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-                    
-                    std::cout << "AIG Optimization\n";
-                    for(int i = 0; i < aig_parts.size(); i++){
-                        std::cout << "Optimize partition " << aig_parts.at(i) << "\n";
-                        oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
-                        mockturtle::depth_view part_depth{part};
-                        std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                        auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-
-                        std::cout << "AIG before optimization\n";
-                        opt.foreach_node([&](auto node){
-                            std::cout << "node = " << node << "\n";
-                            opt.foreach_fanin(node, [&](auto conn, auto i){
-                                std::cout << "child[" << i << "] = " << conn.index << "\n";
-                            });
-                        });
-
-                        mockturtle::aig_script aigopt;
-                        opt = aigopt.run(opt);
-                        std::cout << "AIG after optimization\n";
-                        opt.foreach_node([&](auto node){
-                            std::cout << "node = " << node << "\n";
-                            opt.foreach_fanin(node, [&](auto conn, auto i){
-                                std::cout << "child[" << i << "] = " << conn.index << "\n";
-                            });
-                        });
-                        // mockturtle::write_dot(opt, file_base + "_" + std::to_string(aig_parts.at(i)) + ".dot");
-                        // auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( opt, resyn_mig );
-                        auto opt_mig = aig_to_mig(opt);
-                        std::cout << "MIG after conversion\n";
-                        opt.foreach_node([&](auto node){
-                            std::cout << "node = " << node << "\n";
-                            opt.foreach_fanin(node, [&](auto conn, auto i){
-                                std::cout << "child[" << i << "] = " << conn.index << "\n";
-                            });
-                        });
-                        // mockturtle::write_dot(opt_mig, file_base + "_mig_" + std::to_string(aig_parts.at(i)) + ".dot");
-                        mockturtle::depth_view part_opt_depth{opt_mig};
-                        std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                    }
-                    std::cout << "MIG Optimization\n";
-                    for(int i = 0; i < mig_parts.size(); i++){
-                        std::cout << "Optimize partition " << mig_parts.at(i) << "\n";
-                        oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
-                        mockturtle::depth_view part_depth{part};
-                        std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                        auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                        std::cout << "MIG before optimization\n";
-                        opt.foreach_node([&](auto node){
-                            std::cout << "node = " << node << "\n";
-                            opt.foreach_fanin(node, [&](auto conn, auto i){
-                                std::cout << "child[" << i << "] = " << conn.index << "\n";
-                            });
-                        });
-                        mockturtle::mig_script migopt;
-                        opt = migopt.run(opt);
-                        std::cout << "MIG after optimization\n";
-                        opt.foreach_node([&](auto node){
-                            std::cout << "node = " << node << "\n";
-                            opt.foreach_fanin(node, [&](auto conn, auto i){
-                                std::cout << "child[" << i << "] = " << conn.index << "\n";
-                            });
-                        });
-                        mockturtle::depth_view part_opt_depth{opt};
-                        std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                        partitions_mig.synchronize_part(part, opt, ntk_mig);
-                    }
-                    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-                    std::cout << "AIG partitions = {";
-                    for(int i = 0; i < aig_parts.size(); i++){
-                        std::cout << aig_parts.at(i) << " ";
-                    }
-                    std::cout << "}\n";
-                    std::cout << "MIG partitions = {";
-                    for(int i = 0; i < mig_parts.size(); i++){
-                        std::cout << mig_parts.at(i) << " ";
-                    }
-                    std::cout << "}\n";
-                    std::cout << "Done synchronizing all parts\n";
-                    std::cout << "ntk before connecting outputs\n";
-                    ntk_mig.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        ntk_mig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    partitions_mig.connect_outputs(ntk_mig);
-                    std::cout << "ntk after connecting outputs\n";
-                    ntk_mig.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        ntk_mig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    std::cout << "finished connecting outputs\n";
-                    mockturtle::depth_view ntk_before_depth2{ntk_mig};
-                    std::cout << "size before cleanup = " << ntk_mig.num_gates() << " and depth = " << ntk_before_depth2.depth() << "\n";
-                    
-                    ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
-                    std::cout << "Finished cleaning up dangling\n";
-                    mockturtle::depth_view ntk_depth2{ntk_mig};
-                    std::cout << "new ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                    std::cout << "Saved as MIG\n";
-                    store<mockturtle::mig_network>().extend() = ntk_mig;
-                    mockturtle::write_verilog(ntk_mig, out_file);
-                    // mockturtle::write_dot(ntk_mig, file_base + "_opt.dot");
-                
-                }
-                else{
-                    std::cout << "No AIG stored\n";
-                }
+            auto partitions_aig = store<oracle::partition_manager<mockturtle::aig_network>>().current();
+            int num_parts = partitions_aig.get_part_num();
+            if(is_set("aig")){
+              for(int i = 0; i < num_parts; i++){
+                aig_parts.push_back(i);
+              }
             }
-        }
-    
-    private:
-        std::string cnn_model{};
-        std::string out_file{};
-    };
+            else if(is_set("mig")){
+              for(int i = 0; i < num_parts; i++){
+                mig_parts.push_back(i);
+              }
+            }
+            else if(is_set("brute")){
 
-    ALICE_ADD_COMMAND(optimization, "Optimization");
-    class test_aig_then_part_command : public alice::command{
+              for(int i = 0; i < num_parts; i++){
+                oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
 
-    public:
-        explicit test_aig_then_part_command( const environment::ptr& env )
-                : command( env, "Runs AIG optimization on entire circuit before partitioning and determining best MIG partitions" ){
-
-                opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
-                opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-                add_flag("--brute,-b", "Uses a brute force approach instead of classification");
-        }
-
-    protected:
-        void execute(){
-
-            mockturtle::mig_npn_resynthesis resyn_mig;
-            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-
-            std::vector<int> mig_parts;
-            if(!store<mockturtle::aig_network>().empty()){
-
-                auto ntk_aig = store<mockturtle::aig_network>().current();
-                std::string file_base = ntk_aig._storage->net_name;
-                mockturtle::depth_view orig_ntk_depth{ntk_aig};
-                // std::cout << "ntk_aig size = " << ntk_aig.num_gates() << " and depth = " << orig_ntk_depth.depth() << "\n";
-                std::string net_name = ntk_aig._storage->net_name;
-                
+                auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
+                mockturtle::depth_view part_aig_depth{opt_aig};
+                std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
                 mockturtle::aig_script aigopt;
-                ntk_aig = aigopt.run(ntk_aig);
-                mockturtle::depth_view aig_opt_depth{ntk_aig};
-                // std::cout << "optimized aig network size = " << ntk_aig.num_gates() << " and depth = " << aig_opt_depth.depth() << "\n";
+                opt_aig = aigopt.run(opt_aig);
+                mockturtle::depth_view part_aig_opt_depth{opt_aig};
+                int aig_opt_size = opt_aig.num_gates();
+                int aig_opt_depth = part_aig_opt_depth.depth();
+                std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
 
-                oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig, num_parts);
-                if(is_set("brute")){
+                auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+                mockturtle::depth_view part_mig_depth{opt_mig};
+                std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+                mockturtle::mig_script migopt;
+                opt_mig = migopt.run(opt_mig);
+                mockturtle::depth_view part_mig_opt_depth{opt_mig};
+                int mig_opt_size = opt_mig.num_gates();
+                int mig_opt_depth = part_mig_opt_depth.depth();
+                std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
 
-                    for(int i = 0; i < num_parts; i++){
-                        oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-
-                        auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                        mockturtle::depth_view part_aig_depth{opt_aig};
-                        // std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                        mockturtle::aig_script aigopt;
-                        opt_aig = aigopt.run(opt_aig);
-                        mockturtle::depth_view part_aig_opt_depth{opt_aig};
-                        int aig_opt_size = opt_aig.num_gates();
-                        int aig_opt_depth = part_aig_opt_depth.depth();
-                        // std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
-
-                        auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-                        mockturtle::depth_view part_mig_depth{opt_mig};
-                        // std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-                        mockturtle::mig_script migopt;
-                        opt_mig = migopt.run(opt_mig);
-                        mockturtle::depth_view part_mig_opt_depth{opt_mig};
-                        int mig_opt_size = opt_mig.num_gates();
-                        int mig_opt_depth = part_mig_opt_depth.depth();
-                        // std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
-
-                        if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                            // std::cout << "AIG wins\n";
-                        }
-                        else{
-                            // std::cout << "MIG wins\n";
-                            mig_parts.push_back(i);
-                        }
-                    }
-
+                if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
+                  std::cout << "AIG wins\n";
+                  aig_parts.push_back(i);
                 }
                 else{
-                    if(!cnn_model.empty()){
-                        partitions_aig.run_classification(ntk_aig, cnn_model);
-
-                        mig_parts = partitions_aig.get_mig_parts();
-                    }
-                    else{
-                        std::cout << "Must include CNN model json file\n";
-                    }
-
+                  std::cout << "MIG wins\n";
+                  mig_parts.push_back(i);
                 }
+              }
 
-                mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig); //mockturtle::node_resynthesis<mockturtle::mig_network>( ntk_aig, resyn_mig );
-                oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                        partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-                
-                // std::cout << "Scheduled optimization:\n";
-                // std::cout << "MIG Optimization = {";
-                // for(int i = 0; i < mig_parts.size(); i++){
-                //     std::cout << mig_parts.at(i) << " ";
-                // }
-                // std::cout << "}\n";
-
-                for(int i = 0; i < mig_parts.size(); i++){
-                    // std::cout << "Optimize partition " << mig_parts.at(i) << "\n";
-                    oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
-                    mockturtle::depth_view part_depth{part};
-                    // std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                    auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                    // std::cout << "MIG before optimization\n";
-                    // opt.foreach_node([&](auto node){
-                    //     std::cout << "node = " << node << "\n";
-                    //     opt.foreach_fanin(node, [&](auto conn, auto i){
-                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    //     });
-                    // });
-                    mockturtle::mig_script migopt;
-                    opt = migopt.run(opt);
-                    // std::cout << "MIG after optimization\n";
-                    // opt.foreach_node([&](auto node){
-                    //     std::cout << "node = " << node << "\n";
-                    //     opt.foreach_fanin(node, [&](auto conn, auto i){
-                    //         std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    //     });
-                    // });
-                    mockturtle::depth_view part_opt_depth{opt};
-                    // std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                    partitions_mig.synchronize_part(part, opt, ntk_mig);
-                }
-
-                std::cout << "MIG partitions = {";
-                for(int i = 0; i < mig_parts.size(); i++){
-                    std::cout << mig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-
-                partitions_mig.connect_outputs(ntk_mig);
-                
-                ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
-                mockturtle::depth_view ntk_depth2{ntk_mig};
-                std::cout << "new ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                std::cout << "Finished optimization\n";
-
-                mockturtle::write_verilog(ntk_mig, out_file);
-                
-            
             }
             else{
-                std::cout << "No AIG stored\n";
-            }
-        }
-    
-    private:
-        int num_parts = 0;
-        std::string cnn_model{};
-        std::string out_file{};
-    };
+              if(!cnn_model.empty()){
+                partitions_aig.run_classification(ntk_aig, cnn_model);
+
+                aig_parts = partitions_aig.get_aig_parts();
+                mig_parts = partitions_aig.get_mig_parts();
+              }
+              else{
+                std::cout << "Must include CNN model json file\n";
+              }
 
-    ALICE_ADD_COMMAND(test_aig_then_part, "Optimization");
-
-
-class test_combine_part_command : public alice::command{
-
-    public:
-        explicit test_combine_part_command( const environment::ptr& env )
-                : command( env, "Brute force approach to finding best optimization methods" ){
-
-                opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
-                opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-                add_flag("--brute,-b", "Uses a brute force approach instead of classification");
-        }
-
-    protected:
-        void execute(){
-
-            mockturtle::mig_npn_resynthesis resyn_mig;
-            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-            std::vector<int> aig_parts;
-            std::vector<int> mig_parts;
-            std::vector<int> comb_aig_parts;
-            std::vector<int> comb_mig_parts;
-            if(!store<mockturtle::aig_network>().empty()){
-
-                auto ntk_aig = store<mockturtle::aig_network>().current();
-                std::string file_base = ntk_aig._storage->net_name;
-                // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
-                std::string net_name = ntk_aig._storage->net_name;
-                oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig, num_parts);
-
-                if(is_set("brute")){
-
-                    for(int i = 0; i < num_parts; i++){
-                        oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-
-                        auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                        mockturtle::depth_view part_aig_depth{opt_aig};
-                        std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                        mockturtle::aig_script aigopt;
-                        opt_aig = aigopt.run(opt_aig);
-                        mockturtle::depth_view part_aig_opt_depth{opt_aig};
-                        int aig_opt_size = opt_aig.num_gates();
-                        int aig_opt_depth = part_aig_opt_depth.depth();
-                        std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
-
-                        auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-                        mockturtle::depth_view part_mig_depth{opt_mig};
-                        std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-                        mockturtle::mig_script migopt;
-                        opt_mig = migopt.run(opt_mig);
-                        mockturtle::depth_view part_mig_opt_depth{opt_mig};
-                        int mig_opt_size = opt_mig.num_gates();
-                        int mig_opt_depth = part_mig_opt_depth.depth();
-                        std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
-
-                        if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                            std::cout << "AIG wins\n";
-                            aig_parts.push_back(i);
-                        }
-                        else{
-                            std::cout << "MIG wins\n";
-                            mig_parts.push_back(i);
-                        }
-                    }
-
-                }
-                else{
-                    if(!cnn_model.empty()){
-                        partitions_aig.run_classification(ntk_aig, cnn_model);
-
-                        aig_parts = partitions_aig.get_aig_parts();
-                        mig_parts = partitions_aig.get_mig_parts();
-                    }
-                    else{
-                        std::cout << "Must include CNN model json file\n";
-                    }
-
-                }
-                
-                std::cout << "Scheduled optimization:\n";
-                std::cout << "AIG Optimization = {";
-                for(int i = 0; i < aig_parts.size(); i++){
-                    std::cout << aig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "MIG Optimization = {";
-                for(int i = 0; i < mig_parts.size(); i++){
-                    std::cout << mig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::vector<int> visited;
-                std::unordered_map<int, int> comb_part;
-                for(int i = 0; i < num_parts; i++){
-                    std::cout << "Partition " << i << "\n";
-                    std::cout << "Partition " << i << " Inputs: {";
-                    auto part_inputs = partitions_aig.get_part_inputs(i);
-                    auto part_outputs = partitions_aig.get_part_outputs(i);
-                      typename std::set<mockturtle::aig_network::node>::iterator it;
-                      for(it = part_inputs.begin(); it != part_inputs.end(); ++it){
-                        std::cout << *it << " ";
-                      }
-                      std::cout << "}\n";
-                      std::cout << "Partition " << i << " Outputs: {";
-                      for(it = part_outputs.begin(); it != part_outputs.end(); ++it){
-                        std::cout << *it << " ";
-                      }
-                      std::cout << "}\n";
-                    
-                    std::vector<int> parts_to_combine;
-                    for(it = part_outputs.begin(); it != part_outputs.end(); ++it){
-                        // std::cout << "output = " << ntk_aig.node_to_index(*it) << "\n";
-                        if(ntk_aig.is_po(*it)){
-                            // std::cout << "PO\n";
-                        }
-                        else{
-                            std::vector<int> input_partitions = partitions_aig.get_input_part(*it);
-                            
-                            std::cout << "In partition = {";
-                            for(int j = 0; j < input_partitions.size(); j++){
-                                std::cout << input_partitions.at(j) << " ";
-                                if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                                    if(std::find(aig_parts.begin(), aig_parts.end(), input_partitions.at(j)) != aig_parts.end()){
-                                        if(std::find(parts_to_combine.begin(), parts_to_combine.end(), input_partitions.at(j)) == parts_to_combine.end()
-                                            && input_partitions.at(j) != i){
-                                            parts_to_combine.push_back(input_partitions.at(j));
-                                        }
-                                    }
-                                }
-                                else{
-                                    if(std::find(mig_parts.begin(), mig_parts.end(), input_partitions.at(j)) != mig_parts.end()){
-                                        if(std::find(parts_to_combine.begin(), parts_to_combine.end(), input_partitions.at(j)) == parts_to_combine.end()
-                                            && input_partitions.at(j) != i){
-                                            parts_to_combine.push_back(input_partitions.at(j));
-                                        }
-                                    }
-                                }
-                            }
-                            std::cout << "}\n";                            
-                        }
-                    }
-                    if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                        std::cout << "AIG\n";
-                    }
-                    else{
-                        std::cout << "MIG\n";
-                    }
-                    std::cout << "Partitions to combine current part with = {";
-                    for(int j = 0; j < parts_to_combine.size(); j++){
-                        std::cout << parts_to_combine.at(j) << " ";
-                    }
-                    std::cout << "}\n";
-                    
-                    for(int j = 0; j < parts_to_combine.size(); j++){
-                        int part_1 = 0;
-                        int part_2 = 0;
-                        if(std::find(visited.begin(), visited.end(), parts_to_combine.at(j)) == visited.end()){
-                            part_1 = i;
-                            part_2 = parts_to_combine.at(j);
-                        }
-                        else{
-                            if(std::find(visited.begin(), visited.end(), i) == visited.end()){
-                                part_1 = parts_to_combine.at(j);
-                                part_2 = i;
-                            }
-                        }
-
-                        if(std::find(visited.begin(), visited.end(), part_2) == visited.end()){
-                            std::unordered_map<int,int>::const_iterator got = comb_part.find (part_1);
-                            if(got != comb_part.end()){
-                                part_1 = got->second;
-                            }
-                            std::cout << "Combining " << part_1 << " with " << part_2 << "\n";
-                            std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
-                            auto new_inputs = combined_io.at(0);
-                            auto new_outputs = combined_io.at(1);
-                            comb_part[part_2] = part_1;
-
-                            std::cout << "New inputs = {";
-                            typename std::set<mockturtle::aig_network::node>::iterator it;
-                            for(it = new_inputs.begin(); it != new_inputs.end(); ++it){
-                                std::cout << *it << " ";
-                            }
-                            std::cout << "}\n";
-                            std::cout << "New outputs = {";
-                            for(it = new_outputs.begin(); it != new_outputs.end(); ++it){
-                                std::cout << *it << " ";
-                            }
-                            std::cout << "}\n";
-
-                            partitions_aig.set_part_inputs(part_1, new_inputs);
-                            partitions_aig.set_part_outputs(part_1, new_outputs);
-                            if(std::find(aig_parts.begin(), aig_parts.end(), part_1) != aig_parts.end()){
-                                if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), part_1) == comb_aig_parts.end()){
-                                    comb_aig_parts.push_back(part_1);
-                                }
-                            }
-                            else{
-                                if(std::find(comb_mig_parts.begin(), comb_mig_parts.end(), part_1) == comb_mig_parts.end()){
-                                    comb_mig_parts.push_back(part_1);
-                                }
-                            }
-
-                            visited.push_back(part_2);     
-                        }
-                        
-                    }
-                    if(std::find(visited.begin(), visited.end(), i) == visited.end()){
-                        visited.push_back(i);
-                        if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                            if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), i) == comb_aig_parts.end()){
-                                comb_aig_parts.push_back(i);
-                            }
-                        }
-                        else{
-                            if(std::find(comb_mig_parts.begin(), comb_mig_parts.end(), i) == comb_mig_parts.end()){
-                                comb_mig_parts.push_back(i);
-                            }
-                        }
-                    }
-                    
-                }
-
-                std::cout << "New Scheduled optimization\n";
-                std::cout << "AIG Optimization = {";
-                for(int i = 0; i < comb_aig_parts.size(); i++){
-                    std::cout << comb_aig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "MIG Optimization = {";
-                for(int i = 0; i < comb_mig_parts.size(); i++){
-                    std::cout << comb_mig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-
-                mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig); //mockturtle::node_resynthesis<mockturtle::mig_network>( ntk_aig, resyn_mig );
-                oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                        partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-                
-                std::cout << "AIG Optimization\n";
-                for(int i = 0; i < comb_aig_parts.size(); i++){
-                    std::cout << "Optimize partition " << comb_aig_parts.at(i) << "\n";
-                    oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, comb_aig_parts.at(i));
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                    auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-                    std::cout << "done synthesizing\n";
-                    mockturtle::aig_script aigopt;
-                    opt = aigopt.run(opt);
-                    std::cout << "done optimizing\n";
-                    auto opt_mig = aig_to_mig(opt);
-                    
-                    mockturtle::depth_view part_opt_depth{opt_mig};
-                    std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
-                std::cout << "MIG Optimization\n";
-                for(int i = 0; i < comb_mig_parts.size(); i++){
-                    std::cout << "Optimize partition " << comb_mig_parts.at(i) << "\n";
-                    oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, comb_mig_parts.at(i));
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                    auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                    std::cout << "done synthesizing\n";
-                    mockturtle::mig_script migopt;
-                    opt = migopt.run(opt);
-                    std::cout << "done optimizing\n";
-                    
-                    mockturtle::depth_view part_opt_depth{opt};
-                    std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                    partitions_mig.synchronize_part(part, opt, ntk_mig);
-                }
-                std::cout << comb_aig_parts.size() << " AIGs and " << comb_mig_parts.size() << " MIGs\n";
-                std::cout << "AIG partitions = {";
-                for(int i = 0; i < comb_aig_parts.size(); i++){
-                    std::cout << comb_aig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "MIG partitions = {";
-                for(int i = 0; i < comb_mig_parts.size(); i++){
-                    std::cout << comb_mig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                
-                partitions_mig.connect_outputs(ntk_mig);
-                
-                ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
-                mockturtle::depth_view ntk_depth2{ntk_mig};
-                std::cout << "new ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                std::cout << "Finished optimization\n";
-
-                mockturtle::write_verilog(ntk_mig, out_file);                
-            
-            }
-            else{
-                std::cout << "No AIG stored\n";
-            }
-        }
-    
-    private:
-        int num_parts = 0;
-        std::string cnn_model{};
-        std::string out_file{};
-    };
-
-    ALICE_ADD_COMMAND(test_combine_part, "Optimization");
-
-class test_mix_command : public alice::command{
-
-    public:
-        explicit test_mix_command( const environment::ptr& env )
-                : command( env, "Brute force approach to finding best optimization methods" ){
-
-                opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
-                opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-                add_flag("--brute,-b", "Uses a brute force approach instead of classification");
-        }
-
-    protected:
-        void execute(){
-
-            mockturtle::mig_npn_resynthesis resyn_mig;
-            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-            std::vector<int> aig_parts;
-            std::vector<int> mig_parts;
-            if(!store<mockturtle::aig_network>().empty()){
-
-                auto ntk_aig = store<mockturtle::aig_network>().current();
-                std::string file_base = ntk_aig._storage->net_name;
-                std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
-                std::string net_name = ntk_aig._storage->net_name;
-                oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig, num_parts);
-
-                if(is_set("brute")){
-
-                    for(int i = 0; i < num_parts; i++){
-                        oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-
-                        auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                        mockturtle::depth_view part_aig_depth{opt_aig};
-                        std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                        mockturtle::aig_script aigopt;
-                        opt_aig = aigopt.run(opt_aig);
-                        mockturtle::depth_view part_aig_opt_depth{opt_aig};
-                        int aig_opt_size = opt_aig.num_gates();
-                        int aig_opt_depth = part_aig_opt_depth.depth();
-                        std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
-
-                        auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-                        mockturtle::depth_view part_mig_depth{opt_mig};
-                        std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-                        mockturtle::mig_script migopt;
-                        opt_mig = migopt.run(opt_mig);
-                        mockturtle::depth_view part_mig_opt_depth{opt_mig};
-                        int mig_opt_size = opt_mig.num_gates();
-                        int mig_opt_depth = part_mig_opt_depth.depth();
-                        std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
-
-                        if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                            std::cout << "AIG wins\n";
-                            aig_parts.push_back(i);
-                        }
-                        else{
-                            std::cout << "MIG wins\n";
-                            mig_parts.push_back(i);
-                        }
-                    }
-
-                }
-                else{
-                    if(!cnn_model.empty()){
-                        partitions_aig.run_classification(ntk_aig, cnn_model);
-
-                        aig_parts = partitions_aig.get_aig_parts();
-                        mig_parts = partitions_aig.get_mig_parts();
-                    }
-                    else{
-                        std::cout << "Must include CNN model json file\n";
-                    }
-
-                }
-                
-                // aig_parts = {12};
-                // mig_parts = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19};
-                mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig); //mockturtle::node_resynthesis<mockturtle::mig_network>( ntk_aig, resyn_mig );
-                oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                        partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-                
-                std::cout << "AIG Optimization\n";
-                for(int i = 0; i < aig_parts.size(); i++){
-                    std::cout << "Optimize partition " << aig_parts.at(i) << "\n";
-                    oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                    auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-
-                    std::cout << "AIG before optimization\n";
-                    opt.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-
-                    mockturtle::aig_script aigopt;
-                    opt = aigopt.run(opt);
-                    std::cout << "AIG after optimization\n";
-                    opt.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    // mockturtle::write_dot(opt, file_base + "_" + std::to_string(aig_parts.at(i)) + ".dot");
-                    // auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( opt, resyn_mig );
-                    auto opt_mig = aig_to_mig(opt);
-                    std::cout << "MIG after conversion\n";
-                    opt.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    // mockturtle::write_dot(opt_mig, file_base + "_mig_" + std::to_string(aig_parts.at(i)) + ".dot");
-                    mockturtle::depth_view part_opt_depth{opt_mig};
-                    std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
-                std::cout << "MIG Optimization\n";
-                for(int i = 0; i < mig_parts.size(); i++){
-                    std::cout << "Optimize partition " << mig_parts.at(i) << "\n";
-                    oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                    auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                    std::cout << "MIG before optimization\n";
-                    opt.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    mockturtle::mig_script migopt;
-                    opt = migopt.run(opt);
-                    std::cout << "MIG after optimization\n";
-                    opt.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << "\n";
-                        });
-                    });
-                    mockturtle::depth_view part_opt_depth{opt};
-                    std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                    partitions_mig.synchronize_part(part, opt, ntk_mig);
-                }
-                std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-                std::cout << "AIG partitions = {";
-                for(int i = 0; i < aig_parts.size(); i++){
-                    std::cout << aig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "MIG partitions = {";
-                for(int i = 0; i < mig_parts.size(); i++){
-                    std::cout << mig_parts.at(i) << " ";
-                }
-                std::cout << "}\n";
-                std::cout << "Done synchronizing all parts\n";
-                std::cout << "ntk before connecting outputs\n";
-                ntk_mig.foreach_node([&](auto node){
-                    std::cout << "node = " << node << "\n";
-                    ntk_mig.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    });
-                });
-                partitions_mig.connect_outputs(ntk_mig);
-                std::cout << "ntk after connecting outputs\n";
-                ntk_mig.foreach_node([&](auto node){
-                    std::cout << "node = " << node << "\n";
-                    ntk_mig.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "child[" << i << "] = " << conn.index << "\n";
-                    });
-                });
-                std::cout << "finished connecting outputs\n";
-                mockturtle::depth_view ntk_before_depth2{ntk_mig};
-                std::cout << "size before cleanup = " << ntk_mig.num_gates() << " and depth = " << ntk_before_depth2.depth() << "\n";
-                
-                ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
-                std::cout << "Finished cleaning up dangling\n";
-                mockturtle::depth_view ntk_depth2{ntk_mig};
-                std::cout << "new ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                std::cout << "Finished optimization\n";
-                store<mockturtle::mig_network>().extend() = ntk_mig;
-                mockturtle::write_verilog(ntk_mig, out_file);
-                // mockturtle::write_dot(ntk_mig, file_base + "_opt.dot");
-            
-            }
-            else{
-                std::cout << "No AIG stored\n";
-            }
-        }
-    
-    private:
-        int num_parts = 0;
-        std::string cnn_model{};
-        std::string out_file{};
-    };
-
-    ALICE_ADD_COMMAND(test_mix, "Optimization");
-
-
-class test_part_view_command : public alice::command{
-
-    public:
-        explicit test_part_view_command( const environment::ptr& env )
-                : command( env, "Test the new partition view" ){
-
-                opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-                add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
-        }
-
-    protected:
-        void execute(){
-            mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-            mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-            if(is_set("mig")){
-
-                if(!store<mockturtle::aig_network>().empty()){
-
-                    auto ntk_aig = store<mockturtle::aig_network>().current();
-                    std::cout << "mig size = " << ntk_aig.size() << "\n";
-                    oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig, num_parts);
-                    
-                    mockturtle::mig_network ntk = aig_to_mig( ntk_aig );
-                    std::cout << "mig ntk size = " << ntk.size() << "\n";
-
-                    oracle::partition_manager<mockturtle::mig_network> partitions (ntk, partitions_aig.get_all_part_connections(), 
-                        partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-
-                    
-                    for(int i = 0; i < num_parts; i++){
-                        oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
-                        
-                        std::cout << "\nPartition " << i << "\n";
-                        mockturtle::depth_view part_depth{part};
-                        std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                        mockturtle::mig_npn_resynthesis resyn;
-                        
-                        auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn );
-                        mockturtle::mig_script migopt;
-                        opt = migopt.run(opt);
-                        mockturtle::depth_view part_opt_depth{opt};
-                        // mockturtle::write_dot(opt, std::to_string(i) + "_all_mig.dot");
-                        std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-
-                        partitions.synchronize_part(part, opt, ntk);
-                    }              
-
-                    partitions.connect_outputs(ntk);
-                    
-                    ntk = mockturtle::cleanup_dangling( ntk );
-                    mockturtle::depth_view ntk_depth2{ntk};
-                    std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                    std::cout << "Finished optimization\n";
-                    store<mockturtle::mig_network>().extend() = ntk;
-                    mockturtle::write_verilog(ntk, out_file);
-                }
-                else{
-                    std::cout << "There is no stored MIG network\n";
-                }
-            }
-            else{
-
-                if(!store<mockturtle::aig_network>().empty()){
-
-                    if(!store<mockturtle::aig_network>().empty()){
-
-                        auto ntk = store<mockturtle::aig_network>().current();
-                        std::cout << "aig size = " << ntk.size() << "\n";
-                        oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_parts);
-                        
-                        for(int i = 0; i < num_parts; i++){
-                            oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
-                            
-                            std::cout << "\nPartition " << i << "\n";
-                            mockturtle::depth_view part_depth{part};
-                            std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                            
-                            auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-                            
-                            mockturtle::aig_script aigopt;
-                            opt = aigopt.run(opt);
-                            mockturtle::depth_view part_opt_depth{opt};
-                            std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
-                            
-                            partitions.synchronize_part(part, opt, ntk);
-
-                        }              
-
-                        partitions.connect_outputs(ntk);
-                        
-                        ntk = mockturtle::cleanup_dangling( ntk );
-                        mockturtle::depth_view ntk_depth2{ntk};
-
-                        std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                        std::cout << "Finished optimization\n";
-                        store<mockturtle::aig_network>().extend() = ntk;
-                        mockturtle::write_verilog(ntk, out_file);
-                    }
-
-                    
-                }
-                else{
-                    std::cout << "There is no stored AIG network\n";
-                }
-            }
-
-        }
-
-    private:
-        std::string out_file{};
-        int num_parts = 0;
-    };
-
-    ALICE_ADD_COMMAND(test_part_view, "Test");
-
-    ALICE_COMMAND( test_node_resyn, "test", "Shows the size of each partition"){
-
-        if(!store<mockturtle::mig_network>().empty()){
-            auto mig = store<mockturtle::mig_network>().current();
-            mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-
-            auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( mig, resyn_aig );
-            opt_aig.foreach_node([&](auto node){
-                std::cout << "node = " << node << "\n";
-                opt_aig.foreach_fanin(node, [&](auto conn, auto i){
-                    std::cout << "child[" << i << "] = " << conn.index << " data = " << conn.data << "\n";
-                });
-            });
-            mockturtle::write_verilog(opt_aig, "after_resyn.v");
-        }
-        else{
-            std::cout << "There is no MIG network stored\n";
-        }
-    }
-
-    ALICE_COMMAND( test_part_resyn, "test", "Shows the size of each partition"){
-
-        if(!store<mockturtle::mig_network>().empty()){
-            auto mig = store<mockturtle::mig_network>().current();
-            int num_part = 4;
-            oracle::partition_manager<mockturtle::mig_network> partitions(mig, num_part);
-            for(int i = 0; i < num_part; i++){
-                std::cout << "Partition " << i << "\n";
-                oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(mig, i);
-                mockturtle::mig_npn_resynthesis resyn_mig;
-                auto part_mig = mockturtle::node_resynthesis<mockturtle::mig_network>(part, resyn_mig);
-                mockturtle::write_verilog(part_mig, mig._storage->net_name + "_" + std::to_string(i) + "_test_resyn_orig.v");
-                part.foreach_node([&](auto node){
-                    std::cout << "node = " << node << "\n";
-                    part.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                    });
-                });
-                auto aig = part_to_aig(part);
-                mockturtle::write_verilog(aig, mig._storage->net_name + "_" + std::to_string(i) + "_test_resyn.v");
             }
             
-        }
-        else{
-            std::cout << "There is no MIG network stored\n";
-        }
-    }
-
-    class test_one_man_command : public alice::command{
-
-    public:
-        explicit test_one_man_command( const environment::ptr& env )
-                : command( env, "Test the new partition view" ){
-
-                opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
-                opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-        }
-
-    protected:
-        void execute(){
-            mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-            mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-            // mockturtle::mig_npn_resynthesis resyn_mig;
-
-            std::vector<int> aig_parts = {0,1,2};
-            std::vector<int> mig_parts;
-            if(!store<mockturtle::aig_network>().empty()){
-
-                auto ntk_aig = store<mockturtle::aig_network>().current();
-                std::cout << "aig size = " << ntk_aig.size() << "\n";
-                oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig, num_parts);
-                    
-                mockturtle::mig_network ntk = aig_to_mig( ntk_aig );
-                std::cout << "mig ntk size = " << ntk.size() << "\n";
-
-                oracle::partition_manager<mockturtle::mig_network> partitions (ntk, partitions_aig.get_all_part_connections(), 
+            mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig);
+            oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
-                    
-                // for(int i = 0; i < num_parts; i++){
-                //     int aig_score = 0;
-                //     int mig_score = 0;
-                //     oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-                //     oracle::partition_view<mockturtle::mig_network> part_mig = partitions.create_part(ntk, i);
-                //     std::cout << "\nPartition " << i << "\n";
-                //     mockturtle::depth_view part_depth{part_aig};
-                //     std::cout << "part size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                        
-                //     auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                //     mockturtle::aig_script aigopt;
-                //     opt_aig = aigopt.run(opt_aig);
-                //     mockturtle::depth_view part_aig_depth{opt_aig};
-                //     int aig_opt_size = opt_aig.size();
-                //     int aig_opt_depth = part_aig_depth.depth();
-                //     std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                        
-                //     auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_mig, resyn_mig );
-                //     mockturtle::mig_script migopt;
-                //     opt_mig = migopt.run(opt_mig);
-                //     mockturtle::depth_view part_mig_depth{opt_mig};
-                //     int opt_mig_size = opt_mig.size();
-                //     int opt_mig_depth = part_mig_depth.depth();
-                //     std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-
-                //     if((aig_opt_size * aig_opt_depth) <= (opt_mig_size * opt_mig_depth)){
-                //         std::cout << "AIG wins\n";
-                //         aig_parts.push_back(i);
-                //     }
-                //     else{
-                //         std::cout << "MIG wins\n";
-                //         mig_parts.push_back(i);
-                //     }
-                // } 
-                std::cout << "AIG Optimization\n";
-                for(int i = 0; i < aig_parts.size(); i++){
-                    oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, aig_parts.at(i));
-                    oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, aig_parts.at(i));
-                    std::string file = "b_" + std::to_string(aig_parts.at(i)) + ".dot";
-                    std::cout << "\nPartition " << aig_parts.at(i) << "\n";
-                    mockturtle::depth_view part_depth{part};
-                    std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-                    part_aig.foreach_node([&](auto node){
-                        std::cout << "part node = " << node << "\n";
-                        ntk_aig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "part child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                        });
-                    });
-
-                    // auto mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                    // mockturtle::write_verilog(mig, "partition_" + std::to_string(aig_parts.at(i)) + "_before_resyn.v");
-
-                    auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                    // mockturtle::write_verilog(opt_aig, ntk._storage->net_name + std::to_string(aig_parts.at(i)) + "_from_mig.v");
-                    opt_aig.foreach_node([&](auto node){
-                        std::cout << "before opt node = " << node << "\n";
-                        opt_aig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "before opt child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                        });
-                    });
-                    mockturtle::aig_script aigopt;
-                    opt_aig = aigopt.run(opt_aig);
-                    mockturtle::depth_view part_aig_depth{opt_aig};
-                    std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
-                    opt_aig.foreach_node([&](auto node){
-                        std::cout << "after opt node = " << node << "\n";
-                        opt_aig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "after opt child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                        });
-                    });
-
-                    opt_aig.foreach_po([&](auto po){
-                        std::cout << "po = " << po.index << " and data = " << po.data << "\n";
-                    });
-                    // auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( opt_aig, resyn_mig );
-                    auto opt_mig = aig_to_mig(opt_aig);
-                    mockturtle::depth_view part_mig_depth{opt_mig};
-                    std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-                    std::cout << "Converted to MIG\n";
-                    opt_mig.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        opt_mig.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                        });
-                    });
-                    mockturtle::write_verilog(opt_mig, std::to_string(aig_parts.at(i)) + "_mig_after_opt.v");
-                    mockturtle::write_dot(opt_mig, file);
-                    partitions.synchronize_part(part, opt_mig, ntk);
-
-                    std::cout << "after synch\n";
-                    ntk.foreach_node([&](auto node){
-                        std::cout << "node = " << node << "\n";
-                        ntk.foreach_fanin(node, [&](auto conn, auto i){
-                            std::cout << "child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                        });
-                    });
-                }      
-                // partitions.connect_outputs(ntk);
-
-                // std::cout << "MIG Optimization\n";
-                // for(int i = 0; i < mig_parts.size(); i++){
-                //     oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, mig_parts.at(i));
-
-                //     std::cout << "\nPartition " << mig_parts.at(i) << "\n";
-                //     mockturtle::depth_view part_depth{part};
-                //     std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
-
-                //     auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                //     mockturtle::mig_script migopt;
-                //     opt_mig = migopt.run(opt_mig);
-                //     mockturtle::depth_view part_mig_depth{opt_mig};
-                //     std::cout << "aig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
-
-                //     partitions.synchronize_part(part, opt_mig, ntk);
-                // }     
-
-                std::cout << "before connecting outputs\n";
-                ntk.foreach_node([&](auto node){
-                    std::cout << "before node = " << node << "\n";
-                    ntk.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "before child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                    });
-                });
-                ntk.foreach_po([&](auto po){
-                    std::cout << "before output = " << po.index << "\n";
-                    std::cout << "before is_complemented = " << ntk.is_complemented(po) << "\n";
-                });
-
-                partitions.connect_outputs(ntk);
-                
-                std::cout << "after connecting outputs\n";
-                ntk.foreach_node([&](auto node){
-                    std::cout << "after node = " << node << "\n";
-                    ntk.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "after child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                    });
-                });
-                ntk.foreach_po([&](auto po){
-                    std::cout << "after output = " << po.index << "\n";
-                    std::cout << "after is_complemented = " << ntk.is_complemented(po) << "\n";
-                });
-                std::cout << "finished connecting outputs\n";
-                mockturtle::write_verilog(ntk, "out_before_cleanup.v");
-                ntk = mockturtle::cleanup_dangling( ntk );
-                std::cout << "finished cleanup\n";
-                mockturtle::depth_view ntk_depth2{ntk};
-                ntk.foreach_node([&](auto node){
-                    std::cout << "after cleanup node = " << node << "\n";
-                    ntk.foreach_fanin(node, [&](auto conn, auto i){
-                        std::cout << "after cleanup child[" << i << "] = " << conn.index << " and data = " << conn.data << "\n";
-                    });
-                });
-                ntk.foreach_po([&](auto po){
-                    std::cout << "after cleanup output = " << po.index << "\n";
-                    std::cout << "after cleanup is_complemented = " << ntk.is_complemented(po) << "\n";
-                });
-
-                std::cout << "new ntk size = " << ntk.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-                std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-                mockturtle::write_verilog(ntk, out_file);
-                std::string dot_file = "b_opt.dot";
-                mockturtle::write_dot(ntk, dot_file);
-            }
-            else{
-                std::cout << "There is no stored MIG network\n";
-            }
-        }
             
+            std::cout << "AIG Optimization\n";
+            for(int i = 0; i < aig_parts.size(); i++){
+              std::cout << "Optimize partition " << aig_parts.at(i) << "\n";
+              oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
+              mockturtle::depth_view part_depth{part};
+              std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
+              auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
+
+              mockturtle::aig_script aigopt;
+              opt = aigopt.run(opt);
+
+              auto opt_mig = aig_to_mig(opt);
+              mockturtle::depth_view part_opt_depth{opt_mig};
+              std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
+
+              partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+            }
+            std::cout << "MIG Optimization\n";
+            for(int i = 0; i < mig_parts.size(); i++){
+              std::cout << "Optimize partition " << mig_parts.at(i) << "\n";
+              oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
+              mockturtle::depth_view part_depth{part};
+              std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
+
+              auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
+              
+              mockturtle::mig_script migopt;
+              opt = migopt.run(opt);
+              
+              mockturtle::depth_view part_opt_depth{opt};
+              std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
+
+              partitions_mig.synchronize_part(part, opt, ntk_mig);
+            }
+            std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+            std::cout << "AIG partitions = {";
+            for(int i = 0; i < aig_parts.size(); i++){
+              std::cout << aig_parts.at(i) << " ";
+            }
+            std::cout << "}\n";
+            std::cout << "MIG partitions = {";
+            for(int i = 0; i < mig_parts.size(); i++){
+              std::cout << mig_parts.at(i) << " ";
+            }
+            std::cout << "}\n";
+            
+            partitions_mig.connect_outputs(ntk_mig);
+            
+            mockturtle::depth_view ntk_before_depth2{ntk_mig};
+            
+            ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
+            mockturtle::depth_view ntk_depth2{ntk_mig};
+            std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
+            store<mockturtle::mig_network>().extend() = ntk_mig;
+            mockturtle::write_verilog(ntk_mig, out_file);
+        
+          }
+          else{
+              std::cout << "AIG not partitioned yet\n";
+          }
+        }
+        else{
+          std::cout << "No AIG stored\n";
+        }
+      }
     private:
+        std::string cnn_model{};
         std::string out_file{};
-        int num_parts = 0;
     };
 
-    ALICE_ADD_COMMAND(test_one_man, "Test");
+  ALICE_ADD_COMMAND(optimization, "Optimization");
 
 
-    ALICE_COMMAND( partition_sizes, "Partitioning", "Shows the size of each partition"){
+  ALICE_COMMAND( partition_sizes, "Partitioning", "Shows the size of each partition"){
 
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            for(int i = 0; i < aig._storage->num_partitions; i++){
-                std::cout << "Partition=" << i << ": ";
-                std::cout << aig._storage->partitionSize[i] << "\n";
-            }
-        }
-        else{
-            std::cout << "There is no AIG network stored\n";
-        }
+    if(!store<mockturtle::aig_network>().empty()){
+      auto aig = store<mockturtle::aig_network>().current();
+      for(int i = 0; i < aig._storage->num_partitions; i++){
+        std::cout << "Partition=" << i << ": ";
+        std::cout << aig._storage->partitionSize[i] << "\n";
+      }
+    }
+    else{
+      std::cout << "There is no AIG network stored\n";
+    }
+  }
+
+  ALICE_COMMAND( read_lib, "STA", "Reads standard cell library"){
+    std::string filename = "";
+    std::cout << "Enter liberty path: ";
+    std::cin >> filename;
+
+    sta_cfg.set_lib_path(filename);
+  }
+
+  ALICE_COMMAND( read_netlist, "STA", "Reads mapped verilog"){
+    std::string filename = "";
+    std::cout << "Enter verilog path: ";
+    std::cin >> filename;
+
+    sta_cfg.set_netlist_path(filename);
+  }
+
+  ALICE_COMMAND( read_sdc, "STA", "Reads constraint file"){
+    std::string filename = "";
+    std::cout << "Enter sdc path: ";
+    std::cin >> filename;
+
+    sta_cfg.set_sdc_path(filename);
+  }
+
+  ALICE_COMMAND( run_slack, "STA", "Shows WNS and TNS"){
+
+    sta_cfg.run_slack();
+  }
+
+  ALICE_COMMAND( report_critical_path, "STA", "Runs STA"){
+
+    sta_cfg.run_report_timing();
+  }
+
+  ALICE_COMMAND(show_mig, "Output", "Writes the the mig dot file"){
+  	auto mig = store<mockturtle::mig_network>().current();
+
+  	for (int j =1; j < mig._storage->nodes.size(); j++) {
+  		for (int i = 0; i < mig._storage->nodes.data()->children.size(); i++) {
+  			std::cout << "node index " << j << " node fan in " << mig._storage->nodes[j].children[i].data << std::endl;
+  		}
+  	}
+  	for (unsigned k = mig.num_pis()+1; k<= mig._storage->inputs.size(); k++ ){
+  		auto node = mig.index_to_node(k);
+  		std::cout << " reg " << k << " fan out size " << mig.fanout_size(node) << std::endl;
+    }
+    for (unsigned l=0; l< mig._storage->outputs.size(); l++){
+      std::cout << " outputs " << std::endl;
+      std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
+    }
+  }
+
+  ALICE_COMMAND(show_aig, "Output", "Writes the the aig dot file"){
+
+      auto aig = store<mockturtle::aig_network>().current();
+
+    for (int j =1; j < aig._storage->nodes.size(); j++) {
+      for (int i = 0; i < aig._storage->nodes.data()->children.size(); i++) {
+        std::cout << "node index " << j << " node fan in " << aig._storage->nodes[j].children[i].data << std::endl;
+      }
     }
 
-    ALICE_COMMAND( read_lib, "STA", "Reads standard cell library"){
-        std::string filename = "";
-        std::cout << "Enter liberty path: ";
-        std::cin >> filename;
-
-        sta_cfg.set_lib_path(filename);
+    for (unsigned k = aig.num_pis()+1; k<= (aig._storage->inputs.size() - aig.num_latches()); k++ ){
+    	auto node = aig.index_to_node(k);
+	    std::cout << " reg " << k << " fan out size " << aig.fanout_size(node) << std::endl;
     }
 
-    ALICE_COMMAND( read_netlist, "STA", "Reads mapped verilog"){
-        std::string filename = "";
-        std::cout << "Enter verilog path: ";
-        std::cin >> filename;
+  	for( int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++){
+  		std::cout << "Output " << outIndex << " data " << aig._storage->outputs[outIndex].data << std::endl;
+  	}
 
-        sta_cfg.set_netlist_path(filename);
-    }
+  	aig.foreach_ri([&](auto fi) {
+  		std::cout << "Register " << aig.ri_index(fi) << " data " << fi.data << std::endl;
+  	});
+  }
 
-    ALICE_COMMAND( read_sdc, "STA", "Reads constraint file"){
-        std::string filename = "";
-        std::cout << "Enter sdc path: ";
-        std::cin >> filename;
+  ALICE_COMMAND(print_eachout, "Output", "Testing foreach") {
+  	auto aig = store<mockturtle::aig_network>().current();
+  	static int counter = 0;
+  	aig.foreach_po([&](auto fi) {
+  		std::cout << "Out index " << aig.po_index(fi) << " Counter " << counter << std::endl;
+  	});
+  	counter++;
+  }
 
-        sta_cfg.set_sdc_path(filename);
-    }
+  ALICE_COMMAND(depth, "Output", "Testing depth") {
+  	auto aig = store<mockturtle::aig_network>().current();
 
-    ALICE_COMMAND( run_slack, "STA", "Shows WNS and TNS"){
+  	mockturtle::depth_view aig_depth{aig};
 
-	    sta_cfg.run_slack();
-    }
+  	std::cout << "Aig level " << aig_depth.depth()  << std::endl;
+  }
 
-    ALICE_COMMAND( report_critical_path, "STA", "Runs STA"){
+  ALICE_COMMAND(get_cones, "Output", "Get logical cones for each PO") {
 
-        sta_cfg.run_report_timing();
-    }
+  	auto aig = store<mockturtle::aig_network>().current();
 
-    ALICE_COMMAND( partition_detail, "Partitioning", "Shows what nodes are in each partition"){
+  	//map with number of nodes in each logical cone
+  	std::unordered_map<int, int> po_nodes;
+  	std::unordered_map<int, int> ri_nodes;
 
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            for(int i = 0; i < aig._storage->num_partitions; i++){
-                std::cout << "Partition " << i << ":\n";
-                aig.foreach_node( [&]( auto node ) {
-                    int nodeIdx = aig.node_to_index(node);
-                    if(aig._storage->partitionMap[nodeIdx] == i){
-                        std::cout << nodeIdx << "\n";
-                    }
-                } );
-            }
-        }
-        else{
-            std::cout << "There is no AIG network stored\n";
-        }
-    }
+  	//number of inputs for each cone
+  	std::unordered_map<int, int> po_ins;
+  	std::unordered_map<int, int> ri_ins;
 
-	ALICE_COMMAND(show_mig, "Output", "Writes the the mig dot file"){
-		auto mig = store<mockturtle::mig_network>().current();
+  	//first processing logical cones for POs
+  	for(int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++) {
 
-		for (int j =1; j < mig._storage->nodes.size(); j++) {
-			for (int i = 0; i < mig._storage->nodes.data()->children.size(); i++) {
-				std::cout << "node index " << j << " node fan in " << mig._storage->nodes[j].children[i].data << std::endl;
-			}
-		}
-		for (unsigned k = mig.num_pis()+1; k<= mig._storage->inputs.size(); k++ ){
-			auto node = mig.index_to_node(k);
-			std::cout << " reg " << k << " fan out size " << mig.fanout_size(node) << std::endl;
-            //mig._storage->nodes[node].data
-        }
-        for (unsigned l=0; l< mig._storage->outputs.size(); l++){
-            std::cout << " outputs " << std::endl;
-            //std::cout << " node fan in index " << mig._storage->outputs[l].index << std::endl;
-            std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
-        }
-	}
+  		aig.foreach_node([&](auto node) {
+  			//set all nodes as not visited
+  			aig._storage->nodes[node].data[1].h1 = 0;
+  		});
 
-    ALICE_COMMAND(show_aig, "Output", "Writes the the aig dot file"){
+  		//start counter for a given output index
+  		po_nodes.insert(std::make_pair(outIndex, 0));
 
-//		std::string filename = " ";
-//		std::cout << "Enter filename: ";
-//		std::cin >> filename;
-//
-//		std::ofstream dump;
-//		dump.open (filename);
+  		//starting the counter of inputs
+  		po_ins.insert(std::make_pair(outIndex, 0));
 
-        auto aig = store<mockturtle::aig_network>().current();
+  		//calculate the index of the node driving the output
+  		auto inIdx = aig._storage->outputs[outIndex].data;
+  		if (aig._storage->outputs[outIndex].data & 1)
+  			inIdx = aig._storage->outputs[outIndex].data - 1;
 
-        for (int j =1; j < aig._storage->nodes.size(); j++) {
-            for (int i = 0; i < aig._storage->nodes.data()->children.size(); i++) {
-				std::cout << "node index " << j << " node fan in " << aig._storage->nodes[j].children[i].data << std::endl;
-            }
-        }
+  		inIdx = inIdx >> 1;
 
-        for (unsigned k = aig.num_pis()+1; k<= (aig._storage->inputs.size() - aig.num_latches()); k++ ){
-        	auto node = aig.index_to_node(k);
-			std::cout << " reg " << k << " fan out size " << aig.fanout_size(node) << std::endl;
-        }
+  		//call DFS
+  		compute_cone(aig, inIdx, po_nodes, outIndex, po_ins);
 
-		for( int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++){
-			std::cout << "Output " << outIndex << " data " << aig._storage->outputs[outIndex].data << std::endl;
-			//std::cout << " node fan in index " << aig._storage->outputs[l].index << std::endl;
-		}
+  		aig.foreach_node([&](auto node) {
+  			//set all nodes as not visited
+  			aig._storage->nodes[node].data[1].h1 = 0;
+  		});
 
-		aig.foreach_ri([&](auto fi) {
-			std::cout << "Register " << aig.ri_index(fi) << " data " << fi.data << std::endl;
-		});
-		//dump.close();
-    }
+  		int level = computeLevel(aig, inIdx);
+  		int nodes = 0;
+  		int inputs = 0;
 
-    ALICE_COMMAND(print_eachout, "Output", "Testing foreach") {
-		auto aig = store<mockturtle::aig_network>().current();
-		static int counter = 0;
-		aig.foreach_po([&](auto fi) {
-			std::cout << "Out index " << aig.po_index(fi) << " Counter " << counter << std::endl;
-		});
-		counter++;
-	}
+  		// for each output prints index, nodes, depth and number of inputs, respectively
+  		std::unordered_map<int, int>::iterator it;
+  		it = po_nodes.find(outIndex);
 
-	ALICE_COMMAND(depth, "Output", "Testing depth") {
-		auto aig = store<mockturtle::aig_network>().current();
+  		if (it != po_nodes.end())
+  			nodes = it->second;
 
-		mockturtle::depth_view aig_depth{aig};
+  		std::unordered_map<int, int>::iterator init;
+  		init = po_ins.find(outIndex);
 
-		std::cout << "Aig level " << aig_depth.depth()  << std::endl;
+  		if (it != po_nodes.end())
+  			inputs = init->second;
 
-	}
+  		std::cout << "Output " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
+  		
+  	}
 
-	ALICE_COMMAND(get_cones, "Output", "Get logical cones for each PO") {
-//        std::string filename = " ";
-//        std::cout << "Enter filename: ";
-//        std::cin >> filename;
-//
-//        std::ofstream conesfile;
-//        conesfile.open (filename);
-
-		auto aig = store<mockturtle::aig_network>().current();
-
-		//map with number of nodes in each logical cone
-		std::unordered_map<int, int> po_nodes;
-		std::unordered_map<int, int> ri_nodes;
-
-		//number of inputs for each cone
-		std::unordered_map<int, int> po_ins;
-		std::unordered_map<int, int> ri_ins;
-
-		//first processing logical cones for POs
-		//aig.foreach_po([&](auto fi) {
-		for(int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++) {
-
-			aig.foreach_node([&](auto node) {
-				//set all nodes as not visited
-				aig._storage->nodes[node].data[1].h1 = 0;
-			});
-
-			//PO index to keep track of each cone on the map structure
-			//auto outIndex = aig.po_index(fi);
-
-			//start counter for a given output index
-			po_nodes.insert(std::make_pair(outIndex, 0));
-
-			//starting the counter of inputs
-			po_ins.insert(std::make_pair(outIndex, 0));
-
-			//calculate the index of the node driving the output
-			auto inIdx = aig._storage->outputs[outIndex].data;
-			if (aig._storage->outputs[outIndex].data & 1)
-				inIdx = aig._storage->outputs[outIndex].data - 1;
-
-			inIdx = inIdx >> 1;
-
-			//call DFS
-			compute_cone(aig, inIdx, po_nodes, outIndex, po_ins);
-
-			aig.foreach_node([&](auto node) {
-				//set all nodes as not visited
-				aig._storage->nodes[node].data[1].h1 = 0;
-			});
-
-			int level = computeLevel(aig, inIdx);
-			int nodes = 0;
-			int inputs = 0;
-
-			// for each output prints index, nodes, depth and number of inputs, respectively
-			std::unordered_map<int, int>::iterator it;
-			it = po_nodes.find(outIndex);
-
-			if (it != po_nodes.end())
-				nodes = it->second;
-
-			std::unordered_map<int, int>::iterator init;
-			init = po_ins.find(outIndex);
-
-			if (it != po_nodes.end())
-				inputs = init->second;
-
-			std::cout << "Output " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
-			//});
-		}
-
-		//processing logical cones for registers - pseudo POs
-		aig.foreach_ri([&](auto fi) {
-			aig.foreach_node([&](auto node) {
-				//set all nodes as not visited
-				aig._storage->nodes[node].data[1].h1 = 0;
-			});
-
-            //std::cout << "Entrando no foreach RI " << std::endl;
+  	//processing logical cones for registers - pseudo POs
+  	aig.foreach_ri([&](auto fi) {
+  		aig.foreach_node([&](auto node) {
+  			//set all nodes as not visited
+  			aig._storage->nodes[node].data[1].h1 = 0;
+  		});
 
             //PO index to keep track of each cone on the map structure
-			auto outIndex = aig.ri_index(fi);
+  		auto outIndex = aig.ri_index(fi);
 
-			//start counter for a given ri index
-			ri_nodes.insert(std::make_pair(outIndex, 0));
-			ri_ins.insert(std::make_pair(outIndex, 0));
+  		//start counter for a given ri index
+  		ri_nodes.insert(std::make_pair(outIndex, 0));
+  		ri_ins.insert(std::make_pair(outIndex, 0));
 
-			//calculate the index of the node driving the output
-			auto inIndex = fi.data;
-			if(fi.data & 1)
-				inIndex = fi.data - 1;
+  		//calculate the index of the node driving the output
+  		auto inIndex = fi.data;
+  		if(fi.data & 1)
+  			inIndex = fi.data - 1;
 
-			//calculate latch input node index
-			inIndex = inIndex >> 1;
+  		//calculate latch input node index
+  		inIndex = inIndex >> 1;
 
-			//call DFS
-            compute_cone(aig, inIndex, ri_nodes, outIndex, ri_ins);
+  		//call DFS
+      compute_cone(aig, inIndex, ri_nodes, outIndex, ri_ins);
 
-            aig.foreach_node([&](auto node) {
-                //set all nodes as not visited
-                aig._storage->nodes[node].data[1].h1 = 0;
-            });
+      aig.foreach_node([&](auto node) {
+          //set all nodes as not visited
+          aig._storage->nodes[node].data[1].h1 = 0;
+      });
 
-            int level = computeLevel(aig, inIndex);
-            int nodes = 0;
-			int inputs = 0;
+      int level = computeLevel(aig, inIndex);
+      int nodes = 0;
+  		int inputs = 0;
 
-			// for each output prints index, nodes, depth and number of inputs, respectively
-			std::unordered_map<int, int>::iterator it;
-			it = ri_nodes.find(outIndex);
+  		// for each output prints index, nodes, depth and number of inputs, respectively
+  		std::unordered_map<int, int>::iterator it;
+  		it = ri_nodes.find(outIndex);
 
-			if(it != po_nodes.end())
-				nodes = it->second;
+  		if(it != po_nodes.end())
+  			nodes = it->second;
 
-			std::unordered_map<int, int>::iterator init;
-			init = ri_ins.find(outIndex);
+  		std::unordered_map<int, int>::iterator init;
+  		init = ri_ins.find(outIndex);
 
-			if(it != po_nodes.end())
-				inputs = init->second;
+  		if(it != po_nodes.end())
+  			inputs = init->second;
 
-			std::cout << "Register " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
-		});
-		//conesfile.close ();
+  		std::cout << "Register " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
+  	});
+  }
+
+  ALICE_COMMAND(disjoint_clouds, "Output", "Writes the status for each disjoint combinational cloud on the current AIG"){
+  	std::string filename = " ";
+  	std::cout << "Enter filename: ";
+  	std::cin >> filename;
+
+  	std::ofstream dset;
+  	dset.open (filename);
+
+  	auto aig = store<mockturtle::aig_network>().current();
+
+  	//maps to keep the depth and numb of nodes for each comb cloud
+  	std::unordered_map<int, int> outputs;
+  	std::unordered_map<int, int> depth;
+  	std::unordered_map<int, int> number_nodes;
+
+
+  	//copy sets in a local vector
+  	std::vector<int> clouds;
+
+    //number of aig inputs + 1 to start at the nodes index
+    uint64_t inSize = aig.num_pis()+1;
+
+    //union find constructor - inSize sets the vector index where and nodes start
+    UnionFind uf(aig.size()-1, inSize);
+
+  	//set all nodes as not visited for the DFS
+  	aig.foreach_node([&] (auto node) {
+      aig._storage->nodes[node].data[1].h1 = 0;
+    });
+
+    //first looking to latches
+    aig.foreach_ri( [&] (auto ri) {
+
+      auto indata = ri.data;
+
+      if(indata & 1)
+        indata = indata - 1;
+
+      //calculate latch input node index
+      auto inIndex = indata >> 1;
+
+      if(inIndex>aig.num_pis()) {
+        dfs(aig, inIndex, uf);
+      }
+    });
+
+  	aig.foreach_node([&] (auto node) {
+  		//set all nodes as not visited
+  		aig._storage->nodes[node].data[1].h1 = 0;
+  	});
+
+    //then considering POs
+    for(int i = 0; i<aig.num_pos()-aig.num_latches(); i++){
+  		auto inIdx = aig._storage->outputs[i].data;
+  		if(aig._storage->outputs[i].data & 1)
+  			inIdx = aig._storage->outputs[i].data - 1;
+  		//calculate the index of the node driving the output
+  		inIdx = inIdx >> 1;
+  		if(inIdx>aig.num_pis()) {
+  			dfs(aig, inIdx, uf);
+  		}
     }
 
-    ALICE_COMMAND(disjoint_clouds, "Output", "Writes the status for each disjoint combinational cloud on the current AIG"){
-		std::string filename = " ";
-		std::cout << "Enter filename: ";
-		std::cin >> filename;
+    uf.get_sets(clouds);
 
-		std::ofstream dset;
-		dset.open (filename);
+    for (int j = 0; j < clouds.size() ; ++j) {
+  		auto it = number_nodes.find (clouds[j]);
+  		//element not in the table yet
+  		if(it==number_nodes.end()){
+  			int count = std::count(std::begin(clouds), std::end(clouds), clouds[j]);
+  			number_nodes.insert(std::make_pair(clouds[j],count));
+  		}
+  	}
 
-		auto aig = store<mockturtle::aig_network>().current();
+  	for (std::pair<int, int> element : number_nodes) {
+  		dset << element.second << std::endl;
+  	}
 
-		//maps to keep the depth and numb of nodes for each comb cloud
-		std::unordered_map<int, int> outputs;
-		std::unordered_map<int, int> depth;
-		std::unordered_map<int, int> number_nodes;
+  	std::cout << "Number of disjoint graphs: " << uf.getNumbOfSets() << std::endl;
 
+  	dset.close();
+  }
 
-		//copy sets in a local vector
-		std::vector<int> clouds;
-
-	    //number of aig inputs + 1 to start at the nodes index
-	    uint64_t inSize = aig.num_pis()+1;
-
-	    //union find constructor - inSize sets the vector index where and nodes start
-        UnionFind uf(aig.size()-1, inSize);
-
-		//set all nodes as not visited for the DFS
-		aig.foreach_node([&] (auto node) {
-            aig._storage->nodes[node].data[1].h1 = 0;
-        });
-
-	    //first looking to latches
-	    aig.foreach_ri( [&] (auto ri)
-        {
-	    	auto indata = ri.data;
-
-           if(indata & 1)
-               indata = indata - 1;
-
-           //calculate latch input node index
-           auto inIndex = indata >> 1;
-
-           if(inIndex>aig.num_pis()) {
-			   dfs(aig, inIndex, uf);
-		   }
-		});
-
-		aig.foreach_node([&] (auto node) {
-			//set all nodes as not visited
-			aig._storage->nodes[node].data[1].h1 = 0;
-		});
-
-	    //then considering POs
-	    for(int i = 0; i<aig.num_pos()-aig.num_latches(); i++){
-			auto inIdx = aig._storage->outputs[i].data;
-			if(aig._storage->outputs[i].data & 1)
-				inIdx = aig._storage->outputs[i].data - 1;
-			//calculate the index of the node driving the output
-			inIdx = inIdx >> 1;
-			if(inIdx>aig.num_pis()) {
-				dfs(aig, inIdx, uf);
-			}
-	    }
-
-	    uf.get_sets(clouds);
-
-	    for (int j = 0; j < clouds.size() ; ++j) {
-			auto it = number_nodes.find (clouds[j]);
-			//element not in the table yet
-			if(it==number_nodes.end()){
-				int count = std::count(std::begin(clouds), std::end(clouds), clouds[j]);
-				number_nodes.insert(std::make_pair(clouds[j],count));
-			}
-		}
-
-		for (std::pair<int, int> element : number_nodes)
-		{
-			dset << element.second << std::endl;
-		}
-
-		std::cout << "Number of disjoint graphs: " << uf.getNumbOfSets() << std::endl;
-
-		dset.close();
-	}
-
-    class write_verilog_command : public alice::command{
+  class write_verilog_command : public alice::command{
 
     public:
       explicit write_verilog_command( const environment::ptr& env )
@@ -4814,38 +1225,37 @@ class test_part_view_command : public alice::command{
 
     protected:
         void execute(){
-            if(checkExt(filename, "v")){
-                if(is_set("mig")){
-                    if(!store<mockturtle::mig_network>().empty()){
-                        auto& mig = store<mockturtle::mig_network>().current();
-                        mockturtle::write_verilog(mig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an MIG network stored.\n";
-                    }
-                }
-                else{
-                    if(!store<mockturtle::aig_network>().empty()){
-                        auto& aig = store<mockturtle::aig_network>().current();
-                        mockturtle::write_verilog(aig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an AIG network stored.\n";
-                    }
-                }
+        if(checkExt(filename, "v")){
+          if(is_set("mig")){
+            if(!store<mockturtle::mig_network>().empty()){
+              auto& mig = store<mockturtle::mig_network>().current();
+              mockturtle::write_verilog(mig, filename);
             }
             else{
-                std::cout << filename << " is not a valid verilog file\n";
+              std::cout << "There is not an MIG network stored.\n";
             }
+          }
+          else{
+            if(!store<mockturtle::aig_network>().empty()){
+              auto& aig = store<mockturtle::aig_network>().current();
+              mockturtle::write_verilog(aig, filename);
+            }
+            else{
+              std::cout << "There is not an AIG network stored.\n";
+            }
+          }
         }
-
+        else{
+            std::cout << filename << " is not a valid verilog file\n";
+        }
+      }
     private:
       std::string filename{};
-    };
+  };
 
-    ALICE_ADD_COMMAND(write_verilog, "Output");
+  ALICE_ADD_COMMAND(write_verilog, "Output");
 
-    class write_bench_command : public alice::command{
+  class write_bench_command : public alice::command{
 
     public:
       explicit write_bench_command( const environment::ptr& env )
@@ -4856,39 +1266,38 @@ class test_part_view_command : public alice::command{
       }
 
     protected:
-        void execute(){
-            if(checkExt(filename, "bench")){
-                if(is_set("mig")){
-                    if(!store<mockturtle::mig_network>().empty()){
-                        auto& mig = store<mockturtle::mig_network>().current();
-                        mockturtle::write_bench(mig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an MIG network stored.\n";
-                    }
-                }
-                else{
-                    if(!store<mockturtle::aig_network>().empty()){
-                        auto& aig = store<mockturtle::aig_network>().current();
-                        mockturtle::write_bench(aig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an AIG network stored.\n";
-                    }
-                }
+      void execute(){
+        if(checkExt(filename, "bench")){
+          if(is_set("mig")){
+            if(!store<mockturtle::mig_network>().empty()){
+              auto& mig = store<mockturtle::mig_network>().current();
+              mockturtle::write_bench(mig, filename);
             }
             else{
-                std::cout << filename << " is not a valid bench file\n";
+              std::cout << "There is not an MIG network stored.\n";
             }
+          }
+          else{
+            if(!store<mockturtle::aig_network>().empty()){
+              auto& aig = store<mockturtle::aig_network>().current();
+              mockturtle::write_bench(aig, filename);
+            }
+            else{
+              std::cout << "There is not an AIG network stored.\n";
+            }
+          }
         }
-
+        else{
+            std::cout << filename << " is not a valid bench file\n";
+        }
+      }
     private:
       std::string filename{};
-    };
+  };
 
-    ALICE_ADD_COMMAND(write_bench, "Output");
+  ALICE_ADD_COMMAND(write_bench, "Output");
 
-    class write_dot_command : public alice::command{
+  class write_dot_command : public alice::command{
 
     public:
       explicit write_dot_command( const environment::ptr& env )
@@ -4899,526 +1308,317 @@ class test_part_view_command : public alice::command{
       }
 
     protected:
-        void execute(){
-            if(checkExt(filename, "dot")){
-                if(is_set("mig")){
-                    if(!store<mockturtle::mig_network>().empty()){
-                        auto& mig = store<mockturtle::mig_network>().current();
-                        mockturtle::write_dot(mig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an MIG network stored.\n";
-                    }
-                }
-                else{
-                    if(!store<mockturtle::aig_network>().empty()){
-                        auto& aig = store<mockturtle::aig_network>().current();
-                        mockturtle::write_dot(aig, filename);
-                    }
-                    else{
-                        std::cout << "There is not an AIG network stored.\n";
-                    }
-                }
-                
+      void execute(){
+        if(checkExt(filename, "dot")){
+          if(is_set("mig")){
+            if(!store<mockturtle::mig_network>().empty()){
+              auto& mig = store<mockturtle::mig_network>().current();
+              mockturtle::write_dot(mig, filename);
             }
             else{
-                std::cout << filename << " is not a valid dot file\n";
+              std::cout << "There is not an MIG network stored.\n";
             }
+          }
+          else{
+            if(!store<mockturtle::aig_network>().empty()){
+              auto& aig = store<mockturtle::aig_network>().current();
+              mockturtle::write_dot(aig, filename);
+            }
+            else{
+              std::cout << "There is not an AIG network stored.\n";
+            }
+          }
+            
         }
+        else{
+            std::cout << filename << " is not a valid dot file\n";
+        }
+      }
 
     private:
       std::string filename{};
     };
 
-    ALICE_ADD_COMMAND(write_dot, "Output");
+  ALICE_ADD_COMMAND(write_dot, "Output");
 
-	ALICE_COMMAND(tmap, "Transformation", "Performs LUT techmapping") {
-		auto mig = store<mockturtle::mig_network>().current();;
-		mockturtle::mapping_view<mockturtle::mig_network, true> mapped_mig{mig};
+  ALICE_COMMAND(tmap, "Transformation", "Performs LUT techmapping") {
+    auto mig = store<mockturtle::mig_network>().current();;
+    mockturtle::mapping_view<mockturtle::mig_network, true> mapped_mig{mig};
 
-		mockturtle::lut_mapping_params ps;
-		ps.cut_enumeration_ps.cut_size = 6;
-		mockturtle::lut_mapping(mapped_mig, ps);
-		//mockturtle::lut_mapping<mapped_view<mig_network, true>, true>( mapped_mig );
-	}
+    mockturtle::lut_mapping_params ps;
+    ps.cut_enumeration_ps.cut_size = 6;
+    mockturtle::lut_mapping(mapped_mig, ps);
+  }
 
-    ALICE_COMMAND(interleaving, "Modification", "NPN + depth MIG rewriting") {
-        auto& mig = store<mockturtle::mig_network>().current();
+  ALICE_COMMAND(interleaving, "Modification", "NPN + depth MIG rewriting") {
+    auto& mig = store<mockturtle::mig_network>().current();
 
-        mockturtle::mig_npn_resynthesis resyn;
-        mockturtle::cut_rewriting_params ps;
+    mockturtle::mig_npn_resynthesis resyn;
+    mockturtle::cut_rewriting_params ps;
 
-        ps.cut_enumeration_ps.cut_size = 4;
+    ps.cut_enumeration_ps.cut_size = 4;
 
-        mockturtle::cut_rewriting(mig, resyn, ps);
-        mig = mockturtle::cleanup_dangling( mig );
+    mockturtle::cut_rewriting(mig, resyn, ps);
+    mig = mockturtle::cleanup_dangling( mig );
 
+  }
+
+  ALICE_COMMAND(migscript, "Modification", "Exact NPN MIG rewriting") {
+  	auto& opt = store<mockturtle::mig_network>().current();
+    mockturtle::depth_view mig_depth{opt};
+
+  	//DEPTH REWRITING
+    std::cout << "MIG logic depth " << mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+    mockturtle::mig_script migopt;
+    opt = migopt.run(opt);
+
+    mockturtle::depth_view new_mig_depth{opt};
+    std::cout << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+  }
+
+  ALICE_COMMAND(aigscript, "Modification", "NPN XAG cut rewriting") {
+    auto& opt = store<mockturtle::aig_network>().current();
+    mockturtle::depth_view aig_depth{opt};
+
+    //DEPTH REWRITING
+    std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+
+    mockturtle::aig_script aigopt;
+    opt = aigopt.run(opt);
+
+    mockturtle::depth_view new_aig_depth{opt};
+    std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+
+  }
+
+  ALICE_COMMAND(depthr, "Modification", "Logic depth oriented MIG rewriting"){
+    auto& mig = store<mockturtle::mig_network>().current();
+  	std::cout << "Mig gates " << mig.num_gates() << std::endl;
+
+  	//to compute at level
+  	mockturtle::depth_view mig_depth{mig};
+
+  	std::cout << "Mig level " << mig_depth.depth() << " mig gates " << mig.num_gates() << std::endl;
+
+  	mockturtle::mig_algebraic_depth_rewriting_params pm;
+  	pm.aggressive;
+  	mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
+
+  	mig = mockturtle::cleanup_dangling( mig );
+  	std::cout << "Mig level after algebraic rewriting " << mig_depth.depth() << " Mig gates " << mig.num_gates() << std::endl;
+  }
+
+  ALICE_COMMAND(test_ci, "Output", "Testing mig is ci") {
+  	auto mig = store<mockturtle::mig_network>().current();
+
+  	mig.foreach_ci([&] (auto node) {
+  		if(mig.is_ci(node)){
+  			std::cout << "Found CI " << std::endl;
+  		}
+  	});
+  }
+
+  ALICE_CONVERT( mockturtle::mig_network, element, mockturtle::aig_network ) {
+    auto aig = mockturtle::aig_network();
+  	std::unordered_set<uint32_t> toinvert;
+  	std::unordered_set<uint32_t> duplicated;
+  	std::map<uint32_t , mockturtle::aig_network::signal> update_output ;
+  	std::vector<int> missing;
+
+    //create aig inputs
+  	for (int i = 0; i < element.num_pis() - element.num_latches(); ++i) {
+  		aig.create_pi();
+  	}
+
+    //create registers output (PIs in the AIG)
+    for (int i=0; i<element.num_latches(); i++){
+    	aig.create_ro();
     }
 
-	ALICE_COMMAND(migscript, "Modification", "Exact NPN MIG rewriting") {
-		auto& opt = store<mockturtle::mig_network>().current();
-        mockturtle::depth_view mig_depth{opt};
-
-		//DEPTH REWRITING
-        std::cout << "MIG logic depth " << mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
-
-        mockturtle::mig_script migopt;
-        opt = migopt.run(opt);
-
-        mockturtle::depth_view new_mig_depth{opt};
-        std::cout << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
-        // store<mockturtle::mig_network>().extend() = opt;
-
-	}
-
-    ALICE_COMMAND(aigscript, "Modification", "NPN XAG cut rewriting") {
-        auto& opt = store<mockturtle::aig_network>().current();
-        mockturtle::depth_view aig_depth{opt};
-
-        //DEPTH REWRITING
-        std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
-
-        mockturtle::aig_script aigopt;
-        opt = aigopt.run(opt);
-
-        mockturtle::depth_view new_aig_depth{opt};
-        std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
-        // store<mockturtle::aig_network>().extend() = opt;
-
-    }
-
-	ALICE_COMMAND(depthr, "Modification", "Logic depth oriented MIG rewriting"){
-	    auto& mig = store<mockturtle::mig_network>().current();
-		std::cout << "Mig gates " << mig.num_gates() << std::endl;
-
-		//to compute at level
-		mockturtle::depth_view mig_depth{mig};
-
-		std::cout << "Mig level " << mig_depth.depth() << " mig gates " << mig.num_gates() << std::endl;
-
-		mockturtle::mig_algebraic_depth_rewriting_params pm;
-		pm.aggressive;
-		mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
-
-		mig = mockturtle::cleanup_dangling( mig );
-		std::cout << "Mig level after algebraic rewriting " << mig_depth.depth() << " Mig gates " << mig.num_gates() << std::endl;
-
-//		mockturtle::mig_npn_resynthesis resyn;
-//		mockturtle::cut_rewriting_params ps;
-//		ps.cut_enumeration_ps.cut_size = 4;
-//		mockturtle::cut_rewriting(mig, resyn, ps);
-//		//mig = mockturtle::cleanup_dangling(mig);
-//
-//        std::cout << " mig gates after rewriting " << mig.num_gates() << std::endl;
-
-//		mockturtle::refactoring(mig, resyn);
-//		//mockturtle::resubstitution (mig);
-//		mig = cleanup_dangling( mig );
-//
-//		std::cout << " mig gates after refact 2" << mig.num_gates() << std::endl;
-//
-//		//mockturtle::resubstitution (mig);
-//		//mig = cleanup_dangling( mig );
-//
-//		std::cout << " mig gates after 2 resub " << mig.num_gates() << std::endl;
-	}
-
-	ALICE_COMMAND(test_ci, "Output", "Testing mig is ci"){
-		auto mig = store<mockturtle::mig_network>().current();
-
-		mig.foreach_ci([&] (auto node) {
-			if(mig.is_ci(node)){
-				std::cout << "Found CI " << std::endl;
-			}
-		});
-	}
-
-    ALICE_CONVERT( mockturtle::mig_network, element, mockturtle::aig_network )
-    {
-	    auto aig = mockturtle::aig_network();
-		std::unordered_set<uint32_t> toinvert;
-		std::unordered_set<uint32_t> duplicated;
-		std::map<uint32_t , mockturtle::aig_network::signal> update_output ;
-		std::vector<int> missing;
-
-        //create aig inputs
-		for (int i = 0; i < element.num_pis() - element.num_latches(); ++i) {
-			aig.create_pi();
-		}
-
-        //create registers output (PIs in the AIG)
-        for (int i=0; i<element.num_latches(); i++){
-        	aig.create_ro();
-        }
-
-        //convert majs into ands
-		element.foreach_gate([&] (auto gate) {
-			auto index = element.node_to_index(gate);
-
-			//ignore PIs and Latch inputs
-			if(index > element.num_pis()) {
-
-				if(element._storage->nodes[index].children[0].data == 1){
-
-					auto child2 = element._storage->nodes[index].children[1];
-					auto child3 = element._storage->nodes[index].children[2];
-
-					auto search = toinvert.find(2 * child2.index);
-					if (search == toinvert.end()) {
-						child2 = aig.create_not(child2);
-					}
-
-					auto search1 = toinvert.find(2 * child3.index);
-					if (search1 == toinvert.end()) {
-						child3 = aig.create_not(child3);
-					}
-
-					//add complemented nodes. If a complemented node (first child equals to 1) is fan-in of a node, it should be complemented while generating the aig
-					toinvert.insert(2 * index);
-
-					aig.create_maj(aig.child_to_signal(0), child2, child3);
-				}
-
-				else if (element._storage->nodes[index].children[0].data == 0){
-					auto child2 = element._storage->nodes[index].children[1];
-					auto child3 = element._storage->nodes[index].children[2];
-
-					auto search = toinvert.find(2 * child2.index);
-					if (search != toinvert.end()) {
-						child2 = aig.create_not(child2);
-						duplicated.insert(child2.index * 2);
-						toinvert.erase(2*index);
-					}
-
-					auto search1 = toinvert.find(2 * child3.index);
-					if (search1 != toinvert.end()) {
-						child3 = aig.create_not(child3);
-						duplicated.insert(child3.index * 2);
-					}
-
-					aig.create_maj(aig.child_to_signal(0), child2, child3);
-				}
-
-				else{
-					auto child1 = element._storage->nodes[index].children[0];
-					auto child2 = element._storage->nodes[index].children[1];
-					auto child3 = element._storage->nodes[index].children[2];
-
-					auto search = toinvert.find(2 * child1.index);
-					auto search0 = duplicated.find(2 * child1.index);
-					if (search != toinvert.end() && search0 == duplicated.end()) {
-						child1 = aig.create_not(child1);
-					}
-
-					auto search1 = duplicated.find(2 * child2.index);
-					auto search2 = toinvert.find(2 * child2.index);
-					if (search2 != toinvert.end() && search1 == duplicated.end()) {
-						child2 = aig.create_not(child2);
-					}
-
-					auto search3 = toinvert.find(2 * child3.index);
-					auto search4 = duplicated.find(2*child3.index);
-					if (search3 != toinvert.end() && search4 == duplicated.end()) {
-						child3 = aig.create_not(child3);
-					}
-
-					auto maj = aig.create_maj(child1, child2, child3);
-
-					std::cout << "Inserting in the table " << 2*index << " " << maj.index << std::endl;
-					update_output.insert(std::make_pair(2*index, maj));
-
-				}
-			}
-		});
-
-		aig.foreach_gate([&] (auto gate) {
-			auto index = aig.node_to_index(gate);
-
-			//ignore PIs and Latch inputs
-			if(index > aig.num_pis()) {
-
-				auto child1 = aig._storage->nodes[index].children[0];
-				auto child2 = aig._storage->nodes[index].children[1];
-
-				auto it = update_output.find(2*child1.index);
-
-				if(it!=update_output.end()){
-					if(index < (it->first)/2) {
-						//it->second.complement = it->second.complement ^ 1;
-						std::cout << "Child1! My index " << index <<std::endl;
-						std::cout << "Replacing " << 2*child1.index << " by " << it->second.index << " polarity " << it->second.complement << std::endl;
-						aig._storage->nodes[index].children[0] = it->second;
-						//aig.update();
-					}
-				}
-
-				auto it1 = update_output.find(2*child2.index);
-
-				if(it1!=update_output.end()){
-					if(index < (it1->first)/2) {
-						//it1->second.complement = it1->second.complement ^ 1;
-						std::cout << "Child2! My index " << index <<std::endl;
-						std::cout << "Replacing " << 2*child2.index << " by " << it1->second.index << " polarity " << it1->second.complement << std::endl;
-						aig._storage->nodes[index].children[1] = it1->second;
-						//aig.update();
-					}
-				}
-			}
-		});
-
-        //create aig outputs
-		for(int i = 0; i < element.num_pos() - element.num_latches(); i++){
-			auto in = element._storage->outputs[i].data;
-			auto signal = element.child_to_signal(in);
-			auto signalOut = mockturtle::aig_network::signal(signal);
-
-			auto it = update_output.find(in);
-
-			if(it!=update_output.end()){
-				//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
-				signalOut = it->second;
-			}
-
-			else {
-				auto search = toinvert.find(1 ^ in);
-				if (search != toinvert.end()) {
-					signalOut = aig.create_not(signalOut);
-				}
-
-				auto search1 = toinvert.find(in);
-				if (search1 != toinvert.end()) {
-					signalOut = aig.create_not(signalOut);
-				}
-			}
-			aig.create_po(signalOut);
-		}
-
-		//create registers input as AIG PO
-		for (unsigned int i = 0; i < element.num_latches() ; ++i) {
-			int8_t reset = 0;
-			std::string name = "";
-			auto regIdx = element.num_pos() - element.num_latches() + i;
-			auto signal = element.ri_at(regIdx);
-
-			bool comp = false;
-			auto temp = signal.data;
-
-			auto it = update_output.find(2*signal.index);
-
-			if(it!=update_output.end()){
-				//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
-				auto ri = it->second;
-				aig.create_ri(ri, reset, name);
-
-			}
-
-			else{
-				if (signal.data & 1) {
-					auto temp = signal.data - 1;
-				}
-
-				auto nodeIn = signal.data / 2;
-				if (element._storage->nodes[nodeIn].children[0].data == 1) {
-					comp = true;
-				}
-
-				auto ri = mockturtle::aig_network::signal(signal);
-
-				if (comp) {
-					ri = aig.create_not(ri);
-				}
-
-				aig.create_ri(ri, reset, name);
-			}
-		}
-		return aig;
-    }
-
-   /* ALICE_COMMAND(rewrite_mig, "Optimization", "Runs MIG rewrite"){
-        auto mig = store<mockturtle::mig_network>().current();
-        mockturtle::mig_algebraic_depth_rewriting_params ps;
-        ps.strategy = mockturtle::mig_algebraic_depth_rewriting_params::selective;
-        mockturtle::mig_algebraic_depth_rewriting(mig, ps);
-    }*/
-
-	ALICE_COMMAND(test_aig, "Output", "Writes the the mig dot file"){
-		auto aig = store<mockturtle::aig_network>().current();
-
-		aig.foreach_node( [&] (auto node)
-						  {
-							  for (int i=0; i < aig._storage->nodes.data()->children.size() ; i++ ){
-								  std::cout << "node index " << node << " node fan in " << aig._storage->nodes.data()->children[i].data  << std::endl;
-							  }
-						  });
-	}
-
-    ALICE_COMMAND(print_part_stats, "Stats", "Prints overall statistics of the paritions"){
-
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            // int avg_size = 0;
-            // int max_size = 0;
-            // for(int i = 0; i < aig._storage->num_partitions; i++){
-            // 	avg_size += aig._storage->partitionSize[i];
-            // 	if(max_size < aig._storage->partitionSize[i])
-            // 		max_size = aig._storage->partitionSize[i];
-            // }
-
-            // avg_size = avg_size / aig._storage->num_partitions;
-            // std::cout << "average part size = \n";
-            // std::cout << avg_size << "\n";
-            // std::cout << "max part size = \n";
-            // std::cout << max_size << "\n";
-
-
-            int avg_in_size = 0;
-            int max_in_size = 0;
-            for(int i = 0; i < aig._storage->num_partitions; i++){
-                avg_in_size += aig._storage->partitionInputs[i].size();
-                if(max_in_size < aig._storage->partitionInputs[i].size())
-                    max_in_size = aig._storage->partitionInputs[i].size();
-            }
-            avg_in_size = avg_in_size / aig._storage->num_partitions;
-
-            std::cout << "average part input size = \n";
-            std::cout << avg_in_size << "\n";
-            std::cout << "max part input size = \n";
-            std::cout << max_in_size << "\n";
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-
-    }
-
-    // ALICE_COMMAND( test_partition_size, "Test", "Checks to see if any of the logic cones are too big for a truth table to be generated i.e. inputs >= 25"){
-    //     if(!store<mockturtle::aig_network>().empty()){
-    //         auto aig = store<mockturtle::aig_network>().current();
-    //         if(aig._storage->num_partitions != 0){
-    //             for(int i = 0; i < aig._storage->num_partitions; i++){
-    //                 for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-    //                     int curr_output = aig._storage->partitionOutputs[i].at(j);
-    //                     BFS_traversal(aig, curr_output, i);
-    //                     if(aig._storage->logic_cone_inputs[curr_output].size() >= 25){
-    //                         std::cout << "Cone for " << curr_output << " is too big with size " << aig._storage->logic_cone_inputs[curr_output].size() << "\n";
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         else{
-    //             std::cout << "Partitions not mapped yet\n";
-    //         }
-    //     }
-    //     else{
-    //         std::cout << "No AIG network stored\n";
-    //     }
-    // }
-
-    ALICE_COMMAND( print_full_blif, "IO", "Prints all the partitioned truth tables in one blif file"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            if(aig._storage->num_partitions != 0){
-                if(!aig._storage->output_tt.empty()){
-                    new_tt_blif(aig);
-                }
-                else{
-                    std::cout << "Truth tables not built yet\n";
-                }
-            }
-            else{
-                std::cout << "Partitions not mapped yet\n";
-            }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-
-    ALICE_COMMAND( create_paritioned_aigs, "Test", "Writes an aag representation of each partition of the stored AIG"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            std::vector<mockturtle::aig_network> aig_parts;
-            if(aig._storage->num_partitions != 0){
-                for(int i = 0; i < aig._storage->num_partitions; i++){
-                    for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-                        mockturtle::aig_network temp = create_aig_from_part(aig, i, aig._storage->partitionOutputs[i].at(j));
-                        aig_parts.push_back(temp);
-                    }
-                }
-                std::string filename;
-                std::string path = "./" + aig._storage->net_name + "_aig_parts/";
-                for(int i = 0; i < aig_parts.size(); i++){
-                    filename = path + aig_parts.at(i)._storage->net_name + ".aag";
-                    std::cout << "writing to " << filename << "\n";
-                    write_aig(aig_parts.at(i), filename);
-                }
-            }
-            else{
-                std::cout << "Partitions not mapped yet\n";
-            }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-
-    ALICE_COMMAND( calc_partition_level, "Test", "Returns the depth of every logic cone in every partition"){
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            if(aig._storage->num_partitions != 0){
-
-                for(int i = 0; i < aig._storage->num_partitions; i++){
-                    for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-                        //Mark all nodes as not visited
-                        aig.foreach_node( [&]( auto node ) {
-                            int index = aig.node_to_index(node);
-                            aig._storage->nodes[index].data[1].h1 = 0;
-                        });
-                        std::cout << /*"partition = " <<*/ i << " ";
-                        std::cout << /*"output = " <<*/ aig._storage->partitionOutputs[i].at(j) << " ";
-                        std::cout << /*"level = " <<*/ computeLevelPart(aig, aig._storage->partitionOutputs[i].at(j), i) << "\n";
-                    }
-                }
-            }
-            else{
-                std::cout << "Partitions not mapped yet\n";
-            }
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-    }
-
-    ALICE_COMMAND( tt_algo_stats, "Stat", "Returns various statistics for the truth table generation algorithm" ){
-
-        if(!store<mockturtle::aig_network>().empty()){
-            auto aig = store<mockturtle::aig_network>().current();
-            for(int i = 0; i < aig._storage->num_partitions; i++){
-                std::cout << "\nPartion " << i << "\n";
-                std::cout << "---------------------------------------\n";
-                std::cout << "Number of Inputs = " << aig._storage->partitionInputs[i].size() << "\n";
-                std::cout << "Number of Outputs = " << aig._storage->partitionOutputs[i].size() << "\n\n";
-                for(int j = 0; j < aig._storage->partitionOutputs[i].size(); j++){
-
-                    std::cout << "Output " << aig._storage->partitionOutputs[i].at(j) << "\n";
-                    std::cout << "Partition Size = " << aig._storage->partitionSize[i] << "\n";
-                    std::cout << "Number of Inputs for Output = " << aig._storage->index[aig._storage->partitionOutputs[i].at(j)].size() << "\n";
-                    std::cout << "Depth of Logic Cone = " << aig._storage->output_cone_depth[aig._storage->partitionOutputs[i].at(j)] << "\n";
-                    if(aig._storage->test_runtime[aig._storage->partitionOutputs[i].at(j)] != 0.0){
-                        std::cout << aig._storage->test_runtime[aig._storage->partitionOutputs[i].at(j)] << "\n\n";
-                    }
-                    else
-                        std::cout << "Truth Table Generation Algorithm finished really fast\n\n";
-                }
-            }
-
-        }
-        else{
-            std::cout << "No AIG network stored\n";
-        }
-
-    }
-
+    //convert majs into ands
+  	element.foreach_gate([&] (auto gate) {
+  		auto index = element.node_to_index(gate);
+
+  		//ignore PIs and Latch inputs
+  		if(index > element.num_pis()) {
+
+  			if(element._storage->nodes[index].children[0].data == 1){
+
+  				auto child2 = element._storage->nodes[index].children[1];
+  				auto child3 = element._storage->nodes[index].children[2];
+
+  				auto search = toinvert.find(2 * child2.index);
+  				if (search == toinvert.end()) {
+  					child2 = aig.create_not(child2);
+  				}
+
+  				auto search1 = toinvert.find(2 * child3.index);
+  				if (search1 == toinvert.end()) {
+  					child3 = aig.create_not(child3);
+  				}
+
+  				//add complemented nodes. If a complemented node (first child equals to 1) is fan-in of a node, it should be complemented while generating the aig
+  				toinvert.insert(2 * index);
+
+  				aig.create_maj(aig.child_to_signal(0), child2, child3);
+  			}
+
+  			else if (element._storage->nodes[index].children[0].data == 0){
+  				auto child2 = element._storage->nodes[index].children[1];
+  				auto child3 = element._storage->nodes[index].children[2];
+
+  				auto search = toinvert.find(2 * child2.index);
+  				if (search != toinvert.end()) {
+  					child2 = aig.create_not(child2);
+  					duplicated.insert(child2.index * 2);
+  					toinvert.erase(2*index);
+  				}
+
+  				auto search1 = toinvert.find(2 * child3.index);
+  				if (search1 != toinvert.end()) {
+  					child3 = aig.create_not(child3);
+  					duplicated.insert(child3.index * 2);
+  				}
+
+  				aig.create_maj(aig.child_to_signal(0), child2, child3);
+  			}
+
+  			else{
+  				auto child1 = element._storage->nodes[index].children[0];
+  				auto child2 = element._storage->nodes[index].children[1];
+  				auto child3 = element._storage->nodes[index].children[2];
+
+  				auto search = toinvert.find(2 * child1.index);
+  				auto search0 = duplicated.find(2 * child1.index);
+  				if (search != toinvert.end() && search0 == duplicated.end()) {
+  					child1 = aig.create_not(child1);
+  				}
+
+  				auto search1 = duplicated.find(2 * child2.index);
+  				auto search2 = toinvert.find(2 * child2.index);
+  				if (search2 != toinvert.end() && search1 == duplicated.end()) {
+  					child2 = aig.create_not(child2);
+  				}
+
+  				auto search3 = toinvert.find(2 * child3.index);
+  				auto search4 = duplicated.find(2*child3.index);
+  				if (search3 != toinvert.end() && search4 == duplicated.end()) {
+  					child3 = aig.create_not(child3);
+  				}
+
+  				auto maj = aig.create_maj(child1, child2, child3);
+
+  				std::cout << "Inserting in the table " << 2*index << " " << maj.index << std::endl;
+  				update_output.insert(std::make_pair(2*index, maj));
+
+  			}
+  		}
+  	});
+
+  	aig.foreach_gate([&] (auto gate) {
+  		auto index = aig.node_to_index(gate);
+
+  		//ignore PIs and Latch inputs
+  		if(index > aig.num_pis()) {
+
+  			auto child1 = aig._storage->nodes[index].children[0];
+  			auto child2 = aig._storage->nodes[index].children[1];
+
+  			auto it = update_output.find(2*child1.index);
+
+  			if(it!=update_output.end()){
+  				if(index < (it->first)/2) {
+  					//it->second.complement = it->second.complement ^ 1;
+  					std::cout << "Child1! My index " << index <<std::endl;
+  					std::cout << "Replacing " << 2*child1.index << " by " << it->second.index << " polarity " << it->second.complement << std::endl;
+  					aig._storage->nodes[index].children[0] = it->second;
+  					//aig.update();
+  				}
+  			}
+
+  			auto it1 = update_output.find(2*child2.index);
+
+  			if(it1!=update_output.end()){
+  				if(index < (it1->first)/2) {
+  					//it1->second.complement = it1->second.complement ^ 1;
+  					std::cout << "Child2! My index " << index <<std::endl;
+  					std::cout << "Replacing " << 2*child2.index << " by " << it1->second.index << " polarity " << it1->second.complement << std::endl;
+  					aig._storage->nodes[index].children[1] = it1->second;
+  					//aig.update();
+  				}
+  			}
+  		}
+  	});
+
+    //create aig outputs
+  	for(int i = 0; i < element.num_pos() - element.num_latches(); i++){
+  		auto in = element._storage->outputs[i].data;
+  		auto signal = element.child_to_signal(in);
+  		auto signalOut = mockturtle::aig_network::signal(signal);
+
+  		auto it = update_output.find(in);
+
+  		if(it!=update_output.end()){
+  			//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
+  			signalOut = it->second;
+  		}
+
+  		else {
+  			auto search = toinvert.find(1 ^ in);
+  			if (search != toinvert.end()) {
+  				signalOut = aig.create_not(signalOut);
+  			}
+
+  			auto search1 = toinvert.find(in);
+  			if (search1 != toinvert.end()) {
+  				signalOut = aig.create_not(signalOut);
+  			}
+  		}
+  		aig.create_po(signalOut);
+  	}
+
+  	//create registers input as AIG PO
+  	for (unsigned int i = 0; i < element.num_latches() ; ++i) {
+  		int8_t reset = 0;
+  		std::string name = "";
+  		auto regIdx = element.num_pos() - element.num_latches() + i;
+  		auto signal = element.ri_at(regIdx);
+
+  		bool comp = false;
+  		auto temp = signal.data;
+
+  		auto it = update_output.find(2*signal.index);
+
+  		if(it!=update_output.end()){
+  			//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
+  			auto ri = it->second;
+  			aig.create_ri(ri, reset, name);
+
+  		}
+
+  		else{
+  			if (signal.data & 1) {
+  				auto temp = signal.data - 1;
+  			}
+
+  			auto nodeIn = signal.data / 2;
+  			if (element._storage->nodes[nodeIn].children[0].data == 1) {
+  				comp = true;
+  			}
+
+  			auto ri = mockturtle::aig_network::signal(signal);
+
+  			if (comp) {
+  				ri = aig.create_not(ri);
+  			}
+
+  			aig.create_ri(ri, reset, name);
+  		}
+  	}
+    return aig;
+  }
 } // namespace alice
 
 /* Main method for the Alice shell (with prefix) */
