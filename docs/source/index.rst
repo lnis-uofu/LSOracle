@@ -7,12 +7,14 @@ Welcome to LSOracle's documentation!
    motivation
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Tool Guide
 
    epfl/index
 
    lsoracle/index 
+
+   seqmig/index
 
 .. toctree::
    :caption: Apendix
