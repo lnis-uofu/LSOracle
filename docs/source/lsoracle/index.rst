@@ -1,8 +1,12 @@
-Convulational Neural Network Classifier
+Logic Synthesis Oracle
 =======================================
 
 .. _lsoracle:
-   Convulational Neural Network Classifier
+   Logic Synthesis Oracle 
 
-   cnn
+.. toctree::
+
+    manager
+    view
+    seqmig
 

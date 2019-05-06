@@ -12,20 +12,24 @@ The Logic Synthesis oracle is a framework developed on the top of EPFL logic syn
 To compile, it is needed support to CMake 3.9 and C++ 17. For the tests, we have used cmake 3.11.2 and gcc/g++ 8.2
 The current version has been tested on Red Hat 7.5 and MacOS Yosemite 10.10.  
 
-1. git clone https://github.com/LNIS-Projects/LSOracle.git
-2. mkdir build
-3. cd build
-4. cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
-5. make 
+```{r, engine='bash', count_lines}
+git clone https://github.com/LNIS-Projects/LSOracle.git
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
+make 
+```
 
 ## MIG Sequential Support Example: 
 
 To run sequential MIG, please do as follows:
 
-* ./lstools                                                //run the tool
-* get_mig                                               //read a sequential AIG into a sequential AIG. Specify the file path when the command asks for. 
-* migscript                                             //interleaves area and depth optimization in the same way as the ABC resyn2 optimization command. 
-* write_verilog                                       //outputs the optimized network in Verilog format, that can be used to technology mapping or functional verification. 
+```{r, engine='bash', count_lines}
+./lstools                                                #run the tool
+get_mig                                               #read a sequential AIG into a sequential AIG. Specify the file path when the command asks for. 
+migscript                                             #interleaves area and depth optimization in the same way as the ABC resyn2 optimization command. 
+write_verilog                                       #outputs the optimized network in Verilog format, that can be used to technology mapping or functional verification. 
+```
 
 ## Full Documentation 
 
