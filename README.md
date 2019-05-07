@@ -1,7 +1,7 @@
 # Getting Started with LSOracle
 
 [![Build Status](https://travis-ci.org/LNIS-Projects/LSOracle.svg?branch=master)](https://travis-ci.org/LNIS-Projects/LSOracle)
-[![Documentation Status](https://readthedocs.org/projects/lsoracle/badge/?version=latest)](https://lsoracle.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/lsoracle/badge/?version=master)](https://lsoracle.readthedocs.io/en/master/?badge=master)
 
 ## Introduction
 
@@ -35,5 +35,5 @@ write_verilog                                       #outputs the optimized netwo
 
 ## Full Documentation 
 
-The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/latest/?badge=latest)
+The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/master/?badge=master)
 
