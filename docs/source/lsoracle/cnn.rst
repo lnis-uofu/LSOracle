@@ -1,7 +1,7 @@
 Convulational Neural Network Classifier
 =======================================
 
-In order to determine the best fit algorithm to optimize a partition, a Convolutional Neural Network (CNN) is used. In order to model a logic network's functionality as a 2D image, image representations of the karnaugh-map is used (KM-Image). An example of a KM-Image of a 6-input logic cone is shown below. Updated
+In order to determine the best fit algorithm to optimize a partition, a Convolutional Neural Network (CNN) is used. In order to model a logic network's functionality as a 2D image, image representations of the karnaugh-map is used (KM-Image). An example of a KM-Image of a 6-input logic cone is shown below.
 
 .. image:: /../../../docs/source/lsoracle/images/kmimage.png
 		:width: 600
