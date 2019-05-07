@@ -9,5 +9,5 @@ This option skips classification and just optimizes all partitions using just MI
 	read_aig <AIGER file>
 	//Partition stored AIG 
 	partitioning <number of partitions>
-	//-m flag denotes using AIG optimization
+	//-m flag denotes using MIG optimization
 	optimization -m -o <Verilog file to write to>
