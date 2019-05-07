@@ -1,7 +1,7 @@
 Two-Step Mixed Synthesis
 =========================
 
-This method also uses classification but it is slighty different than the method described above. This method also partitions an AIG network and performs classification but it only optimizes partitions that have been classified to use AIG optimization. The resulting network is then partitioned and re-classified and now MIG classified partitions are optimized. Similar to the above command, the flag -b can be used instead of -c cnn_model.json to use a brute force method for classification.
+This method also uses classification, but it is slightly different. This method also partitions an AIG network and performs classification, but it only optimizes partitions that have been classified to use AIG optimization. The resulting network is then partitioned and re-classified, and now MIG classified partitions are optimized. Similar to the above command, the flag -b can be used instead of -c cnn_model.json to use a brute force method for classification.
 
 .. code-block:: c++
 	

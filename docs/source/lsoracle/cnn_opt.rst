@@ -1,7 +1,7 @@
 Optimization with Classification
 =================================
 
-The main functionality of this command is to use the CNN model to determine the best fit algorithm for each partition of a network. The general flow of this command is: read network into either AIG (must begin with AIG network), perform k-means hypergraph partitioning, determine algorithm to use with each using classification, perform optimization on each partition, merge partitions back into one, and write out optimized network. An example of using this command is shown below.
+The main functionality of this command is to use the CNN model to determine the best-fit algorithm for each partition of a network. The general flow of this command is: read network into either AIG (must begin with AIG network), perform k-means hypergraph partitioning, determine the algorithm to use with each using classification, perform optimization on each partition, merge partitions back into one, and write out an optimized network. An example of using this command is shown below.
 
 .. code-block:: c++
 	
