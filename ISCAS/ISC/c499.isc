@@ -1,0 +1,719 @@
+*  combinational logic example  "c499"
+*-------------------------------------------------------------
+*
+*
+*  total number of lines in the netlist ..............   499
+*  simplistically reduced equivalent fault set size =    758
+*        lines from primary input  gates .......    41
+*        lines from primary output gates .......    32
+*        lines from interior gate outputs ......   170
+*        lines from **    59 ** fanout stems ...   256
+*
+*        avg_fanin  =  2.02,     max_fanin  =  5
+*        avg_fanout =  4.34,     max_fanout = 12
+*
+*
+*
+*
+*
+    1 id0      inpt    3   0 >sa0 >sa1
+  146 d0a      from id0      >sa0 >sa1
+  147 d0b      from id0      >sa0 >sa1
+  148 d0c      from id0      >sa0 >sa1
+    5 id1      inpt    3   0 >sa0 >sa1
+  149 d1a      from id1      >sa0 >sa1
+  150 d1b      from id1      >sa0 >sa1
+  151 d1c      from id1      >sa0 >sa1
+    9 id2      inpt    3   0 >sa0 >sa1
+  152 d2a      from id2      >sa0 >sa1
+  153 d2b      from id2      >sa0 >sa1
+  154 d2c      from id2      >sa0 >sa1
+   13 id3      inpt    3   0 >sa0 >sa1
+  155 d3a      from id3      >sa0 >sa1
+  156 d3b      from id3      >sa0 >sa1
+  157 d3c      from id3      >sa0 >sa1
+   17 id4      inpt    3   0 >sa0 >sa1
+  158 d4a      from id4      >sa0 >sa1
+  159 d4b      from id4      >sa0 >sa1
+  160 d4c      from id4      >sa0 >sa1
+   21 id5      inpt    3   0 >sa0 >sa1
+  161 d5a      from id5      >sa0 >sa1
+  162 d5b      from id5      >sa0 >sa1
+  163 d5c      from id5      >sa0 >sa1
+   25 id6      inpt    3   0 >sa0 >sa1
+  164 d6a      from id6      >sa0 >sa1
+  165 d6b      from id6      >sa0 >sa1
+  166 d6c      from id6      >sa0 >sa1
+   29 id7      inpt    3   0 >sa0 >sa1
+  167 d7a      from id7      >sa0 >sa1
+  168 d7b      from id7      >sa0 >sa1
+  169 d7c      from id7      >sa0 >sa1
+   33 id8      inpt    3   0 >sa0 >sa1
+  170 d8a      from id8      >sa0 >sa1
+  171 d8b      from id8      >sa0 >sa1
+  172 d8c      from id8      >sa0 >sa1
+   37 id9      inpt    3   0 >sa0 >sa1
+  173 d9a      from id9      >sa0 >sa1
+  174 d9b      from id9      >sa0 >sa1
+  175 d9c      from id9      >sa0 >sa1
+   41 id10     inpt    3   0 >sa0 >sa1
+  176 d10a     from id10     >sa0 >sa1
+  177 d10b     from id10     >sa0 >sa1
+  178 d10c     from id10     >sa0 >sa1
+   45 id11     inpt    3   0 >sa0 >sa1
+  179 d11a     from id11     >sa0 >sa1
+  180 d11b     from id11     >sa0 >sa1
+  181 d11c     from id11     >sa0 >sa1
+   49 id12     inpt    3   0 >sa0 >sa1
+  182 d12a     from id12     >sa0 >sa1
+  183 d12b     from id12     >sa0 >sa1
+  184 d12c     from id12     >sa0 >sa1
+   53 id13     inpt    3   0 >sa0 >sa1
+  185 d13a     from id13     >sa0 >sa1
+  186 d13b     from id13     >sa0 >sa1
+  187 d13c     from id13     >sa0 >sa1
+   57 id14     inpt    3   0 >sa0 >sa1
+  188 d14a     from id14     >sa0 >sa1
+  189 d14b     from id14     >sa0 >sa1
+  190 d14c     from id14     >sa0 >sa1
+   61 id15     inpt    3   0 >sa0 >sa1
+  191 d15a     from id15     >sa0 >sa1
+  192 d15b     from id15     >sa0 >sa1
+  193 d15c     from id15     >sa0 >sa1
+   65 id16     inpt    3   0 >sa0 >sa1
+  194 d16a     from id16     >sa0 >sa1
+  195 d16b     from id16     >sa0 >sa1
+  196 d16c     from id16     >sa0 >sa1
+   69 id17     inpt    3   0 >sa0 >sa1
+  197 d17a     from id17     >sa0 >sa1
+  198 d17b     from id17     >sa0 >sa1
+  199 d17c     from id17     >sa0 >sa1
+   73 id18     inpt    3   0 >sa0 >sa1
+  200 d18a     from id18     >sa0 >sa1
+  201 d18b     from id18     >sa0 >sa1
+  202 d18c     from id18     >sa0 >sa1
+   77 id19     inpt    3   0 >sa0 >sa1
+  203 d19a     from id19     >sa0 >sa1
+  204 d19b     from id19     >sa0 >sa1
+  205 d19c     from id19     >sa0 >sa1
+   81 id20     inpt    3   0 >sa0 >sa1
+  206 d20a     from id20     >sa0 >sa1
+  207 d20b     from id20     >sa0 >sa1
+  208 d20c     from id20     >sa0 >sa1
+   85 id21     inpt    3   0 >sa0 >sa1
+  209 d21a     from id21     >sa0 >sa1
+  210 d21b     from id21     >sa0 >sa1
+  211 d21c     from id21     >sa0 >sa1
+   89 id22     inpt    3   0 >sa0 >sa1
+  212 d22a     from id22     >sa0 >sa1
+  213 d22b     from id22     >sa0 >sa1
+  214 d22c     from id22     >sa0 >sa1
+   93 id23     inpt    3   0 >sa0 >sa1
+  215 d23a     from id23     >sa0 >sa1
+  216 d23b     from id23     >sa0 >sa1
+  217 d23c     from id23     >sa0 >sa1
+   97 id24     inpt    3   0 >sa0 >sa1
+  218 d24a     from id24     >sa0 >sa1
+  219 d24b     from id24     >sa0 >sa1
+  220 d24c     from id24     >sa0 >sa1
+  101 id25     inpt    3   0 >sa0 >sa1
+  221 d25a     from id25     >sa0 >sa1
+  222 d25b     from id25     >sa0 >sa1
+  223 d25c     from id25     >sa0 >sa1
+  105 id26     inpt    3   0 >sa0 >sa1
+  224 d26a     from id26     >sa0 >sa1
+  225 d26b     from id26     >sa0 >sa1
+  226 d26c     from id26     >sa0 >sa1
+  109 id27     inpt    3   0 >sa0 >sa1
+  227 d27a     from id27     >sa0 >sa1
+  228 d27b     from id27     >sa0 >sa1
+  229 d27c     from id27     >sa0 >sa1
+  113 id28     inpt    3   0 >sa0 >sa1
+  230 d28a     from id28     >sa0 >sa1
+  231 d28b     from id28     >sa0 >sa1
+  232 d28c     from id28     >sa0 >sa1
+  117 id29     inpt    3   0 >sa0 >sa1
+  233 d29a     from id29     >sa0 >sa1
+  234 d29b     from id29     >sa0 >sa1
+  235 d29c     from id29     >sa0 >sa1
+  121 id30     inpt    3   0 >sa0 >sa1
+  236 d30a     from id30     >sa0 >sa1
+  237 d30b     from id30     >sa0 >sa1
+  238 d30c     from id30     >sa0 >sa1
+  125 id31     inpt    3   0 >sa0 >sa1
+  239 d31a     from id31     >sa0 >sa1
+  240 d31b     from id31     >sa0 >sa1
+  241 d31c     from id31     >sa0 >sa1
+  129 ic0      inpt    1   0      >sa1
+  130 ic1      inpt    1   0      >sa1
+  131 ic2      inpt    1   0      >sa1
+  132 ic3      inpt    1   0      >sa1
+  133 ic4      inpt    1   0      >sa1
+  134 ic5      inpt    1   0      >sa1
+  135 ic6      inpt    1   0      >sa1
+  136 ic7      inpt    1   0      >sa1
+  137 r        inpt    8   0 >sa0 >sa1
+  242 r0       from r             >sa1
+  243 r1       from r             >sa1
+  244 r2       from r             >sa1
+  245 r3       from r             >sa1
+  246 r4       from r             >sa1
+  247 r5       from r             >sa1
+  248 r6       from r             >sa1
+  249 r7       from r             >sa1
+  250 xa0      xor     1   2 >sa0 >sa1
+   146   149
+  251 xa1      xor     1   2 >sa0 >sa1
+   152   155
+  252 xa2      xor     1   2 >sa0 >sa1
+   158   161
+  253 xa3      xor     1   2 >sa0 >sa1
+   164   167
+  254 xa4      xor     1   2 >sa0 >sa1
+   170   173
+  255 xa5      xor     1   2 >sa0 >sa1
+   176   179
+  256 xa6      xor     1   2 >sa0 >sa1
+   182   185
+  257 xa7      xor     1   2 >sa0 >sa1
+   188   191
+  258 xa8      xor     1   2 >sa0 >sa1
+   194   197
+  259 xa9      xor     1   2 >sa0 >sa1
+   200   203
+  260 xa10     xor     1   2 >sa0 >sa1
+   206   209
+  261 xa11     xor     1   2 >sa0 >sa1
+   212   215
+  262 xa12     xor     1   2 >sa0 >sa1
+   218   221
+  263 xa13     xor     1   2 >sa0 >sa1
+   224   227
+  264 xa14     xor     1   2 >sa0 >sa1
+   230   233
+  265 xa15     xor     1   2 >sa0 >sa1
+   236   239
+  266 h0       and     1   2 >sa0 >sa1
+   129   242
+  267 h1       and     1   2 >sa0 >sa1
+   130   243
+  268 h2       and     1   2 >sa0 >sa1
+   131   244
+  269 h3       and     1   2 >sa0 >sa1
+   132   245
+  270 h4       and     1   2 >sa0 >sa1
+   133   246
+  271 h5       and     1   2 >sa0 >sa1
+   134   247
+  272 h6       and     1   2 >sa0 >sa1
+   135   248
+  273 h7       and     1   2 >sa0 >sa1
+   136   249
+  274 xb0      xor     1   2 >sa0 >sa1
+   147   159
+  275 xc0      xor     1   2 >sa0 >sa1
+   171   183
+  276 xb1      xor     1   2 >sa0 >sa1
+   150   162
+  277 xc1      xor     1   2 >sa0 >sa1
+   174   186
+  278 xb2      xor     1   2 >sa0 >sa1
+   153   165
+  279 xc2      xor     1   2 >sa0 >sa1
+   177   189
+  280 xb3      xor     1   2 >sa0 >sa1
+   156   168
+  281 xc3      xor     1   2 >sa0 >sa1
+   180   192
+  282 xb4      xor     1   2 >sa0 >sa1
+   195   207
+  283 xc4      xor     1   2 >sa0 >sa1
+   219   231
+  284 xb5      xor     1   2 >sa0 >sa1
+   198   210
+  285 xc5      xor     1   2 >sa0 >sa1
+   222   234
+  286 xb6      xor     1   2 >sa0 >sa1
+   201   213
+  287 xc6      xor     1   2 >sa0 >sa1
+   225   237
+  288 xb7      xor     1   2 >sa0 >sa1
+   204   216
+  289 xc7      xor     1   2 >sa0 >sa1
+   228   240
+  290 f0       xor     2   2 >sa0 >sa1
+   250   251
+  322 f0a      from f0       >sa0 >sa1
+  323 f0b      from f0       >sa0 >sa1
+  293 f1       xor     2   2 >sa0 >sa1
+   252   253
+  324 f1a      from f1       >sa0 >sa1
+  325 f1b      from f1       >sa0 >sa1
+  296 f2       xor     2   2 >sa0 >sa1
+   254   255
+  326 f2a      from f2       >sa0 >sa1
+  327 f2b      from f2       >sa0 >sa1
+  299 f3       xor     2   2 >sa0 >sa1
+   256   257
+  328 f3a      from f3       >sa0 >sa1
+  329 f3b      from f3       >sa0 >sa1
+  302 f4       xor     2   2 >sa0 >sa1
+   258   259
+  330 f4a      from f4       >sa0 >sa1
+  331 f4b      from f4       >sa0 >sa1
+  305 f5       xor     2   2 >sa0 >sa1
+   260   261
+  332 f5a      from f5       >sa0 >sa1
+  333 f5b      from f5       >sa0 >sa1
+  308 f6       xor     2   2 >sa0 >sa1
+   262   263
+  334 f6a      from f6       >sa0 >sa1
+  335 f6b      from f6       >sa0 >sa1
+  311 f7       xor     2   2 >sa0 >sa1
+   264   265
+  336 f7a      from f7       >sa0 >sa1
+  337 f7b      from f7       >sa0 >sa1
+  314 xe0      xor     1   2 >sa0 >sa1
+   274   275
+  315 xe1      xor     1   2 >sa0 >sa1
+   276   277
+  316 xe2      xor     1   2 >sa0 >sa1
+   278   279
+  317 xe3      xor     1   2 >sa0 >sa1
+   280   281
+  318 xe4      xor     1   2 >sa0 >sa1
+   282   283
+  319 xe5      xor     1   2 >sa0 >sa1
+   284   285
+  320 xe6      xor     1   2 >sa0 >sa1
+   286   287
+  321 xe7      xor     1   2 >sa0 >sa1
+   288   289
+  338 g0       xor     1   2 >sa0 >sa1
+   322   324
+  339 g1       xor     1   2 >sa0 >sa1
+   326   328
+  340 g2       xor     1   2 >sa0 >sa1
+   323   327
+  341 g3       xor     1   2 >sa0 >sa1
+   325   329
+  342 g4       xor     1   2 >sa0 >sa1
+   330   332
+  343 g5       xor     1   2 >sa0 >sa1
+   334   336
+  344 g6       xor     1   2 >sa0 >sa1
+   331   335
+  345 g7       xor     1   2 >sa0 >sa1
+   333   337
+  346 xd0      xor     1   2 >sa0 >sa1
+   266   342
+  347 xd1      xor     1   2 >sa0 >sa1
+   267   343
+  348 xd2      xor     1   2 >sa0 >sa1
+   268   344
+  349 xd3      xor     1   2 >sa0 >sa1
+   269   345
+  350 xd4      xor     1   2 >sa0 >sa1
+   270   338
+  351 xd5      xor     1   2 >sa0 >sa1
+   271   339
+  352 xd6      xor     1   2 >sa0 >sa1
+   272   340
+  353 xd7      xor     1   2 >sa0 >sa1
+   273   341
+  354 s0       xor    12   2 >sa0 >sa1
+   314   346
+  458 s0a      from s0
+  459 s0b      from s0
+  460 s0c      from s0
+  461 s0d      from s0            >sa1
+  462 s0e      from s0            >sa1
+  463 s0f      from s0            >sa1
+  464 s0g      from s0            >sa1
+  465 s0h      from s0            >sa1
+  466 s0i      from s0            >sa1
+  467 s0j      from s0            >sa1
+  468 s0k      from s0
+  469 s0l      from s0
+  367 s1       xor    12   2 >sa0 >sa1
+   315   347
+  470 s1a      from s1
+  471 s1b      from s1
+  472 s1c      from s1            >sa1
+  473 s1d      from s1
+  474 s1e      from s1            >sa1
+  475 s1f      from s1            >sa1
+  476 s1g      from s1            >sa1
+  477 s1h      from s1            >sa1
+  478 s1i      from s1
+  479 s1j      from s1
+  480 s1k      from s1            >sa1
+  481 s1l      from s1            >sa1
+  380 s2       xor    12   2 >sa0 >sa1
+   316   348
+  482 s2a      from s2
+  483 s2b      from s2            >sa1
+  484 s2c      from s2
+  485 s2d      from s2
+  486 s2e      from s2            >sa1
+  487 s2f      from s2            >sa1
+  488 s2g      from s2            >sa1
+  489 s2h      from s2            >sa1
+  490 s2i      from s2            >sa1
+  491 s2j      from s2
+  492 s2k      from s2            >sa1
+  493 s2l      from s2
+  393 s3       xor    12   2 >sa0 >sa1
+   317   349
+  494 s3a      from s3            >sa1
+  495 s3b      from s3
+  496 s3c      from s3
+  497 s3d      from s3
+  498 s3e      from s3            >sa1
+  499 s3f      from s3            >sa1
+  500 s3g      from s3            >sa1
+  501 s3h      from s3            >sa1
+  502 s3i      from s3
+  503 s3j      from s3            >sa1
+  504 s3k      from s3
+  505 s3l      from s3            >sa1
+  406 s4       xor    12   2 >sa0 >sa1
+   318   350
+  506 s4a      from s4
+  507 s4b      from s4
+  508 s4c      from s4
+  509 s4d      from s4            >sa1
+  510 s4e      from s4            >sa1
+  511 s4f      from s4            >sa1
+  512 s4g      from s4            >sa1
+  513 s4h      from s4            >sa1
+  514 s4i      from s4            >sa1
+  515 s4j      from s4            >sa1
+  516 s4k      from s4
+  517 s4l      from s4
+  419 s5       xor    12   2 >sa0 >sa1
+   319   351
+  518 s5a      from s5
+  519 s5b      from s5
+  520 s5c      from s5            >sa1
+  521 s5d      from s5
+  522 s5e      from s5            >sa1
+  523 s5f      from s5            >sa1
+  524 s5g      from s5            >sa1
+  525 s5h      from s5            >sa1
+  526 s5i      from s5
+  527 s5j      from s5
+  528 s5k      from s5            >sa1
+  529 s5l      from s5            >sa1
+  432 s6       xor    12   2 >sa0 >sa1
+   320   352
+  530 s6a      from s6
+  531 s6b      from s6            >sa1
+  532 s6c      from s6
+  533 s6d      from s6
+  534 s6e      from s6            >sa1
+  535 s6f      from s6            >sa1
+  536 s6g      from s6            >sa1
+  537 s6h      from s6            >sa1
+  538 s6i      from s6            >sa1
+  539 s6j      from s6
+  540 s6k      from s6            >sa1
+  541 s6l      from s6
+  445 s7       xor    12   2 >sa0 >sa1
+   321   353
+  542 s7a      from s7            >sa1
+  543 s7b      from s7
+  544 s7c      from s7
+  545 s7d      from s7
+  546 s7e      from s7            >sa1
+  547 s7f      from s7            >sa1
+  548 s7g      from s7            >sa1
+  549 s7h      from s7            >sa1
+  550 s7i      from s7
+  551 s7j      from s7            >sa1
+  552 s7k      from s7
+  553 s7l      from s7            >sa1
+  554 y0a      not     1   1      >sa1
+   458
+  555 y1a      not     1   1      >sa1
+   470
+  556 y2a      not     1   1      >sa1
+   482
+  557 y0b      not     1   1      >sa1
+   459
+  558 y1b      not     1   1      >sa1
+   471
+  559 y3b      not     1   1      >sa1
+   495
+  560 y0c      not     1   1      >sa1
+   460
+  561 y2c      not     1   1      >sa1
+   484
+  562 y3c      not     1   1      >sa1
+   496
+  563 y1d      not     1   1      >sa1
+   473
+  564 y2d      not     1   1      >sa1
+   485
+  565 y3d      not     1   1      >sa1
+   497
+  566 y5i      not     1   1      >sa1
+   526
+  567 y7i      not     1   1      >sa1
+   550
+  568 y5j      not     1   1      >sa1
+   527
+  569 y6j      not     1   1      >sa1
+   539
+  570 y4k      not     1   1      >sa1
+   516
+  571 y7k      not     1   1      >sa1
+   552
+  572 y4l      not     1   1      >sa1
+   517
+  573 y6l      not     1   1      >sa1
+   541
+  574 y4a      not     1   1      >sa1
+   506
+  575 y5a      not     1   1      >sa1
+   518
+  576 y6a      not     1   1      >sa1
+   530
+  577 y4b      not     1   1      >sa1
+   507
+  578 y5b      not     1   1      >sa1
+   519
+  579 y7b      not     1   1      >sa1
+   543
+  580 y4c      not     1   1      >sa1
+   508
+  581 y6c      not     1   1      >sa1
+   532
+  582 y7c      not     1   1      >sa1
+   544
+  583 y5d      not     1   1      >sa1
+   521
+  584 y6d      not     1   1      >sa1
+   533
+  585 y7d      not     1   1      >sa1
+   545
+  586 y1i      not     1   1      >sa1
+   478
+  587 y3i      not     1   1      >sa1
+   502
+  588 y1j      not     1   1      >sa1
+   479
+  589 y2j      not     1   1      >sa1
+   491
+  590 y0k      not     1   1      >sa1
+   468
+  591 y3k      not     1   1      >sa1
+   504
+  592 y0l      not     1   1      >sa1
+   469
+  593 y2l      not     1   1      >sa1
+   493
+  594 t0       and     1   4 >sa0
+   554   555   556   494
+  595 t1       and     1   4 >sa0
+   557   558   483   559
+  596 t2       and     1   4 >sa0
+   560   472   561   562
+  597 t3       and     1   4 >sa0
+   461   563   564   565
+  598 t4       and     1   4 >sa0
+   574   575   576   542
+  599 t5       and     1   4 >sa0
+   577   578   531   579
+  600 t6       and     1   4 >sa0
+   580   520   581   582
+  601 t7       and     1   4 >sa0
+   509   583   584   585
+  602 u0       or      4   4 >sa0 >sa1
+   594   595   596   597
+  612 va       from u0            >sa1
+  613 vb       from u0            >sa1
+  614 vc       from u0            >sa1
+  615 vd       from u0            >sa1
+  607 u1       or      4   4 >sa0 >sa1
+   598   599   600   601
+  616 ve       from u1            >sa1
+  617 vf       from u1            >sa1
+  618 vg       from u1            >sa1
+  619 vh       from u1            >sa1
+  620 wa       and     4   5 >sa0 >sa1
+   514   566   538   567   612
+  660 wa0      from wa            >sa1
+  661 wa1      from wa            >sa1
+  662 wa2      from wa            >sa1
+  663 wa3      from wa            >sa1
+  625 wb       and     4   5 >sa0 >sa1
+   515   568   569   551   613
+  664 wb0      from wb            >sa1
+  665 wb1      from wb            >sa1
+  666 wb2      from wb            >sa1
+  667 wb3      from wb            >sa1
+  630 wc       and     4   5 >sa0 >sa1
+   570   528   540   571   614
+  668 wc0      from wc            >sa1
+  669 wc1      from wc            >sa1
+  670 wc2      from wc            >sa1
+  671 wc3      from wc            >sa1
+  635 wd       and     4   5 >sa0 >sa1
+   572   529   573   553   615
+  672 wd0      from wd            >sa1
+  673 wd1      from wd            >sa1
+  674 wd2      from wd            >sa1
+  675 wd3      from wd            >sa1
+  640 we       and     4   5 >sa0 >sa1
+   466   586   490   587   616
+  676 we0      from we            >sa1
+  677 we1      from we            >sa1
+  678 we2      from we            >sa1
+  679 we3      from we            >sa1
+  645 wf       and     4   5 >sa0 >sa1
+   467   588   589   503   617
+  680 wf0      from wf            >sa1
+  681 wf1      from wf            >sa1
+  682 wf2      from wf            >sa1
+  683 wf3      from wf            >sa1
+  650 wg       and     4   5 >sa0 >sa1
+   590   480   492   591   618
+  684 wg0      from wg            >sa1
+  685 wg1      from wg            >sa1
+  686 wg2      from wg            >sa1
+  687 wg3      from wg            >sa1
+  655 wh       and     4   5 >sa0 >sa1
+   592   481   593   505   619
+  688 wh0      from wh            >sa1
+  689 wh1      from wh            >sa1
+  690 wh2      from wh            >sa1
+  691 wh3      from wh            >sa1
+  692 e0       and     1   2 >sa0 >sa1
+   462   660
+  693 e1       and     1   2 >sa0 >sa1
+   474   661
+  694 e2       and     1   2 >sa0 >sa1
+   486   662
+  695 e3       and     1   2 >sa0 >sa1
+   498   663
+  696 e4       and     1   2 >sa0 >sa1
+   463   664
+  697 e5       and     1   2 >sa0 >sa1
+   475   665
+  698 e6       and     1   2 >sa0 >sa1
+   487   666
+  699 e7       and     1   2 >sa0 >sa1
+   499   667
+  700 e8       and     1   2 >sa0 >sa1
+   464   668
+  701 e9       and     1   2 >sa0 >sa1
+   476   669
+  702 e10      and     1   2 >sa0 >sa1
+   488   670
+  703 e11      and     1   2 >sa0 >sa1
+   500   671
+  704 e12      and     1   2 >sa0 >sa1
+   465   672
+  705 e13      and     1   2 >sa0 >sa1
+   477   673
+  706 e14      and     1   2 >sa0 >sa1
+   489   674
+  707 e15      and     1   2 >sa0 >sa1
+   501   675
+  708 e16      and     1   2 >sa0 >sa1
+   510   676
+  709 e17      and     1   2 >sa0 >sa1
+   522   677
+  710 e18      and     1   2 >sa0 >sa1
+   534   678
+  711 e19      and     1   2 >sa0 >sa1
+   546   679
+  712 e20      and     1   2 >sa0 >sa1
+   511   680
+  713 e21      and     1   2 >sa0 >sa1
+   523   681
+  714 e22      and     1   2 >sa0 >sa1
+   535   682
+  715 e23      and     1   2 >sa0 >sa1
+   547   683
+  716 e24      and     1   2 >sa0 >sa1
+   512   684
+  717 e25      and     1   2 >sa0 >sa1
+   524   685
+  718 e26      and     1   2 >sa0 >sa1
+   536   686
+  719 e27      and     1   2 >sa0 >sa1
+   548   687
+  720 e28      and     1   2 >sa0 >sa1
+   513   688
+  721 e29      and     1   2 >sa0 >sa1
+   525   689
+  722 e30      and     1   2 >sa0 >sa1
+   537   690
+  723 e31      and     1   2 >sa0 >sa1
+   549   691
+  724 od0      xor     0   2 >sa0 >sa1
+   148   692
+  725 od1      xor     0   2 >sa0 >sa1
+   151   693
+  726 od2      xor     0   2 >sa0 >sa1
+   154   694
+  727 od3      xor     0   2 >sa0 >sa1
+   157   695
+  728 od4      xor     0   2 >sa0 >sa1
+   160   696
+  729 od5      xor     0   2 >sa0 >sa1
+   163   697
+  730 od6      xor     0   2 >sa0 >sa1
+   166   698
+  731 od7      xor     0   2 >sa0 >sa1
+   169   699
+  732 od8      xor     0   2 >sa0 >sa1
+   172   700
+  733 od9      xor     0   2 >sa0 >sa1
+   175   701
+  734 od10     xor     0   2 >sa0 >sa1
+   178   702
+  735 od11     xor     0   2 >sa0 >sa1
+   181   703
+  736 od12     xor     0   2 >sa0 >sa1
+   184   704
+  737 od13     xor     0   2 >sa0 >sa1
+   187   705
+  738 od14     xor     0   2 >sa0 >sa1
+   190   706
+  739 od15     xor     0   2 >sa0 >sa1
+   193   707
+  740 od16     xor     0   2 >sa0 >sa1
+   196   708
+  741 od17     xor     0   2 >sa0 >sa1
+   199   709
+  742 od18     xor     0   2 >sa0 >sa1
+   202   710
+  743 od19     xor     0   2 >sa0 >sa1
+   205   711
+  744 od20     xor     0   2 >sa0 >sa1
+   208   712
+  745 od21     xor     0   2 >sa0 >sa1
+   211   713
+  746 od22     xor     0   2 >sa0 >sa1
+   214   714
+  747 od23     xor     0   2 >sa0 >sa1
+   217   715
+  748 od24     xor     0   2 >sa0 >sa1
+   220   716
+  749 od25     xor     0   2 >sa0 >sa1
+   223   717
+  750 od26     xor     0   2 >sa0 >sa1
+   226   718
+  751 od27     xor     0   2 >sa0 >sa1
+   229   719
+  752 od28     xor     0   2 >sa0 >sa1
+   232   720
+  753 od29     xor     0   2 >sa0 >sa1
+   235   721
+  754 od30     xor     0   2 >sa0 >sa1
+   238   722
+  755 od31     xor     0   2 >sa0 >sa1
+   241   723

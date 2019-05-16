@@ -1,0 +1,1590 @@
+#  combinational logic example "c2670"
+#-------------------------------------------------------------
+#
+#
+#  total number of lines in the netlist ..............  2670
+#  simplistically reduced equivalent fault set size =   2747
+#        lines from primary input  gates .......   233
+#        lines from primary output gates .......   140
+#        lines from interior gate outputs ......  1129
+#        lines from **   454 ** fanout stems ...  1244
+#
+#        avg_fanin  =  1.64,     max_fanin  =  5
+#        avg_fanout =  2.74,     max_fanout = 11
+#
+#
+#
+#
+#
+INPUT(1)	#... primary input
+INPUT(2)	#... primary input
+INPUT(3)	#... primary input
+INPUT(4)	#... primary input
+INPUT(5)	#... primary input
+INPUT(6)	#... primary input
+INPUT(7)	#... primary input
+INPUT(8)	#... primary input
+INPUT(11)	#... primary input
+INPUT(14)	#... primary input
+INPUT(15)	#... primary input
+INPUT(16)	#... primary input
+INPUT(19)	#... primary input
+INPUT(20)	#... primary input
+INPUT(21)	#... primary input
+INPUT(22)	#... primary input
+INPUT(23)	#... primary input
+INPUT(24)	#... primary input
+INPUT(25)	#... primary input
+INPUT(26)	#... primary input
+INPUT(27)	#... primary input
+INPUT(28)	#... primary input
+INPUT(29)	#... primary input
+INPUT(32)	#... primary input
+INPUT(33)	#... primary input
+INPUT(34)	#... primary input
+INPUT(35)	#... primary input
+INPUT(36)	#... primary input
+INPUT(37)	#... primary input
+INPUT(40)	#... primary input
+INPUT(43)	#... primary input
+INPUT(44)	#... primary input
+INPUT(47)	#... primary input
+INPUT(48)	#... primary input
+INPUT(49)	#... primary input
+INPUT(50)	#... primary input
+INPUT(51)	#... primary input
+INPUT(52)	#... primary input
+INPUT(53)	#... primary input
+INPUT(54)	#... primary input
+INPUT(55)	#... primary input
+INPUT(56)	#... primary input
+INPUT(57)	#... primary input
+INPUT(60)	#... primary input
+INPUT(61)	#... primary input
+INPUT(62)	#... primary input
+INPUT(63)	#... primary input
+INPUT(64)	#... primary input
+INPUT(65)	#... primary input
+INPUT(66)	#... primary input
+INPUT(67)	#... primary input
+INPUT(68)	#... primary input
+INPUT(69)	#... primary input
+INPUT(72)	#... primary input
+INPUT(73)	#... primary input
+INPUT(74)	#... primary input
+INPUT(75)	#... primary input
+INPUT(76)	#... primary input
+INPUT(77)	#... primary input
+INPUT(78)	#... primary input
+INPUT(79)	#... primary input
+INPUT(80)	#... primary input
+INPUT(81)	#... primary input
+INPUT(82)	#... primary input
+INPUT(85)	#... primary input
+INPUT(86)	#... primary input
+INPUT(87)	#... primary input
+INPUT(88)	#... primary input
+INPUT(89)	#... primary input
+INPUT(90)	#... primary input
+INPUT(91)	#... primary input
+INPUT(92)	#... primary input
+INPUT(93)	#... primary input
+INPUT(94)	#... primary input
+INPUT(95)	#... primary input
+INPUT(96)	#... primary input
+INPUT(99)	#... primary input
+INPUT(100)	#... primary input
+INPUT(101)	#... primary input
+INPUT(102)	#... primary input
+INPUT(103)	#... primary input
+INPUT(104)	#... primary input
+INPUT(105)	#... primary input
+INPUT(106)	#... primary input
+INPUT(107)	#... primary input
+INPUT(108)	#... primary input
+INPUT(111)	#... primary input
+INPUT(112)	#... primary input
+INPUT(113)	#... primary input
+INPUT(114)	#... primary input
+INPUT(115)	#... primary input
+INPUT(116)	#... primary input
+INPUT(117)	#... primary input
+INPUT(118)	#... primary input
+INPUT(119)	#... primary input
+INPUT(120)	#... primary input
+INPUT(123)	#... primary input
+INPUT(124)	#... primary input
+INPUT(125)	#... primary input
+INPUT(126)	#... primary input
+INPUT(127)	#... primary input
+INPUT(128)	#... primary input
+INPUT(129)	#... primary input
+INPUT(130)	#... primary input
+INPUT(131)	#... primary input
+INPUT(132)	#... primary input
+INPUT(135)	#... primary input
+INPUT(136)	#... primary input
+INPUT(137)	#... primary input
+INPUT(138)	#... primary input
+INPUT(139)	#... primary input
+INPUT(140)	#... primary input
+INPUT(141)	#... primary input
+INPUT(142)	#... primary input
+INPUT(169)	#... primary input
+INPUT(174)	#... primary input
+INPUT(177)	#... primary input
+INPUT(178)	#... primary input
+INPUT(179)	#... primary input
+INPUT(180)	#... primary input
+INPUT(181)	#... primary input
+INPUT(182)	#... primary input
+INPUT(183)	#... primary input
+INPUT(184)	#... primary input
+INPUT(185)	#... primary input
+INPUT(186)	#... primary input
+INPUT(189)	#... primary input
+INPUT(190)	#... primary input
+INPUT(191)	#... primary input
+INPUT(192)	#... primary input
+INPUT(193)	#... primary input
+INPUT(194)	#... primary input
+INPUT(195)	#... primary input
+INPUT(196)	#... primary input
+INPUT(197)	#... primary input
+INPUT(198)	#... primary input
+INPUT(199)	#... primary input
+INPUT(200)	#... primary input
+INPUT(201)	#... primary input
+INPUT(202)	#... primary input
+INPUT(203)	#... primary input
+INPUT(204)	#... primary input
+INPUT(205)	#... primary input
+INPUT(206)	#... primary input
+INPUT(207)	#... primary input
+INPUT(208)	#... primary input
+INPUT(209)	#... primary input
+INPUT(210)	#... primary input
+INPUT(211)	#... primary input
+INPUT(212)	#... primary input
+INPUT(213)	#... primary input
+INPUT(214)	#... primary input
+INPUT(215)	#... primary input
+INPUT(239)	#... primary input
+INPUT(240)	#... primary input
+INPUT(241)	#... primary input
+INPUT(242)	#... primary input
+INPUT(243)	#... primary input
+INPUT(244)	#... primary input
+INPUT(245)	#... primary input
+INPUT(246)	#... primary input
+INPUT(247)	#... primary input
+INPUT(248)	#... primary input
+INPUT(249)	#... primary input
+INPUT(250)	#... primary input
+INPUT(251)	#... primary input
+INPUT(252)	#... primary input
+INPUT(253)	#... primary input
+INPUT(254)	#... primary input
+INPUT(255)	#... primary input
+INPUT(256)	#... primary input
+INPUT(257)	#... primary input
+INPUT(262)	#... primary input
+INPUT(263)	#... primary input
+INPUT(264)	#... primary input
+INPUT(265)	#... primary input
+INPUT(266)	#... primary input
+INPUT(267)	#... primary input
+INPUT(268)	#... primary input
+INPUT(269)	#... primary input
+INPUT(270)	#... primary input
+INPUT(271)	#... primary input
+INPUT(272)	#... primary input
+INPUT(273)	#... primary input
+INPUT(274)	#... primary input
+INPUT(275)	#... primary input
+INPUT(276)	#... primary input
+INPUT(277)	#... primary input
+INPUT(278)	#... primary input
+INPUT(279)	#... primary input
+INPUT(452)	#... primary input
+INPUT(483)	#... primary input
+INPUT(543)	#... primary input
+INPUT(559)	#... primary input
+INPUT(567)	#... primary input
+INPUT(651)	#... primary input
+INPUT(661)	#... primary input
+INPUT(860)	#... primary input
+INPUT(868)	#... primary input
+INPUT(1083)	#... primary input
+INPUT(1341)	#... primary input
+INPUT(1348)	#... primary input
+INPUT(1384)	#... primary input
+INPUT(1956)	#... primary input
+INPUT(1961)	#... primary input
+INPUT(1966)	#... primary input
+INPUT(1971)	#... primary input
+INPUT(1976)	#... primary input
+INPUT(1981)	#... primary input
+INPUT(1986)	#... primary input
+INPUT(1991)	#... primary input
+INPUT(1996)	#... primary input
+INPUT(2066)	#... primary input
+INPUT(2067)	#... primary input
+INPUT(2072)	#... primary input
+INPUT(2078)	#... primary input
+INPUT(2084)	#... primary input
+INPUT(2090)	#... primary input
+INPUT(2096)	#... primary input
+INPUT(2100)	#... primary input
+INPUT(2104)	#... primary input
+INPUT(2105)	#... primary input
+INPUT(2106)	#... primary input
+INPUT(2427)	#... primary input
+INPUT(2430)	#... primary input
+INPUT(2435)	#... primary input
+INPUT(2438)	#... primary input
+INPUT(2443)	#... primary input
+INPUT(2446)	#... primary input
+INPUT(2451)	#... primary input
+INPUT(2454)	#... primary input
+INPUT(2474)	#... primary input
+INPUT(2678)	#... primary input
+#
+#
+OUTPUT(169)	#... primary output
+OUTPUT(174)	#... primary output
+OUTPUT(177)	#... primary output
+OUTPUT(178)	#... primary output
+OUTPUT(179)	#... primary output
+OUTPUT(180)	#... primary output
+OUTPUT(181)	#... primary output
+OUTPUT(182)	#... primary output
+OUTPUT(183)	#... primary output
+OUTPUT(184)	#... primary output
+OUTPUT(185)	#... primary output
+OUTPUT(186)	#... primary output
+OUTPUT(189)	#... primary output
+OUTPUT(190)	#... primary output
+OUTPUT(191)	#... primary output
+OUTPUT(192)	#... primary output
+OUTPUT(193)	#... primary output
+OUTPUT(194)	#... primary output
+OUTPUT(195)	#... primary output
+OUTPUT(196)	#... primary output
+OUTPUT(197)	#... primary output
+OUTPUT(198)	#... primary output
+OUTPUT(199)	#... primary output
+OUTPUT(200)	#... primary output
+OUTPUT(201)	#... primary output
+OUTPUT(202)	#... primary output
+OUTPUT(203)	#... primary output
+OUTPUT(204)	#... primary output
+OUTPUT(205)	#... primary output
+OUTPUT(206)	#... primary output
+OUTPUT(207)	#... primary output
+OUTPUT(208)	#... primary output
+OUTPUT(209)	#... primary output
+OUTPUT(210)	#... primary output
+OUTPUT(211)	#... primary output
+OUTPUT(212)	#... primary output
+OUTPUT(213)	#... primary output
+OUTPUT(214)	#... primary output
+OUTPUT(215)	#... primary output
+OUTPUT(239)	#... primary output
+OUTPUT(240)	#... primary output
+OUTPUT(241)	#... primary output
+OUTPUT(242)	#... primary output
+OUTPUT(243)	#... primary output
+OUTPUT(244)	#... primary output
+OUTPUT(245)	#... primary output
+OUTPUT(246)	#... primary output
+OUTPUT(247)	#... primary output
+OUTPUT(248)	#... primary output
+OUTPUT(249)	#... primary output
+OUTPUT(250)	#... primary output
+OUTPUT(251)	#... primary output
+OUTPUT(252)	#... primary output
+OUTPUT(253)	#... primary output
+OUTPUT(254)	#... primary output
+OUTPUT(255)	#... primary output
+OUTPUT(256)	#... primary output
+OUTPUT(257)	#... primary output
+OUTPUT(262)	#... primary output
+OUTPUT(263)	#... primary output
+OUTPUT(264)	#... primary output
+OUTPUT(265)	#... primary output
+OUTPUT(266)	#... primary output
+OUTPUT(267)	#... primary output
+OUTPUT(268)	#... primary output
+OUTPUT(269)	#... primary output
+OUTPUT(270)	#... primary output
+OUTPUT(271)	#... primary output
+OUTPUT(272)	#... primary output
+OUTPUT(273)	#... primary output
+OUTPUT(274)	#... primary output
+OUTPUT(275)	#... primary output
+OUTPUT(276)	#... primary output
+OUTPUT(277)	#... primary output
+OUTPUT(278)	#... primary output
+OUTPUT(279)	#... primary output
+OUTPUT(350)	#... primary output
+OUTPUT(335)	#... primary output
+OUTPUT(409)	#... primary output
+OUTPUT(369)	#... primary output
+OUTPUT(367)	#... primary output
+OUTPUT(411)	#... primary output
+OUTPUT(337)	#... primary output
+OUTPUT(384)	#... primary output
+OUTPUT(218)	#... primary output
+OUTPUT(219)	#... primary output
+OUTPUT(220)	#... primary output
+OUTPUT(221)	#... primary output
+OUTPUT(235)	#... primary output
+OUTPUT(236)	#... primary output
+OUTPUT(237)	#... primary output
+OUTPUT(238)	#... primary output
+OUTPUT(158)	#... primary output
+OUTPUT(259)	#... primary output
+OUTPUT(391)	#... primary output
+OUTPUT(173)	#... primary output
+OUTPUT(223)	#... primary output
+OUTPUT(234)	#... primary output
+OUTPUT(217)	#... primary output
+OUTPUT(325)	#... primary output
+OUTPUT(261)	#... primary output
+OUTPUT(319)	#... primary output
+OUTPUT(160)	#... primary output
+OUTPUT(162)	#... primary output
+OUTPUT(164)	#... primary output
+OUTPUT(166)	#... primary output
+OUTPUT(168)	#... primary output
+OUTPUT(171)	#... primary output
+OUTPUT(153)	#... primary output
+OUTPUT(176)	#... primary output
+OUTPUT(188)	#... primary output
+OUTPUT(299)	#... primary output
+OUTPUT(301)	#... primary output
+OUTPUT(286)	#... primary output
+OUTPUT(303)	#... primary output
+OUTPUT(288)	#... primary output
+OUTPUT(305)	#... primary output
+OUTPUT(290)	#... primary output
+OUTPUT(284)	#... primary output
+OUTPUT(321)	#... primary output
+OUTPUT(297)	#... primary output
+OUTPUT(280)	#... primary output
+OUTPUT(148)	#... primary output
+OUTPUT(282)	#... primary output
+OUTPUT(323)	#... primary output
+OUTPUT(156)	#... primary output
+OUTPUT(401)	#... primary output
+OUTPUT(227)	#... primary output
+OUTPUT(229)	#... primary output
+OUTPUT(311)	#... primary output
+OUTPUT(150)	#... primary output
+OUTPUT(145)	#... primary output
+OUTPUT(395)	#... primary output
+OUTPUT(295)	#... primary output
+OUTPUT(331)	#... primary output
+OUTPUT(397)	#... primary output
+OUTPUT(329)	#... primary output
+OUTPUT(231)	#... primary output
+OUTPUT(308)	#... primary output
+OUTPUT(225)	#... primary output
+#
+#
+#	Output		Type	Inputs...
+#	------		----	---------
+	350 = 	buff(	452)
+	335 = 	buff(	452)
+	409 = 	buff(	452)
+	546 = 	and(	1,	3)
+	560 = 	not(	559)
+	369 = 	buff(	1083)
+	367 = 	buff(	1083)
+	1385 = 	not(	1384)
+	411 = 	buff(	2066)
+	337 = 	buff(	2066)
+	384 = 	buff(	2066)
+	157 = 	and(	2090,	2084,	2078,	2072)
+	547 = 	not(	546)
+	218 = 	not(	44)
+	219 = 	not(	132)
+	220 = 	not(	82)
+	221 = 	not(	96)
+	235 = 	not(	69)
+	236 = 	not(	120)
+	237 = 	not(	57)
+	238 = 	not(	108)
+	258 = 	and(	2,	15,	661)
+	480 = 	buff(	661)
+	486 = 	and(	37,	37)
+	654 = 	buff(	452)
+	655 = 	buff(	8)
+	658 = 	buff(	8)
+	772 = 	buff(	543)
+	795 = 	buff(	651)
+	865 = 	not(	860)
+	875 = 	not(	868)
+	882 = 	and(	11,	868)
+	1251 = 	and(	132,	82,	96,	44)
+	1254 = 	and(	120,	57,	108,	69)
+	1261 = 	buff(	543)
+	1284 = 	buff(	651)
+	1344 = 	not(	1341)
+	1351 = 	not(	1348)
+	1394 = 	buff(	2104)
+	1418 = 	buff(	2105)
+	2433 = 	not(	2427)
+	2434 = 	not(	2430)
+	2441 = 	not(	2435)
+	2442 = 	not(	2438)
+	2449 = 	not(	2443)
+	2450 = 	not(	2446)
+	2478 = 	not(	2474)
+	1631 = 	buff(	2104)
+	1655 = 	buff(	2105)
+	1710 = 	buff(	16)
+	1721 = 	buff(	16)
+	2682 = 	not(	2678)
+	1955 = 	and(	7,	661)
+	1959 = 	not(	1956)
+	1964 = 	not(	1961)
+	1969 = 	not(	1966)
+	1974 = 	not(	1971)
+	1979 = 	not(	1976)
+	1984 = 	not(	1981)
+	1989 = 	not(	1986)
+	1994 = 	not(	1991)
+	1999 = 	not(	1996)
+	2001 = 	buff(	29)
+	2012 = 	buff(	29)
+	2070 = 	not(	2067)
+	2076 = 	not(	2072)
+	2082 = 	not(	2078)
+	2088 = 	not(	2084)
+	2094 = 	not(	2090)
+	2099 = 	not(	2096)
+	2103 = 	not(	2100)
+	2457 = 	not(	2451)
+	2458 = 	not(	2454)
+	2461 = 	buff(	1348)
+	2464 = 	buff(	1341)
+	2471 = 	buff(	1956)
+	2479 = 	buff(	1966)
+	2482 = 	buff(	1961)
+	2487 = 	buff(	1976)
+	2490 = 	buff(	1971)
+	2495 = 	buff(	1986)
+	2498 = 	buff(	1981)
+	2505 = 	buff(	1996)
+	2508 = 	buff(	1991)
+	2675 = 	buff(	2067)
+	2683 = 	buff(	2078)
+	2686 = 	buff(	2072)
+	2691 = 	buff(	2090)
+	2694 = 	buff(	2084)
+	2699 = 	buff(	2100)
+	2702 = 	buff(	2096)
+	158 = 	not(	157)
+	259 = 	not(	258)
+	487 = 	not(	486)
+	391 = 	buff(	654)
+	1475 = 	nand(	2430,	2433)
+	1476 = 	nand(	2427,	2434)
+	1484 = 	nand(	2438,	2441)
+	1485 = 	nand(	2435,	2442)
+	1493 = 	nand(	2446,	2449)
+	1494 = 	nand(	2443,	2450)
+	2459 = 	nand(	2454,	2457)
+	2460 = 	nand(	2451,	2458)
+	173 = 	and(	94,	654)
+	216 = 	and(	2106,	1955)
+	223 = 	not(	1955)
+	234 = 	nand(	567,	1955)
+	1253 = 	not(	1251)
+	1256 = 	not(	1254)
+	558 = 	and(	1254,	1251)
+	748 = 	buff(	655)
+	784 = 	not(	772)
+	807 = 	not(	795)
+	821 = 	and(	80,	772,	795)
+	825 = 	and(	68,	772,	795)
+	829 = 	and(	79,	772,	795)
+	833 = 	and(	78,	772,	795)
+	837 = 	and(	77,	772,	795)
+	881 = 	and(	11,	875)
+	994 = 	buff(	655)
+	1273 = 	not(	1261)
+	1296 = 	not(	1284)
+	1310 = 	and(	76,	1261,	1284)
+	1314 = 	and(	75,	1261,	1284)
+	1318 = 	and(	74,	1261,	1284)
+	1322 = 	and(	73,	1261,	1284)
+	1326 = 	and(	72,	1261,	1284)
+	1406 = 	not(	1394)
+	1430 = 	not(	1418)
+	1444 = 	and(	114,	1394,	1418)
+	1448 = 	and(	113,	1394,	1418)
+	1452 = 	and(	112,	1394,	1418)
+	1456 = 	and(	111,	1394,	1418)
+	1460 = 	and(	1394,	1418)
+	1477 = 	nand(	1475,	1476)
+	1486 = 	nand(	1484,	1485)
+	1495 = 	nand(	1493,	1494)
+	2477 = 	not(	2471)
+	1499 = 	nand(	2471,	2478)
+	2485 = 	not(	2479)
+	2486 = 	not(	2482)
+	2493 = 	not(	2487)
+	2494 = 	not(	2490)
+	1643 = 	not(	1631)
+	1667 = 	not(	1655)
+	1681 = 	and(	118,	1631,	1655)
+	1685 = 	and(	107,	1631,	1655)
+	1689 = 	and(	117,	1631,	1655)
+	1693 = 	and(	116,	1631,	1655)
+	1697 = 	and(	115,	1631,	1655)
+	1716 = 	not(	1710)
+	1728 = 	not(	1721)
+	2681 = 	not(	2675)
+	1776 = 	nand(	2675,	2682)
+	2689 = 	not(	2683)
+	2690 = 	not(	2686)
+	2697 = 	not(	2691)
+	2698 = 	not(	2694)
+	1831 = 	buff(	658)
+	1893 = 	buff(	658)
+	2007 = 	not(	2001)
+	2018 = 	not(	2012)
+	2467 = 	not(	2461)
+	2468 = 	not(	2464)
+	2501 = 	not(	2495)
+	2502 = 	not(	2498)
+	2511 = 	not(	2505)
+	2512 = 	not(	2508)
+	2518 = 	nand(	2459,	2460)
+	2551 = 	buff(	1344)
+	2559 = 	buff(	1351)
+	2567 = 	buff(	1959)
+	2575 = 	buff(	1964)
+	2583 = 	buff(	1969)
+	2591 = 	buff(	1974)
+	2599 = 	buff(	1979)
+	2607 = 	buff(	1984)
+	2615 = 	buff(	1989)
+	2623 = 	buff(	1994)
+	2705 = 	not(	2699)
+	2706 = 	not(	2702)
+	2735 = 	buff(	1999)
+	2743 = 	buff(	2070)
+	2751 = 	buff(	2076)
+	2759 = 	buff(	2082)
+	2767 = 	buff(	2088)
+	2775 = 	buff(	2094)
+	217 = 	not(	216)
+	550 = 	and(	2106,	1253)
+	552 = 	and(	567,	1256)
+	325 = 	buff(	558)
+	894 = 	or(	881,	882)
+	1498 = 	nand(	2474,	2477)
+	1507 = 	nand(	2482,	2485)
+	1508 = 	nand(	2479,	2486)
+	1516 = 	nand(	2490,	2493)
+	1517 = 	nand(	2487,	2494)
+	1775 = 	nand(	2678,	2681)
+	1784 = 	nand(	2686,	2689)
+	1785 = 	nand(	2683,	2690)
+	1793 = 	nand(	2694,	2697)
+	1794 = 	nand(	2691,	2698)
+	2469 = 	nand(	2464,	2467)
+	2470 = 	nand(	2461,	2468)
+	2503 = 	nand(	2498,	2501)
+	2504 = 	nand(	2495,	2502)
+	2513 = 	nand(	2508,	2511)
+	2514 = 	nand(	2505,	2512)
+	2707 = 	nand(	2702,	2705)
+	2708 = 	nand(	2699,	2706)
+	261 = 	not(	558)
+	551 = 	not(	550)
+	553 = 	not(	552)
+	818 = 	and(	93,	784,	807)
+	819 = 	and(	55,	772,	807)
+	820 = 	and(	67,	784,	795)
+	822 = 	and(	81,	784,	807)
+	823 = 	and(	43,	772,	807)
+	824 = 	and(	56,	784,	795)
+	826 = 	and(	92,	784,	807)
+	827 = 	and(	54,	772,	807)
+	828 = 	and(	66,	784,	795)
+	830 = 	and(	91,	784,	807)
+	831 = 	and(	53,	772,	807)
+	832 = 	and(	65,	784,	795)
+	834 = 	and(	90,	784,	807)
+	835 = 	and(	52,	772,	807)
+	836 = 	and(	64,	784,	795)
+	1307 = 	and(	89,	1273,	1296)
+	1308 = 	and(	51,	1261,	1296)
+	1309 = 	and(	63,	1273,	1284)
+	1311 = 	and(	88,	1273,	1296)
+	1312 = 	and(	50,	1261,	1296)
+	1313 = 	and(	62,	1273,	1284)
+	1315 = 	and(	87,	1273,	1296)
+	1316 = 	and(	49,	1261,	1296)
+	1317 = 	and(	1273,	1284)
+	1319 = 	and(	86,	1273,	1296)
+	1320 = 	and(	48,	1261,	1296)
+	1321 = 	and(	61,	1273,	1284)
+	1323 = 	and(	85,	1273,	1296)
+	1324 = 	and(	47,	1261,	1296)
+	1325 = 	and(	60,	1273,	1284)
+	1441 = 	and(	138,	1406,	1430)
+	1442 = 	and(	102,	1394,	1430)
+	1443 = 	and(	126,	1406,	1418)
+	1445 = 	and(	137,	1406,	1430)
+	1446 = 	and(	101,	1394,	1430)
+	1447 = 	and(	125,	1406,	1418)
+	1449 = 	and(	136,	1406,	1430)
+	1450 = 	and(	100,	1394,	1430)
+	1451 = 	and(	124,	1406,	1418)
+	1453 = 	and(	135,	1406,	1430)
+	1454 = 	and(	99,	1394,	1430)
+	1455 = 	and(	123,	1406,	1418)
+	1457 = 	and(	1406,	1430)
+	1458 = 	and(	1394,	1430)
+	1459 = 	and(	1406,	1418)
+	1481 = 	not(	1477)
+	1490 = 	not(	1486)
+	1500 = 	nand(	1498,	1499)
+	1509 = 	nand(	1507,	1508)
+	1518 = 	nand(	1516,	1517)
+	1521 = 	buff(	1495)
+	1525 = 	buff(	1495)
+	2557 = 	not(	2551)
+	2565 = 	not(	2559)
+	2573 = 	not(	2567)
+	2581 = 	not(	2575)
+	2589 = 	not(	2583)
+	2597 = 	not(	2591)
+	2605 = 	not(	2599)
+	2613 = 	not(	2607)
+	2621 = 	not(	2615)
+	2629 = 	not(	2623)
+	1678 = 	and(	142,	1643,	1667)
+	1679 = 	and(	106,	1631,	1667)
+	1680 = 	and(	130,	1643,	1655)
+	1682 = 	and(	131,	1643,	1667)
+	1683 = 	and(	95,	1631,	1667)
+	1684 = 	and(	119,	1643,	1655)
+	1686 = 	and(	141,	1643,	1667)
+	1687 = 	and(	105,	1631,	1667)
+	1688 = 	and(	129,	1643,	1655)
+	1690 = 	and(	140,	1643,	1667)
+	1691 = 	and(	104,	1631,	1667)
+	1692 = 	and(	128,	1643,	1655)
+	1694 = 	and(	139,	1643,	1667)
+	1695 = 	and(	103,	1631,	1667)
+	1696 = 	and(	127,	1643,	1655)
+	1734 = 	and(	19,	1716)
+	1736 = 	and(	4,	1716)
+	1738 = 	and(	20,	1716)
+	1740 = 	and(	5,	1716)
+	1742 = 	and(	21,	1728)
+	1744 = 	and(	22,	1728)
+	1746 = 	and(	23,	1728)
+	1748 = 	and(	6,	1728)
+	1750 = 	and(	24,	1728)
+	1777 = 	nand(	1775,	1776)
+	1786 = 	nand(	1784,	1785)
+	1795 = 	nand(	1793,	1794)
+	2023 = 	and(	25,	2007)
+	2025 = 	and(	32,	2007)
+	2027 = 	and(	26,	2007)
+	2029 = 	and(	33,	2007)
+	2031 = 	and(	27,	2018)
+	2033 = 	and(	34,	2018)
+	2035 = 	and(	35,	2018)
+	2037 = 	and(	28,	2018)
+	2741 = 	not(	2735)
+	2749 = 	not(	2743)
+	2757 = 	not(	2751)
+	2765 = 	not(	2759)
+	2773 = 	not(	2767)
+	2781 = 	not(	2775)
+	2515 = 	nand(	2469,	2470)
+	2522 = 	not(	2518)
+	2525 = 	nand(	2513,	2514)
+	2528 = 	nand(	2503,	2504)
+	2730 = 	nand(	2707,	2708)
+	554 = 	and(	551,	553)
+	838 = 	or(	818,	819,	820,	821)
+	841 = 	or(	822,	823,	824,	825)
+	846 = 	or(	826,	827,	828,	829)
+	854 = 	or(	830,	831,	832,	833)
+	857 = 	or(	834,	835,	836,	837)
+	1327 = 	or(	1307,	1308,	1309,	1310)
+	1329 = 	or(	1311,	1312,	1313,	1314)
+	1331 = 	or(	1315,	1316,	1317,	1318)
+	1333 = 	or(	1319,	1320,	1321,	1322)
+	1335 = 	or(	1323,	1324,	1325,	1326)
+	1461 = 	or(	1441,	1442,	1443,	1444)
+	1464 = 	or(	1445,	1446,	1447,	1448)
+	1467 = 	or(	1449,	1450,	1451,	1452)
+	1470 = 	or(	1453,	1454,	1455,	1456)
+	1473 = 	or(	1457,	1458,	1459,	1460)
+	1698 = 	or(	1682,	1683,	1684,	1685)
+	1701 = 	or(	1686,	1687,	1688,	1689)
+	1704 = 	or(	1690,	1691,	1692,	1693)
+	1707 = 	or(	1694,	1695,	1696,	1697)
+	2634 = 	or(	1678,	1679,	1680,	1681)
+	319 = 	buff(	554)
+	1504 = 	not(	1500)
+	1513 = 	not(	1509)
+	1524 = 	not(	1521)
+	1528 = 	not(	1525)
+	1529 = 	buff(	1518)
+	1533 = 	buff(	1518)
+	1538 = 	and(	1486,	1477,	1521)
+	1541 = 	and(	1490,	1481,	1525)
+	1781 = 	not(	1777)
+	1790 = 	not(	1786)
+	1806 = 	buff(	1795)
+	1810 = 	buff(	1795)
+	2734 = 	not(	2730)
+	2521 = 	not(	2515)
+	2524 = 	nand(	2515,	2522)
+	2531 = 	not(	2525)
+	2532 = 	not(	2528)
+	144 = 	and(	838,	860)
+	147 = 	and(	846,	860)
+	152 = 	and(	841,	860)
+	160 = 	not(	1464)
+	162 = 	not(	1467)
+	164 = 	not(	1461)
+	166 = 	not(	1329)
+	168 = 	not(	1327)
+	171 = 	not(	857)
+	175 = 	and(	480,	483,	36,	554)
+	187 = 	and(	480,	483,	554,	547)
+	516 = 	buff(	838)
+	852 = 	not(	846)
+	885 = 	and(	841,	875)
+	887 = 	and(	846,	875)
+	893 = 	and(	1327,	868)
+	1028 = 	not(	838)
+	1031 = 	not(	841)
+	1035 = 	not(	846)
+	1041 = 	buff(	854)
+	1049 = 	buff(	857)
+	1057 = 	buff(	1327)
+	1060 = 	buff(	1329)
+	1066 = 	buff(	1331)
+	1072 = 	buff(	1333)
+	1078 = 	buff(	1335)
+	1213 = 	nand(	2099,	1470)
+	1218 = 	nand(	2103,	1473)
+	1250 = 	buff(	1704)
+	1387 = 	and(	1461,	1385)
+	1389 = 	not(	1464)
+	1537 = 	and(	1481,	1486,	1524)
+	1540 = 	and(	1477,	1490,	1528)
+	1735 = 	and(	841,	1710)
+	1737 = 	and(	846,	1710)
+	1739 = 	and(	854,	1710)
+	1741 = 	and(	857,	1710)
+	1743 = 	and(	1327,	1721)
+	1745 = 	and(	1329,	1721)
+	1747 = 	and(	1331,	1721)
+	1749 = 	and(	1333,	1721)
+	1751 = 	and(	1335,	1721)
+	2638 = 	not(	2634)
+	2024 = 	and(	1698,	2001)
+	2026 = 	and(	1701,	2001)
+	2028 = 	and(	1704,	2001)
+	2030 = 	and(	1707,	2001)
+	2032 = 	and(	1461,	2012)
+	2034 = 	and(	1464,	2012)
+	2036 = 	and(	1467,	2012)
+	2038 = 	and(	1470,	2012)
+	2154 = 	buff(	841)
+	2523 = 	nand(	2518,	2521)
+	2533 = 	nand(	2528,	2531)
+	2534 = 	nand(	2525,	2532)
+	2631 = 	buff(	1698)
+	2639 = 	buff(	1704)
+	2642 = 	buff(	1701)
+	2647 = 	buff(	1461)
+	2650 = 	buff(	1707)
+	2655 = 	buff(	1467)
+	2658 = 	buff(	1464)
+	2665 = 	buff(	1473)
+	2668 = 	buff(	1470)
+	153 = 	or(	865,	152)
+	176 = 	not(	175)
+	188 = 	not(	187)
+	299 = 	buff(	1041)
+	301 = 	buff(	1049)
+	286 = 	buff(	1057)
+	303 = 	buff(	1060)
+	288 = 	buff(	1066)
+	305 = 	buff(	1072)
+	290 = 	buff(	1078)
+	1532 = 	not(	1529)
+	1536 = 	not(	1533)
+	1539 = 	nor(	1537,	1538)
+	1542 = 	nor(	1540,	1541)
+	1544 = 	and(	1509,	1500,	1529)
+	1547 = 	and(	1513,	1504,	1533)
+	2065 = 	or(	2037,	2038)
+	1809 = 	not(	1806)
+	1813 = 	not(	1810)
+	1821 = 	and(	1786,	1777,	1806)
+	1824 = 	and(	1790,	1781,	1810)
+	2538 = 	nand(	2523,	2524)
+	2546 = 	nand(	2533,	2534)
+	2554 = 	or(	1734,	1735)
+	2562 = 	or(	1736,	1737)
+	2570 = 	or(	1738,	1739)
+	2578 = 	or(	1740,	1741)
+	2586 = 	or(	1742,	1743)
+	2594 = 	or(	1744,	1745)
+	2602 = 	or(	1746,	1747)
+	2610 = 	or(	1748,	1749)
+	2618 = 	or(	1750,	1751)
+	2626 = 	or(	2023,	2024)
+	2738 = 	or(	2025,	2026)
+	2746 = 	or(	2027,	2028)
+	2754 = 	or(	2029,	2030)
+	2762 = 	or(	2031,	2032)
+	2770 = 	or(	2033,	2034)
+	2778 = 	or(	2035,	2036)
+	456 = 	and(	1389,	1387,	40)
+	466 = 	not(	1387)
+	562 = 	nand(	560,	852)
+	883 = 	and(	516,	875)
+	889 = 	and(	1049,	868)
+	891 = 	and(	1041,	875)
+	1043 = 	not(	1041)
+	1051 = 	not(	1049)
+	1062 = 	not(	1060)
+	1068 = 	not(	1066)
+	1074 = 	not(	1072)
+	1080 = 	not(	1078)
+	1225 = 	and(	2099,	1213)
+	1227 = 	and(	1213,	1470)
+	1232 = 	and(	2103,	1218)
+	1234 = 	and(	1218,	1473)
+	1543 = 	and(	1504,	1509,	1532)
+	1546 = 	and(	1500,	1513,	1536)
+	2637 = 	not(	2631)
+	1753 = 	nand(	2631,	2638)
+	2645 = 	not(	2639)
+	2646 = 	not(	2642)
+	2653 = 	not(	2647)
+	2654 = 	not(	2650)
+	1820 = 	and(	1781,	1786,	1809)
+	1823 = 	and(	1777,	1790,	1813)
+	2107 = 	buff(	1031)
+	2110 = 	buff(	1028)
+	2118 = 	buff(	1035)
+	2123 = 	not(	1057)
+	2151 = 	not(	852)
+	2158 = 	not(	2154)
+	2161 = 	buff(	1031)
+	2164 = 	buff(	1028)
+	2172 = 	buff(	1035)
+	2235 = 	buff(	516)
+	2262 = 	buff(	1035)
+	2350 = 	buff(	1035)
+	2535 = 	nand(	1542,	1539)
+	2661 = 	not(	2655)
+	2662 = 	not(	2658)
+	2671 = 	not(	2665)
+	2672 = 	not(	2668)
+	468 = 	and(	40,	1389,	466)
+	897 = 	or(	887,	889)
+	898 = 	or(	891,	893)
+	1228 = 	or(	1225,	1227)
+	1235 = 	or(	1232,	1234)
+	1545 = 	nor(	1543,	1544)
+	1548 = 	nor(	1546,	1547)
+	2542 = 	not(	2538)
+	2550 = 	not(	2546)
+	1561 = 	nand(	2554,	2557)
+	2558 = 	not(	2554)
+	1565 = 	nand(	2562,	2565)
+	2566 = 	not(	2562)
+	1569 = 	nand(	2570,	2573)
+	2574 = 	not(	2570)
+	1573 = 	nand(	2578,	2581)
+	2582 = 	not(	2578)
+	1577 = 	nand(	2586,	2589)
+	2590 = 	not(	2586)
+	1581 = 	nand(	2594,	2597)
+	2598 = 	not(	2594)
+	1585 = 	nand(	2602,	2605)
+	2606 = 	not(	2602)
+	1589 = 	nand(	2610,	2613)
+	2614 = 	not(	2610)
+	1593 = 	nand(	2618,	2621)
+	2622 = 	not(	2618)
+	1597 = 	nand(	2626,	2629)
+	2630 = 	not(	2626)
+	1752 = 	nand(	2634,	2637)
+	1761 = 	nand(	2642,	2645)
+	1762 = 	nand(	2639,	2646)
+	1770 = 	nand(	2650,	2653)
+	1771 = 	nand(	2647,	2654)
+	1822 = 	nor(	1820,	1821)
+	1825 = 	nor(	1823,	1824)
+	2039 = 	nand(	2738,	2741)
+	2742 = 	not(	2738)
+	2043 = 	nand(	2746,	2749)
+	2750 = 	not(	2746)
+	2047 = 	nand(	2754,	2757)
+	2758 = 	not(	2754)
+	2051 = 	nand(	2762,	2765)
+	2766 = 	not(	2762)
+	2055 = 	nand(	2770,	2773)
+	2774 = 	not(	2770)
+	2059 = 	nand(	2778,	2781)
+	2782 = 	not(	2778)
+	2663 = 	nand(	2658,	2661)
+	2664 = 	nand(	2655,	2662)
+	2673 = 	nand(	2668,	2671)
+	2674 = 	nand(	2665,	2672)
+	146 = 	and(	562,	865)
+	462 = 	not(	456)
+	2113 = 	not(	2107)
+	2114 = 	not(	2110)
+	2122 = 	not(	2118)
+	2129 = 	not(	2123)
+	592 = 	buff(	562)
+	2167 = 	not(	2161)
+	2168 = 	not(	2164)
+	2176 = 	not(	2172)
+	2241 = 	not(	2235)
+	2266 = 	not(	2262)
+	743 = 	not(	456)
+	749 = 	buff(	456)
+	886 = 	and(	562,	868)
+	284 = 	buff(	897)
+	321 = 	buff(	897)
+	297 = 	buff(	898)
+	280 = 	buff(	898)
+	995 = 	buff(	456)
+	1006 = 	not(	456)
+	1550 = 	nand(	2535,	2542)
+	2354 = 	not(	2350)
+	2541 = 	not(	2535)
+	1562 = 	nand(	2551,	2558)
+	1566 = 	nand(	2559,	2566)
+	1570 = 	nand(	2567,	2574)
+	1574 = 	nand(	2575,	2582)
+	1578 = 	nand(	2583,	2590)
+	1582 = 	nand(	2591,	2598)
+	1586 = 	nand(	2599,	2606)
+	1590 = 	nand(	2607,	2614)
+	1594 = 	nand(	2615,	2622)
+	1598 = 	nand(	2623,	2630)
+	1754 = 	nand(	1752,	1753)
+	1763 = 	nand(	1761,	1762)
+	1772 = 	nand(	1770,	1771)
+	2040 = 	nand(	2735,	2742)
+	2044 = 	nand(	2743,	2750)
+	2048 = 	nand(	2751,	2758)
+	2052 = 	nand(	2759,	2766)
+	2056 = 	nand(	2767,	2774)
+	2060 = 	nand(	2775,	2782)
+	2115 = 	buff(	1043)
+	2126 = 	buff(	1051)
+	2131 = 	buff(	1068)
+	2134 = 	buff(	1062)
+	2141 = 	buff(	1080)
+	2144 = 	buff(	1074)
+	2157 = 	not(	2151)
+	2160 = 	nand(	2151,	2158)
+	2169 = 	buff(	1043)
+	2177 = 	buff(	1068)
+	2180 = 	buff(	1062)
+	2187 = 	buff(	1080)
+	2190 = 	buff(	1074)
+	2207 = 	not(	562)
+	2254 = 	buff(	1043)
+	2334 = 	buff(	1051)
+	2342 = 	buff(	1043)
+	2422 = 	buff(	1051)
+	2543 = 	nand(	1548,	1545)
+	2709 = 	nand(	2673,	2674)
+	2712 = 	nand(	2663,	2664)
+	2727 = 	nand(	1825,	1822)
+	148 = 	or(	146,	147)
+	569 = 	nand(	2110,	2113)
+	570 = 	nand(	2107,	2114)
+	599 = 	nand(	2164,	2167)
+	600 = 	nand(	2161,	2168)
+	896 = 	or(	885,	886)
+	1549 = 	nand(	2538,	2541)
+	1243 = 	not(	1228)
+	1245 = 	not(	1235)
+	1257 = 	buff(	468)
+	1258 = 	buff(	468)
+	1563 = 	nand(	1561,	1562)
+	1567 = 	nand(	1565,	1566)
+	1571 = 	nand(	1569,	1570)
+	1575 = 	nand(	1573,	1574)
+	1579 = 	nand(	1577,	1578)
+	1583 = 	nand(	1581,	1582)
+	1587 = 	nand(	1585,	1586)
+	1591 = 	nand(	1589,	1590)
+	1595 = 	nand(	1593,	1594)
+	1599 = 	nand(	1597,	1598)
+	2041 = 	nand(	2039,	2040)
+	2045 = 	nand(	2043,	2044)
+	2049 = 	nand(	2047,	2048)
+	2053 = 	nand(	2051,	2052)
+	2057 = 	nand(	2055,	2056)
+	2061 = 	nand(	2059,	2060)
+	2159 = 	nand(	2154,	2157)
+	475 = 	buff(	462)
+	490 = 	and(	1078,	743)
+	496 = 	and(	1698,	743)
+	502 = 	and(	1701,	743)
+	508 = 	and(	1250,	743)
+	765 = 	and(	1057,	749)
+	769 = 	and(	1060,	749)
+	571 = 	nand(	569,	570)
+	2121 = 	not(	2115)
+	579 = 	nand(	2115,	2122)
+	587 = 	nand(	2126,	2129)
+	2130 = 	not(	2126)
+	596 = 	not(	592)
+	601 = 	nand(	599,	600)
+	2175 = 	not(	2169)
+	609 = 	nand(	2169,	2176)
+	2258 = 	not(	2254)
+	1014 = 	and(	1057,	995)
+	1018 = 	and(	1060,	995)
+	717 = 	and(	1078,	1006)
+	723 = 	and(	1698,	1006)
+	729 = 	and(	1701,	1006)
+	735 = 	and(	1250,	1006)
+	753 = 	not(	749)
+	282 = 	buff(	896)
+	323 = 	buff(	896)
+	2338 = 	not(	2334)
+	999 = 	not(	995)
+	1091 = 	nand(	1549,	1550)
+	2346 = 	not(	2342)
+	2426 = 	not(	2422)
+	1337 = 	buff(	462)
+	2549 = 	not(	2543)
+	1552 = 	nand(	2543,	2550)
+	1600 = 	not(	1599)
+	1596 = 	not(	1595)
+	1592 = 	not(	1591)
+	1588 = 	not(	1587)
+	1584 = 	not(	1583)
+	1580 = 	not(	1579)
+	1576 = 	not(	1575)
+	1572 = 	not(	1571)
+	1568 = 	not(	1567)
+	1564 = 	not(	1563)
+	2062 = 	not(	2061)
+	2058 = 	not(	2057)
+	2054 = 	not(	2053)
+	2050 = 	not(	2049)
+	2046 = 	not(	2045)
+	2042 = 	not(	2041)
+	1758 = 	not(	1754)
+	1767 = 	not(	1763)
+	1798 = 	buff(	1772)
+	1802 = 	buff(	1772)
+	2733 = 	not(	2727)
+	1829 = 	nand(	2727,	2734)
+	2137 = 	not(	2131)
+	2138 = 	not(	2134)
+	2147 = 	not(	2141)
+	2148 = 	not(	2144)
+	2183 = 	not(	2177)
+	2184 = 	not(	2180)
+	2193 = 	not(	2187)
+	2194 = 	not(	2190)
+	2210 = 	nand(	2159,	2160)
+	2213 = 	not(	2207)
+	2715 = 	not(	2709)
+	2716 = 	not(	2712)
+	1094 = 	and(	1235,	1245)
+	1096 = 	and(	1228,	1243)
+	578 = 	nand(	2118,	2121)
+	588 = 	nand(	2123,	2130)
+	608 = 	nand(	2172,	2175)
+	742 = 	buff(	1257)
+	1005 = 	buff(	1257)
+	1092 = 	not(	1091)
+	1551 = 	nand(	2546,	2549)
+	1554 = 	and(	1600,	1596,	1592,	1588,	1584)
+	1555 = 	and(	1580,	1576,	1572,	1568,	1564)
+	1557 = 	and(	2065,	2062)
+	1558 = 	and(	2058,	2054,	2050,	2046,	2042)
+	1828 = 	nand(	2730,	2733)
+	1845 = 	buff(	1258)
+	1907 = 	buff(	1258)
+	2139 = 	nand(	2134,	2137)
+	2140 = 	nand(	2131,	2138)
+	2149 = 	nand(	2144,	2147)
+	2150 = 	nand(	2141,	2148)
+	2185 = 	nand(	2180,	2183)
+	2186 = 	nand(	2177,	2184)
+	2195 = 	nand(	2190,	2193)
+	2196 = 	nand(	2187,	2194)
+	2717 = 	nand(	2712,	2715)
+	2718 = 	nand(	2709,	2716)
+	154 = 	or(	1094,	1245)
+	155 = 	or(	1096,	1243)
+	763 = 	and(	1057,	753)
+	767 = 	and(	1060,	753)
+	531 = 	and(	1066,	753)
+	537 = 	and(	1072,	753)
+	575 = 	not(	571)
+	580 = 	nand(	578,	579)
+	589 = 	nand(	587,	588)
+	605 = 	not(	601)
+	610 = 	nand(	608,	609)
+	1012 = 	and(	1057,	999)
+	1016 = 	and(	1060,	999)
+	705 = 	and(	1066,	999)
+	711 = 	and(	1072,	999)
+	1093 = 	and(	1092,	14)
+	1355 = 	buff(	475)
+	1553 = 	nand(	1551,	1552)
+	1556 = 	and(	1554,	1555)
+	1559 = 	and(	1557,	1558)
+	1601 = 	buff(	1337)
+	1801 = 	not(	1798)
+	1805 = 	not(	1802)
+	1815 = 	and(	1763,	1754,	1798)
+	1818 = 	and(	1767,	1758,	1802)
+	1830 = 	nand(	1828,	1829)
+	1836 = 	buff(	475)
+	1850 = 	buff(	475)
+	1898 = 	buff(	1337)
+	1912 = 	buff(	1337)
+	2197 = 	nand(	2149,	2150)
+	2200 = 	nand(	2139,	2140)
+	2214 = 	not(	2210)
+	2215 = 	nand(	2210,	2213)
+	2217 = 	nand(	2195,	2196)
+	2220 = 	nand(	2185,	2186)
+	2722 = 	nand(	2717,	2718)
+	156 = 	nand(	154,	155)
+	492 = 	and(	490,	742)
+	498 = 	and(	496,	742)
+	504 = 	and(	502,	742)
+	510 = 	and(	508,	742)
+	519 = 	or(	763,	765)
+	525 = 	or(	767,	769)
+	533 = 	and(	531,	748)
+	539 = 	and(	537,	748)
+	693 = 	or(	1012,	1014)
+	699 = 	or(	1016,	1018)
+	707 = 	and(	705,	994)
+	713 = 	and(	711,	994)
+	719 = 	and(	717,	1005)
+	725 = 	and(	723,	1005)
+	731 = 	and(	729,	1005)
+	737 = 	and(	735,	1005)
+	401 = 	buff(	1093)
+	1560 = 	and(	1556,	1559,	894)
+	1814 = 	and(	1758,	1763,	1801)
+	1817 = 	and(	1754,	1767,	1805)
+	2216 = 	nand(	2207,	2214)
+	227 = 	not(	1830)
+	229 = 	not(	1553)
+	493 = 	not(	492)
+	499 = 	not(	498)
+	505 = 	not(	504)
+	511 = 	not(	510)
+	521 = 	and(	519,	748)
+	527 = 	and(	525,	748)
+	534 = 	not(	533)
+	540 = 	not(	539)
+	584 = 	not(	580)
+	613 = 	buff(	589)
+	617 = 	buff(	589)
+	621 = 	buff(	610)
+	625 = 	buff(	610)
+	676 = 	and(	1344,	1355)
+	695 = 	and(	693,	994)
+	701 = 	and(	699,	994)
+	708 = 	not(	707)
+	714 = 	not(	713)
+	720 = 	not(	719)
+	726 = 	not(	725)
+	732 = 	not(	731)
+	738 = 	not(	737)
+	1087 = 	not(	1093)
+	1108 = 	and(	1344,	1601)
+	1361 = 	not(	1355)
+	1369 = 	and(	1351,	1355)
+	1373 = 	and(	1959,	1355)
+	1377 = 	and(	1964,	1355)
+	311 = 	buff(	1560)
+	1607 = 	not(	1601)
+	1615 = 	and(	1351,	1601)
+	1619 = 	and(	1959,	1601)
+	1623 = 	and(	1964,	1601)
+	1816 = 	nor(	1814,	1815)
+	1819 = 	nor(	1817,	1818)
+	2726 = 	not(	2722)
+	1842 = 	not(	1836)
+	1858 = 	and(	1969,	1836)
+	1863 = 	and(	1974,	1836)
+	1866 = 	and(	1979,	1836)
+	1868 = 	and(	1984,	1836)
+	1870 = 	and(	1989,	1850)
+	1872 = 	and(	1994,	1850)
+	1874 = 	and(	1999,	1850)
+	1876 = 	and(	2070,	1850)
+	1904 = 	not(	1898)
+	1920 = 	and(	1969,	1898)
+	1925 = 	and(	1974,	1898)
+	1928 = 	and(	1979,	1898)
+	1930 = 	and(	1984,	1898)
+	1932 = 	and(	1989,	1912)
+	1934 = 	and(	1994,	1912)
+	1936 = 	and(	1999,	1912)
+	1938 = 	and(	2070,	1912)
+	2203 = 	not(	2197)
+	2204 = 	not(	2200)
+	2223 = 	not(	2217)
+	2224 = 	not(	2220)
+	2238 = 	nand(	2215,	2216)
+	150 = 	not(	1560)
+	522 = 	not(	521)
+	528 = 	not(	527)
+	696 = 	not(	695)
+	702 = 	not(	701)
+	1881 = 	and(	1866,	1831)
+	1883 = 	and(	1868,	1831)
+	1885 = 	and(	1870,	1845)
+	1887 = 	and(	1872,	1845)
+	1889 = 	and(	1874,	1845)
+	1891 = 	and(	1876,	1845)
+	1943 = 	and(	1928,	1893)
+	1945 = 	and(	1930,	1893)
+	1947 = 	and(	1932,	1907)
+	1949 = 	and(	1934,	1907)
+	1951 = 	and(	1936,	1907)
+	1953 = 	and(	1938,	1907)
+	2205 = 	nand(	2200,	2203)
+	2206 = 	nand(	2197,	2204)
+	2225 = 	nand(	2220,	2223)
+	2226 = 	nand(	2217,	2224)
+	2719 = 	nand(	1819,	1816)
+	616 = 	not(	613)
+	620 = 	not(	617)
+	624 = 	not(	621)
+	628 = 	not(	625)
+	630 = 	and(	580,	571,	613)
+	633 = 	and(	584,	575,	617)
+	636 = 	and(	601,	592,	621)
+	639 = 	and(	605,	596,	625)
+	645 = 	nand(	2238,	2241)
+	2242 = 	not(	2238)
+	675 = 	and(	1999,	1361)
+	1107 = 	and(	1999,	1607)
+	1368 = 	and(	2070,	1361)
+	1371 = 	and(	2076,	1361)
+	1375 = 	and(	2082,	1361)
+	1614 = 	and(	2070,	1607)
+	1617 = 	and(	2076,	1607)
+	1621 = 	and(	2082,	1607)
+	1856 = 	and(	2088,	1842)
+	1861 = 	and(	2094,	1842)
+	1918 = 	and(	2088,	1904)
+	1923 = 	and(	2094,	1904)
+	2230 = 	nand(	2205,	2206)
+	2246 = 	nand(	2225,	2226)
+	2270 = 	buff(	511)
+	2278 = 	buff(	505)
+	2286 = 	buff(	499)
+	2294 = 	buff(	493)
+	2302 = 	buff(	540)
+	2310 = 	buff(	534)
+	2358 = 	buff(	738)
+	2366 = 	buff(	732)
+	2374 = 	buff(	726)
+	2382 = 	buff(	720)
+	2390 = 	buff(	714)
+	2398 = 	buff(	708)
+	629 = 	and(	575,	580,	616)
+	632 = 	and(	571,	584,	620)
+	635 = 	and(	596,	601,	624)
+	638 = 	and(	592,	605,	628)
+	646 = 	nand(	2235,	2242)
+	677 = 	or(	675,	676)
+	1827 = 	nand(	2719,	2726)
+	907 = 	and(	1891,	511)
+	915 = 	and(	1889,	505)
+	922 = 	and(	1887,	499)
+	924 = 	and(	493,	1885)
+	937 = 	and(	1883,	540)
+	946 = 	and(	1881,	534)
+	1109 = 	or(	1107,	1108)
+	1125 = 	and(	1953,	738)
+	1133 = 	and(	1951,	732)
+	1140 = 	and(	1949,	726)
+	1142 = 	and(	720,	1947)
+	1155 = 	and(	1945,	714)
+	1164 = 	and(	1943,	708)
+	1378 = 	or(	1368,	1369)
+	1380 = 	or(	1371,	1373)
+	1382 = 	or(	1375,	1377)
+	1624 = 	or(	1614,	1615)
+	1626 = 	or(	1617,	1619)
+	1628 = 	or(	1621,	1623)
+	2725 = 	not(	2719)
+	1859 = 	or(	1856,	1858)
+	1864 = 	or(	1861,	1863)
+	1921 = 	or(	1918,	1920)
+	1926 = 	or(	1923,	1925)
+	2267 = 	buff(	1891)
+	2275 = 	buff(	1889)
+	2283 = 	buff(	1887)
+	2291 = 	buff(	1885)
+	2299 = 	buff(	1883)
+	2307 = 	buff(	1881)
+	2318 = 	buff(	528)
+	2326 = 	buff(	522)
+	2355 = 	buff(	1953)
+	2363 = 	buff(	1951)
+	2371 = 	buff(	1949)
+	2379 = 	buff(	1947)
+	2387 = 	buff(	1945)
+	2395 = 	buff(	1943)
+	2406 = 	buff(	702)
+	2414 = 	buff(	696)
+	647 = 	nand(	645,	646)
+	631 = 	nor(	629,	630)
+	634 = 	nor(	632,	633)
+	637 = 	nor(	635,	636)
+	640 = 	nor(	638,	639)
+	2234 = 	not(	2230)
+	2250 = 	not(	2246)
+	679 = 	and(	677,	1031)
+	1826 = 	nand(	2722,	2725)
+	2274 = 	not(	2270)
+	2282 = 	not(	2278)
+	2290 = 	not(	2286)
+	2298 = 	not(	2294)
+	2306 = 	not(	2302)
+	2314 = 	not(	2310)
+	1110 = 	and(	1109,	1031)
+	2362 = 	not(	2358)
+	2370 = 	not(	2366)
+	2378 = 	not(	2374)
+	2386 = 	not(	2382)
+	2394 = 	not(	2390)
+	2402 = 	not(	2398)
+	1877 = 	and(	1859,	1831)
+	1879 = 	and(	1864,	1831)
+	1939 = 	and(	1921,	1893)
+	1941 = 	and(	1926,	1893)
+	143 = 	and(	647,	865)
+	671 = 	and(	1380,	1043)
+	674 = 	and(	1378,	1035)
+	686 = 	nand(	1826,	1827)
+	2273 = 	not(	2267)
+	900 = 	nand(	2267,	2274)
+	2281 = 	not(	2275)
+	909 = 	nand(	2275,	2282)
+	2289 = 	not(	2283)
+	917 = 	nand(	2283,	2290)
+	2297 = 	not(	2291)
+	926 = 	nand(	2291,	2298)
+	2305 = 	not(	2299)
+	929 = 	nand(	2299,	2306)
+	2313 = 	not(	2307)
+	939 = 	nand(	2307,	2314)
+	2322 = 	not(	2318)
+	2330 = 	not(	2326)
+	967 = 	and(	1382,	1051)
+	1104 = 	and(	1626,	1043)
+	1106 = 	and(	1624,	1035)
+	2361 = 	not(	2355)
+	1118 = 	nand(	2355,	2362)
+	2369 = 	not(	2363)
+	1127 = 	nand(	2363,	2370)
+	2377 = 	not(	2371)
+	1135 = 	nand(	2371,	2378)
+	2385 = 	not(	2379)
+	1144 = 	nand(	2379,	2386)
+	2393 = 	not(	2387)
+	1147 = 	nand(	2387,	2394)
+	2401 = 	not(	2395)
+	1157 = 	nand(	2395,	2402)
+	2410 = 	not(	2406)
+	2418 = 	not(	2414)
+	1184 = 	and(	1628,	1051)
+	2227 = 	nand(	634,	631)
+	2243 = 	nand(	640,	637)
+	2251 = 	buff(	1380)
+	2259 = 	buff(	1378)
+	2331 = 	buff(	1382)
+	2339 = 	buff(	1626)
+	2347 = 	buff(	1624)
+	2419 = 	buff(	1628)
+	145 = 	or(	143,	144)
+	687 = 	not(	686)
+	899 = 	nand(	2270,	2273)
+	908 = 	nand(	2278,	2281)
+	916 = 	nand(	2286,	2289)
+	925 = 	nand(	2294,	2297)
+	928 = 	nand(	2302,	2305)
+	938 = 	nand(	2310,	2313)
+	954 = 	and(	1879,	528)
+	961 = 	and(	1877,	522)
+	1117 = 	nand(	2358,	2361)
+	1126 = 	nand(	2366,	2369)
+	1134 = 	nand(	2374,	2377)
+	1143 = 	nand(	2382,	2385)
+	1146 = 	nand(	2390,	2393)
+	1156 = 	nand(	2398,	2401)
+	1172 = 	and(	1941,	702)
+	1179 = 	and(	1939,	696)
+	2315 = 	buff(	1879)
+	2323 = 	buff(	1877)
+	2403 = 	buff(	1941)
+	2411 = 	buff(	1939)
+	2233 = 	not(	2227)
+	642 = 	nand(	2227,	2234)
+	2249 = 	not(	2243)
+	649 = 	nand(	2243,	2250)
+	2257 = 	not(	2251)
+	665 = 	nand(	2251,	2258)
+	684 = 	nand(	2259,	2266)
+	2265 = 	not(	2259)
+	688 = 	and(	687,	487)
+	901 = 	nand(	899,	900)
+	910 = 	nand(	908,	909)
+	918 = 	nand(	916,	917)
+	927 = 	nand(	925,	926)
+	930 = 	nand(	928,	929)
+	940 = 	nand(	938,	939)
+	2337 = 	not(	2331)
+	963 = 	nand(	2331,	2338)
+	2345 = 	not(	2339)
+	1099 = 	nand(	2339,	2346)
+	1115 = 	nand(	2347,	2354)
+	2353 = 	not(	2347)
+	1119 = 	nand(	1117,	1118)
+	1128 = 	nand(	1126,	1127)
+	1136 = 	nand(	1134,	1135)
+	1145 = 	nand(	1143,	1144)
+	1148 = 	nand(	1146,	1147)
+	1158 = 	nand(	1156,	1157)
+	2425 = 	not(	2419)
+	1181 = 	nand(	2419,	2426)
+	641 = 	nand(	2230,	2233)
+	648 = 	nand(	2246,	2249)
+	664 = 	nand(	2254,	2257)
+	683 = 	nand(	2262,	2265)
+	395 = 	buff(	688)
+	2321 = 	not(	2315)
+	948 = 	nand(	2315,	2322)
+	2329 = 	not(	2323)
+	956 = 	nand(	2323,	2330)
+	962 = 	nand(	2334,	2337)
+	1098 = 	nand(	2342,	2345)
+	1114 = 	nand(	2350,	2353)
+	2409 = 	not(	2403)
+	1166 = 	nand(	2403,	2410)
+	2417 = 	not(	2411)
+	1174 = 	nand(	2411,	2418)
+	1180 = 	nand(	2422,	2425)
+	643 = 	nand(	641,	642)
+	650 = 	nand(	648,	649)
+	666 = 	nand(	664,	665)
+	681 = 	nand(	683,	684)
+	690 = 	not(	688)
+	947 = 	nand(	2318,	2321)
+	955 = 	nand(	2326,	2329)
+	964 = 	nand(	962,	963)
+	968 = 	and(	910,	927,	918,	901)
+	970 = 	and(	901,	915)
+	971 = 	and(	910,	901,	922)
+	972 = 	and(	918,	901,	924,	910)
+	978 = 	and(	930,	946)
+	979 = 	and(	940,	930,	954)
+	1100 = 	nand(	1098,	1099)
+	1112 = 	nand(	1114,	1115)
+	1165 = 	nand(	2406,	2409)
+	1173 = 	nand(	2414,	2417)
+	1182 = 	nand(	1180,	1181)
+	1185 = 	and(	1128,	1145,	1136,	1119)
+	1187 = 	and(	1119,	1133)
+	1188 = 	and(	1128,	1119,	1140)
+	1189 = 	and(	1136,	1119,	1142,	1128)
+	1195 = 	and(	1148,	1164)
+	1196 = 	and(	1158,	1148,	1172)
+	644 = 	not(	643)
+	884 = 	and(	650,	868)
+	949 = 	nand(	947,	948)
+	957 = 	nand(	955,	956)
+	969 = 	not(	968)
+	973 = 	or(	907,	970,	971,	972)
+	1167 = 	nand(	1165,	1166)
+	1175 = 	nand(	1173,	1174)
+	1186 = 	not(	1185)
+	1190 = 	or(	1125,	1187,	1188,	1189)
+	680 = 	and(	666,	674)
+	682 = 	and(	681,	666,	679)
+	895 = 	or(	883,	884)
+	1025 = 	and(	644,	487)
+	1111 = 	and(	1100,	1106)
+	1113 = 	and(	1112,	1100,	1110)
+	685 = 	or(	671,	680,	682)
+	295 = 	buff(	895)
+	331 = 	buff(	895)
+	976 = 	not(	973)
+	977 = 	and(	940,	964,	949,	930,	957)
+	980 = 	and(	949,	930,	961,	940)
+	981 = 	and(	957,	949,	930,	967,	940)
+	397 = 	buff(	1025)
+	1116 = 	or(	1104,	1111,	1113)
+	1193 = 	not(	1190)
+	1194 = 	and(	1158,	1182,	1167,	1148,	1175)
+	1197 = 	and(	1167,	1148,	1179,	1158)
+	1198 = 	and(	1175,	1167,	1148,	1184,	1158)
+	982 = 	or(	937,	978,	979,	980,	981)
+	983 = 	and(	977,	685)
+	988 = 	nand(	976,	969)
+	1027 = 	not(	1025)
+	1199 = 	or(	1155,	1195,	1196,	1197,	1198)
+	1200 = 	and(	1194,	1116)
+	1205 = 	nand(	1193,	1186)
+	984 = 	or(	982,	983)
+	1085 = 	and(	690,	1027,	1830)
+	1201 = 	or(	1199,	1200)
+	987 = 	not(	984)
+	990 = 	and(	988,	984)
+	1204 = 	not(	1201)
+	1207 = 	and(	1205,	1201)
+	989 = 	and(	973,	987)
+	1206 = 	and(	1190,	1204)
+	991 = 	or(	989,	990)
+	1208 = 	or(	1206,	1207)
+	329 = 	buff(	1208)
+	1221 = 	nand(	1208,	991)
+	1238 = 	and(	1208,	1221)
+	1239 = 	and(	1221,	991)
+	1240 = 	or(	1238,	1239)
+	1247 = 	not(	1240)
+	471 = 	and(	1240,	1247)
+	473 = 	or(	471,	1247)
+	231 = 	not(	473)
+	1088 = 	and(	1553,	1087,	473)
+	1089 = 	and(	1085,	1088,	554)
+	308 = 	buff(	1089)
+	225 = 	not(	1089)

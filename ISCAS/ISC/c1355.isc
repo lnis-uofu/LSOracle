@@ -1,0 +1,1919 @@
+*  combinational logic example "c1355"
+*-------------------------------------------------------------
+*
+*
+*  total number of lines in the netlist ..............  1355
+*  simplistically reduced equivalent fault set size =   1574
+*        lines from primary input  gates .......    41
+*        lines from primary output gates .......    32
+*        lines from interior gate outputs ......   514
+*        lines from **   259 ** fanout stems ...   768
+*
+*        avg_fanin  =  1.95,     max_fanin  =  5
+*        avg_fanout =  2.97,     max_fanout = 12
+*
+*
+*
+*
+*
+    1     1gat inpt    6   0 >sa0 >sa1
+    2     1f01 from     1gat      >sa1
+    3     1f02 from     1gat      >sa1
+    4     1f03 from     1gat      >sa1
+    5     1f04 from     1gat      >sa1
+    6     1f05 from     1gat      >sa1
+    7     1f06 from     1gat      >sa1
+    8     8gat inpt    6   0 >sa0 >sa1
+    9     8f01 from     8gat      >sa1
+   10     8f02 from     8gat      >sa1
+   11     8f03 from     8gat      >sa1
+   12     8f04 from     8gat      >sa1
+   13     8f05 from     8gat      >sa1
+   14     8f06 from     8gat      >sa1
+   15    15gat inpt    6   0 >sa0 >sa1
+   16    15f01 from    15gat      >sa1
+   17    15f02 from    15gat      >sa1
+   18    15f03 from    15gat      >sa1
+   19    15f04 from    15gat      >sa1
+   20    15f05 from    15gat      >sa1
+   21    15f06 from    15gat      >sa1
+   22    22gat inpt    6   0 >sa0 >sa1
+   23    22f01 from    22gat      >sa1
+   24    22f02 from    22gat      >sa1
+   25    22f03 from    22gat      >sa1
+   26    22f04 from    22gat      >sa1
+   27    22f05 from    22gat      >sa1
+   28    22f06 from    22gat      >sa1
+   29    29gat inpt    6   0 >sa0 >sa1
+   30    29f01 from    29gat      >sa1
+   31    29f02 from    29gat      >sa1
+   32    29f03 from    29gat      >sa1
+   33    29f04 from    29gat      >sa1
+   34    29f05 from    29gat      >sa1
+   35    29f06 from    29gat      >sa1
+   36    36gat inpt    6   0 >sa0 >sa1
+   37    36f01 from    36gat      >sa1
+   38    36f02 from    36gat      >sa1
+   39    36f03 from    36gat      >sa1
+   40    36f04 from    36gat      >sa1
+   41    36f05 from    36gat      >sa1
+   42    36f06 from    36gat      >sa1
+   43    43gat inpt    6   0 >sa0 >sa1
+   44    43f01 from    43gat      >sa1
+   45    43f02 from    43gat      >sa1
+   46    43f03 from    43gat      >sa1
+   47    43f04 from    43gat      >sa1
+   48    43f05 from    43gat      >sa1
+   49    43f06 from    43gat      >sa1
+   50    50gat inpt    6   0 >sa0 >sa1
+   51    50f01 from    50gat      >sa1
+   52    50f02 from    50gat      >sa1
+   53    50f03 from    50gat      >sa1
+   54    50f04 from    50gat      >sa1
+   55    50f05 from    50gat      >sa1
+   56    50f06 from    50gat      >sa1
+   57    57gat inpt    6   0 >sa0 >sa1
+   58    57f01 from    57gat      >sa1
+   59    57f02 from    57gat      >sa1
+   60    57f03 from    57gat      >sa1
+   61    57f04 from    57gat      >sa1
+   62    57f05 from    57gat      >sa1
+   63    57f06 from    57gat      >sa1
+   64    64gat inpt    6   0 >sa0 >sa1
+   65    64f01 from    64gat      >sa1
+   66    64f02 from    64gat      >sa1
+   67    64f03 from    64gat      >sa1
+   68    64f04 from    64gat      >sa1
+   69    64f05 from    64gat      >sa1
+   70    64f06 from    64gat      >sa1
+   71    71gat inpt    6   0 >sa0 >sa1
+   72    71f01 from    71gat      >sa1
+   73    71f02 from    71gat      >sa1
+   74    71f03 from    71gat      >sa1
+   75    71f04 from    71gat      >sa1
+   76    71f05 from    71gat      >sa1
+   77    71f06 from    71gat      >sa1
+   78    78gat inpt    6   0 >sa0 >sa1
+   79    78f01 from    78gat      >sa1
+   80    78f02 from    78gat      >sa1
+   81    78f03 from    78gat      >sa1
+   82    78f04 from    78gat      >sa1
+   83    78f05 from    78gat      >sa1
+   84    78f06 from    78gat      >sa1
+   85    85gat inpt    6   0 >sa0 >sa1
+   86    85f01 from    85gat      >sa1
+   87    85f02 from    85gat      >sa1
+   88    85f03 from    85gat      >sa1
+   89    85f04 from    85gat      >sa1
+   90    85f05 from    85gat      >sa1
+   91    85f06 from    85gat      >sa1
+   92    92gat inpt    6   0 >sa0 >sa1
+   93    92f01 from    92gat      >sa1
+   94    92f02 from    92gat      >sa1
+   95    92f03 from    92gat      >sa1
+   96    92f04 from    92gat      >sa1
+   97    92f05 from    92gat      >sa1
+   98    92f06 from    92gat      >sa1
+   99    99gat inpt    6   0 >sa0 >sa1
+  100    99f01 from    99gat      >sa1
+  101    99f02 from    99gat      >sa1
+  102    99f03 from    99gat      >sa1
+  103    99f04 from    99gat      >sa1
+  104    99f05 from    99gat      >sa1
+  105    99f06 from    99gat      >sa1
+  106   106gat inpt    6   0 >sa0 >sa1
+  107   106f01 from   106gat      >sa1
+  108   106f02 from   106gat      >sa1
+  109   106f03 from   106gat      >sa1
+  110   106f04 from   106gat      >sa1
+  111   106f05 from   106gat      >sa1
+  112   106f06 from   106gat      >sa1
+  113   113gat inpt    6   0 >sa0 >sa1
+  114   113f01 from   113gat      >sa1
+  115   113f02 from   113gat      >sa1
+  116   113f03 from   113gat      >sa1
+  117   113f04 from   113gat      >sa1
+  118   113f05 from   113gat      >sa1
+  119   113f06 from   113gat      >sa1
+  120   120gat inpt    6   0 >sa0 >sa1
+  121   120f01 from   120gat      >sa1
+  122   120f02 from   120gat      >sa1
+  123   120f03 from   120gat      >sa1
+  124   120f04 from   120gat      >sa1
+  125   120f05 from   120gat      >sa1
+  126   120f06 from   120gat      >sa1
+  127   127gat inpt    6   0 >sa0 >sa1
+  128   127f01 from   127gat      >sa1
+  129   127f02 from   127gat      >sa1
+  130   127f03 from   127gat      >sa1
+  131   127f04 from   127gat      >sa1
+  132   127f05 from   127gat      >sa1
+  133   127f06 from   127gat      >sa1
+  134   134gat inpt    6   0 >sa0 >sa1
+  135   134f01 from   134gat      >sa1
+  136   134f02 from   134gat      >sa1
+  137   134f03 from   134gat      >sa1
+  138   134f04 from   134gat      >sa1
+  139   134f05 from   134gat      >sa1
+  140   134f06 from   134gat      >sa1
+  141   141gat inpt    6   0 >sa0 >sa1
+  142   141f01 from   141gat      >sa1
+  143   141f02 from   141gat      >sa1
+  144   141f03 from   141gat      >sa1
+  145   141f04 from   141gat      >sa1
+  146   141f05 from   141gat      >sa1
+  147   141f06 from   141gat      >sa1
+  148   148gat inpt    6   0 >sa0 >sa1
+  149   148f01 from   148gat      >sa1
+  150   148f02 from   148gat      >sa1
+  151   148f03 from   148gat      >sa1
+  152   148f04 from   148gat      >sa1
+  153   148f05 from   148gat      >sa1
+  154   148f06 from   148gat      >sa1
+  155   155gat inpt    6   0 >sa0 >sa1
+  156   155f01 from   155gat      >sa1
+  157   155f02 from   155gat      >sa1
+  158   155f03 from   155gat      >sa1
+  159   155f04 from   155gat      >sa1
+  160   155f05 from   155gat      >sa1
+  161   155f06 from   155gat      >sa1
+  162   162gat inpt    6   0 >sa0 >sa1
+  163   162f01 from   162gat      >sa1
+  164   162f02 from   162gat      >sa1
+  165   162f03 from   162gat      >sa1
+  166   162f04 from   162gat      >sa1
+  167   162f05 from   162gat      >sa1
+  168   162f06 from   162gat      >sa1
+  169   169gat inpt    6   0 >sa0 >sa1
+  170   169f01 from   169gat      >sa1
+  171   169f02 from   169gat      >sa1
+  172   169f03 from   169gat      >sa1
+  173   169f04 from   169gat      >sa1
+  174   169f05 from   169gat      >sa1
+  175   169f06 from   169gat      >sa1
+  176   176gat inpt    6   0 >sa0 >sa1
+  177   176f01 from   176gat      >sa1
+  178   176f02 from   176gat      >sa1
+  179   176f03 from   176gat      >sa1
+  180   176f04 from   176gat      >sa1
+  181   176f05 from   176gat      >sa1
+  182   176f06 from   176gat      >sa1
+  183   183gat inpt    6   0 >sa0 >sa1
+  184   183f01 from   183gat      >sa1
+  185   183f02 from   183gat      >sa1
+  186   183f03 from   183gat      >sa1
+  187   183f04 from   183gat      >sa1
+  188   183f05 from   183gat      >sa1
+  189   183f06 from   183gat      >sa1
+  190   190gat inpt    6   0 >sa0 >sa1
+  191   190f01 from   190gat      >sa1
+  192   190f02 from   190gat      >sa1
+  193   190f03 from   190gat      >sa1
+  194   190f04 from   190gat      >sa1
+  195   190f05 from   190gat      >sa1
+  196   190f06 from   190gat      >sa1
+  197   197gat inpt    6   0 >sa0 >sa1
+  198   197f01 from   197gat      >sa1
+  199   197f02 from   197gat      >sa1
+  200   197f03 from   197gat      >sa1
+  201   197f04 from   197gat      >sa1
+  202   197f05 from   197gat      >sa1
+  203   197f06 from   197gat      >sa1
+  204   204gat inpt    6   0 >sa0 >sa1
+  205   204f01 from   204gat      >sa1
+  206   204f02 from   204gat      >sa1
+  207   204f03 from   204gat      >sa1
+  208   204f04 from   204gat      >sa1
+  209   204f05 from   204gat      >sa1
+  210   204f06 from   204gat      >sa1
+  211   211gat inpt    6   0 >sa0 >sa1
+  212   211f01 from   211gat      >sa1
+  213   211f02 from   211gat      >sa1
+  214   211f03 from   211gat      >sa1
+  215   211f04 from   211gat      >sa1
+  216   211f05 from   211gat      >sa1
+  217   211f06 from   211gat      >sa1
+  218   218gat inpt    6   0 >sa0 >sa1
+  219   218f01 from   218gat      >sa1
+  220   218f02 from   218gat      >sa1
+  221   218f03 from   218gat      >sa1
+  222   218f04 from   218gat      >sa1
+  223   218f05 from   218gat      >sa1
+  224   218f06 from   218gat      >sa1
+  225   225gat inpt    1   0      >sa1
+  226   226gat inpt    1   0      >sa1
+  227   227gat inpt    1   0      >sa1
+  228   228gat inpt    1   0      >sa1
+  229   229gat inpt    1   0      >sa1
+  230   230gat inpt    1   0      >sa1
+  231   231gat inpt    1   0      >sa1
+  232   232gat inpt    1   0      >sa1
+  233   233gat inpt    8   0 >sa0 >sa1
+  234   233f01 from   233gat      >sa1
+  235   233f02 from   233gat      >sa1
+  236   233f03 from   233gat      >sa1
+  237   233f04 from   233gat      >sa1
+  238   233f05 from   233gat      >sa1
+  239   233f06 from   233gat      >sa1
+  240   233f07 from   233gat      >sa1
+  241   233f08 from   233gat      >sa1
+  242   242gat and     2   2 >sa0 >sa1
+   225   234
+  243   242f01 from   242gat      >sa1
+  244   242f02 from   242gat      >sa1
+  245   245gat and     2   2 >sa0 >sa1
+   226   235
+  246   245f01 from   245gat      >sa1
+  247   245f02 from   245gat      >sa1
+  248   248gat and     2   2 >sa0 >sa1
+   227   236
+  249   248f01 from   248gat      >sa1
+  250   248f02 from   248gat      >sa1
+  251   251gat and     2   2 >sa0 >sa1
+   228   237
+  252   251f01 from   251gat      >sa1
+  253   251f02 from   251gat      >sa1
+  254   254gat and     2   2 >sa0 >sa1
+   229   238
+  255   254f01 from   254gat      >sa1
+  256   254f02 from   254gat      >sa1
+  257   257gat and     2   2 >sa0 >sa1
+   230   239
+  258   257f01 from   257gat      >sa1
+  259   257f02 from   257gat      >sa1
+  260   260gat and     2   2 >sa0 >sa1
+   231   240
+  261   260f01 from   260gat      >sa1
+  262   260f02 from   260gat      >sa1
+  263   263gat and     2   2 >sa0 >sa1
+   232   241
+  264   263f01 from   263gat      >sa1
+  265   263f02 from   263gat      >sa1
+  266   266gat nand    2   2 >sa0 >sa1
+     4    11
+  267   266f01 from   266gat      >sa1
+  268   266f02 from   266gat      >sa1
+  269   269gat nand    2   2 >sa0 >sa1
+    18    25
+  270   269f01 from   269gat      >sa1
+  271   269f02 from   269gat      >sa1
+  272   272gat nand    2   2 >sa0 >sa1
+    32    39
+  273   272f01 from   272gat      >sa1
+  274   272f02 from   272gat      >sa1
+  275   275gat nand    2   2 >sa0 >sa1
+    46    53
+  276   275f01 from   275gat      >sa1
+  277   275f02 from   275gat      >sa1
+  278   278gat nand    2   2 >sa0 >sa1
+    60    67
+  279   278f01 from   278gat      >sa1
+  280   278f02 from   278gat      >sa1
+  281   281gat nand    2   2 >sa0 >sa1
+    74    81
+  282   281f01 from   281gat      >sa1
+  283   281f02 from   281gat      >sa1
+  284   284gat nand    2   2 >sa0 >sa1
+    88    95
+  285   284f01 from   284gat      >sa1
+  286   284f02 from   284gat      >sa1
+  287   287gat nand    2   2 >sa0 >sa1
+   102   109
+  288   287f01 from   287gat      >sa1
+  289   287f02 from   287gat      >sa1
+  290   290gat nand    2   2 >sa0 >sa1
+   116   123
+  291   290f01 from   290gat      >sa1
+  292   290f02 from   290gat      >sa1
+  293   293gat nand    2   2 >sa0 >sa1
+   130   137
+  294   293f01 from   293gat      >sa1
+  295   293f02 from   293gat      >sa1
+  296   296gat nand    2   2 >sa0 >sa1
+   144   151
+  297   296f01 from   296gat      >sa1
+  298   296f02 from   296gat      >sa1
+  299   299gat nand    2   2 >sa0 >sa1
+   158   165
+  300   299f01 from   299gat      >sa1
+  301   299f02 from   299gat      >sa1
+  302   302gat nand    2   2 >sa0 >sa1
+   172   179
+  303   302f01 from   302gat      >sa1
+  304   302f02 from   302gat      >sa1
+  305   305gat nand    2   2 >sa0 >sa1
+   186   193
+  306   305f01 from   305gat      >sa1
+  307   305f02 from   305gat      >sa1
+  308   308gat nand    2   2 >sa0 >sa1
+   200   207
+  309   308f01 from   308gat      >sa1
+  310   308f02 from   308gat      >sa1
+  311   311gat nand    2   2 >sa0 >sa1
+   214   221
+  312   311f01 from   311gat      >sa1
+  313   311f02 from   311gat      >sa1
+  314   314gat nand    2   2 >sa0 >sa1
+     6    34
+  315   314f01 from   314gat      >sa1
+  316   314f02 from   314gat      >sa1
+  317   317gat nand    2   2 >sa0 >sa1
+    62    90
+  318   317f01 from   317gat      >sa1
+  319   317f02 from   317gat      >sa1
+  320   320gat nand    2   2 >sa0 >sa1
+    13    41
+  321   320f01 from   320gat      >sa1
+  322   320f02 from   320gat      >sa1
+  323   323gat nand    2   2 >sa0 >sa1
+    69    97
+  324   323f01 from   323gat      >sa1
+  325   323f02 from   323gat      >sa1
+  326   326gat nand    2   2 >sa0 >sa1
+    20    48
+  327   326f01 from   326gat      >sa1
+  328   326f02 from   326gat      >sa1
+  329   329gat nand    2   2 >sa0 >sa1
+    76   104
+  330   329f01 from   329gat      >sa1
+  331   329f02 from   329gat      >sa1
+  332   332gat nand    2   2 >sa0 >sa1
+    27    55
+  333   332f01 from   332gat      >sa1
+  334   332f02 from   332gat      >sa1
+  335   335gat nand    2   2 >sa0 >sa1
+    83   111
+  336   335f01 from   335gat      >sa1
+  337   335f02 from   335gat      >sa1
+  338   338gat nand    2   2 >sa0 >sa1
+   118   146
+  339   338f01 from   338gat      >sa1
+  340   338f02 from   338gat      >sa1
+  341   341gat nand    2   2 >sa0 >sa1
+   174   202
+  342   341f01 from   341gat      >sa1
+  343   341f02 from   341gat      >sa1
+  344   344gat nand    2   2 >sa0 >sa1
+   125   153
+  345   344f01 from   344gat      >sa1
+  346   344f02 from   344gat      >sa1
+  347   347gat nand    2   2 >sa0 >sa1
+   181   209
+  348   347f01 from   347gat      >sa1
+  349   347f02 from   347gat      >sa1
+  350   350gat nand    2   2 >sa0 >sa1
+   132   160
+  351   350f01 from   350gat      >sa1
+  352   350f02 from   350gat      >sa1
+  353   353gat nand    2   2 >sa0 >sa1
+   188   216
+  354   353f01 from   353gat      >sa1
+  355   353f02 from   353gat      >sa1
+  356   356gat nand    2   2 >sa0 >sa1
+   139   167
+  357   356f01 from   356gat      >sa1
+  358   356f02 from   356gat      >sa1
+  359   359gat nand    2   2 >sa0 >sa1
+   195   223
+  360   359f01 from   359gat      >sa1
+  361   359f02 from   359gat      >sa1
+  362   362gat nand    1   2      >sa1
+     5   267
+  363   363gat nand    1   2      >sa1
+    12   268
+  364   364gat nand    1   2      >sa1
+    19   270
+  365   365gat nand    1   2      >sa1
+    26   271
+  366   366gat nand    1   2      >sa1
+    33   273
+  367   367gat nand    1   2      >sa1
+    40   274
+  368   368gat nand    1   2      >sa1
+    47   276
+  369   369gat nand    1   2      >sa1
+    54   277
+  370   370gat nand    1   2      >sa1
+    61   279
+  371   371gat nand    1   2      >sa1
+    68   280
+  372   372gat nand    1   2      >sa1
+    75   282
+  373   373gat nand    1   2      >sa1
+    82   283
+  374   374gat nand    1   2      >sa1
+    89   285
+  375   375gat nand    1   2      >sa1
+    96   286
+  376   376gat nand    1   2      >sa1
+   103   288
+  377   377gat nand    1   2      >sa1
+   110   289
+  378   378gat nand    1   2      >sa1
+   117   291
+  379   379gat nand    1   2      >sa1
+   124   292
+  380   380gat nand    1   2      >sa1
+   131   294
+  381   381gat nand    1   2      >sa1
+   138   295
+  382   382gat nand    1   2      >sa1
+   145   297
+  383   383gat nand    1   2      >sa1
+   152   298
+  384   384gat nand    1   2      >sa1
+   159   300
+  385   385gat nand    1   2      >sa1
+   166   301
+  386   386gat nand    1   2      >sa1
+   173   303
+  387   387gat nand    1   2      >sa1
+   180   304
+  388   388gat nand    1   2      >sa1
+   187   306
+  389   389gat nand    1   2      >sa1
+   194   307
+  390   390gat nand    1   2      >sa1
+   201   309
+  391   391gat nand    1   2      >sa1
+   208   310
+  392   392gat nand    1   2      >sa1
+   215   312
+  393   393gat nand    1   2      >sa1
+   222   313
+  394   394gat nand    1   2      >sa1
+     7   315
+  395   395gat nand    1   2      >sa1
+    35   316
+  396   396gat nand    1   2      >sa1
+    63   318
+  397   397gat nand    1   2      >sa1
+    91   319
+  398   398gat nand    1   2      >sa1
+    14   321
+  399   399gat nand    1   2      >sa1
+    42   322
+  400   400gat nand    1   2      >sa1
+    70   324
+  401   401gat nand    1   2      >sa1
+    98   325
+  402   402gat nand    1   2      >sa1
+    21   327
+  403   403gat nand    1   2      >sa1
+    49   328
+  404   404gat nand    1   2      >sa1
+    77   330
+  405   405gat nand    1   2      >sa1
+   105   331
+  406   406gat nand    1   2      >sa1
+    28   333
+  407   407gat nand    1   2      >sa1
+    56   334
+  408   408gat nand    1   2      >sa1
+    84   336
+  409   409gat nand    1   2      >sa1
+   112   337
+  410   410gat nand    1   2      >sa1
+   119   339
+  411   411gat nand    1   2      >sa1
+   147   340
+  412   412gat nand    1   2      >sa1
+   175   342
+  413   413gat nand    1   2      >sa1
+   203   343
+  414   414gat nand    1   2      >sa1
+   126   345
+  415   415gat nand    1   2      >sa1
+   154   346
+  416   416gat nand    1   2      >sa1
+   182   348
+  417   417gat nand    1   2      >sa1
+   210   349
+  418   418gat nand    1   2      >sa1
+   133   351
+  419   419gat nand    1   2      >sa1
+   161   352
+  420   420gat nand    1   2      >sa1
+   189   354
+  421   421gat nand    1   2      >sa1
+   217   355
+  422   422gat nand    1   2      >sa1
+   140   357
+  423   423gat nand    1   2      >sa1
+   168   358
+  424   424gat nand    1   2      >sa1
+   196   360
+  425   425gat nand    1   2      >sa1
+   224   361
+  426   426gat nand    2   2 >sa0 >sa1
+   362   363
+  427   426f01 from   426gat      >sa1
+  428   426f02 from   426gat      >sa1
+  429   429gat nand    2   2 >sa0 >sa1
+   364   365
+  430   429f01 from   429gat      >sa1
+  431   429f02 from   429gat      >sa1
+  432   432gat nand    2   2 >sa0 >sa1
+   366   367
+  433   432f01 from   432gat      >sa1
+  434   432f02 from   432gat      >sa1
+  435   435gat nand    2   2 >sa0 >sa1
+   368   369
+  436   435f01 from   435gat      >sa1
+  437   435f02 from   435gat      >sa1
+  438   438gat nand    2   2 >sa0 >sa1
+   370   371
+  439   438f01 from   438gat      >sa1
+  440   438f02 from   438gat      >sa1
+  441   441gat nand    2   2 >sa0 >sa1
+   372   373
+  442   441f01 from   441gat      >sa1
+  443   441f02 from   441gat      >sa1
+  444   444gat nand    2   2 >sa0 >sa1
+   374   375
+  445   444f01 from   444gat      >sa1
+  446   444f02 from   444gat      >sa1
+  447   447gat nand    2   2 >sa0 >sa1
+   376   377
+  448   447f01 from   447gat      >sa1
+  449   447f02 from   447gat      >sa1
+  450   450gat nand    2   2 >sa0 >sa1
+   378   379
+  451   450f01 from   450gat      >sa1
+  452   450f02 from   450gat      >sa1
+  453   453gat nand    2   2 >sa0 >sa1
+   380   381
+  454   453f01 from   453gat      >sa1
+  455   453f02 from   453gat      >sa1
+  456   456gat nand    2   2 >sa0 >sa1
+   382   383
+  457   456f01 from   456gat      >sa1
+  458   456f02 from   456gat      >sa1
+  459   459gat nand    2   2 >sa0 >sa1
+   384   385
+  460   459f01 from   459gat      >sa1
+  461   459f02 from   459gat      >sa1
+  462   462gat nand    2   2 >sa0 >sa1
+   386   387
+  463   462f01 from   462gat      >sa1
+  464   462f02 from   462gat      >sa1
+  465   465gat nand    2   2 >sa0 >sa1
+   388   389
+  466   465f01 from   465gat      >sa1
+  467   465f02 from   465gat      >sa1
+  468   468gat nand    2   2 >sa0 >sa1
+   390   391
+  469   468f01 from   468gat      >sa1
+  470   468f02 from   468gat      >sa1
+  471   471gat nand    2   2 >sa0 >sa1
+   392   393
+  472   471f01 from   471gat      >sa1
+  473   471f02 from   471gat      >sa1
+  474   474gat nand    2   2 >sa0 >sa1
+   394   395
+  475   474f01 from   474gat      >sa1
+  476   474f02 from   474gat      >sa1
+  477   477gat nand    2   2 >sa0 >sa1
+   396   397
+  478   477f01 from   477gat      >sa1
+  479   477f02 from   477gat      >sa1
+  480   480gat nand    2   2 >sa0 >sa1
+   398   399
+  481   480f01 from   480gat      >sa1
+  482   480f02 from   480gat      >sa1
+  483   483gat nand    2   2 >sa0 >sa1
+   400   401
+  484   483f01 from   483gat      >sa1
+  485   483f02 from   483gat      >sa1
+  486   486gat nand    2   2 >sa0 >sa1
+   402   403
+  487   486f01 from   486gat      >sa1
+  488   486f02 from   486gat      >sa1
+  489   489gat nand    2   2 >sa0 >sa1
+   404   405
+  490   489f01 from   489gat      >sa1
+  491   489f02 from   489gat      >sa1
+  492   492gat nand    2   2 >sa0 >sa1
+   406   407
+  493   492f01 from   492gat      >sa1
+  494   492f02 from   492gat      >sa1
+  495   495gat nand    2   2 >sa0 >sa1
+   408   409
+  496   495f01 from   495gat      >sa1
+  497   495f02 from   495gat      >sa1
+  498   498gat nand    2   2 >sa0 >sa1
+   410   411
+  499   498f01 from   498gat      >sa1
+  500   498f02 from   498gat      >sa1
+  501   501gat nand    2   2 >sa0 >sa1
+   412   413
+  502   501f01 from   501gat      >sa1
+  503   501f02 from   501gat      >sa1
+  504   504gat nand    2   2 >sa0 >sa1
+   414   415
+  505   504f01 from   504gat      >sa1
+  506   504f02 from   504gat      >sa1
+  507   507gat nand    2   2 >sa0 >sa1
+   416   417
+  508   507f01 from   507gat      >sa1
+  509   507f02 from   507gat      >sa1
+  510   510gat nand    2   2 >sa0 >sa1
+   418   419
+  511   510f01 from   510gat      >sa1
+  512   510f02 from   510gat      >sa1
+  513   513gat nand    2   2 >sa0 >sa1
+   420   421
+  514   513f01 from   513gat      >sa1
+  515   513f02 from   513gat      >sa1
+  516   516gat nand    2   2 >sa0 >sa1
+   422   423
+  517   516f01 from   516gat      >sa1
+  518   516f02 from   516gat      >sa1
+  519   519gat nand    2   2 >sa0 >sa1
+   424   425
+  520   519f01 from   519gat      >sa1
+  521   519f02 from   519gat      >sa1
+  522   522gat nand    2   2 >sa0 >sa1
+   427   430
+  523   522f01 from   522gat      >sa1
+  524   522f02 from   522gat      >sa1
+  525   525gat nand    2   2 >sa0 >sa1
+   433   436
+  526   525f01 from   525gat      >sa1
+  527   525f02 from   525gat      >sa1
+  528   528gat nand    2   2 >sa0 >sa1
+   439   442
+  529   528f01 from   528gat      >sa1
+  530   528f02 from   528gat      >sa1
+  531   531gat nand    2   2 >sa0 >sa1
+   445   448
+  532   531f01 from   531gat      >sa1
+  533   531f02 from   531gat      >sa1
+  534   534gat nand    2   2 >sa0 >sa1
+   451   454
+  535   534f01 from   534gat      >sa1
+  536   534f02 from   534gat      >sa1
+  537   537gat nand    2   2 >sa0 >sa1
+   457   460
+  538   537f01 from   537gat      >sa1
+  539   537f02 from   537gat      >sa1
+  540   540gat nand    2   2 >sa0 >sa1
+   463   466
+  541   540f01 from   540gat      >sa1
+  542   540f02 from   540gat      >sa1
+  543   543gat nand    2   2 >sa0 >sa1
+   469   472
+  544   543f01 from   543gat      >sa1
+  545   543f02 from   543gat      >sa1
+  546   546gat nand    2   2 >sa0 >sa1
+   475   478
+  547   546f01 from   546gat      >sa1
+  548   546f02 from   546gat      >sa1
+  549   549gat nand    2   2 >sa0 >sa1
+   481   484
+  550   549f01 from   549gat      >sa1
+  551   549f02 from   549gat      >sa1
+  552   552gat nand    2   2 >sa0 >sa1
+   487   490
+  553   552f01 from   552gat      >sa1
+  554   552f02 from   552gat      >sa1
+  555   555gat nand    2   2 >sa0 >sa1
+   493   496
+  556   555f01 from   555gat      >sa1
+  557   555f02 from   555gat      >sa1
+  558   558gat nand    2   2 >sa0 >sa1
+   499   502
+  559   558f01 from   558gat      >sa1
+  560   558f02 from   558gat      >sa1
+  561   561gat nand    2   2 >sa0 >sa1
+   505   508
+  562   561f01 from   561gat      >sa1
+  563   561f02 from   561gat      >sa1
+  564   564gat nand    2   2 >sa0 >sa1
+   511   514
+  565   564f01 from   564gat      >sa1
+  566   564f02 from   564gat      >sa1
+  567   567gat nand    2   2 >sa0 >sa1
+   517   520
+  568   567f01 from   567gat      >sa1
+  569   567f02 from   567gat      >sa1
+  570   570gat nand    1   2      >sa1
+   428   523
+  571   571gat nand    1   2      >sa1
+   431   524
+  572   572gat nand    1   2      >sa1
+   434   526
+  573   573gat nand    1   2      >sa1
+   437   527
+  574   574gat nand    1   2      >sa1
+   440   529
+  575   575gat nand    1   2      >sa1
+   443   530
+  576   576gat nand    1   2      >sa1
+   446   532
+  577   577gat nand    1   2      >sa1
+   449   533
+  578   578gat nand    1   2      >sa1
+   452   535
+  579   579gat nand    1   2      >sa1
+   455   536
+  580   580gat nand    1   2      >sa1
+   458   538
+  581   581gat nand    1   2      >sa1
+   461   539
+  582   582gat nand    1   2      >sa1
+   464   541
+  583   583gat nand    1   2      >sa1
+   467   542
+  584   584gat nand    1   2      >sa1
+   470   544
+  585   585gat nand    1   2      >sa1
+   473   545
+  586   586gat nand    1   2      >sa1
+   476   547
+  587   587gat nand    1   2      >sa1
+   479   548
+  588   588gat nand    1   2      >sa1
+   482   550
+  589   589gat nand    1   2      >sa1
+   485   551
+  590   590gat nand    1   2      >sa1
+   488   553
+  591   591gat nand    1   2      >sa1
+   491   554
+  592   592gat nand    1   2      >sa1
+   494   556
+  593   593gat nand    1   2      >sa1
+   497   557
+  594   594gat nand    1   2      >sa1
+   500   559
+  595   595gat nand    1   2      >sa1
+   503   560
+  596   596gat nand    1   2      >sa1
+   506   562
+  597   597gat nand    1   2      >sa1
+   509   563
+  598   598gat nand    1   2      >sa1
+   512   565
+  599   599gat nand    1   2      >sa1
+   515   566
+  600   600gat nand    1   2      >sa1
+   518   568
+  601   601gat nand    1   2      >sa1
+   521   569
+  602   602gat nand    4   2 >sa0 >sa1
+   570   571
+  603   602f01 from   602gat      >sa1
+  604   602f02 from   602gat      >sa1
+  605   602f03 from   602gat      >sa1
+  606   602f04 from   602gat      >sa1
+  607   607gat nand    4   2 >sa0 >sa1
+   572   573
+  608   607f01 from   607gat      >sa1
+  609   607f02 from   607gat      >sa1
+  610   607f03 from   607gat      >sa1
+  611   607f04 from   607gat      >sa1
+  612   612gat nand    4   2 >sa0 >sa1
+   574   575
+  613   612f01 from   612gat      >sa1
+  614   612f02 from   612gat      >sa1
+  615   612f03 from   612gat      >sa1
+  616   612f04 from   612gat      >sa1
+  617   617gat nand    4   2 >sa0 >sa1
+   576   577
+  618   617f01 from   617gat      >sa1
+  619   617f02 from   617gat      >sa1
+  620   617f03 from   617gat      >sa1
+  621   617f04 from   617gat      >sa1
+  622   622gat nand    4   2 >sa0 >sa1
+   578   579
+  623   622f01 from   622gat      >sa1
+  624   622f02 from   622gat      >sa1
+  625   622f03 from   622gat      >sa1
+  626   622f04 from   622gat      >sa1
+  627   627gat nand    4   2 >sa0 >sa1
+   580   581
+  628   627f01 from   627gat      >sa1
+  629   627f02 from   627gat      >sa1
+  630   627f03 from   627gat      >sa1
+  631   627f04 from   627gat      >sa1
+  632   632gat nand    4   2 >sa0 >sa1
+   582   583
+  633   632f01 from   632gat      >sa1
+  634   632f02 from   632gat      >sa1
+  635   632f03 from   632gat      >sa1
+  636   632f04 from   632gat      >sa1
+  637   637gat nand    4   2 >sa0 >sa1
+   584   585
+  638   637f01 from   637gat      >sa1
+  639   637f02 from   637gat      >sa1
+  640   637f03 from   637gat      >sa1
+  641   637f04 from   637gat      >sa1
+  642   642gat nand    2   2 >sa0 >sa1
+   586   587
+  643   642f01 from   642gat      >sa1
+  644   642f02 from   642gat      >sa1
+  645   645gat nand    2   2 >sa0 >sa1
+   588   589
+  646   645f01 from   645gat      >sa1
+  647   645f02 from   645gat      >sa1
+  648   648gat nand    2   2 >sa0 >sa1
+   590   591
+  649   648f01 from   648gat      >sa1
+  650   648f02 from   648gat      >sa1
+  651   651gat nand    2   2 >sa0 >sa1
+   592   593
+  652   651f01 from   651gat      >sa1
+  653   651f02 from   651gat      >sa1
+  654   654gat nand    2   2 >sa0 >sa1
+   594   595
+  655   654f01 from   654gat      >sa1
+  656   654f02 from   654gat      >sa1
+  657   657gat nand    2   2 >sa0 >sa1
+   596   597
+  658   657f01 from   657gat      >sa1
+  659   657f02 from   657gat      >sa1
+  660   660gat nand    2   2 >sa0 >sa1
+   598   599
+  661   660f01 from   660gat      >sa1
+  662   660f02 from   660gat      >sa1
+  663   663gat nand    2   2 >sa0 >sa1
+   600   601
+  664   663f01 from   663gat      >sa1
+  665   663f02 from   663gat      >sa1
+  666   666gat nand    2   2 >sa0 >sa1
+   603   608
+  667   666f01 from   666gat      >sa1
+  668   666f02 from   666gat      >sa1
+  669   669gat nand    2   2 >sa0 >sa1
+   613   618
+  670   669f01 from   669gat      >sa1
+  671   669f02 from   669gat      >sa1
+  672   672gat nand    2   2 >sa0 >sa1
+   605   615
+  673   672f01 from   672gat      >sa1
+  674   672f02 from   672gat      >sa1
+  675   675gat nand    2   2 >sa0 >sa1
+   610   620
+  676   675f01 from   675gat      >sa1
+  677   675f02 from   675gat      >sa1
+  678   678gat nand    2   2 >sa0 >sa1
+   623   628
+  679   678f01 from   678gat      >sa1
+  680   678f02 from   678gat      >sa1
+  681   681gat nand    2   2 >sa0 >sa1
+   633   638
+  682   681f01 from   681gat      >sa1
+  683   681f02 from   681gat      >sa1
+  684   684gat nand    2   2 >sa0 >sa1
+   625   635
+  685   684f01 from   684gat      >sa1
+  686   684f02 from   684gat      >sa1
+  687   687gat nand    2   2 >sa0 >sa1
+   630   640
+  688   687f01 from   687gat      >sa1
+  689   687f02 from   687gat      >sa1
+  690   690gat nand    1   2      >sa1
+   604   667
+  691   691gat nand    1   2      >sa1
+   609   668
+  692   692gat nand    1   2      >sa1
+   614   670
+  693   693gat nand    1   2      >sa1
+   619   671
+  694   694gat nand    1   2      >sa1
+   606   673
+  695   695gat nand    1   2      >sa1
+   616   674
+  696   696gat nand    1   2      >sa1
+   611   676
+  697   697gat nand    1   2      >sa1
+   621   677
+  698   698gat nand    1   2      >sa1
+   624   679
+  699   699gat nand    1   2      >sa1
+   629   680
+  700   700gat nand    1   2      >sa1
+   634   682
+  701   701gat nand    1   2      >sa1
+   639   683
+  702   702gat nand    1   2      >sa1
+   626   685
+  703   703gat nand    1   2      >sa1
+   636   686
+  704   704gat nand    1   2      >sa1
+   631   688
+  705   705gat nand    1   2      >sa1
+   641   689
+  706   706gat nand    2   2 >sa0 >sa1
+   690   691
+  707   706f01 from   706gat      >sa1
+  708   706f02 from   706gat      >sa1
+  709   709gat nand    2   2 >sa0 >sa1
+   692   693
+  710   709f01 from   709gat      >sa1
+  711   709f02 from   709gat      >sa1
+  712   712gat nand    2   2 >sa0 >sa1
+   694   695
+  713   712f01 from   712gat      >sa1
+  714   712f02 from   712gat      >sa1
+  715   715gat nand    2   2 >sa0 >sa1
+   696   697
+  716   715f01 from   715gat      >sa1
+  717   715f02 from   715gat      >sa1
+  718   718gat nand    2   2 >sa0 >sa1
+   698   699
+  719   718f01 from   718gat      >sa1
+  720   718f02 from   718gat      >sa1
+  721   721gat nand    2   2 >sa0 >sa1
+   700   701
+  722   721f01 from   721gat      >sa1
+  723   721f02 from   721gat      >sa1
+  724   724gat nand    2   2 >sa0 >sa1
+   702   703
+  725   724f01 from   724gat      >sa1
+  726   724f02 from   724gat      >sa1
+  727   727gat nand    2   2 >sa0 >sa1
+   704   705
+  728   727f01 from   727gat      >sa1
+  729   727f02 from   727gat      >sa1
+  730   730gat nand    2   2 >sa0 >sa1
+   243   719
+  731   730f01 from   730gat      >sa1
+  732   730f02 from   730gat      >sa1
+  733   733gat nand    2   2 >sa0 >sa1
+   246   722
+  734   733f01 from   733gat      >sa1
+  735   733f02 from   733gat      >sa1
+  736   736gat nand    2   2 >sa0 >sa1
+   249   725
+  737   736f01 from   736gat      >sa1
+  738   736f02 from   736gat      >sa1
+  739   739gat nand    2   2 >sa0 >sa1
+   252   728
+  740   739f01 from   739gat      >sa1
+  741   739f02 from   739gat      >sa1
+  742   742gat nand    2   2 >sa0 >sa1
+   255   707
+  743   742f01 from   742gat      >sa1
+  744   742f02 from   742gat      >sa1
+  745   745gat nand    2   2 >sa0 >sa1
+   258   710
+  746   745f01 from   745gat      >sa1
+  747   745f02 from   745gat      >sa1
+  748   748gat nand    2   2 >sa0 >sa1
+   261   713
+  749   748f01 from   748gat      >sa1
+  750   748f02 from   748gat      >sa1
+  751   751gat nand    2   2 >sa0 >sa1
+   264   716
+  752   751f01 from   751gat      >sa1
+  753   751f02 from   751gat      >sa1
+  754   754gat nand    1   2      >sa1
+   244   731
+  755   755gat nand    1   2      >sa1
+   720   732
+  756   756gat nand    1   2      >sa1
+   247   734
+  757   757gat nand    1   2      >sa1
+   723   735
+  758   758gat nand    1   2      >sa1
+   250   737
+  759   759gat nand    1   2      >sa1
+   726   738
+  760   760gat nand    1   2      >sa1
+   253   740
+  761   761gat nand    1   2      >sa1
+   729   741
+  762   762gat nand    1   2      >sa1
+   256   743
+  763   763gat nand    1   2      >sa1
+   708   744
+  764   764gat nand    1   2      >sa1
+   259   746
+  765   765gat nand    1   2      >sa1
+   711   747
+  766   766gat nand    1   2      >sa1
+   262   749
+  767   767gat nand    1   2      >sa1
+   714   750
+  768   768gat nand    1   2      >sa1
+   265   752
+  769   769gat nand    1   2      >sa1
+   717   753
+  770   770gat nand    2   2 >sa0 >sa1
+   754   755
+  771   770f01 from   770gat      >sa1
+  772   770f02 from   770gat      >sa1
+  773   773gat nand    2   2 >sa0 >sa1
+   756   757
+  774   773f01 from   773gat      >sa1
+  775   773f02 from   773gat      >sa1
+  776   776gat nand    2   2 >sa0 >sa1
+   758   759
+  777   776f01 from   776gat      >sa1
+  778   776f02 from   776gat      >sa1
+  779   779gat nand    2   2 >sa0 >sa1
+   760   761
+  780   779f01 from   779gat      >sa1
+  781   779f02 from   779gat      >sa1
+  782   782gat nand    2   2 >sa0 >sa1
+   762   763
+  783   782f01 from   782gat      >sa1
+  784   782f02 from   782gat      >sa1
+  785   785gat nand    2   2 >sa0 >sa1
+   764   765
+  786   785f01 from   785gat      >sa1
+  787   785f02 from   785gat      >sa1
+  788   788gat nand    2   2 >sa0 >sa1
+   766   767
+  789   788f01 from   788gat      >sa1
+  790   788f02 from   788gat      >sa1
+  791   791gat nand    2   2 >sa0 >sa1
+   768   769
+  792   791f01 from   791gat      >sa1
+  793   791f02 from   791gat      >sa1
+  794   794gat nand    2   2 >sa0 >sa1
+   643   771
+  795   794f01 from   794gat      >sa1
+  796   794f02 from   794gat      >sa1
+  797   797gat nand    2   2 >sa0 >sa1
+   646   774
+  798   797f01 from   797gat      >sa1
+  799   797f02 from   797gat      >sa1
+  800   800gat nand    2   2 >sa0 >sa1
+   649   777
+  801   800f01 from   800gat      >sa1
+  802   800f02 from   800gat      >sa1
+  803   803gat nand    2   2 >sa0 >sa1
+   652   780
+  804   803f01 from   803gat      >sa1
+  805   803f02 from   803gat      >sa1
+  806   806gat nand    2   2 >sa0 >sa1
+   655   783
+  807   806f01 from   806gat      >sa1
+  808   806f02 from   806gat      >sa1
+  809   809gat nand    2   2 >sa0 >sa1
+   658   786
+  810   809f01 from   809gat      >sa1
+  811   809f02 from   809gat      >sa1
+  812   812gat nand    2   2 >sa0 >sa1
+   661   789
+  813   812f01 from   812gat      >sa1
+  814   812f02 from   812gat      >sa1
+  815   815gat nand    2   2 >sa0 >sa1
+   664   792
+  816   815f01 from   815gat      >sa1
+  817   815f02 from   815gat      >sa1
+  818   818gat nand    1   2      >sa1
+   644   795
+  819   819gat nand    1   2      >sa1
+   772   796
+  820   820gat nand    1   2      >sa1
+   647   798
+  821   821gat nand    1   2      >sa1
+   775   799
+  822   822gat nand    1   2      >sa1
+   650   801
+  823   823gat nand    1   2      >sa1
+   778   802
+  824   824gat nand    1   2      >sa1
+   653   804
+  825   825gat nand    1   2      >sa1
+   781   805
+  826   826gat nand    1   2      >sa1
+   656   807
+  827   827gat nand    1   2      >sa1
+   784   808
+  828   828gat nand    1   2      >sa1
+   659   810
+  829   829gat nand    1   2      >sa1
+   787   811
+  830   830gat nand    1   2      >sa1
+   662   813
+  831   831gat nand    1   2      >sa1
+   790   814
+  832   832gat nand    1   2      >sa1
+   665   816
+  833   833gat nand    1   2      >sa1
+   793   817
+  834   834gat nand   12   2 >sa0 >sa1
+   818   819
+  835   834f01 from   834gat
+  836   834f02 from   834gat
+  837   834f03 from   834gat
+  838   834f04 from   834gat
+  839   834f05 from   834gat
+  840   834f06 from   834gat      >sa1
+  841   834f07 from   834gat      >sa1
+  842   834f08 from   834gat      >sa1
+  843   834f09 from   834gat      >sa1
+  844   834f10 from   834gat      >sa1
+  845   834f11 from   834gat      >sa1
+  846   834f12 from   834gat      >sa1
+  847   847gat nand   12   2 >sa0 >sa1
+   820   821
+  848   847f01 from   847gat
+  849   847f02 from   847gat
+  850   847f03 from   847gat
+  851   847f04 from   847gat
+  852   847f05 from   847gat
+  853   847f06 from   847gat      >sa1
+  854   847f07 from   847gat      >sa1
+  855   847f08 from   847gat      >sa1
+  856   847f09 from   847gat      >sa1
+  857   847f10 from   847gat      >sa1
+  858   847f11 from   847gat      >sa1
+  859   847f12 from   847gat      >sa1
+  860   860gat nand   12   2 >sa0 >sa1
+   822   823
+  861   860f01 from   860gat
+  862   860f02 from   860gat
+  863   860f03 from   860gat
+  864   860f04 from   860gat
+  865   860f05 from   860gat
+  866   860f06 from   860gat      >sa1
+  867   860f07 from   860gat      >sa1
+  868   860f08 from   860gat      >sa1
+  869   860f09 from   860gat      >sa1
+  870   860f10 from   860gat      >sa1
+  871   860f11 from   860gat      >sa1
+  872   860f12 from   860gat      >sa1
+  873   873gat nand   12   2 >sa0 >sa1
+   824   825
+  874   873f01 from   873gat
+  875   873f02 from   873gat
+  876   873f03 from   873gat
+  877   873f04 from   873gat
+  878   873f05 from   873gat
+  879   873f06 from   873gat      >sa1
+  880   873f07 from   873gat      >sa1
+  881   873f08 from   873gat      >sa1
+  882   873f09 from   873gat      >sa1
+  883   873f10 from   873gat      >sa1
+  884   873f11 from   873gat      >sa1
+  885   873f12 from   873gat      >sa1
+  886   886gat nand   12   2 >sa0 >sa1
+   828   829
+  887   886f01 from   886gat
+  888   886f02 from   886gat
+  889   886f03 from   886gat
+  890   886f04 from   886gat
+  891   886f05 from   886gat
+  892   886f06 from   886gat      >sa1
+  893   886f07 from   886gat      >sa1
+  894   886f08 from   886gat      >sa1
+  895   886f09 from   886gat      >sa1
+  896   886f10 from   886gat      >sa1
+  897   886f11 from   886gat      >sa1
+  898   886f12 from   886gat      >sa1
+  899   899gat nand   12   2 >sa0 >sa1
+   832   833
+  900   899f01 from   899gat
+  901   899f02 from   899gat
+  902   899f03 from   899gat
+  903   899f04 from   899gat
+  904   899f05 from   899gat
+  905   899f06 from   899gat      >sa1
+  906   899f07 from   899gat      >sa1
+  907   899f08 from   899gat      >sa1
+  908   899f09 from   899gat      >sa1
+  909   899f10 from   899gat      >sa1
+  910   899f11 from   899gat      >sa1
+  911   899f12 from   899gat      >sa1
+  912   912gat nand   12   2 >sa0 >sa1
+   830   831
+  913   912f01 from   912gat
+  914   912f02 from   912gat
+  915   912f03 from   912gat
+  916   912f04 from   912gat
+  917   912f05 from   912gat
+  918   912f06 from   912gat      >sa1
+  919   912f07 from   912gat      >sa1
+  920   912f08 from   912gat      >sa1
+  921   912f09 from   912gat      >sa1
+  922   912f10 from   912gat      >sa1
+  923   912f11 from   912gat      >sa1
+  924   912f12 from   912gat      >sa1
+  925   925gat nand   12   2 >sa0 >sa1
+   826   827
+  926   925f01 from   925gat
+  927   925f02 from   925gat
+  928   925f03 from   925gat
+  929   925f04 from   925gat
+  930   925f05 from   925gat
+  931   925f06 from   925gat      >sa1
+  932   925f07 from   925gat      >sa1
+  933   925f08 from   925gat      >sa1
+  934   925f09 from   925gat      >sa1
+  935   925f10 from   925gat      >sa1
+  936   925f11 from   925gat      >sa1
+  937   925f12 from   925gat      >sa1
+  938   938gat not     1   1      >sa1
+   835
+  939   939gat not     1   1      >sa1
+   848
+  940   940gat not     1   1      >sa1
+   861
+  941   941gat not     1   1      >sa1
+   836
+  942   942gat not     1   1      >sa1
+   849
+  943   943gat not     1   1      >sa1
+   874
+  944   944gat not     1   1      >sa1
+   837
+  945   945gat not     1   1      >sa1
+   862
+  946   946gat not     1   1      >sa1
+   875
+  947   947gat not     1   1      >sa1
+   850
+  948   948gat not     1   1      >sa1
+   863
+  949   949gat not     1   1      >sa1
+   876
+  950   950gat not     1   1      >sa1
+   887
+  951   951gat not     1   1      >sa1
+   900
+  952   952gat not     1   1      >sa1
+   888
+  953   953gat not     1   1      >sa1
+   913
+  954   954gat not     1   1      >sa1
+   926
+  955   955gat not     1   1      >sa1
+   901
+  956   956gat not     1   1      >sa1
+   927
+  957   957gat not     1   1      >sa1
+   914
+  958   958gat not     1   1      >sa1
+   928
+  959   959gat not     1   1      >sa1
+   889
+  960   960gat not     1   1      >sa1
+   915
+  961   961gat not     1   1      >sa1
+   929
+  962   962gat not     1   1      >sa1
+   890
+  963   963gat not     1   1      >sa1
+   902
+  964   964gat not     1   1      >sa1
+   930
+  965   965gat not     1   1      >sa1
+   916
+  966   966gat not     1   1      >sa1
+   903
+  967   967gat not     1   1      >sa1
+   891
+  968   968gat not     1   1      >sa1
+   917
+  969   969gat not     1   1      >sa1
+   904
+  970   970gat not     1   1      >sa1
+   851
+  971   971gat not     1   1      >sa1
+   877
+  972   972gat not     1   1      >sa1
+   852
+  973   973gat not     1   1      >sa1
+   864
+  974   974gat not     1   1      >sa1
+   838
+  975   975gat not     1   1      >sa1
+   878
+  976   976gat not     1   1      >sa1
+   839
+  977   977gat not     1   1      >sa1
+   865
+  978   978gat and     1   4 >sa0
+   938   939   940   879
+  979   979gat and     1   4 >sa0
+   941   942   866   943
+  980   980gat and     1   4 >sa0
+   944   853   945   946
+  981   981gat and     1   4 >sa0
+   840   947   948   949
+  982   982gat and     1   4 >sa0
+   958   959   960   905
+  983   983gat and     1   4 >sa0
+   961   962   918   963
+  984   984gat and     1   4 >sa0
+   964   892   965   966
+  985   985gat and     1   4 >sa0
+   931   967   968   969
+  986   986gat or      4   4 >sa0 >sa1
+   978   979   980   981
+  987   986f01 from   986gat      >sa1
+  988   986f02 from   986gat      >sa1
+  989   986f03 from   986gat      >sa1
+  990   986f04 from   986gat      >sa1
+  991   991gat or      4   4 >sa0 >sa1
+   982   983   984   985
+  992   991f01 from   991gat      >sa1
+  993   991f02 from   991gat      >sa1
+  994   991f03 from   991gat      >sa1
+  995   991f04 from   991gat      >sa1
+  996   996gat and     4   5 >sa0 >sa1
+   932   950   919   951   987
+  997   996f01 from   996gat      >sa1
+  998   996f02 from   996gat      >sa1
+  999   996f03 from   996gat      >sa1
+ 1000   996f04 from   996gat      >sa1
+ 1001  1001gat and     4   5 >sa0 >sa1
+   933   952   953   906   988
+ 1002  1001f01 from  1001gat      >sa1
+ 1003  1001f02 from  1001gat      >sa1
+ 1004  1001f03 from  1001gat      >sa1
+ 1005  1001f04 from  1001gat      >sa1
+ 1006  1006gat and     4   5 >sa0 >sa1
+   954   893   920   955   989
+ 1007  1006f01 from  1006gat      >sa1
+ 1008  1006f02 from  1006gat      >sa1
+ 1009  1006f03 from  1006gat      >sa1
+ 1010  1006f04 from  1006gat      >sa1
+ 1011  1011gat and     4   5 >sa0 >sa1
+   956   894   957   907   990
+ 1012  1011f01 from  1011gat      >sa1
+ 1013  1011f02 from  1011gat      >sa1
+ 1014  1011f03 from  1011gat      >sa1
+ 1015  1011f04 from  1011gat      >sa1
+ 1016  1016gat and     4   5 >sa0 >sa1
+   841   970   867   971   992
+ 1017  1016f01 from  1016gat      >sa1
+ 1018  1016f02 from  1016gat      >sa1
+ 1019  1016f03 from  1016gat      >sa1
+ 1020  1016f04 from  1016gat      >sa1
+ 1021  1021gat and     4   5 >sa0 >sa1
+   842   972   973   880   993
+ 1022  1021f01 from  1021gat      >sa1
+ 1023  1021f02 from  1021gat      >sa1
+ 1024  1021f03 from  1021gat      >sa1
+ 1025  1021f04 from  1021gat      >sa1
+ 1026  1026gat and     4   5 >sa0 >sa1
+   974   854   868   975   994
+ 1027  1026f01 from  1026gat      >sa1
+ 1028  1026f02 from  1026gat      >sa1
+ 1029  1026f03 from  1026gat      >sa1
+ 1030  1026f04 from  1026gat      >sa1
+ 1031  1031gat and     4   5 >sa0 >sa1
+   976   855   977   881   995
+ 1032  1031f01 from  1031gat      >sa1
+ 1033  1031f02 from  1031gat      >sa1
+ 1034  1031f03 from  1031gat      >sa1
+ 1035  1031f04 from  1031gat      >sa1
+ 1036  1036gat and     2   2 >sa0 >sa1
+   843   997
+ 1037  1036f01 from  1036gat      >sa1
+ 1038  1036f02 from  1036gat      >sa1
+ 1039  1039gat and     2   2 >sa0 >sa1
+   856   998
+ 1040  1039f01 from  1039gat      >sa1
+ 1041  1039f02 from  1039gat      >sa1
+ 1042  1042gat and     2   2 >sa0 >sa1
+   869   999
+ 1043  1042f01 from  1042gat      >sa1
+ 1044  1042f02 from  1042gat      >sa1
+ 1045  1045gat and     2   2 >sa0 >sa1
+   882  1000
+ 1046  1045f01 from  1045gat      >sa1
+ 1047  1045f02 from  1045gat      >sa1
+ 1048  1048gat and     2   2 >sa0 >sa1
+   844  1002
+ 1049  1048f01 from  1048gat      >sa1
+ 1050  1048f02 from  1048gat      >sa1
+ 1051  1051gat and     2   2 >sa0 >sa1
+   857  1003
+ 1052  1051f01 from  1051gat      >sa1
+ 1053  1051f02 from  1051gat      >sa1
+ 1054  1054gat and     2   2 >sa0 >sa1
+   870  1004
+ 1055  1054f01 from  1054gat      >sa1
+ 1056  1054f02 from  1054gat      >sa1
+ 1057  1057gat and     2   2 >sa0 >sa1
+   883  1005
+ 1058  1057f01 from  1057gat      >sa1
+ 1059  1057f02 from  1057gat      >sa1
+ 1060  1060gat and     2   2 >sa0 >sa1
+   845  1007
+ 1061  1060f01 from  1060gat      >sa1
+ 1062  1060f02 from  1060gat      >sa1
+ 1063  1063gat and     2   2 >sa0 >sa1
+   858  1008
+ 1064  1063f01 from  1063gat      >sa1
+ 1065  1063f02 from  1063gat      >sa1
+ 1066  1066gat and     2   2 >sa0 >sa1
+   871  1009
+ 1067  1066f01 from  1066gat      >sa1
+ 1068  1066f02 from  1066gat      >sa1
+ 1069  1069gat and     2   2 >sa0 >sa1
+   884  1010
+ 1070  1069f01 from  1069gat      >sa1
+ 1071  1069f02 from  1069gat      >sa1
+ 1072  1072gat and     2   2 >sa0 >sa1
+   846  1012
+ 1073  1072f01 from  1072gat      >sa1
+ 1074  1072f02 from  1072gat      >sa1
+ 1075  1075gat and     2   2 >sa0 >sa1
+   859  1013
+ 1076  1075f01 from  1075gat      >sa1
+ 1077  1075f02 from  1075gat      >sa1
+ 1078  1078gat and     2   2 >sa0 >sa1
+   872  1014
+ 1079  1078f01 from  1078gat      >sa1
+ 1080  1078f02 from  1078gat      >sa1
+ 1081  1081gat and     2   2 >sa0 >sa1
+   885  1015
+ 1082  1081f01 from  1081gat      >sa1
+ 1083  1081f02 from  1081gat      >sa1
+ 1084  1084gat and     2   2 >sa0 >sa1
+   934  1017
+ 1085  1084f01 from  1084gat      >sa1
+ 1086  1084f02 from  1084gat      >sa1
+ 1087  1087gat and     2   2 >sa0 >sa1
+   895  1018
+ 1088  1087f01 from  1087gat      >sa1
+ 1089  1087f02 from  1087gat      >sa1
+ 1090  1090gat and     2   2 >sa0 >sa1
+   921  1019
+ 1091  1090f01 from  1090gat      >sa1
+ 1092  1090f02 from  1090gat      >sa1
+ 1093  1093gat and     2   2 >sa0 >sa1
+   908  1020
+ 1094  1093f01 from  1093gat      >sa1
+ 1095  1093f02 from  1093gat      >sa1
+ 1096  1096gat and     2   2 >sa0 >sa1
+   935  1022
+ 1097  1096f01 from  1096gat      >sa1
+ 1098  1096f02 from  1096gat      >sa1
+ 1099  1099gat and     2   2 >sa0 >sa1
+   896  1023
+ 1100  1099f01 from  1099gat      >sa1
+ 1101  1099f02 from  1099gat      >sa1
+ 1102  1102gat and     2   2 >sa0 >sa1
+   922  1024
+ 1103  1102f01 from  1102gat      >sa1
+ 1104  1102f02 from  1102gat      >sa1
+ 1105  1105gat and     2   2 >sa0 >sa1
+   909  1025
+ 1106  1105f01 from  1105gat      >sa1
+ 1107  1105f02 from  1105gat      >sa1
+ 1108  1108gat and     2   2 >sa0 >sa1
+   936  1027
+ 1109  1108f01 from  1108gat      >sa1
+ 1110  1108f02 from  1108gat      >sa1
+ 1111  1111gat and     2   2 >sa0 >sa1
+   897  1028
+ 1112  1111f01 from  1111gat      >sa1
+ 1113  1111f02 from  1111gat      >sa1
+ 1114  1114gat and     2   2 >sa0 >sa1
+   923  1029
+ 1115  1114f01 from  1114gat      >sa1
+ 1116  1114f02 from  1114gat      >sa1
+ 1117  1117gat and     2   2 >sa0 >sa1
+   910  1030
+ 1118  1117f01 from  1117gat      >sa1
+ 1119  1117f02 from  1117gat      >sa1
+ 1120  1120gat and     2   2 >sa0 >sa1
+   937  1032
+ 1121  1120f01 from  1120gat      >sa1
+ 1122  1120f02 from  1120gat      >sa1
+ 1123  1123gat and     2   2 >sa0 >sa1
+   898  1033
+ 1124  1123f01 from  1123gat      >sa1
+ 1125  1123f02 from  1123gat      >sa1
+ 1126  1126gat and     2   2 >sa0 >sa1
+   924  1034
+ 1127  1126f01 from  1126gat      >sa1
+ 1128  1126f02 from  1126gat      >sa1
+ 1129  1129gat and     2   2 >sa0 >sa1
+   911  1035
+ 1130  1129f01 from  1129gat      >sa1
+ 1131  1129f02 from  1129gat      >sa1
+ 1132  1132gat nand    2   2 >sa0 >sa1
+     2  1037
+ 1133  1132f01 from  1132gat      >sa1
+ 1134  1132f02 from  1132gat      >sa1
+ 1135  1135gat nand    2   2 >sa0 >sa1
+     9  1040
+ 1136  1135f01 from  1135gat      >sa1
+ 1137  1135f02 from  1135gat      >sa1
+ 1138  1138gat nand    2   2 >sa0 >sa1
+    16  1043
+ 1139  1138f01 from  1138gat      >sa1
+ 1140  1138f02 from  1138gat      >sa1
+ 1141  1141gat nand    2   2 >sa0 >sa1
+    23  1046
+ 1142  1141f01 from  1141gat      >sa1
+ 1143  1141f02 from  1141gat      >sa1
+ 1144  1144gat nand    2   2 >sa0 >sa1
+    30  1049
+ 1145  1144f01 from  1144gat      >sa1
+ 1146  1144f02 from  1144gat      >sa1
+ 1147  1147gat nand    2   2 >sa0 >sa1
+    37  1052
+ 1148  1147f01 from  1147gat      >sa1
+ 1149  1147f02 from  1147gat      >sa1
+ 1150  1150gat nand    2   2 >sa0 >sa1
+    44  1055
+ 1151  1150f01 from  1150gat      >sa1
+ 1152  1150f02 from  1150gat      >sa1
+ 1153  1153gat nand    2   2 >sa0 >sa1
+    51  1058
+ 1154  1153f01 from  1153gat      >sa1
+ 1155  1153f02 from  1153gat      >sa1
+ 1156  1156gat nand    2   2 >sa0 >sa1
+    58  1061
+ 1157  1156f01 from  1156gat      >sa1
+ 1158  1156f02 from  1156gat      >sa1
+ 1159  1159gat nand    2   2 >sa0 >sa1
+    65  1064
+ 1160  1159f01 from  1159gat      >sa1
+ 1161  1159f02 from  1159gat      >sa1
+ 1162  1162gat nand    2   2 >sa0 >sa1
+    72  1067
+ 1163  1162f01 from  1162gat      >sa1
+ 1164  1162f02 from  1162gat      >sa1
+ 1165  1165gat nand    2   2 >sa0 >sa1
+    79  1070
+ 1166  1165f01 from  1165gat      >sa1
+ 1167  1165f02 from  1165gat      >sa1
+ 1168  1168gat nand    2   2 >sa0 >sa1
+    86  1073
+ 1169  1168f01 from  1168gat      >sa1
+ 1170  1168f02 from  1168gat      >sa1
+ 1171  1171gat nand    2   2 >sa0 >sa1
+    93  1076
+ 1172  1171f01 from  1171gat      >sa1
+ 1173  1171f02 from  1171gat      >sa1
+ 1174  1174gat nand    2   2 >sa0 >sa1
+   100  1079
+ 1175  1174f01 from  1174gat      >sa1
+ 1176  1174f02 from  1174gat      >sa1
+ 1177  1177gat nand    2   2 >sa0 >sa1
+   107  1082
+ 1178  1177f01 from  1177gat      >sa1
+ 1179  1177f02 from  1177gat      >sa1
+ 1180  1180gat nand    2   2 >sa0 >sa1
+   114  1085
+ 1181  1180f01 from  1180gat      >sa1
+ 1182  1180f02 from  1180gat      >sa1
+ 1183  1183gat nand    2   2 >sa0 >sa1
+   121  1088
+ 1184  1183f01 from  1183gat      >sa1
+ 1185  1183f02 from  1183gat      >sa1
+ 1186  1186gat nand    2   2 >sa0 >sa1
+   128  1091
+ 1187  1186f01 from  1186gat      >sa1
+ 1188  1186f02 from  1186gat      >sa1
+ 1189  1189gat nand    2   2 >sa0 >sa1
+   135  1094
+ 1190  1189f01 from  1189gat      >sa1
+ 1191  1189f02 from  1189gat      >sa1
+ 1192  1192gat nand    2   2 >sa0 >sa1
+   142  1097
+ 1193  1192f01 from  1192gat      >sa1
+ 1194  1192f02 from  1192gat      >sa1
+ 1195  1195gat nand    2   2 >sa0 >sa1
+   149  1100
+ 1196  1195f01 from  1195gat      >sa1
+ 1197  1195f02 from  1195gat      >sa1
+ 1198  1198gat nand    2   2 >sa0 >sa1
+   156  1103
+ 1199  1198f01 from  1198gat      >sa1
+ 1200  1198f02 from  1198gat      >sa1
+ 1201  1201gat nand    2   2 >sa0 >sa1
+   163  1106
+ 1202  1201f01 from  1201gat      >sa1
+ 1203  1201f02 from  1201gat      >sa1
+ 1204  1204gat nand    2   2 >sa0 >sa1
+   170  1109
+ 1205  1204f01 from  1204gat      >sa1
+ 1206  1204f02 from  1204gat      >sa1
+ 1207  1207gat nand    2   2 >sa0 >sa1
+   177  1112
+ 1208  1207f01 from  1207gat      >sa1
+ 1209  1207f02 from  1207gat      >sa1
+ 1210  1210gat nand    2   2 >sa0 >sa1
+   184  1115
+ 1211  1210f01 from  1210gat      >sa1
+ 1212  1210f02 from  1210gat      >sa1
+ 1213  1213gat nand    2   2 >sa0 >sa1
+   191  1118
+ 1214  1213f01 from  1213gat      >sa1
+ 1215  1213f02 from  1213gat      >sa1
+ 1216  1216gat nand    2   2 >sa0 >sa1
+   198  1121
+ 1217  1216f01 from  1216gat      >sa1
+ 1218  1216f02 from  1216gat      >sa1
+ 1219  1219gat nand    2   2 >sa0 >sa1
+   205  1124
+ 1220  1219f01 from  1219gat      >sa1
+ 1221  1219f02 from  1219gat      >sa1
+ 1222  1222gat nand    2   2 >sa0 >sa1
+   212  1127
+ 1223  1222f01 from  1222gat      >sa1
+ 1224  1222f02 from  1222gat      >sa1
+ 1225  1225gat nand    2   2 >sa0 >sa1
+   219  1130
+ 1226  1225f01 from  1225gat      >sa1
+ 1227  1225f02 from  1225gat      >sa1
+ 1228  1228gat nand    1   2      >sa1
+     3  1133
+ 1229  1229gat nand    1   2      >sa1
+  1038  1134
+ 1230  1230gat nand    1   2      >sa1
+    10  1136
+ 1231  1231gat nand    1   2      >sa1
+  1041  1137
+ 1232  1232gat nand    1   2      >sa1
+    17  1139
+ 1233  1233gat nand    1   2      >sa1
+  1044  1140
+ 1234  1234gat nand    1   2      >sa1
+    24  1142
+ 1235  1235gat nand    1   2      >sa1
+  1047  1143
+ 1236  1236gat nand    1   2      >sa1
+    31  1145
+ 1237  1237gat nand    1   2      >sa1
+  1050  1146
+ 1238  1238gat nand    1   2      >sa1
+    38  1148
+ 1239  1239gat nand    1   2      >sa1
+  1053  1149
+ 1240  1240gat nand    1   2      >sa1
+    45  1151
+ 1241  1241gat nand    1   2      >sa1
+  1056  1152
+ 1242  1242gat nand    1   2      >sa1
+    52  1154
+ 1243  1243gat nand    1   2      >sa1
+  1059  1155
+ 1244  1244gat nand    1   2      >sa1
+    59  1157
+ 1245  1245gat nand    1   2      >sa1
+  1062  1158
+ 1246  1246gat nand    1   2      >sa1
+    66  1160
+ 1247  1247gat nand    1   2      >sa1
+  1065  1161
+ 1248  1248gat nand    1   2      >sa1
+    73  1163
+ 1249  1249gat nand    1   2      >sa1
+  1068  1164
+ 1250  1250gat nand    1   2      >sa1
+    80  1166
+ 1251  1251gat nand    1   2      >sa1
+  1071  1167
+ 1252  1252gat nand    1   2      >sa1
+    87  1169
+ 1253  1253gat nand    1   2      >sa1
+  1074  1170
+ 1254  1254gat nand    1   2      >sa1
+    94  1172
+ 1255  1255gat nand    1   2      >sa1
+  1077  1173
+ 1256  1256gat nand    1   2      >sa1
+   101  1175
+ 1257  1257gat nand    1   2      >sa1
+  1080  1176
+ 1258  1258gat nand    1   2      >sa1
+   108  1178
+ 1259  1259gat nand    1   2      >sa1
+  1083  1179
+ 1260  1260gat nand    1   2      >sa1
+   115  1181
+ 1261  1261gat nand    1   2      >sa1
+  1086  1182
+ 1262  1262gat nand    1   2      >sa1
+   122  1184
+ 1263  1263gat nand    1   2      >sa1
+  1089  1185
+ 1264  1264gat nand    1   2      >sa1
+   129  1187
+ 1265  1265gat nand    1   2      >sa1
+  1092  1188
+ 1266  1266gat nand    1   2      >sa1
+   136  1190
+ 1267  1267gat nand    1   2      >sa1
+  1095  1191
+ 1268  1268gat nand    1   2      >sa1
+   143  1193
+ 1269  1269gat nand    1   2      >sa1
+  1098  1194
+ 1270  1270gat nand    1   2      >sa1
+   150  1196
+ 1271  1271gat nand    1   2      >sa1
+  1101  1197
+ 1272  1272gat nand    1   2      >sa1
+   157  1199
+ 1273  1273gat nand    1   2      >sa1
+  1104  1200
+ 1274  1274gat nand    1   2      >sa1
+   164  1202
+ 1275  1275gat nand    1   2      >sa1
+  1107  1203
+ 1276  1276gat nand    1   2      >sa1
+   171  1205
+ 1277  1277gat nand    1   2      >sa1
+  1110  1206
+ 1278  1278gat nand    1   2      >sa1
+   178  1208
+ 1279  1279gat nand    1   2      >sa1
+  1113  1209
+ 1280  1280gat nand    1   2      >sa1
+   185  1211
+ 1281  1281gat nand    1   2      >sa1
+  1116  1212
+ 1282  1282gat nand    1   2      >sa1
+   192  1214
+ 1283  1283gat nand    1   2      >sa1
+  1119  1215
+ 1284  1284gat nand    1   2      >sa1
+   199  1217
+ 1285  1285gat nand    1   2      >sa1
+  1122  1218
+ 1286  1286gat nand    1   2      >sa1
+   206  1220
+ 1287  1287gat nand    1   2      >sa1
+  1125  1221
+ 1288  1288gat nand    1   2      >sa1
+   213  1223
+ 1289  1289gat nand    1   2      >sa1
+  1128  1224
+ 1290  1290gat nand    1   2      >sa1
+   220  1226
+ 1291  1291gat nand    1   2      >sa1
+  1131  1227
+ 1292  1292gat nand    1   2
+  1228  1229
+ 1293  1293gat nand    1   2
+  1230  1231
+ 1294  1294gat nand    1   2
+  1232  1233
+ 1295  1295gat nand    1   2
+  1234  1235
+ 1296  1296gat nand    1   2
+  1236  1237
+ 1297  1297gat nand    1   2
+  1238  1239
+ 1298  1298gat nand    1   2
+  1240  1241
+ 1299  1299gat nand    1   2
+  1242  1243
+ 1300  1300gat nand    1   2
+  1244  1245
+ 1301  1301gat nand    1   2
+  1246  1247
+ 1302  1302gat nand    1   2
+  1248  1249
+ 1303  1303gat nand    1   2
+  1250  1251
+ 1304  1304gat nand    1   2
+  1252  1253
+ 1305  1305gat nand    1   2
+  1254  1255
+ 1306  1306gat nand    1   2
+  1256  1257
+ 1307  1307gat nand    1   2
+  1258  1259
+ 1308  1308gat nand    1   2
+  1260  1261
+ 1309  1309gat nand    1   2
+  1262  1263
+ 1310  1310gat nand    1   2
+  1264  1265
+ 1311  1311gat nand    1   2
+  1266  1267
+ 1312  1312gat nand    1   2
+  1268  1269
+ 1313  1313gat nand    1   2
+  1270  1271
+ 1314  1314gat nand    1   2
+  1272  1273
+ 1315  1315gat nand    1   2
+  1274  1275
+ 1316  1316gat nand    1   2
+  1276  1277
+ 1317  1317gat nand    1   2
+  1278  1279
+ 1318  1318gat nand    1   2
+  1280  1281
+ 1319  1319gat nand    1   2
+  1282  1283
+ 1320  1320gat nand    1   2
+  1284  1285
+ 1321  1321gat nand    1   2
+  1286  1287
+ 1322  1322gat nand    1   2
+  1288  1289
+ 1323  1323gat nand    1   2
+  1290  1291
+ 1324  1324gat buff    0   1 >sa0 >sa1
+  1292
+ 1325  1325gat buff    0   1 >sa0 >sa1
+  1293
+ 1326  1326gat buff    0   1 >sa0 >sa1
+  1294
+ 1327  1327gat buff    0   1 >sa0 >sa1
+  1295
+ 1328  1328gat buff    0   1 >sa0 >sa1
+  1296
+ 1329  1329gat buff    0   1 >sa0 >sa1
+  1297
+ 1330  1330gat buff    0   1 >sa0 >sa1
+  1298
+ 1331  1331gat buff    0   1 >sa0 >sa1
+  1299
+ 1332  1332gat buff    0   1 >sa0 >sa1
+  1300
+ 1333  1333gat buff    0   1 >sa0 >sa1
+  1301
+ 1334  1334gat buff    0   1 >sa0 >sa1
+  1302
+ 1335  1335gat buff    0   1 >sa0 >sa1
+  1303
+ 1336  1336gat buff    0   1 >sa0 >sa1
+  1304
+ 1337  1337gat buff    0   1 >sa0 >sa1
+  1305
+ 1338  1338gat buff    0   1 >sa0 >sa1
+  1306
+ 1339  1339gat buff    0   1 >sa0 >sa1
+  1307
+ 1340  1340gat buff    0   1 >sa0 >sa1
+  1308
+ 1341  1341gat buff    0   1 >sa0 >sa1
+  1309
+ 1342  1342gat buff    0   1 >sa0 >sa1
+  1310
+ 1343  1343gat buff    0   1 >sa0 >sa1
+  1311
+ 1344  1344gat buff    0   1 >sa0 >sa1
+  1312
+ 1345  1345gat buff    0   1 >sa0 >sa1
+  1313
+ 1346  1346gat buff    0   1 >sa0 >sa1
+  1314
+ 1347  1347gat buff    0   1 >sa0 >sa1
+  1315
+ 1348  1348gat buff    0   1 >sa0 >sa1
+  1316
+ 1349  1349gat buff    0   1 >sa0 >sa1
+  1317
+ 1350  1350gat buff    0   1 >sa0 >sa1
+  1318
+ 1351  1351gat buff    0   1 >sa0 >sa1
+  1319
+ 1352  1352gat buff    0   1 >sa0 >sa1
+  1320
+ 1353  1353gat buff    0   1 >sa0 >sa1
+  1321
+ 1354  1354gat buff    0   1 >sa0 >sa1
+  1322
+ 1355  1355gat buff    0   1 >sa0 >sa1
+  1323
