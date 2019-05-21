@@ -9,6 +9,8 @@ import numpy as np
 import os
 import shutil
 import subprocess
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import re
 import time
@@ -18,12 +20,12 @@ from datetime import datetime
 #These may need to be modified based on individual installation
 #making this more robust is on the to-do list once this is functional
 home_path = os.getenv('HOME')
-lstools_path = home_path + '/code/LSOracle/build/core'
+lstools_path = home_path + '/LSOracle/build/core'
 abc_path = home_path + '/abc'
-seconds = time.time()
-timestamp =  strftime('%Y%m%d%H%M%S', gmtime(seconds))
+timestamp = datetime.now()
+timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
 print ('LSOracle test suite     ')
-print(time.ctime(seconds))
+print(timestamp)
 print('\nHome path: ' + home_path + '\n')
 
 #End to end tests
@@ -34,7 +36,7 @@ print('Test path: ' + test_path + '\n')
 files = glob.glob(test_path_glob)
 print('\n')
 
-results_file_path = test_path + '/' + timestamp + '_basic_tests.txt'
+results_file_path = test_path + '/' + timestamp_format + '_basic_tests.txt'
 results_file = open(results_file_path,'w')
 #we'll have to do some more thinking about what a good end to end test looks like.  For now I'm going to optimize a couple benchmarks
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than 
