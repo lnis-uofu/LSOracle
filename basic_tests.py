@@ -53,7 +53,7 @@ for curr_file in files:
     string_stdout = str(stdout)
     size = float(string_stdout[7:string_stdout.find('\n')])
     num_part = math.ceil(size / 300)
-	print('size: ' + size +' partitions = size/300:  ' + num_part + '\n')
+    print('size: ' + size +' partitions = size/300:  ' + num_part + '\n')
     results_file.write('size: ' + size +' partitions = size/300:  ' + num_part + '\n')
     #mixed synthesis with classifier
     opt_file = curr_file + '_mixed_out.v'
