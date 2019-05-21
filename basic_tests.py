@@ -44,7 +44,6 @@ for curr_file in files:
     results_file.write(curr_file + '\n')
     os.chdir(lstools_path)
     #report statistics
-    #cmd = ['./lstools',' -c ', 'read_aig ' + curr_file + '; ps -a']
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; ps -a;']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
@@ -52,6 +51,7 @@ for curr_file in files:
     size = float(string_stdout[7:string_stdout.find('\n')])
     num_part = math.ceil(size / 300)
     print(num_part)
+    
     results_file.write('size: ' + str(size) +' partitions = size/300:  ' + str(num_part) + '\n')
     #mixed synthesis with classifier
     opt_file = curr_file + '_mixed_out.v'
@@ -60,7 +60,7 @@ for curr_file in files:
     results_file.write('mixed synthesis with classifier\n')
     results_file.write(str(cmd))
     results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     print('mixed synthesis done.  See file for detailed output.\n')
@@ -73,7 +73,7 @@ for curr_file in files:
     results_file.write('brute force mixed synthesis\n')
     results_file.write(str(cmd))
     results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     print('brute force mixed synthesis done.  See file for detailed output.\n')
@@ -86,7 +86,7 @@ for curr_file in files:
     results_file.write('AIG only\n')
     results_file.write(str(cmd))
     results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     print('AIG done.  See file for detailed output.\n')
@@ -99,7 +99,7 @@ for curr_file in files:
     results_file.write('MIG only\n')
     results_file.write(str(cmd))
     results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     print('MIG done.  See file for detailed output.\n')
