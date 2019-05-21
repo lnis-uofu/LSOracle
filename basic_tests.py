@@ -25,9 +25,14 @@ timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
 print ("LSOracle test suite     ")
 print(timestamp)
 print('\nHome path: ' + home_path + '\n')
+
+#End to end tests
+test_path = '/home/stemple/LSOracle/test_files/end_to_end'
+test_path_glob = test_path + '/*.aig'
+print('End to end tests\n')
 print('Test path: ' + test_path + '\n')
 files = glob.glob(test_path_glob)
-print('\n')
+print(files)
 
 results_file_path = test_path + '/' + timestamp_format + '_basic_tests.txt'
 results_file = open(results_file_path,'w')
@@ -38,22 +43,22 @@ for curr_file in files:
     print(curr_file + '\n')
     results_file.write(curr_file + '\n')
     os.chdir(lstools_path)
-
     #report statistics
+    #cmd = ['./lstools',' -c ', 'read_aig ' + curr_file + '; ps -a']
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; ps -a;']
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     size = float(string_stdout[7:string_stdout.find('\n')])
     num_part = math.ceil(size / 300)
-    print('size: ' + size +' partitions = size/300:  ' + num_part + '\n')
-    results_file.write('size: ' + size +' partitions = size/300:  ' + num_part + '\n')
+    print(num_part)
+    results_file.write('size: ' + str(size) +' partitions = size/300:  ' + str(num_part) + '\n')
     #mixed synthesis with classifier
     opt_file = curr_file + '_mixed_out.v'
     #this assumes that cnn_model.json is in the lstools_path root directory
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -c cnn_model.json -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('mixed synthesis with classifier\n')
-    results_file.write(cmd)
+    results_file.write(str(cmd))
     results_file.write('\n')
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     stdout, stderr = process.communicate()
@@ -66,7 +71,7 @@ for curr_file in files:
     opt_file = curr_file + '_brute_out.v'
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -b -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('brute force mixed synthesis\n')
-    results_file.write(cmd)
+    results_file.write(str(cmd))
     results_file.write('\n')
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     stdout, stderr = process.communicate()
@@ -79,7 +84,7 @@ for curr_file in files:
     opt_file = curr_file + '_AIG_out.v'
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; aig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('AIG only\n')
-    results_file.write(cmd)
+    results_file.write(str(cmd))
     results_file.write('\n')
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     stdout, stderr = process.communicate()
@@ -92,7 +97,7 @@ for curr_file in files:
     opt_file = curr_file + '_MIG_out.v'
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('MIG only\n')
-    results_file.write(cmd)
+    results_file.write(str(cmd))
     results_file.write('\n')
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     stdout, stderr = process.communicate()
