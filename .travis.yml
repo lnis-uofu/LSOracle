@@ -21,6 +21,8 @@ matrix:
     env: COMPILER=g++-8
 
 before_install:
+  - echo -e "machine github.com\n  login $GITHUB_TOKEN" > ~/.netrc
+  - git lfs pull
 
 install:
   - DEPS_DIR="${HOME}/deps"
@@ -35,6 +37,9 @@ install:
       brew install cmake || brew upgrade cmake
     fi
   - cmake --version
+  - cd ${DEPS_DIR}
+  - git clone https://github.com/berkeley-abc/abc.git
+  - cd abc && make ABC_USE_NO_READLINE=1
 
 before_script:
 # print out some version numbers
@@ -56,6 +61,8 @@ script:
  - cd build
  - cmake ..
  - make
+ - cd ..
+ - python basic_tests.py
 
 after_failure:
   - echo "failure"
