@@ -1,6 +1,3 @@
-#End to end and unit test script
-#forked from Max's testing_results.py script
-#Scott Temple 20MAY2019
 import argparse
 import sys
 import glob
@@ -18,20 +15,16 @@ import timeit
 from datetime import datetime
 
 #These may need to be modified based on individual installation
-#making this more robust is on the to-do list once this is functional
 home_path = os.getenv('HOME')
 lstools_path = home_path + '/LSOracle/build/core'
 abc_path = home_path + '/abc'
+test_path = lstools_path + '/../../test_files'
+test_path_glob = test_path + '/*.aig'
 timestamp = datetime.now()
 timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
-print ('LSOracle test suite     ')
+print ("LSOracle test suite     ")
 print(timestamp)
 print('\nHome path: ' + home_path + '\n')
-
-#End to end tests
-test_path = lstools_path + '/../../test_files/end_to_end'
-test_path_glob = test_path + '/*.aig'
-print('End to end tests\n')
 print('Test path: ' + test_path + '\n')
 files = glob.glob(test_path_glob)
 print('\n')
@@ -68,7 +61,6 @@ for curr_file in files:
     print('mixed synthesis done.  See file for detailed output.\n')
     results_file.write(string_stdout)
     results_file.write('\n ')
-    #I need a way to grab the results for each of these so I can compare each method alert when it fails
 
     #Brute Force
     opt_file = curr_file + '_brute_out.v'
@@ -85,7 +77,6 @@ for curr_file in files:
    
     #AIG only
     opt_file = curr_file + '_AIG_out.v'
-    #shouldn't be aig_partition.  Not sure what it is right now
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; aig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('AIG only\n')
     results_file.write(cmd)
@@ -110,12 +101,5 @@ for curr_file in files:
     results_file.write(string_stdout)
     results_file.write('\n ')
    
-#a unit test suite can go here.  Will likely move it to the top once it's written
-#
-#test_path = lstools_path + '/../../test_files/unit'
-#test_path_glob = test_path + '/*.aig'
-#print('Unit tests\n')
-#print('Test path: ' + test_path + '\n')
-#files = glob.glob(test_path_glob)
-#results_file.write('\n\nBegin unit tests\n')
-
+    #a unit test suite can go here.  Will likely move it to the top once it's written
+    #
