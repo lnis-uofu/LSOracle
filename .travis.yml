@@ -1,5 +1,3 @@
-#new travis config.  Ought to be less of a mess, speed up the build, add support for the test script I'm running.
-#I modified the old one, and it works, but it's slow, and seems a little cargo cult-y, so I'm replacing it.
 language: 
     - cpp
 cache: 
