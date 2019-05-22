@@ -18,6 +18,7 @@ from datetime import datetime
 home_path = os.getenv('HOME')
 lstools_path = home_path + '/LSOracle/build/core'
 abc_path = home_path + '/abc'
+training_file = home_path + '/LSOracle/cnn_model.json'
 timestamp = datetime.now()
 timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
 print ("LSOracle test suite     ")
@@ -25,7 +26,7 @@ print(timestamp)
 print('\nHome path: ' + home_path + '\n')
 
 #End to end tests
-test_path = lstools_path + '/../../end_to_end'
+test_path = lstools_path + '/../../tests/end_to_end'
 test_path_glob = test_path + '/*.aig'
 print('End to end tests\n')
 print('Test path: ' + test_path + '\n')
@@ -46,24 +47,23 @@ for curr_file in files:
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
-    size = float(string_stdout[7:string_stdout.find('\n')])
-    num_part = math.ceil(size / 300)
+    #number of nodes
+    unoptimized_size = float(string_stdout[7:string_stdout.find('\n')])
+    num_part = math.ceil(unoptimized_size / 300)
     print(num_part)
-    
-    results_file.write('size: ' + str(size) +' partitions = size/300:  ' + str(num_part) + '\n')
+    results_file.write('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part) + '\n')
     #mixed synthesis with classifier
     opt_file = curr_file + '_mixed_out.v'
-    #this assumes that cnn_model.json is in the lstools_path root directory
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -c cnn_model.json -p ' + str(num_part) + ' -o ' + opt_file + ';']
+    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -c ' + training_file + ' -p ' + str(num_part) + ' -o ' + opt_file + ';']
     results_file.write('mixed synthesis with classifier\n')
     results_file.write(str(cmd))
     results_file.write('\n')
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
-    print('mixed synthesis done.  See file for detailed output.\n')
-    results_file.write(string_stdout)
-    results_file.write('\n ')
+    cnn_size = int(string_stdout[string_stdout.find('new ntk size = '):string_stdout.find('Finished optimization') - 1])
+    print("new ntk size: " + str(cnn_size) + '\n')
+    results_file.write("new ntk size: " + str(cnn_size) + '\n')
 
     #Brute Force
     opt_file = curr_file + '_brute_out.v'
@@ -105,4 +105,3 @@ for curr_file in files:
     results_file.write('\n ')
    
     #a unit test suite can go here.  Will likely move it to the top once it's written
-    #

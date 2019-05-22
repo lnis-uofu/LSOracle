@@ -46,6 +46,7 @@ script:
   - cd build
   - cmake ..
   - make
+  - cd ..
   - python basic_tests.py
 
 notifications:
