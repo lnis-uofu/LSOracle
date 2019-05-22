@@ -18,8 +18,6 @@ from datetime import datetime
 home_path = os.getenv('HOME')
 lstools_path = home_path + '/LSOracle/build/core'
 abc_path = home_path + '/abc'
-test_path = lstools_path + '/../../test_files'
-test_path_glob = test_path + '/*.aig'
 timestamp = datetime.now()
 timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
 print ("LSOracle test suite     ")
@@ -27,7 +25,7 @@ print(timestamp)
 print('\nHome path: ' + home_path + '\n')
 
 #End to end tests
-test_path = '/home/stemple/LSOracle/test_files/end_to_end'
+test_path = lstools_path + '/../../end_to_end'
 test_path_glob = test_path + '/*.aig'
 print('End to end tests\n')
 print('Test path: ' + test_path + '\n')
