@@ -2,12 +2,12 @@ language:
     - cpp
 cache: 
     - ccache
-sudo: 
-    - required
 dist: 
     - trusty
 os: 
     - linux
+sudo: 
+    - required
 
 env:
   global:
