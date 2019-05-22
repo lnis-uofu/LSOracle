@@ -6,7 +6,9 @@ cache: ccache
 env:
   global:
     - COMPILER=g++-8
-
+stages:
+  - build
+  - test
 addons:
   apt:
     sources:
