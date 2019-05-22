@@ -6,9 +6,6 @@ cache: ccache
 env:
   global:
     - COMPILER=g++-8
-stages:
-  - build
-  - test
 addons:
   apt:
     sources:
@@ -54,11 +51,6 @@ jobs:
       - cd build
       - cmake ..
       - make
-
-    stage: test
-    script:
-      - cd "${TRAVIS_BUILD_DIR}"
-      - python basic_tests.py
 
 notifications:
   slack:
