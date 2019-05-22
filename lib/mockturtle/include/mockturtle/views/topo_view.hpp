@@ -140,6 +140,10 @@ public:
                              fn );
   }
 
+  std::vector<node> get_node_vec(){
+    return topo_order;
+  }
+
   /*! \brief Reimplementation of `foreach_po`.
    *
    * If `start_signal` is provided in constructor, only this is returned as

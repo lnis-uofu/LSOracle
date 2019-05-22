@@ -30,13 +30,37 @@ namespace alice
 
     protected:
       void execute(){
-
+        mockturtle::mig_npn_resynthesis resyn_mig;
+        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
         if(is_set("mig")){
           if(!store<mockturtle::mig_network>().empty()){
             std::cout << "Partitioning stored MIG network\n";
             auto ntk = store<mockturtle::mig_network>().current();
             oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
             store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
+
+            for(int i = 0; i < num_partitions; i++){
+              std::cout << "Partition " << i << "\n";
+              oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
+
+              auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
+              std::cout << "size = " << opt.size() << "\n";
+              std::set<mockturtle::mig_network::node> inputs = partitions.get_part_inputs(i);
+              typename std::set<mockturtle::mig_network::node>::iterator it;
+              std::cout << "Inputs = ";
+              for(it = inputs.begin(); it != inputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "\n";
+
+              std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(i);
+              std::cout << "Outputs = ";
+              for(it = outputs.begin(); it != outputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "\n";
+            }
+            
           }
           else{
             std::cout << "MIG network not stored\n";
@@ -48,6 +72,28 @@ namespace alice
             auto ntk = store<mockturtle::aig_network>().current();
             oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions); 
             store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+
+            for(int i = 0; i < num_partitions; i++){
+              std::cout << "Partition " << i << "\n";
+              oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
+
+              auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
+              std::cout << "size = " << opt.size() << "\n";
+              std::set<mockturtle::mig_network::node> inputs = partitions.get_part_inputs(i);
+              typename std::set<mockturtle::mig_network::node>::iterator it;
+              std::cout << "Inputs = ";
+              for(it = inputs.begin(); it != inputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "\n";
+
+              std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(i);
+              std::cout << "Outputs = ";
+              for(it = outputs.begin(); it != outputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "\n";
+            }
           }
           else{
             std::cout << "AIG network not stored\n";

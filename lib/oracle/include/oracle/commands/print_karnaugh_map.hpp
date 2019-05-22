@@ -60,5 +60,5 @@ namespace alice
       std::string directory{};
   };
 
-  ALICE_ADD_COMMAND(print_karnaugh, "IO");
+  ALICE_ADD_COMMAND(print_karnaugh, "Output");
 }
