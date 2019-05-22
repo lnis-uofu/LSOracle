@@ -18,11 +18,11 @@
 
 namespace alice
 {
-  class mixed_command : public alice::command{
+  class mixed_2step_command : public alice::command{
 
     public:
-      explicit mixed_command( const environment::ptr& env )
-        : command( env, "Optimize partitions with AIG based-optimizer." ){
+      explicit mixed_2step_command( const environment::ptr& env )
+        : command( env, "Performs AIG optimization on corresponding partitions and then repartition for MIG optimization" ){
         opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
         opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
         opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
@@ -227,5 +227,5 @@ namespace alice
       std::string out_file{};
   };
 
-  ALICE_ADD_COMMAND(mixed, "Optimization");
+  ALICE_ADD_COMMAND(mixed_2step, "Optimization");
 }

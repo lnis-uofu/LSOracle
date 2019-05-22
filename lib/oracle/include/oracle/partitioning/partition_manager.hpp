@@ -62,6 +62,64 @@ namespace oracle
   public:
     partition_manager(){}
 
+    partition_manager(Ntk const& ntk, std::map<node, int> partition, int part_num){
+      // std::cout << "number of parts = " << part_num << "\n";
+      num_partitions = part_num;
+      for(int i = 0; i < part_num; ++i)
+        _part_scope.push_back(std::set<node>());
+
+      ntk.foreach_node( [&](auto curr_node){
+        //get rid of circuit PIs
+        // std::cout << "Node = " << curr_node << "\n";
+        if (ntk.is_pi(curr_node) ) {
+          // std::cout << "PI\n";
+          // std::cout << "partition[curr_node] = " << partition[curr_node] << "\n";
+          _part_scope[partition[curr_node]].insert(curr_node);
+          _part_pis.insert(std::pair<int, node>(partition[curr_node], curr_node));
+        }
+
+        if (ntk.is_ro(curr_node)) {
+          // std::cout << "RO\n";
+          _part_scope[partition[curr_node]].insert(curr_node);
+          _part_pis.insert(std::pair<int, node>(partition[curr_node], curr_node));
+          if(ntk.is_po(curr_node)){
+            _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
+          }
+        }
+        //get rid of circuit POs
+        else if (ntk.is_po(curr_node)) {
+          // std::cout << "PO\n";
+          _part_scope[partition[curr_node]].insert(curr_node);
+          _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
+        }
+        else if (!ntk.is_constant(curr_node)) {
+          // std::cout << "not constant\n";
+          _part_scope[partition[curr_node]].insert(curr_node);
+        }
+
+        //look to partition inputs (those that are not circuit PIs)
+        if (!ntk.is_pi(curr_node) && !ntk.is_ro(curr_node)){
+          // std::cout << "not PI AND not RO\n";
+          ntk.foreach_fanin(curr_node, [&](auto const &conn, auto j) {
+            // std::cout << "fanin = " << conn.index << "\n";
+            if (partition[ntk.index_to_node(conn.index)] != partition[curr_node] && !ntk.is_constant(ntk.index_to_node(conn.index))) {
+              _part_scope[partition[curr_node]].insert(curr_node);
+              _part_pis.insert(std::pair<int, node>(partition[curr_node], ntk.index_to_node(conn.index)));
+              _part_pos.insert(std::pair<int, node>(partition[ntk.index_to_node(conn.index)],ntk.index_to_node(conn.index)));
+              
+            }
+          });
+        }
+      });
+      // std::cout << "mapped partitions\n";
+      for(int i = 0; i < part_num; i++){
+        partitionInputs[i] = create_part_inputs(i);
+        typename std::set<node>::iterator it;
+        partitionOutputs[i] = create_part_outputs(i);
+        update_io(i);
+      }
+    }
+
     partition_manager(Ntk const& ntk, std::vector<std::set<node>> scope, std::unordered_map<int, std::set<node>> inputs, 
       std::unordered_map<int, std::set<node>> outputs, int part_num){
 
@@ -464,6 +522,17 @@ namespace oracle
 
   public:
     oracle::partition_view<Ntk> create_part( Ntk const& ntk, int part ){
+      typename std::set<node>::iterator it;
+      std::cout << "Partition " << part << " Inputs = {";
+      for(it = partitionInputs[part].begin(); it != partitionInputs[part].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
+      std::cout << "Partition " << part << " Outputs = {";
+      for(it = partitionOutputs[part].begin(); it != partitionOutputs[part].end(); ++it){
+        std::cout << *it << " ";
+      }
+      std::cout << "}\n";
       oracle::partition_view<Ntk> partition(ntk, partitionInputs[part], partitionOutputs[part], false);
       return partition;
     }
@@ -519,8 +588,8 @@ namespace oracle
         }
 
         if(!opt.is_constant(opt_node) && !opt.is_pi(opt_node) && !opt.is_ro(opt_node)){
-          std::cout << "Replace " << ntk.node_to_index(ntk.get_node(part_out)) << " by "
-                    << ntk.node_to_index(ntk.get_node(opt_out)) << std::endl;
+          // std::cout << "Replace " << ntk.node_to_index(ntk.get_node(part_out)) << " by "
+          //           << ntk.node_to_index(ntk.get_node(opt_out)) << std::endl;
           output_substitutions[ntk.get_node(part_out)] = opt_out;
         }
       }

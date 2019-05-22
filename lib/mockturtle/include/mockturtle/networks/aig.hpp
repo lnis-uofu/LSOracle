@@ -531,6 +531,18 @@ public:
 
       return maj;
   }
+
+  signal create_maj_part(signal const& a, signal const& b, signal const& c)
+  {
+//      signal left1 = create_and(a,b);
+//      signal right1 = create_and(a,c);
+//      signal left = create_or(left1,right1);
+//      signal right = create_and(b,c);
+//      signal final = create_or(left, right);
+      auto maj = create_or(create_or(create_and(a, b ),create_and(a, c )),create_and(b, c ));
+
+      return maj;
+  }
 #pragma endregion
 
 #pragma region Create arbitrary functions
