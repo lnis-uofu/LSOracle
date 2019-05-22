@@ -171,7 +171,7 @@ public:
     return {0, static_cast<uint64_t>( value ? 1 : 0 )};
   }
 
-   void create_in_name(unsigned index, const std::string& name){
+  void create_in_name(unsigned index, const std::string& name){
     // std::cout << "input index " << (int)index << " name " << name << "\n";
     _storage->inputNames[index] = name;
   }
@@ -395,31 +395,29 @@ public:
       return ( a.complement == b.complement ) ? a : c;
     }
 
-    /*  complemented edges minimization */
-    auto node_complement = false;
-    if ( static_cast<unsigned>( a.complement ) + static_cast<unsigned>( b.complement ) +
-             static_cast<unsigned>( c.complement ) >=
-         2u )
-    {
-      node_complement = true;
-      a.complement = !a.complement;
-      b.complement = !b.complement;
-      c.complement = !c.complement;
-    }
-
     storage::element_type::node_type node;
     node.children[0] = a;
     node.children[1] = b;
     node.children[2] = c;
+
+    /* structural hashing */
+    const auto it = _storage->hash.find( node );
+    if ( it != _storage->hash.end() )
+    {
+      return {it->second, 0};
+    }
 
     const auto index = _storage->nodes.size();
 
     if ( index >= .9 * _storage->nodes.capacity() )
     {
       _storage->nodes.reserve( static_cast<uint64_t>( 3.1415f * index ) );
+      _storage->hash.reserve( static_cast<uint64_t>( 3.1415f * index ) );
     }
 
     _storage->nodes.push_back( node );
+
+    _storage->hash[node] = index;
 
     /* increase ref-count to children */
     _storage->nodes[a.index].data[0].h1++;
@@ -431,7 +429,7 @@ public:
       fn( index );
     }
 
-    return {index, node_complement};
+    return {index, 0};
   }
 
   signal create_and( signal const& a, signal const& b )
