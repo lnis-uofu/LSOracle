@@ -18,6 +18,7 @@ matrix:
           - libboost-program-options1.55-dev
           - lcov
           - gcovr
+          - python-numpy
     env: COMPILER=g++-8
 
 before_install:
