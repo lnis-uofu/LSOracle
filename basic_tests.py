@@ -81,18 +81,18 @@ for curr_file in files:
     results_file.write('\n ')
    
     #AIG only
-   # opt_file = curr_file + '_AIG_out.v'
-   # cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; aig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
-   # results_file.write('AIG only\n')
-  #  results_file.write(str(cmd))
-  #  results_file.write('\n')
-  #  process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-  #  stdout, stderr = process.communicate()
-  #  string_stdout = str(stdout)
-  #  print('AIG done.  See file for detailed output.\n')
-  #  results_file.write(string_stdout)
-  #  results_file.write('\n ')
-    print ("skipping aig.  Need a change to test something eles")
+    opt_file = curr_file + '_AIG_out.v'
+    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; aig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
+    results_file.write('AIG only\n')
+    results_file.write(str(cmd))
+    results_file.write('\n')
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    string_stdout = str(stdout)
+    print('AIG done.  See file for detailed output.\n')
+    results_file.write(string_stdout)
+    results_file.write('\n ')
+    print ("AIG done")
     #MIG only
     opt_file = curr_file + '_MIG_out.v'
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']

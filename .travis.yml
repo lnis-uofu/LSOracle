@@ -1,14 +1,8 @@
-language: 
-    - cpp
-cache: 
-    - ccache
-dist: 
-    - trusty
-os: 
-    - linux
-sudo: 
-    - required
-
+language: cpp
+os: linux
+dist: trusty
+sudo: required
+cache: ccache
 env:
   global:
     - COMPILER=g++-8
