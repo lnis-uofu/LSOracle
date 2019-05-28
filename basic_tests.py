@@ -46,7 +46,7 @@ else:
 #Define our function to call the lstools executable
 def optimize(filename, mode, part_num, suffix):
     opt_file = filename + suffix + '.v'
-    cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' mode + '-p'  + str(part_num) + ' -o ' + opt_file + ';']
+    cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + '-p'  + str(part_num) + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
@@ -88,14 +88,22 @@ for curr_file in files:
    
     #mixed synthesis with classifier
     cmdstr = 'optimization -c ' + training_file
-    mixed_size = optimize(curr_file, cmdstr, num_part, '_out')
-    print("ntk size after mixed synthesis: " + str(mixed_size) + '\n')
-    #compare network sizes
-    assert(int(unoptimized_size) > mixed_size), "optimized network larger than original (this is a test. Replace me soon."
+    mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
+    print('ntk size after mixed synthesis: ' + str(mixed_size) + '\n')
 
     #Brute Force
     cmdstr = 'optimization -b'
-    brute_size = optimize(curr_file, cmdstr, num_part, '_out')
-    print("ntk size after brute force: " + str(brute_size) + '\n')
-    #compare network sizes
-    assert(int(unoptimized_size) > brute_size), "optimized network larger than original (this is a test. Replace me soon."
+    brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
+    print('ntk size after brute force: ' + str(brute_size) + '\n')
+    
+    #AIG only
+    cmdstr = 'optimization -a'
+    aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
+    print('ntk size after aig optimization: ' + str(aig_size) + '\n')
+    
+    #MIG only
+    cmdstr = 'optimization -m'
+    mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
+    print('ntk size after mig optimization: ' + str(mig_size) + '\n')
+    
+    assert (mixed_size <= aig_size or mixed_size <= mig_size) or (brute_size <= aig_size or brute_size <= mig_size)
