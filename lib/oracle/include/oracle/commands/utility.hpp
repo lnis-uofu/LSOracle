@@ -137,13 +137,16 @@ namespace alice
     part.foreach_pi( [&]( auto n ) {
       node2new[n] = mig.create_pi();
     } );
+    // std::cout << "created all PIs\n";
         
     part.foreach_node( [&]( auto n ) {
+      // std::cout << "Node = " << n << "\n";
       if ( part.is_constant( n ) || part.is_pi( n ) || part.is_ci( n ) || part.is_ro( n ))
         return;
 
       std::vector<mockturtle::mig_network::signal> children;
       part.foreach_fanin( n, [&]( auto const& f ) {
+        // std::cout << "fanin = " << f.index << "\n";
         children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
       } );
 
@@ -153,12 +156,14 @@ namespace alice
       else{
         node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
       }
+      // std::cout << "created majority\n";
     } );
 
     /* map primary outputs */
     part.foreach_po( [&]( auto const& f ) {
       mig.create_po( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
     } );
+    // std::cout << "created POs\n";
 
     return mig;
   }

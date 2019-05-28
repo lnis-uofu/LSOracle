@@ -1015,21 +1015,22 @@ namespace alice{
             int num_part = partitions.get_part_num();
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
-              std::cout << "Partition " << i << "\n";
-              std::cout << "Number of PI = " << part.num_pis() << "\n";
-              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              std::cout << "\n\nPartition " << i << "\n";
+              // std::cout << "Number of PI = " << part.num_pis() << "\n";
+              // std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
+              // std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
               std::cout << "Nodes = {";
               part.foreach_gate([&](auto node){
                 std::cout << node << " ";
               });
               std::cout << "}\n";
-              std::cout << "Inputs = {";
-              part.foreach_pi([&](auto pi){
-                std::cout << pi << " ";
-              });
+              std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
+              std::set<int>::iterator it;
+              std::cout << "connected partitions = {";
+              for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
+                std::cout << *it << " ";
+              } 
               std::cout << "}\n";
-
             }
           }
           else{
@@ -1048,19 +1049,21 @@ namespace alice{
             int num_part = partitions.get_part_num();
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
-              std::cout << "Partition " << i << "\n";
-              std::cout << "Number of PI = " << part.num_pis() << "\n";
-              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              std::cout << "\n\nPartition " << i << "\n";
+              // std::cout << "Number of PI = " << part.num_pis() << "\n";
+              // std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
+              // std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
               std::cout << "Nodes = {";
               part.foreach_gate([&](auto node){
                 std::cout << node << " ";
               });
               std::cout << "}\n";
-              std::cout << "Inputs = {";
-              part.foreach_pi([&](auto pi){
-                std::cout << pi << " ";
-              });
+              std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
+              std::set<int>::iterator it;
+              std::cout << "connected partitions = {";
+              for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
+                std::cout << *it << " ";
+              } 
               std::cout << "}\n";
             }
           }
