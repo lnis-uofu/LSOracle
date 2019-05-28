@@ -13,95 +13,89 @@ import re
 import time
 import timeit
 from datetime import datetime
+import logging
 
-#These may need to be modified based on individual installation
+#Set up command line parser
+parser = argparse.ArgumentParser(prog='lstools_test', description='Test script for LSOracle')
+parser.add_argument('--log_to_file', action='store_true', help='print log information to specified filename in LSOracle directory')
+parser.add_argument('--verbose', '-v', action='count', help='output detail.  Default (unset) = warning; -v = info, -vv = debug')
+parser.add_argument('--test_directory', '-t', help='If you have a custom set of test files, specify path here.  Default LSOracle/tests. The directory you specify should have 2 subdirectories: end_to_end and unit_tests, and the input files should be .aig format')
+parser.add_argument('--training_model', '-m', default='/LSOracle/cnn_model.json', help='if you have a custom tensorflow model for the classifier, specify it here.')
+args = parser.parse_args()
+
+#saving paths for future use
 home_path = os.getenv('HOME')
 lstools_path = home_path + '/LSOracle/build/core'
 abc_path = home_path + '/abc'
-training_file = home_path + '/LSOracle/cnn_model.json'
+training_file = home_path + args.training_model
+
+#configure logging
 timestamp = datetime.now()
 timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
-print ("LSOracle test suite     ")
-print(timestamp)
-print('\nHome path: ' + home_path + '\n')
+log_level = 'WARNING'
+if args.verbose == 1:
+    log_level = 'INFO'
+if args.verbose > 1:
+    log_level = 'DEBUG'
+if args.log_to_file:
+    log_filename = timestamp_format + '_lsoracle_test.log'
+    logging.basicConfig(filename=log_filename,format='%(asctime)s:%(levelname)s:%(message)s', level=log_level)
+else:
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=log_level)
 
+#Define our function to call the lstools executable
+def optimize(filename, mode, part_num, suffix):
+    opt_file = filename + suffix + '.v'
+    cmd = ['./lstools','-c', 'read_aig ' + filename + ';' + mode + '-p'  + str(part_num) + ' -o ' + opt_file + ';']
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    string_stdout = str(stdout)
+    string_stderr = str(stderr)
+    if string_stderr:
+        logging.warning(string_stderr)
+    cnn_size = int(string_stdout[string_stdout.find('new ntk size = '):string_stdout.find('Finished optimization') - 1])
+    return cnn_size
+
+#Begin tests
+print('LSOracle test suite  %s', str(timestamp))
+logging.debug('Home path: %s', home_path)
 #End to end tests
+#Grab my test files
 test_path = lstools_path + '/../../tests/end_to_end'
 test_path_glob = test_path + '/*.aig'
-print('End to end tests\n')
-print('Test path: ' + test_path + '\n')
+logging.info('End to end tests\n')
+logging.info('Test path: %s', test_path)
 files = glob.glob(test_path_glob)
-print(files)
-
-results_file_path = test_path + '/' + timestamp_format + '_basic_tests.txt'
-results_file = open(results_file_path,'w')
+logging.debug("List of test files: ")
+logging.debug(files)
+#Actual testing
 #we'll have to do some more thinking about what a good end to end test looks like.  For now I'm going to optimize a couple benchmarks
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than 
 #both mig and aig.  It ought to, at least, be between them.
 for curr_file in files:
     print(curr_file + '\n')
-    results_file.write(curr_file + '\n')
     os.chdir(lstools_path)
+   
     #report statistics
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; ps -a;']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
-    #number of nodes
+    #calculate number of nodes
     unoptimized_size = float(string_stdout[7:string_stdout.find('\n')])
     num_part = math.ceil(unoptimized_size / 300)
-    print(num_part)
-    results_file.write('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part) + '\n')
+    print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part) + '\n')
+   
     #mixed synthesis with classifier
-    opt_file = curr_file + '_mixed_out.v'
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -c ' + training_file + ' -p ' + str(num_part) + ' -o ' + opt_file + ';']
-    results_file.write('mixed synthesis with classifier\n')
-    results_file.write(str(cmd))
-    results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    string_stdout = str(stdout)
-    cnn_size = int(string_stdout[string_stdout.find('new ntk size = '):string_stdout.find('Finished optimization') - 1])
-    print("new ntk size: " + str(cnn_size) + '\n')
-    results_file.write("new ntk size: " + str(cnn_size) + '\n')
+    cmdstr = 'mixed -c ' + training_file
+    mixed_size = optimize(curr_file, cmdstr, num_part, '_out')
+    print("ntk size after mixed synthesis: " + str(mixed_size) + '\n')
+    #compare network sizes
+    assert(int(unoptimized_size) > mixed_size), "optimized network larger than original (this is a test. Replace me soon."
 
     #Brute Force
-    opt_file = curr_file + '_brute_out.v'
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mixed -b -p ' + str(num_part) + ' -o ' + opt_file + ';']
-    results_file.write('brute force mixed synthesis\n')
-    results_file.write(str(cmd))
-    results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    string_stdout = str(stdout)
-    print('brute force mixed synthesis done.  See file for detailed output.\n')
-    results_file.write(string_stdout)
-    results_file.write('\n ')
-   
-    #AIG only
-    opt_file = curr_file + '_AIG_out.v'
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; aig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
-    results_file.write('AIG only\n')
-    results_file.write(str(cmd))
-    results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    string_stdout = str(stdout)
-    print('AIG done.  See file for detailed output.\n')
-    results_file.write(string_stdout)
-    results_file.write('\n ')
-    print ("AIG done")
-    #MIG only
-    opt_file = curr_file + '_MIG_out.v'
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; mig_partition -p ' + str(num_part) + ' -o ' + opt_file + ';']
-    results_file.write('MIG only\n')
-    results_file.write(str(cmd))
-    results_file.write('\n')
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    string_stdout = str(stdout)
-    print('MIG done.  See file for detailed output.\n')
-    results_file.write(string_stdout)
-    results_file.write('\n ')
-   
-    #a unit test suite can go here.  Will likely move it to the top once it's written
+    cmdstr = 'mixed -b'
+    brute_size = optimize(curr_file, cmdstr, num_part, '_out')
+    print("ntk size after brute force: " + str(brute_size) + '\n')
+    #compare network sizes
+    assert(int(unoptimized_size) > brute_size), "optimized network larger than original (this is a test. Replace me soon."
