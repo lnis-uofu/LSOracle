@@ -57,7 +57,8 @@ def optimize(filename, mode, part_num, suffix):
     return cnn_size
 
 #Begin tests
-print('LSOracle test suite  %s', str(timestamp))
+print('LSOracle test suite ' + str(timestamp))
+print(home_path)
 logging.debug('Home path: %s', home_path)
 #End to end tests
 #Grab my test files
@@ -65,9 +66,11 @@ test_path = lstools_path + '/../../tests/end_to_end'
 test_path_glob = test_path + '/*.aig'
 logging.info('End to end tests\n')
 logging.info('Test path: %s', test_path)
+print(test_path)
 files = glob.glob(test_path_glob)
 logging.debug("List of test files: ")
 logging.debug(files)
+print(files)
 #Actual testing
 #we'll have to do some more thinking about what a good end to end test looks like.  For now I'm going to optimize a couple benchmarks
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than 
