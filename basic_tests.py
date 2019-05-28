@@ -46,14 +46,15 @@ else:
 #Define our function to call the lstools executable
 def optimize(filename, mode, part_num, suffix):
     opt_file = filename + suffix + '.v'
-    cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + '-p'  + str(part_num) + ' -o ' + opt_file + ';']
+    cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + '-p '  + str(part_num) + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     string_stderr = str(stderr)
     if string_stderr:
         logging.warning(string_stderr)
-    cnn_size = int(string_stdout[string_stdout.find('new ntk size = '):string_stdout.find('Finished optimization') - 1])
+#the output format has changed, so now this script is broken.  The line now looks like: "Final ntk size = n and depth = i"
+    cnn_size = int(string_stdout[string_stdout.find('Final ntk size = '):string_stdout.find('and') - 1])
     return cnn_size
 
 #Begin tests
@@ -110,3 +111,18 @@ for curr_file in files:
     print('ntk size after mig optimization: ' + str(mig_size) + '\n')
     
     assert (mixed_size <= aig_size or mixed_size <= mig_size) or (brute_size <= aig_size or brute_size <= mig_size)
+
+#unit tests
+#Grab my test files
+test_path = lstools_path + '/../../tests/unit'
+test_path_glob = test_path + '/*.aig'
+logging.info('Unit tests\n')
+logging.info('Test path: %s', test_path)
+print(test_path)
+files = glob.glob(test_path_glob)
+logging.debug("List of test files: ")
+logging.debug(files)
+print(files)
+for curr_file in files:
+    print(curr_file + '\n')
+    os.chdir(lstools_path)
