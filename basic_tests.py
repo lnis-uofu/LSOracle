@@ -115,28 +115,28 @@ for curr_file in files:
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
-    assert(abcout == 'Networks are equivalent.')
+    assert('Networks are equivalent' in abcout)
 
     #Brute Force
     cmdstr = 'optimization -b'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')
-    assert(abcout == 'Networks are equivalent.')
+    assert('Networks are equivalent' in abcout)
     
     #AIG only
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
     print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
     abcout = compare(curr_file, '_aig_out')
-    assert(abcout == 'Networks are equivalent.')
+    assert('Networks are equivalent' in abcout)
     
     #MIG only
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
     print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))
     abcout = compare(curr_file, '_mig_out')
-    assert(abcout == 'Networks are equivalent.')
+    assert('Networks are equivalent' in abcout)
     
     assert (mixed_size[0] <= aig_size[0] or mixed_size[0] <= mig_size[0]) or (brute_size[0] <= aig_size[0] or brute_size[0] <= mig_size[0])
 
