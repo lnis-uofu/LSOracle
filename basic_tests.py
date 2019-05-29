@@ -98,19 +98,20 @@ for curr_file in files:
     #Brute Force
     cmdstr = 'optimization -b'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
-    print('ntk size after brute force: ' + str(brute_size) + '\n')
-    
+    print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]) + '\n')
+
     #AIG only
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
-    print('ntk size after aig optimization: ' + str(aig_size) + '\n')
+    print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]) + '\n')
+
     
     #MIG only
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
-    print('ntk size after mig optimization: ' + str(mig_size) + '\n')
+    print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]) + '\n')
     
-    assert (mixed_size <= aig_size or mixed_size <= mig_size) or (brute_size <= aig_size or brute_size <= mig_size)
+    assert (mixed_size[0] <= aig_size[0] or mixed_size[0] <= mig_size[0]) or (brute_size[0] <= aig_size[0] or brute_size[0] <= mig_size[0])
 
 #unit tests
 #Grab my test files
