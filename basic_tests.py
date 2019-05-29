@@ -28,9 +28,10 @@ args = parser.parse_args()
 home_path = os.getenv('HOME')
 if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
+    training_file = lstools_path + '/../../cnn_model.json'
 else:
     lstools_path = home_path + '/LSOracle/build/core'
-training_file = home_path + args.training_model
+    training_file = home_path + args.training_model
 
 #configure logging
 timestamp = datetime.now()
@@ -80,19 +81,17 @@ def compare(filename, suffix):
     
 #Begin tests
 print('LSOracle test suite ' + str(timestamp))
-print(home_path)
+logging.debug(home_path)
 logging.debug('Home path: %s', home_path)
 #End to end tests
 #Grab my test files
 test_path = lstools_path + '/../../tests/end_to_end'
 test_path_glob = test_path + '/*.aig'
-logging.info('End to end tests\n')
+print('\nEnd to end tests: ')
 logging.info('Test path: %s', test_path)
-print(test_path)
 files = glob.glob(test_path_glob)
 logging.debug("List of test files: ")
 logging.debug(files)
-print(files)
 #Actual testing
 #we'll have to do some more thinking about what a good end to end test looks like.  For now I'm going to optimize a couple benchmarks
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than 
@@ -109,7 +108,7 @@ for curr_file in files:
     #calculate number of nodes
     unoptimized_size = float(string_stdout[7:string_stdout.find('\n')])
     num_part = math.ceil(unoptimized_size / 300)
-    print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part) + '\n')
+    print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
    
     #mixed synthesis with classifier
     cmdstr = 'optimization -c ' + training_file
@@ -128,7 +127,7 @@ for curr_file in files:
     #AIG only
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
-    print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]) + '\n')
+    print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
     abcout = compare(curr_file, '_aig_out')
     assert(abcout == 'Networks are equivalent.')
     
@@ -141,17 +140,16 @@ for curr_file in files:
     
     assert (mixed_size[0] <= aig_size[0] or mixed_size[0] <= mig_size[0]) or (brute_size[0] <= aig_size[0] or brute_size[0] <= mig_size[0])
 
-#unit tests
+#unit tests.  This is a stub.
 #Grab my test files
+print('\nUnit tests:')
 test_path = lstools_path + '/../../tests/unit'
 test_path_glob = test_path + '/*.aig'
 logging.info('Unit tests\n')
 logging.info('Test path: %s', test_path)
-print(test_path)
 files = glob.glob(test_path_glob)
 logging.debug("List of test files: ")
 logging.debug(files)
-print(files)
 for curr_file in files:
     print(curr_file + '\n')
     os.chdir(lstools_path)
