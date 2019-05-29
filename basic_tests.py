@@ -27,7 +27,7 @@ args = parser.parse_args()
 #saving paths for future use
 home_path = os.getenv('HOME')
 if args.travis:
-    lstools_path = home_path + '/build/LNIS-Projects/LSOractle/build/core'
+    lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
 else:
     lstools_path = home_path + '/LSOracle/build/core'
 training_file = home_path + args.training_model
@@ -98,7 +98,7 @@ print(files)
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than 
 #both mig and aig.  It ought to, at least, be between them.
 for curr_file in files:
-    print(curr_file + '\n')
+    print('\n' + curr_file)
     os.chdir(lstools_path)
    
     #report statistics
@@ -114,14 +114,14 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -c ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]) + '\n')
+    print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert(abcout == 'Networks are equivalent.')
 
     #Brute Force
     cmdstr = 'optimization -b'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
-    print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]) + '\n')
+    print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')
     assert(abcout == 'Networks are equivalent.')
     
@@ -135,7 +135,7 @@ for curr_file in files:
     #MIG only
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
-    print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]) + '\n')
+    print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))
     abcout = compare(curr_file, '_mig_out')
     assert(abcout == 'Networks are equivalent.')
     
