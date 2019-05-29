@@ -57,6 +57,23 @@ def optimize(filename, mode, part_num, suffix):
     #in this case it will be [ntk size, depth]
     return [int(s) for s in string_stdout[-1].split() if s.isdigit()]
 
+def compare(filename, suffix):
+    new_file = filename + '.v'
+    opt_file = filename + suffix + '.v'
+    #need to create verilog file to compare to
+    cmd = ['./lstools','-c', 'get_aig ' + new_file + '; write_verilog ' + opt_file + ';']
+    #maybe I should capture this output.  I'm not sure.
+    subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    #use cec to compare the pre and post optimization files
+    cmd = ['abc', '-c', 'cec ' + new_file +' '+ opt_file + ';']
+    abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    abc_stdout, abc_stderr = abc_process.communicate()
+    string_abc = str(abc_stdout)
+    print (string_abc[string_abc.find('Networks'):string_abc.find('\n')])
+    #should look more closely here and throw an error if the networks aren't the same
+
+    
 #Begin tests
 print('LSOracle test suite ' + str(timestamp))
 print(home_path)
@@ -94,23 +111,26 @@ for curr_file in files:
     cmdstr = 'optimization -c ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]) + '\n')
+    compare(curr_file, '_mixed_out')
 
     #Brute Force
     cmdstr = 'optimization -b'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]) + '\n')
+    compare(curr_file, '_brute_out')
 
     #AIG only
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
     print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]) + '\n')
-
+    compare(curr_file, '_aig_out')
     
     #MIG only
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
     print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]) + '\n')
-    
+    compare(curr_file, '_mig_out')
+
     assert (mixed_size[0] <= aig_size[0] or mixed_size[0] <= mig_size[0]) or (brute_size[0] <= aig_size[0] or brute_size[0] <= mig_size[0])
 
 #unit tests
