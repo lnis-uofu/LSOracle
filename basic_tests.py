@@ -21,12 +21,15 @@ parser.add_argument('--log_to_file', action='store_true', help='print log inform
 parser.add_argument('--verbose', '-v', action='count', help='output detail.  Default (unset) = warning; -v = info, -vv = debug')
 parser.add_argument('--test_directory', '-t', help='If you have a custom set of test files, specify path here.  Default LSOracle/tests. The directory you specify should have 2 subdirectories: end_to_end and unit_tests, and the input files should be .aig format')
 parser.add_argument('--training_model', '-m', default='/LSOracle/cnn_model.json', help='if you have a custom tensorflow model for the classifier, specify it here.')
+parser.add_argument('--travis', action='store_true', help='sets paths, envs, etc, to appropriate values for travis ci')
 args = parser.parse_args()
 
 #saving paths for future use
 home_path = os.getenv('HOME')
-lstools_path = home_path + '/LSOracle/build/core'
-abc_path = home_path + '/abc'
+if args.travis:
+    lstools_path = home_path + '/build/LNIS-Projects/LSOractle/build/core'
+else:
+    lstools_path = home_path + '/LSOracle/build/core'
 training_file = home_path + args.training_model
 
 #configure logging
@@ -51,7 +54,7 @@ def optimize(filename, mode, part_num, suffix):
     stdout, stderr = process.communicate()
     string_stdout = str(stdout).splitlines()
     string_stderr = str(stderr)
-    if string_stderr != 'None':
+    if 'None' not in string_stderr:
         logging.warning(string_stderr)
     #this takes the last line of output and returns a list of all positive integers in that string
     #in this case it will be [ntk size, depth]
@@ -69,7 +72,7 @@ def compare(filename, suffix):
     cmd = ['abc', '-c', 'cec ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
-    if abc_stderr != 'None':
+    if "None" not in abc_stderr:
         logging.warning(abc_stderr)
     string_abc = str(abc_stdout).splitlines()
     print(string_abc[-1])

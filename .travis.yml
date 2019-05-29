@@ -47,7 +47,7 @@ script:
   - cmake ..
   - make
   - cd ..
-  - python basic_tests.py
+  - python basic_tests.py --travis
 
 notifications:
   slack:
