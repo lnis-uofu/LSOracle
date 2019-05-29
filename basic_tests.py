@@ -49,13 +49,13 @@ def optimize(filename, mode, part_num, suffix):
     cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    string_stdout = str(stdout)
+    string_stdout = str(stdout).splitlines()
     string_stderr = str(stderr)
     if string_stderr != 'None':
         logging.warning(string_stderr)
-#the output format has changed, so now this script is broken.  The line now looks like: "Final ntk size = n and depth = i"
-    cnn_size = int(string_stdout[string_stdout.find('Final ntk size = '):string_stdout.find('and') - 1])
-    return cnn_size
+    #this takes the last line of output and returns a list of all positive integers in that string
+    #in this case it will be [ntk size, depth]
+    return [int(s) for s in string_stdout[-1].split() if s.isdigit()]
 
 #Begin tests
 print('LSOracle test suite ' + str(timestamp))
@@ -93,7 +93,7 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -c ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print('ntk size after mixed synthesis: ' + str(mixed_size) + '\n')
+    print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]) + '\n')
 
     #Brute Force
     cmdstr = 'optimization -b'
