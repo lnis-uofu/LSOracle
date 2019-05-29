@@ -61,7 +61,7 @@ def compare(filename, suffix):
     new_file = filename + '.v'
     opt_file = filename + suffix + '.v'
     #need to create verilog file to compare to
-    cmd = ['./lstools','-c', 'get_aig ' + new_file + '; write_verilog ' + opt_file + ';']
+    cmd = ['./lstools','-c', 'read_aig ' + new_file + '; write_verilog ' + opt_file + ';']
     #maybe I should capture this output.  I'm not sure.
     subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
