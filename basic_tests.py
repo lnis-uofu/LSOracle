@@ -75,7 +75,8 @@ def compare(filename, suffix):
     abc_stdout, abc_stderr = abc_process.communicate()
     if "None" not in str(abc_stderr):
         logging.warning(str(abc_stderr))
-    string_abc = str(abc_stdout).splitlines()
+    intermediate_string = str(abc_stdout)
+    string_abc = intermediate_string.splitlines()
     print(string_abc[-1])
     return string_abc[-1]
     

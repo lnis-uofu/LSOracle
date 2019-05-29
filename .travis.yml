@@ -2,7 +2,11 @@ language: cpp
 os: linux
 dist: trusty
 sudo: required
-cache: ccache
+cache: 
+  - ccache
+  directories:
+    - $HOME/deps/abc
+
 env:
   global:
     - COMPILER=g++-8
@@ -44,7 +48,7 @@ script:
   - cd "${TRAVIS_BUILD_DIR}"
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake .. -DCMAKE_BUILD_TYPE=RELEASE
   - make
   - cd ..
   - python basic_tests.py --travis
