@@ -72,8 +72,8 @@ def compare(filename, suffix):
     cmd = ['abc', '-c', 'cec ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
-    if "None" not in abc_stderr:
-        logging.warning(abc_stderr)
+    if "None" not in str(abc_stderr):
+        logging.warning(str(abc_stderr)
     string_abc = str(abc_stdout).splitlines()
     print(string_abc[-1])
     return string_abc[-1]
