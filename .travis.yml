@@ -37,7 +37,7 @@ install:
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   - echo ${PATH}
   - cd ${DEPS_DIR}
-  - git clone https://github.com/berkeley-abc/abc.git ||:
+  - git clone https://github.com/berkeley-abc/abc.git || true
   - cd abc && make ABC_USE_NO_READLINE=1
   - export PATH=${DEPS_DIR}/abc:${PATH}
   - echo ${PATH}
