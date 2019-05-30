@@ -5,6 +5,7 @@ sudo: required
 cache: 
   directories:
     - $HOME/deps/abc
+    - $HOME/.ccache
 
 env:
   global:
