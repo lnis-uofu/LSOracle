@@ -31,11 +31,12 @@ before_install:
   - git lfs pull
 install:
   - DEPS_DIR="${HOME}/deps"
-  - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+  - mkdir -p ${DEPS_DIR}
+  - ./deps_install.sh
+  - cd ${DEPS_DIR}
   - CMAKE_URL="https://cmake.org/files/v3.13/cmake-3.13.0-rc3-Linux-x86_64.tar.gz"
   - mkdir -p cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
   - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-  - ./home/travis/build/LNIS-Projects/LSOracle/deps_install.sh
 
 script:
   - export CC=/usr/bin/gcc-8
