@@ -257,6 +257,8 @@ private:
     {
       auto entry0 = *p++;
       auto entry1 = *p++;
+      // std::cout << "entry0 = " << entry0 << "\n";
+      // std::cout << "entry1 = " << entry1 << "\n";
 
       if ( entry0 == 0 && entry1 == 0 )
         break;
