@@ -1,7 +1,7 @@
 Partitions with only AIG Optimization
 ======================================
 
-This option skips classification and just optimizes all partitions using just AIG optimization.
+This option skips classification and optimizes all partitions using just AIG optimization.
 
 .. code-block:: c++
 	
