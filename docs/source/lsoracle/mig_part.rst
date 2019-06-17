@@ -1,7 +1,7 @@
 Partitions with only MIG Optimization
 =====================================
 
-This option skips classification and just optimizes all partitions using just MIG optimization. Note that the AIGER file must still be stored as an AIG network. Conversion for MIG optimization will occur after partitioning.
+This option skips classification and optimizes all partitions using just MIG optimization. Note that the AIGER file must still be stored as an AIG network. Conversion for MIG optimization will occur after partitioning.
 
 .. code-block:: c++
 	
