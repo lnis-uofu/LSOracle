@@ -1273,6 +1273,7 @@ namespace alice{
           std::cout << "Optimizing stored AIG network\n";
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
+
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
@@ -1298,6 +1299,7 @@ namespace alice{
 
                 auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
                 mockturtle::depth_view part_aig_depth{opt_aig};
+
                 mockturtle::aig_script aigopt;
                 opt_aig = aigopt.run(opt_aig);
                 mockturtle::depth_view part_aig_opt_depth{opt_aig};

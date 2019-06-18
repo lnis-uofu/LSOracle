@@ -129,7 +129,11 @@ class test_combine_part_command : public alice::command{
             std::unordered_map<int, int> comb_part;
             for(int i = 0; i < num_parts; i++){
               if(std::find(visited.begin(), visited.end(), i) == visited.end()){
+<<<<<<< HEAD
                 std::vector<int> parts_to_combine;
+=======
+                std::set<int> parts_to_combine;
+>>>>>>> f68977b17fa558212dbe5b70e1d6621900e07e72
                 std::cout << "Partition " << i << "\n";
                 std::cout << "Partition " << i << " Inputs: {";
                 auto part_inputs = partitions_aig.get_part_inputs(i);
@@ -283,6 +287,7 @@ class test_combine_part_command : public alice::command{
                       
                     } 
                     std::cout << "}\n";  
+
                   }
                   visited.push_back(i);
 
@@ -342,6 +347,7 @@ class test_combine_part_command : public alice::command{
                 std::cout << conn.index << " ";
               });
               std::cout << "}\n";
+
               mockturtle::depth_view part_depth{part};
               std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
@@ -379,6 +385,7 @@ class test_combine_part_command : public alice::command{
                 std::cout << *it << " ";
               }
               std::cout << "}\n";
+
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, comb_mig_parts.at(i));
               mockturtle::depth_view part_depth{part};
               std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
@@ -406,6 +413,7 @@ class test_combine_part_command : public alice::command{
             mockturtle::depth_view ntk_depth2{ntk_mig};
             std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
             std::cout << "Area Delay Product = " << ntk_mig.num_gates() * ntk_depth2.depth() << "\n";
+
             std::cout << comb_aig_parts.size() << " AIGs and " << comb_mig_parts.size() << " MIGs\n";
             std::cout << "AIG partitions = {";
             for(int i = 0; i < comb_aig_parts.size(); i++){
