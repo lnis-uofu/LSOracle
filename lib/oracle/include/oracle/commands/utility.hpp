@@ -135,6 +135,7 @@ namespace alice
     }
 
     part.foreach_pi( [&]( auto n ) {
+
       node2new[n] = mig.create_pi();
     } );
     // std::cout << "created all PIs\n";
@@ -145,20 +146,29 @@ namespace alice
         return;
 
       std::vector<mockturtle::mig_network::signal> children;
+      // std::cout << "before foreach_fanin\n";
       part.foreach_fanin( n, [&]( auto const& f ) {
-        // std::cout << "fanin = " << f.index << "\n";
+        // std::cout << "before pushing " << f.index << " to children\n";
         children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
+        // std::cout << "after pushing to children\n";
       } );
+      // std::cout << "after foreach_fanin\n";
 
-      if(skip_edge_min == 1){
-        node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
-      }
-      else{
-        node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
-      }
+      // if(children.size() == 0){
+      //   node2new[n] = mig.create_pi();
+      // }
+      // else{
+        if(skip_edge_min == 1){
+          node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
+        }
+        else{
+          node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
+        }
+      // }
+      
       // std::cout << "created majority\n";
     } );
-
+    // std::cout << "completed nodes\n";
     /* map primary outputs */
     part.foreach_po( [&]( auto const& f ) {
       mig.create_po( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
