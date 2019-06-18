@@ -40,12 +40,6 @@
 #include "partitioning/seed_partitioner.hpp"
 #include "partitioning/fpga_seed_partitioner.hpp"
 
-/*
-#include "commands/testing/level_partition_manager.hpp"
-#include "commands/testing/test_sort_fanout.hpp"
-#include "commands/testing/test_cad_proj_part.hpp"
-*/
-
 #include "commands/depth_based.hpp"
 #include "commands/mixed_2steps.hpp"
 #include "commands/get_all_partitions.hpp"

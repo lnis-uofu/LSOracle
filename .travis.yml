@@ -1,64 +1,58 @@
 language: cpp
+os: linux
+dist: trusty
+sudo: required
+cache: 
+  directories:
+    - $HOME/deps/abc
+    - $HOME/.ccache
 
-matrix:
-  include:
-  - os: linux
-    dist: trusty
-    sudo: required
-    compiler: gcc
-    addons:
-      apt:
-        sources:
-          - ubuntu-toolchain-r-test
-          - george-edison55-precise-backports
-        packages:
-          - g++-8
-          - cmake
-          - libboost-program-options1.55.0
-          - libboost-program-options1.55-dev
-          - lcov
-          - gcovr
-    env: COMPILER=g++-8
+env:
+  global:
+    - COMPILER=g++-8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-8
+      - g++-8
+      - cmake
+      - libboost-program-options1.55.0
+      - libboost-program-options1.55-dev
+      - lcov
+      - gcovr
+      - python-numpy
+      - python-matplotlib
 
 before_install:
-
+#removes speed limit on downloads
+  - echo -e "machine github.com\n  login $GITHUB_TOKEN" > ~/.netrc
+  - git lfs pull
 install:
   - DEPS_DIR="${HOME}/deps"
   - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="https://cmake.org/files/v3.13/cmake-3.13.0-rc3-Linux-x86_64.tar.gz"
-      mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
-      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-      echo ${PATH}
-    else
-      brew install cmake || brew upgrade cmake
-    fi
-  - cmake --version
-
-before_script:
-# print out some version numbers
-#- $CMAKE_CXX --version
-# configure
-- cd "${TRAVIS_BUILD_DIR}"
-#- mkdir build; cp sonar-project.properties build; cd build
-#- cmake
-#  -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
-#  -DCMAKE_C_COMPILER="$CMAKE_CC" -DCMAKE_CXX_COMPILER="$CMAKE_CXX" -DKAHYPAR_USE_GCOV="$COV"
-#  -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-#  $CMAKE_ARGS ..
+  - CMAKE_URL="https://cmake.org/files/v3.13/cmake-3.13.0-rc3-Linux-x86_64.tar.gz"
+  - mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
+  - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+  - echo ${PATH}
+  - cd ${DEPS_DIR}
+  - git clone https://github.com/berkeley-abc/abc.git || true
+  - cd abc && make ABC_USE_NO_READLINE=1
+  - export PATH=${DEPS_DIR}/abc:${PATH}
+  - echo ${PATH}
 
 script:
- - export CC=/usr/bin/gcc-8
- - export CXX=/usr/bin/g++-8
- - gcc -v && g++ -v && cmake --version
- - mkdir build
- - cd build
- - cmake ..
- - make
+  - export CC=/usr/bin/gcc-8
+  - export CXX=/usr/bin/g++-8
+  - cd "${TRAVIS_BUILD_DIR}"
+  - mkdir build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=RELEASE
+  - make
+  - cd ..
+  - python basic_tests.py --travis
 
-after_failure:
-  - echo "failure"
-
-after_success:
-  - echo "success"
+notifications:
+  slack:
+    secure: GdtRuYo8zwdwUGJR9wan4gXAF58E0mrxofS6vByLFtXiN2RCEdE8kajyv6pbxJQT2+lV0jfWTHcq5ZscW2gJFAcw/ND7CJTzsz8C0TrLW622WJTDAyhyXxJNZKmW8qTi2nbW8xG9X0xPwKKhhJK0eb99A+4klYXG55ctEXyFRPCxRxM1M3q1ekJP6H/WBkje/H0118DQH92lFhSRjUxAAWxeGUu8NRqYC3bN4zdS6mmuU9e5JqOAaaDuo386Om8yEbXQf7oi6IantmkA8oXeuZK6gdMBUZUl6a18xtRq3p1292mRYlwjWsuTSHIsl52bqp0sTjgfAVe4pmpvpuKRE5BYd3QeyWnSu0KQaK3PcRapde6KSd8cqskwbIXFQbV1/SYH1ZrGAPxe0J93lllKYIiMim1zWTegWXsER5iFXGId4euDWboDx3ZiVBtmpP34vA8U+bFP147rO7aSr+YLTAPSEqX98ugNm8wd3bjCZWZ/HRuowQr64mDtes5XNdI8iWKIAIoKKbEfAO+Y2FRgUtkOiuk37VsN1vamM97qd7ex0mfxq6jOivwNkv8pxcqAmr0EKGFyhPEKYlx0n4jClcATiA/NOQshUkkpvh1CoVX6OwX+WwxvKSpBLKkhG43rLOwztz1LH/C68Cn6eVSseAUQIug5G79q8/Cqnc//RNo=
