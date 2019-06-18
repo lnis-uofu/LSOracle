@@ -129,7 +129,7 @@ class test_combine_part_command : public alice::command{
             std::unordered_map<int, int> comb_part;
             for(int i = 0; i < num_parts; i++){
               if(std::find(visited.begin(), visited.end(), i) == visited.end()){
-                std::set<int> parts_to_combine;
+                std::vector<int> parts_to_combine;
                 std::cout << "Partition " << i << "\n";
                 std::cout << "Partition " << i << " Inputs: {";
                 auto part_inputs = partitions_aig.get_part_inputs(i);
@@ -152,7 +152,7 @@ class test_combine_part_command : public alice::command{
                   std::cout << "AIG\n";
                   for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
                     if(std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end()){
-                      parts_to_combine.insert(*conn_it);
+                      parts_to_combine.push_back(*conn_it);
                     }
                   }
                 }
@@ -160,27 +160,47 @@ class test_combine_part_command : public alice::command{
                   std::cout << "MIG\n";
                   for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
                     if(std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end()){
-                      parts_to_combine.insert(*conn_it);
+                      parts_to_combine.push_back(*conn_it);
                     }
                   }
                 }
 
                 std::cout << "Partitions to combine current part with = {";
-                for(conn_it = parts_to_combine.begin(); conn_it != parts_to_combine.end(); ++conn_it){
-                  std::cout << *conn_it << " ";
-                } 
+                for(int j = 0; j < parts_to_combine.size(); j++){
+                  std::cout << parts_to_combine.at(j) << " ";
+                }
+                // for(conn_it = parts_to_combine.begin(); conn_it != parts_to_combine.end(); ++conn_it){
+                //   std::cout << *conn_it << " ";
+                // } 
                 std::cout << "}\n";
-                
-                for(conn_it = parts_to_combine.begin(); conn_it != parts_to_combine.end(); ++conn_it){
+
+                if(parts_to_combine.size() == 0){
+                  if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
+                    if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), i) == comb_aig_parts.end()){
+                      std::cout << "pushing " << i << " into comb_aig_parts\n";
+                      comb_aig_parts.push_back(i);
+                    }
+                  }
+                  else{
+                    if(std::find(comb_mig_parts.begin(), comb_mig_parts.end(), i) == comb_mig_parts.end()){
+                      std::cout << "pushing " << i << " into comb_mig_parts\n";
+                      comb_mig_parts.push_back(i);
+                    }
+                  }
+                }
+
+                for(int idx = 0; idx < parts_to_combine.size(); idx++){
+                //for(conn_it = parts_to_combine.begin(); conn_it != parts_to_combine.end(); ++conn_it){
+                  int curr_part = parts_to_combine.at(idx);
                   int part_1 = 0;
                   int part_2 = 0;
-                  if(std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
+                  if(std::find(visited.begin(), visited.end(), curr_part) == visited.end()){
                     part_1 = i;
-                    part_2 = *conn_it;
+                    part_2 = curr_part;
                   }
                   else{
                     if(std::find(visited.begin(), visited.end(), i) == visited.end()){
-                      part_1 = *conn_it;
+                      part_1 = curr_part;
                       part_2 = i;
                     }
                   }
@@ -225,26 +245,6 @@ class test_combine_part_command : public alice::command{
                     partitions_aig.set_part_inputs(part_1, new_inputs);
                     partitions_aig.set_part_outputs(part_1, new_outputs);
 
-                    connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
-                    std::cout << part_1 << " new connected partitions = {";
-                    for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
-                      if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                        if(parts_to_combine.find(*conn_it) == parts_to_combine.end() && 
-                          std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end()){
-
-                          parts_to_combine.insert(*conn_it);
-                        }
-                      }
-                      else{
-                        if(parts_to_combine.find(*conn_it) == parts_to_combine.end() && 
-                          std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end()){
-
-                          parts_to_combine.insert(*conn_it);
-                        }
-                      }
-                      std::cout << *conn_it << " ";
-                    } 
-                    std::cout << "}\n";
                     if(std::find(aig_parts.begin(), aig_parts.end(), part_1) != aig_parts.end()){
                       if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), part_1) == comb_aig_parts.end()){
                         std::cout << "pushing " << part_1 << " into comb_aig_parts\n";
@@ -258,7 +258,32 @@ class test_combine_part_command : public alice::command{
                       }
                     }
 
-                    visited.push_back(part_2);   
+                    visited.push_back(part_2); 
+
+                    connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
+                    std::cout << part_1 << " new connected partitions = {";
+                    for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
+                      if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
+                        if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                          std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end() &&
+                          std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
+                          // std::cout << "adding " << *conn_it << " to parts_to_combine\n";
+                          std::cout << *conn_it << " ";
+                          parts_to_combine.push_back(*conn_it);
+                        }
+                      }
+                      else{
+                        if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                          std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end() &&
+                          std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
+
+                          parts_to_combine.push_back(*conn_it);
+                        }
+                      }
+                      
+                    } 
+                    std::cout << "}\n";  
+
                   }
                   visited.push_back(i);
 
@@ -294,7 +319,31 @@ class test_combine_part_command : public alice::command{
             std::cout << "AIG Optimization\n";
             for(int i = 0; i < comb_aig_parts.size(); i++){
               std::cout << "Optimize partition " << comb_aig_parts.at(i) << "\n";
+              std::cout << "Partition " << comb_aig_parts.at(i) << " Inputs: {";
+              auto part_inputs = partitions_mig.get_part_inputs(comb_aig_parts.at(i));
+              auto part_outputs = partitions_mig.get_part_outputs(comb_aig_parts.at(i));
+              typename std::set<mockturtle::aig_network::node>::iterator it;
+              for(it = part_inputs.begin(); it != part_inputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "}\n";
+              std::cout << "Partition " << comb_aig_parts.at(i) << " Outputs: {";
+              for(it = part_outputs.begin(); it != part_outputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "}\n";
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, comb_aig_parts.at(i));
+              std::cout << "Inputs = {";
+              part.foreach_pi([&](auto const& pi){
+                std::cout << pi << " ";
+              });
+              std::cout << "\n";
+              std::cout << "Outputs = {";
+              part.foreach_po([&](auto conn, auto i){
+                std::cout << conn.index << " ";
+              });
+              std::cout << "}\n";
+
               mockturtle::depth_view part_depth{part};
               std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
@@ -319,12 +368,26 @@ class test_combine_part_command : public alice::command{
             std::cout << "MIG Optimization\n";
             for(int i = 0; i < comb_mig_parts.size(); i++){
               std::cout << "Optimize partition " << comb_mig_parts.at(i) << "\n";
+              std::cout << "Partition " << comb_mig_parts.at(i) << " Inputs: {";
+              auto part_inputs = partitions_mig.get_part_inputs(comb_mig_parts.at(i));
+              auto part_outputs = partitions_mig.get_part_outputs(comb_mig_parts.at(i));
+              typename std::set<mockturtle::aig_network::node>::iterator it;
+              for(it = part_inputs.begin(); it != part_inputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "}\n";
+              std::cout << "Partition " << comb_mig_parts.at(i) << " Outputs: {";
+              for(it = part_outputs.begin(); it != part_outputs.end(); ++it){
+                std::cout << *it << " ";
+              }
+              std::cout << "}\n";
+
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, comb_mig_parts.at(i));
               mockturtle::depth_view part_depth{part};
               std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
               // auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part, resyn_mig);
-              auto opt = part_to_mig(part, 1);
+              auto opt = part_to_mig(part, 0);
 
               mockturtle::depth_view opt_part_depth{opt};
               std::cout << "part size after resynthesis = " << opt.num_gates() << " and depth = " << opt_part_depth.depth() << "\n";
@@ -337,6 +400,16 @@ class test_combine_part_command : public alice::command{
 
               partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
+            
+            partitions_mig.connect_outputs(ntk_mig);
+            
+            mockturtle::depth_view ntk_before_depth2{ntk_mig};
+            
+            ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
+            mockturtle::depth_view ntk_depth2{ntk_mig};
+            std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
+            std::cout << "Area Delay Product = " << ntk_mig.num_gates() * ntk_depth2.depth() << "\n";
+
             std::cout << comb_aig_parts.size() << " AIGs and " << comb_mig_parts.size() << " MIGs\n";
             std::cout << "AIG partitions = {";
             for(int i = 0; i < comb_aig_parts.size(); i++){
@@ -348,19 +421,11 @@ class test_combine_part_command : public alice::command{
               std::cout << comb_mig_parts.at(i) << " ";
             }
             std::cout << "}\n";
-            
-            partitions_mig.connect_outputs(ntk_mig);
-            
-            mockturtle::depth_view ntk_before_depth2{ntk_mig};
-            
-            ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
-            mockturtle::depth_view ntk_depth2{ntk_mig};
-            std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
-            std::cout << "Area Delay Product = " << ntk_mig.num_gates() * ntk_depth2.depth() << "\n";
-            std::cout << "Finished optimization\n";
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
             std::cout << "Full Optimization: " << duration.count() << "ms\n";
+            std::cout << "Finished optimization\n";
+            
             store<mockturtle::mig_network>().extend() = ntk_mig;
             mockturtle::write_verilog(ntk_mig, out_file);
         

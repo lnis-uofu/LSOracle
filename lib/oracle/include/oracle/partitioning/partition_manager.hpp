@@ -246,16 +246,11 @@ namespace oracle
                           &objective, context, partition.data());
 
         
-        ntk.foreach_pi([&](auto pi){
-          _part_scope[partition[ntk.node_to_index(pi)]].insert(ntk.index_to_node(pi));
-          _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(pi)], ntk.index_to_node(pi)));
-        });
-
-        ntk.foreach_ro([&](auto ro){
-          _part_scope[partition[ntk.node_to_index(ro)]].insert(ro);
-          _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(ro)], ro));
-          if(ntk.is_po(ro)){
-            _part_pos.insert(std::pair<int, node>(partition[ntk.node_to_index(ro)], ro));
+        ntk.foreach_node( [&](auto curr_node){
+          //get rid of circuit PIs
+          if (ntk.is_pi(curr_node) ) {
+            _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+            _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], curr_node));
           }
         });
 
@@ -530,17 +525,18 @@ namespace oracle
 
   public:
     oracle::partition_view<Ntk> create_part( Ntk const& ntk, int part ){
-      typename std::set<node>::iterator it;
-      std::cout << "Partition " << part << " Inputs = {";
-      for(it = partitionInputs[part].begin(); it != partitionInputs[part].end(); ++it){
-        std::cout << *it << " ";
-      }
-      std::cout << "}\n";
-      std::cout << "Partition " << part << " Outputs = {";
-      for(it = partitionOutputs[part].begin(); it != partitionOutputs[part].end(); ++it){
-        std::cout << *it << " ";
-      }
-      std::cout << "}\n";
+      // typename std::set<node>::iterator it;
+      // std::cout << "Partition " << part << " Inputs = {";
+      // for(it = partitionInputs[part].begin(); it != partitionInputs[part].end(); ++it){
+      //   std::cout << *it << " ";
+      // }
+      // std::cout << "}\n";
+      // std::cout << "Partition " << part << " Outputs = {";
+      // for(it = partitionOutputs[part].begin(); it != partitionOutputs[part].end(); ++it){
+      //   std::cout << *it << " ";
+      // }
+      // std::cout << "}\n";
+
       oracle::partition_view<Ntk> partition(ntk, partitionInputs[part], partitionOutputs[part], false);
       return partition;
     }
@@ -565,7 +561,7 @@ namespace oracle
         }
         if ( opt.is_constant( node ) || opt.is_pi( node ) || opt.is_ro( node ))
           return;
-
+        // std::cout << "Node = " << node << "\n";
         /* collect children */
         std::vector<signal> children;
         opt.foreach_fanin( node, [&]( auto child, auto ) {
@@ -776,16 +772,18 @@ namespace oracle
         auto average_nodes = 0;
         auto average_depth = 0;
 
+        // std::cout << "Current partition = " << partition << "\n";
 
         mockturtle::depth_view ntk_depth{ntk};
 
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
           auto output = *it;
+          // std::cout << "curr output = " << output << "\n";
           total_depth += computeLevel(ntk, output, partition);
+          // std::cout << "updated total depth\n";
           total_outputs++;
         }
-
         if(total_outputs>0) {
            average_nodes = _num_nodes_cone / total_outputs;
            average_depth = total_depth / total_outputs;
@@ -793,14 +791,16 @@ namespace oracle
 
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
           auto output = *it;
+          // std::cout << "current output = " << output << "\n";
           _num_nodes_cone = 0;
           std::vector<float> image = get_km_image(ntk, partition, output);
+          // std::cout << "received image of size = " << image.size() << "\n";
           if(image.size() > 0){
             const fdeep::shared_float_vec sv(fplus::make_shared_ref<fdeep::float_vec>(std::move(image)));
             fdeep::tensor5 input(fdeep::shape5(1, 1, row_num, col_num, chann_num), sv);
             const auto result = model.predict_class({input});
-            std::cout << "Result\n";
-            std::cout << labels.at(result) << "\n";
+            // std::cout << "Result\n";
+            // std::cout << labels.at(result) << "\n";
 
             weight = 1;
             weight_nodes = 1;
@@ -809,7 +809,6 @@ namespace oracle
               int num_inputs = logic_cone_inputs[output].size();
 
               int depth = computeLevel(ntk, output, partition);
-
               if(depth > average_depth && average_depth > 0 ){
                 if(depth > average_depth + 1)
                   weight = 2;
@@ -847,21 +846,22 @@ namespace oracle
             }
           }
           else{
-            std::cout << "Dealing with big cone with " << logic_cone_inputs[output].size() << " inputs" << std::endl;
+            // std::cout << "Dealing with big cone with " << logic_cone_inputs[output].size() << " inputs" << std::endl;
 
             _num_nodes_cone = 0;
             int big_depth = computeLevel(ntk, output, partition);
-
+            // std::cout << "computed depth: " << big_depth << "\n";
+            // std::cout << "network depth: " << ntk_depth.depth() << "\n";
             if (big_depth > 0.4 * ntk_depth.depth())
               mig_score += ( (weight_nodes*_num_nodes_cone)+(3*big_depth));
 
             else aig_score += ( (weight_nodes*_num_nodes_cone)+(3*big_depth));
 
+            // std::cout << "updated score\n";
           }
         }
         if(aig_score > mig_score){
           aig_parts.push_back(partition);
-
         }
         else{
           mig_parts.push_back(partition);
@@ -1189,7 +1189,7 @@ namespace oracle
       std::set<node> shared_history;
 
       std::set_union(shared_io.begin(), shared_io.end(),
-                     combined_deleted_nodes.begin(), combined_deleted_nodes.end(),
+                     combined_deleted_nodes[part_1].begin(), combined_deleted_nodes[part_1].end(),
                      std::inserter(shared_history, shared_history.end()));
       typename std::set<node>::iterator it;
 
@@ -1204,9 +1204,9 @@ namespace oracle
       std::set_union(partitionOutputs[part_1].begin(), partitionOutputs[part_1].end(),
                      partitionOutputs[part_2].begin(), partitionOutputs[part_2].end(),
                      std::inserter(merged_outputs, merged_outputs.end()));
-      std::cout << part_2 << " inputs = {";
+      // std::cout << part_2 << " inputs = {";
       for(it = partitionInputs[part_2].begin(); it != partitionInputs[part_2].end(); ++it){
-        std::cout << *it << " ";
+        // std::cout << *it << " ";
         for(int i = 0; i < input_partition[*it].size(); i++){
           if(input_partition[*it].at(i) = part_2){
             // std::cout << "in partition " << input_partition[*it].at(i) << "\n";
@@ -1215,29 +1215,36 @@ namespace oracle
         }
         
       }
-      std::cout << "}\n";
 
-      std::cout << part_2 << " outputs = {";
+      // std::cout << "}\n";
+
+      // std::cout << part_2 << " outputs = {";
       for(it = partitionOutputs[part_2].begin(); it != partitionOutputs[part_2].end(); ++it){
-        std::cout << *it << " ";
+        // std::cout << *it << " ";
         if(_part_nodes[*it] == part_2)
           _part_nodes[*it] = part_1;
       }
-      std::cout << "}\n";
+      // std::cout << "}\n";
 
       merged_inputs.erase(ntk.index_to_node(0));
       for(it = shared_history.begin(); it != shared_history.end(); ++it){
         node shared_node = *it;
+        // std::cout << "shared node = " << shared_node << "\n";
         if(!ntk.is_pi(shared_node)){
+          // std::cout << "erasing " << shared_node << "\n";
           merged_inputs.erase(shared_node);
         }
         // std::cout << "shared node = " << shared_node << "\n";
         if(!ntk.is_po(shared_node)){
+          // std::cout << "erasing " << shared_node << "\n";
           merged_outputs.erase(shared_node);
         }
 
-        if(combined_deleted_nodes.find(shared_node) == combined_deleted_nodes.end())
-          combined_deleted_nodes.insert(shared_node);
+        if(combined_deleted_nodes[part_1].find(shared_node) == combined_deleted_nodes[part_1].end() && 
+          !ntk.is_pi(shared_node) && !ntk.is_po(shared_node)){
+
+          combined_deleted_nodes[part_1].insert(shared_node);
+        }
         
       }
 
@@ -1295,15 +1302,17 @@ namespace oracle
       typename std::set<node>::iterator it;
       // std::cout << "Partition " << partition_num << " Inputs:\n";
       for(it = partitionInputs[partition_num].begin(); it != partitionInputs[partition_num].end(); ++it){
-        // std::cout << *it << " and curr part " << _part_nodes[*it] << "\n";
-        if(_part_nodes[*it] != partition_num && !ntk.is_pi(*it)){
-          // std::cout << "in partition = " << _part_nodes[*it] << "\n";
-          conn_parts.insert(_part_nodes[*it]);
+        // std::cout << *it << "\n";
+        for(int i = 0; i < output_partition[*it].size(); i++){
+          if(output_partition[*it].at(i) != partition_num && !ntk.is_pi(*it)){
+            // std::cout << "in partition = " << output_partition[*it].at(i) << "\n";
+            conn_parts.insert(output_partition[*it].at(i));
+          }
         }
       }
       // std::cout << "Partition " << partition_num << " Outputs:\n";
       for(it = partitionOutputs[partition_num].begin(); it != partitionOutputs[partition_num].end(); ++it){
-        // std::cout << *it << " and curr part " << _part_nodes[*it] << "\n";
+        // std::cout << *it <<  "\n";
         for(int i = 0; i < input_partition[*it].size(); i++){
           if(input_partition[*it].at(i) != partition_num && !ntk.is_pi(*it)){
             // std::cout << "in partition " << input_partition[*it].at(i) << "\n";
@@ -1335,7 +1344,7 @@ namespace oracle
     std::vector<std::set<node>> _part_scope;
     int _num_nodes_cone;
 
-    std::set<node> combined_deleted_nodes;
+    std::unordered_map<int, std::set<node>> combined_deleted_nodes;
 
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
