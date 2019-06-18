@@ -129,11 +129,7 @@ class test_combine_part_command : public alice::command{
             std::unordered_map<int, int> comb_part;
             for(int i = 0; i < num_parts; i++){
               if(std::find(visited.begin(), visited.end(), i) == visited.end()){
-<<<<<<< HEAD
                 std::vector<int> parts_to_combine;
-=======
-                std::set<int> parts_to_combine;
->>>>>>> f68977b17fa558212dbe5b70e1d6621900e07e72
                 std::cout << "Partition " << i << "\n";
                 std::cout << "Partition " << i << " Inputs: {";
                 auto part_inputs = partitions_aig.get_part_inputs(i);
