@@ -600,6 +600,7 @@ namespace oracle
     }
 
     void generate_truth_tables(Ntk const& ntk){
+      #pragma omp parallel for
       for(int i = 0; i < num_partitions; i++){                  
                   
         typename std::set<node>::iterator it;
@@ -759,7 +760,7 @@ namespace oracle
       if(output_tt.empty()){
         generate_truth_tables(ntk);
       }
-
+      #pragma omp parallel for
       for(int i = 0; i < num_partitions; i++){
         int aig_score = 0;
         int mig_score = 0;
@@ -876,6 +877,7 @@ namespace oracle
       }
 
       mkdir(directory.c_str(), 0777);
+      #pragma omp parallel for
       for(int i = 0; i < num_partitions; i++){
         int partition = i;
         typename std::set<node>::iterator it;
