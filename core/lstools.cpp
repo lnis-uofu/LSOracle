@@ -1293,9 +1293,11 @@ namespace alice{
               }
             }
             else if(is_set("brute")){
-              #pragma omp numthreads(4)
-              #pragma omp parallel for ordered firstprivate(ntk_aig, partitions_aig)
+            //  #pragma omp numthreads(4)
+              #pragma omp parallel for ordered firstprivate(ntk_aig, partitions_aig) schedule(static, 1)
               for(int i = 0; i < num_parts; i++){
+                #pragma omp ordered
+                {
                 std::cout << "begin partition " << i << "\n";
                 int aig_opt_size = 0;
                 int aig_opt_depth = 0;
@@ -1347,6 +1349,7 @@ namespace alice{
                     mig_parts.push_back(i);
                   }
                 } // end critical block
+                }
               } //end for loop
             }
             else{
@@ -1375,8 +1378,12 @@ namespace alice{
             #pragma omp section
             {
             for(int i = 0; i < aig_parts.size(); i++){
-               std::cout << "AIG Optimize partition " << aig_parts.at(i) << "\n";
-              oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
+               //std::cout << "AIG Optimize partition " << aig_parts.at(i) << "\n";
+              oracle::partition_view<mockturtle::mig_network> part;
+              #pragma omp critical
+              {
+              part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
+              }
               mockturtle::depth_view part_depth{part};
                std::cout << "AIG part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
@@ -1402,8 +1409,12 @@ namespace alice{
            #pragma omp section
            {
             for(int i = 0; i < mig_parts.size(); i++){
-               std::cout << "MIG Optimize partition " << mig_parts.at(i) << "\n";
-              oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
+            //   std::cout << "MIG Optimize partition " << mig_parts.at(i) << "\n";
+               oracle::partition_view<mockturtle::mig_network> part;
+               #pragma omp critical
+               {
+              part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
+               }
               mockturtle::depth_view part_depth{part};
                std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
