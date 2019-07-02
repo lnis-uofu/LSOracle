@@ -1369,7 +1369,11 @@ namespace alice{
             std::cout << "2nd parallel block\t";
             std::cout << "aig_parts "<<aig_parts.size() << " mig_parts " << mig_parts.size() <<"\n"; 
 
-           #pragma omp parallel for ordered
+           //#pragma omp parallel for ordered
+           #pragma omp parallel sections
+           {
+            #pragma omp section
+            {
             for(int i = 0; i < aig_parts.size(); i++){
                std::cout << "AIG Optimize partition " << aig_parts.at(i) << "\n";
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
@@ -1394,8 +1398,9 @@ namespace alice{
               partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
               }
            }
-
-           #pragma omp parallel for ordered
+            }
+           #pragma omp section
+           {
             for(int i = 0; i < mig_parts.size(); i++){
                std::cout << "MIG Optimize partition " << mig_parts.at(i) << "\n";
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
@@ -1418,6 +1423,8 @@ namespace alice{
               partitions_mig.synchronize_part(part, opt, ntk_mig);
               }
             }
+           }
+           }
 
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
             std::cout << "AIG partitions = {";
