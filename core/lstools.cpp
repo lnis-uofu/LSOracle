@@ -1268,8 +1268,6 @@ namespace alice{
         std::vector<int> mig_parts;
         if(!store<mockturtle::aig_network>().empty()){
           std::cout << "Optimizing stored AIG network\n";
-          //this returns a pointer.  So the firstprivate statement was just giving each thread their own pointer, all to the same data structure.
-          //which they then sometimes fuck up in interesting, unpredictable ways, causing a segfault.
           mockturtle::aig_network ntk_aig = store<mockturtle::aig_network>().current();
           
           std::string file_base = ntk_aig._storage->net_name;
@@ -1293,46 +1291,40 @@ namespace alice{
               }
             }
             else if(is_set("brute")){
-            //  #pragma omp numthreads(4)
-              #pragma omp parallel for ordered firstprivate(ntk_aig, partitions_aig) schedule(static, 1)
+              #pragma omp parallel for ordered schedule(static, 1)
               for(int i = 0; i < num_parts; i++){
-                #pragma omp ordered
-                {
+                mockturtle::aig_network private_ntk_aig = ntk_aig;
+                std::cout << "classifier\n";
                 std::cout << "begin partition " << i << "\n";
                 int aig_opt_size = 0;
                 int aig_opt_depth = 0;
                 int mig_opt_depth = 0;
                 int mig_opt_size = 0;
+                //local copies for each thread
                 mockturtle::aig_network opt_aig;
                 mockturtle::mig_network opt_mig;
-                //these are causing the segfaults
                 mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
                 mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
+                oracle::partition_view<mockturtle::aig_network> part_aig;
 
-                std::cout << "create_part ";
-                oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
-                std::cout<<"done \n";
-                std::cout << "aig ";
-                #pragma omp critical(node_resyn)
+                std::cout << "AIG portion\n";
+                #pragma omp critical
                 {
+                part_aig = partitions_aig.create_part(private_ntk_aig, i);
                 opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
                 }
-                std::cout << "opt_aig set";
-                mockturtle::depth_view part_aig_depth{opt_aig};
-                std::cout << " depth view ";
                 mockturtle::aig_script aigopt;
                 opt_aig = aigopt.run(opt_aig);
-                std::cout << " aigopt ";
                 mockturtle::depth_view part_aig_opt_depth{opt_aig};
-                std::cout << "get stats";
                 aig_opt_size = opt_aig.num_gates();
                 aig_opt_depth = part_aig_opt_depth.depth();
-                std::cout << "mig ";
-                #pragma omp critical(node_resyn)
+
+                std::cout << "MIG portion\n";
+                #pragma omp critical
                 {
                 opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
                 }
-                mockturtle::depth_view part_mig_depth{opt_mig};
+             //   mockturtle::depth_view part_mig_depth{opt_mig};
                 mockturtle::mig_script migopt;
                 opt_mig = migopt.run(opt_mig);
                 mockturtle::depth_view part_mig_opt_depth{opt_mig};
@@ -1349,7 +1341,6 @@ namespace alice{
                     mig_parts.push_back(i);
                   }
                 } // end critical block
-                }
               } //end for loop
             }
             else{
@@ -1368,15 +1359,9 @@ namespace alice{
             oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
 
-            // std::cout << "AIG Optimization\n";
             std::cout << "2nd parallel block\t";
-            std::cout << "aig_parts "<<aig_parts.size() << " mig_parts " << mig_parts.size() <<"\n"; 
 
-           //#pragma omp parallel for ordered
-           #pragma omp parallel sections
-           {
-            #pragma omp section
-            {
+           #pragma omp parallel for 
             for(int i = 0; i < aig_parts.size(); i++){
                //std::cout << "AIG Optimize partition " << aig_parts.at(i) << "\n";
               oracle::partition_view<mockturtle::mig_network> part;
@@ -1404,10 +1389,8 @@ namespace alice{
               {
               partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
               }
-           }
-            }
-           #pragma omp section
-           {
+           } //end for loop
+           
             for(int i = 0; i < mig_parts.size(); i++){
             //   std::cout << "MIG Optimize partition " << mig_parts.at(i) << "\n";
                oracle::partition_view<mockturtle::mig_network> part;
@@ -1433,9 +1416,8 @@ namespace alice{
               {
               partitions_mig.synchronize_part(part, opt, ntk_mig);
               }
-            }
-           }
-           }
+            } //end for
+        
 
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
             std::cout << "AIG partitions = {";
