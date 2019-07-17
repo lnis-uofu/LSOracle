@@ -17,6 +17,7 @@ public:
   explicit depth_partition_command( const environment::ptr& env )
     : command( env, "Optimize partitions with MIGs or AIGs based on their logic depth." ){
     opts.add_option( "--num_parts,p", num_parts, "Number of partitions to create" )->required();
+    opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
   }
 
 protected:
@@ -25,8 +26,6 @@ protected:
     //read AIG to generate hypergraph
     if(!store<mockturtle::aig_network>().empty()) {
       auto& ntk = store<mockturtle::aig_network>().current();
-
-      std::string filename = ntk._storage->net_name + "_mixed_part_" + std::to_string(num_parts) + ".v";
 
       mockturtle::depth_view depth{ntk};
       std::cout << "Ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
@@ -83,7 +82,6 @@ protected:
 
         std::cout << "Assigning partition " << mig_based.at(i) << " to MIG optimizer " << std::endl;
         oracle::partition_view<mockturtle::mig_network> part_mig = partitions_mig.create_part(ntk_mig, mig_based.at(i));
-        //std::cout << "\nPartition " << part_mig_opt.at(i) << "\n";
         mockturtle::depth_view part_mig_depth{part_mig};
         std::cout << "part size = " << part_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
 
@@ -96,22 +94,15 @@ protected:
         std::cout << "Synchronizing " << std::endl;
         partitions_mig.synchronize_part(part_mig, mig_opt, ntk_mig);
       }
-//
       partitions_mig.connect_outputs(ntk_mig);
 
       ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
       mockturtle::depth_view ntk_depth2{ntk_mig};
 
-      // ntk_mig.foreach_gate( [&](auto node){
-      //     std::cout << "nodeIdx = " << ntk_mig.node_to_index(node) << "\n";
-      //     std::cout << "child[0] = " << ntk_mig._storage->nodes[node].children[0].index << "\n";
-      //     std::cout << "child[1] = " << ntk_mig._storage->nodes[node].children[1].index << "\n";
-      //     std::cout << "child[2] = " << ntk_mig._storage->nodes[node].children[2].index << "\n";
-      // });
       std::cout << "new ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
       std::cout << "new ntk number of latches = " << ntk_mig.num_latches() << "\n";
 
-      mockturtle::write_verilog(ntk_mig, filename);
+      mockturtle::write_verilog(ntk_mig, out_file);
     }
     else{
       std::cout << "There is no stored AIG network\n";
@@ -119,8 +110,8 @@ protected:
   }
 
 private:
-  std::string filename{};
   int num_parts = 0;
+  std::string out_file{};
 };
 
 ALICE_ADD_COMMAND(depth_partition, "Optimization");

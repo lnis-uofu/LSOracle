@@ -158,7 +158,6 @@ namespace mockturtle
         {
             _node_to_index[n] = _nodes.size();
             _nodes.push_back( n );
-
             auto fanout_counter = 0;
             this->foreach_fanin( n, [&]( const auto& f ) {
                 if ( std::find( _nodes.begin(), _nodes.end(), this->get_node( f ) ) != _nodes.end() )

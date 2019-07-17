@@ -28,7 +28,7 @@ To run sequential MIG, please do as follows:
 
 ```{r, engine='bash', count_lines}
 ./lstools                                                #run the tool
-get_mig                                               #read a sequential AIG into a sequential AIG. Specify the file path when the command asks for. 
+read_aig -m                                               #read a sequential AIG into a sequential AIG. Specify the file path when the command asks for. 
 migscript                                             #interleaves area and depth optimization in the same way as the ABC resyn2 optimization command. 
 write_verilog                                       #outputs the optimized network in Verilog format, that can be used to technology mapping or functional verification. 
 ```
