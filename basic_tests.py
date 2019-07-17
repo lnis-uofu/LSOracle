@@ -57,16 +57,13 @@ def optimize(filename, mode, part_num, suffix):
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
-    #this takes the last line of output and returns a list of all positive integers in that string
-    #in this case it will be [ntk size, depth]
-    return [int(s) for s in string_stdout[-1].split() if s.isdigit()]
+    return [int(s) for s in string_stdout[-4].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
     opt_file = filename + suffix + '.v'
     #need to create verilog file to compare to
     cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; write_verilog ' + new_file + ';']
-    #maybe I should capture this output.  I'm not sure.
     subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     #use cec to compare the pre and post optimization files
@@ -77,6 +74,7 @@ def compare(filename, suffix):
         logging.warning(str(abc_stderr))
     intermediate_string = str(abc_stdout)
     string_abc = intermediate_string.splitlines()
+    print("str_abc \n")
     print(string_abc[-1])
     return string_abc[-1]
     
@@ -114,6 +112,7 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -c ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
+    print (mixed_size)
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)
