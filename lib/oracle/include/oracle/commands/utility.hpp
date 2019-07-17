@@ -81,7 +81,7 @@ namespace alice
     Network conversion
   ***************************************************/
 
-  mockturtle::mig_network aig_to_mig(mockturtle::aig_network aig){
+  mockturtle::mig_network aig_to_mig(mockturtle::aig_network aig, int skip_edge_min){
     mockturtle::mig_network mig;
 
     mockturtle::node_map<mockturtle::mig_network::signal, mockturtle::aig_network> node2new( aig );
@@ -105,7 +105,13 @@ namespace alice
         children.push_back( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
       } );
 
-      node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
+      if(skip_edge_min == 1){
+        node2new[n] = mig.create_maj_part(mig.get_constant( false ), children.at(0), children.at(1));
+      }
+      else{
+        node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
+      }
+      
           
     } );
 
@@ -115,6 +121,117 @@ namespace alice
     } );
 
     return mig;
+  }
+
+  mockturtle::mig_network part_to_mig(oracle::partition_view<mockturtle::mig_network> part, int skip_edge_min){
+    mockturtle::mig_network mig;
+
+    std::unordered_map<mockturtle::mig_network::node, mockturtle::mig_network::signal> node2new;
+
+    node2new[part.get_node( part.get_constant( false ) )] = mig.get_constant( false );
+    if ( part.get_node( part.get_constant( true ) ) != part.get_node( part.get_constant( false ) ) ){
+
+      node2new[part.get_node( part.get_constant( true ) )] = mig.get_constant( true );
+    }
+
+    part.foreach_pi( [&]( auto n ) {
+
+      node2new[n] = mig.create_pi();
+    } );
+    // std::cout << "created all PIs\n";
+        
+    part.foreach_node( [&]( auto n ) {
+      // std::cout << "Node = " << n << "\n";
+      if ( part.is_constant( n ) || part.is_pi( n ) || part.is_ci( n ) || part.is_ro( n ))
+        return;
+
+      std::vector<mockturtle::mig_network::signal> children;
+      // std::cout << "before foreach_fanin\n";
+      part.foreach_fanin( n, [&]( auto const& f ) {
+        // std::cout << "before pushing " << f.index << " to children\n";
+        children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
+        // std::cout << "after pushing to children\n";
+      } );
+      // std::cout << "after foreach_fanin\n";
+
+      // if(children.size() == 0){
+      //   node2new[n] = mig.create_pi();
+      // }
+      // else{
+        if(skip_edge_min == 1){
+          node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
+        }
+        else{
+          node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
+        }
+      // }
+      
+      // std::cout << "created majority\n";
+    } );
+    // std::cout << "completed nodes\n";
+    /* map primary outputs */
+    part.foreach_po( [&]( auto const& f ) {
+      mig.create_po( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
+    } );
+    // std::cout << "created POs\n";
+
+    return mig;
+  }
+
+  mockturtle::aig_network mig_to_aig(mockturtle::mig_network mig){
+    mockturtle::aig_network aig;
+
+    mockturtle::node_map<mockturtle::aig_network::signal, mockturtle::mig_network> node2new( mig );
+
+    node2new[mig.get_node( mig.get_constant( false ) )] = aig.get_constant( false );
+    if ( mig.get_node( mig.get_constant( true ) ) != mig.get_node( mig.get_constant( false ) ) ){
+
+      node2new[mig.get_node( mig.get_constant( true ) )] = aig.get_constant( true );
+    }
+
+    mig.foreach_pi( [&]( auto n ) {
+      node2new[n] = aig.create_pi();
+    } );
+    
+    std::set<mockturtle::mig_network::node> nodes_to_change;    
+    mig.foreach_node( [&]( auto n ) {
+
+      if ( mig.is_constant( n ) || mig.is_pi( n ) || mig.is_ci( n ) || mig.is_ro( n ))
+        return;
+
+      std::vector<mockturtle::aig_network::signal> children;
+
+      if(mig._storage->nodes[n].children[0].data != 0){
+        mockturtle::mig_network::signal child1 = mig._storage->nodes[n].children[1];
+        mockturtle::mig_network::signal child2 = mig._storage->nodes[n].children[2];
+        children.push_back(mig.is_complemented( child1 ) ? node2new[child1] : aig.create_not( node2new[child1] ));
+        children.push_back(mig.is_complemented( child2 ) ? node2new[child2] : aig.create_not( node2new[child2] ));
+        nodes_to_change.insert(n);
+      }
+      else{
+        for(int i = 1; i < mig._storage->nodes[n].children.size(); i++){
+          auto node = mig.get_node(mig._storage->nodes[n].children[i]);
+          mockturtle::mig_network::signal child = mig._storage->nodes[n].children[i];
+          if(nodes_to_change.find(node) != nodes_to_change.end()){
+            
+            children.push_back(mig.is_complemented( child ) ? node2new[child] : aig.create_not( node2new[child] ));
+          }
+          else{
+            
+            children.push_back(mig.is_complemented( child ) ? aig.create_not( node2new[child] ): node2new[child] );
+          }
+        }
+      }
+      node2new[n] = aig.create_and(children.at(0), children.at(1));
+          
+    } );
+
+    /* map primary outputs */
+    mig.foreach_po( [&]( auto const& f ) {
+      aig.create_po( mig.is_complemented( f ) ? aig.create_not( node2new[f] ) : node2new[f] );
+    } );
+
+    return aig;
   }
 
   /***************************************************/

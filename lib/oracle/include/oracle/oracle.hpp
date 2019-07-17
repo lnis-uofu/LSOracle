@@ -31,14 +31,27 @@
 */
 
 #pragma once
+
 #include "partitioning/partition_manager.hpp"
 #include "partitioning/partition_view.hpp"
 #include "partitioning/hyperg.hpp"
+
+#include "partitioning/cluster.hpp"
+#include "partitioning/seed_partitioner.hpp"
+#include "partitioning/fpga_seed_partitioner.hpp"
+
 #include "commands/depth_based.hpp"
 #include "commands/mixed_2steps.hpp"
-#include "commands/mixed_brute.hpp"
 #include "commands/get_all_partitions.hpp"
 #include "commands/partitioning.hpp"
 #include "commands/generate_truth_tables.hpp"
 #include "commands/print_karnaugh_map.hpp"
 #include "commands/utility.hpp"
+#include "commands/testing/test_aig_then_part.hpp"
+#include "commands/testing/test_combine_part.hpp"
+#include "commands/testing/test_seed_partitioner.hpp"
+#include "commands/testing/test_fpga_seed.hpp"
+
+#include "commands/testing/pattern_view.hpp"
+
+

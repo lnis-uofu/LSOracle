@@ -98,7 +98,7 @@ namespace oracle
         }
 
         for ( auto const& p : pivots ) {
-
+          // std::cout << "pivot = " << p << "\n";
           traverse( p );
         }
 
@@ -130,14 +130,23 @@ namespace oracle
 
       inline bool is_pi( node const& pi ) const 
       {
+        std::vector<signal> children;
+        this->foreach_fanin( pi, [&]( const auto& f ) {
+          children.push_back(f);
+        });
         const auto beg = _nodes.begin() + _num_constants;
-        return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;
+        // std::cout << "is_pi children size = " << children.size() << "\n";
+        return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;// || children.size() == 0;
       }
 
       inline bool is_ci( node const& pi ) const 
       {
+        std::vector<signal> children;
+        this->foreach_fanin( pi, [&]( const auto& f ) {
+          children.push_back(f);
+        });
         const auto beg = _nodes.begin() + _num_constants;
-        return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;
+        return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;// || children.size() == 0;
       }
 
 
@@ -175,11 +184,16 @@ namespace oracle
           return _children[nodeIdx];
       }
 
+      std::vector<node> get_node_list(){
+        return _nodes;
+      }
+
 
   private:
 
     void add_node( node const& n )
     {
+      // std::cout << "adding node " << n << "\n";
       _node_to_index[n] = _nodes.size();
       _nodes.push_back( n );
       _nodes_lut.insert(n);
@@ -195,11 +209,12 @@ namespace oracle
     }
 
       void traverse( node const& n ) {
-
+        // std::cout << "Node = " << n << "\n";
         if ( this->visited( n ) == 1 )
           return;
 
         this->foreach_fanin( n, [&]( const auto& f ) {
+          // std::cout << "fanin of " << n << " = " << f.index << "\n";
           traverse( this->get_node( f ) );
         } );
 
@@ -228,7 +243,6 @@ namespace oracle
     public:
       unsigned _num_constants{1};
       unsigned _num_leaves{0};
-      Ntk const* ntk;
       std::vector<node> _nodes;
       std::unordered_map<int, uint32_t> _visited;
       std::unordered_map<int, std::vector<signal>> _children;

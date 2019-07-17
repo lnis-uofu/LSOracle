@@ -6,7 +6,7 @@ Logic Synthesis Oracle
 
 .. toctree::
 
-    cnn
+    deep_learning
     manager
     view
     optimization

@@ -18,12 +18,12 @@
 
 namespace alice
 {
-  class mixed_command : public alice::command{
+  class mixed_2step_command : public alice::command{
 
     public:
-      explicit mixed_command( const environment::ptr& env )
-        : command( env, "Optimize partitions with AIG based-optimizer." ){
-        opts.add_option( "--cnn_model,-c", cnn_model, "Trained CNN model for classification" );
+      explicit mixed_2step_command( const environment::ptr& env )
+        : command( env, "Performs AIG optimization on corresponding partitions and then repartition for MIG optimization" ){
+        opts.add_option( "--nn_model,-c", nn_model, "Trained neural network model for classification" );
         opts.add_option( "--num_parts,-p", num_parts, "Number of partitions to create" )->required();
         opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
         add_flag("--brute,-b", "Uses a brute force approach instead of classification");
@@ -83,8 +83,8 @@ namespace alice
             }
           }
           else{
-            if(!cnn_model.empty()){
-              partitions_aig.run_classification(ntk, cnn_model);
+            if(!nn_model.empty()){
+              partitions_aig.run_classification(ntk, nn_model);
 
               aig_parts1 = partitions_aig.get_aig_parts();
               mig_parts1 = partitions_aig.get_mig_parts();
@@ -163,8 +163,8 @@ namespace alice
 
           }
           else{
-            if(!cnn_model.empty()){
-              tmp.run_classification(ntk_final, cnn_model);
+            if(!nn_model.empty()){
+              tmp.run_classification(ntk_final, nn_model);
 
               aig_parts2 = tmp.get_aig_parts();
               mig_parts2 = tmp.get_mig_parts();
@@ -223,9 +223,9 @@ namespace alice
 
     private:
       int num_parts = 0;
-      std::string cnn_model{};
+      std::string nn_model{};
       std::string out_file{};
   };
 
-  ALICE_ADD_COMMAND(mixed, "Optimization");
+  ALICE_ADD_COMMAND(mixed_2step, "Optimization");
 }

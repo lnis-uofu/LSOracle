@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(prog='lstools_test', description='Test script f
 parser.add_argument('--log_to_file', action='store_true', help='print log information to specified filename in LSOracle directory')
 parser.add_argument('--verbose', '-v', action='count', help='output detail.  Default (unset) = warning; -v = info, -vv = debug')
 parser.add_argument('--test_directory', '-t', help='If you have a custom set of test files, specify path here.  Default LSOracle/tests. The directory you specify should have 2 subdirectories: end_to_end and unit_tests, and the input files should be .aig format')
-parser.add_argument('--training_model', '-m', default='/LSOracle/cnn_model.json', help='if you have a custom tensorflow model for the classifier, specify it here.')
+parser.add_argument('--training_model', '-m', default='/LSOracle/deep_learn_model.json', help='if you have a custom tensorflow model for the classifier, specify it here.')
 parser.add_argument('--travis', action='store_true', help='sets paths, envs, etc, to appropriate values for travis ci')
 args = parser.parse_args()
 
@@ -28,7 +28,7 @@ args = parser.parse_args()
 home_path = os.getenv('HOME')
 if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
-    training_file = lstools_path + '/../../cnn_model.json'
+    training_file = lstools_path + '/../../deep_learn_model.json'
 else:
     lstools_path = home_path + '/LSOracle/build/core'
     training_file = home_path + args.training_model
