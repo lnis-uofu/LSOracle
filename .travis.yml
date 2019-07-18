@@ -50,8 +50,8 @@ script:
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=RELEASE
   - make
- # - cd ..
- # - python basic_tests.py --travis
+  - cd ..
+  - python basic_tests.py --travis
 
 notifications:
   slack:
