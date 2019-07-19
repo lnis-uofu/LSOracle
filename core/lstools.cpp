@@ -1020,21 +1020,21 @@ namespace alice{
               std::cout << "Number of PO = " << part.num_pos() << "\n";
               std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
               std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-              std::cout << "Inputs = {";
-              part.foreach_pi([&](auto pi){
-                std::cout << pi << " ";
-              });
-              std::cout << "}\n";
-              std::cout << "Outputs = {";
-              part.foreach_po([&](auto conn, auto i){
-                std::cout << conn.index << " ";
-              });
-              std::cout << "}\n";
-              std::cout << "Nodes = {";
-              part.foreach_gate([&](auto node){
-                std::cout << node << " ";
-              });
-              std::cout << "}\n";
+              // std::cout << "Inputs = {";
+              // part.foreach_pi([&](auto pi){
+              //   std::cout << pi << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Outputs = {";
+              // part.foreach_po([&](auto conn, auto i){
+              //   std::cout << conn.index << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Nodes = {";
+              // part.foreach_gate([&](auto node){
+              //   std::cout << node << " ";
+              // });
+              // std::cout << "}\n";
               std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
               std::set<int>::iterator it;
               std::cout << "connected partitions = {";
@@ -1273,7 +1273,6 @@ namespace alice{
           std::cout << "Optimizing stored AIG network\n";
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
-
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
@@ -1299,7 +1298,6 @@ namespace alice{
 
                 auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
                 mockturtle::depth_view part_aig_depth{opt_aig};
-
                 mockturtle::aig_script aigopt;
                 opt_aig = aigopt.run(opt_aig);
                 mockturtle::depth_view part_aig_opt_depth{opt_aig};
@@ -1334,7 +1332,7 @@ namespace alice{
               }
 
             }
-            
+
             mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig, 1);
             oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
@@ -1383,17 +1381,18 @@ namespace alice{
 
               partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
+
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-            std::cout << "AIG partitions = {";
-            for(int i = 0; i < aig_parts.size(); i++){
-              std::cout << aig_parts.at(i) << " ";
-            }
-            std::cout << "}\n";
-            std::cout << "MIG partitions = {";
-            for(int i = 0; i < mig_parts.size(); i++){
-              std::cout << mig_parts.at(i) << " ";
-            }
-            std::cout << "}\n";
+            // std::cout << "AIG partitions = {";
+            // for(int i = 0; i < aig_parts.size(); i++){
+            //   std::cout << aig_parts.at(i) << " ";
+            // }
+            // std::cout << "}\n";
+            // std::cout << "MIG partitions = {";
+            // for(int i = 0; i < mig_parts.size(); i++){
+            //   std::cout << mig_parts.at(i) << " ";
+            // }
+            // std::cout << "}\n";
             
             partitions_mig.connect_outputs(ntk_mig);
             
@@ -1528,87 +1527,6 @@ namespace alice{
 
   ALICE_ADD_COMMAND(find_part, "Testing");
 
-  class xor_pattern_rec_command : public alice::command{
-
-    public:
-        explicit xor_pattern_rec_command( const environment::ptr& env )
-                : command( env, "Find groups of nodes that make up XOR patterns" ){
-
-            add_flag("--mig,-m", "Look at stored MIG");
-        }
-
-    protected:
-      void execute(){
-
-        if(is_set("mig")){
-          if(!store<mockturtle::mig_network>().empty()){
-
-            auto ntk = store<mockturtle::mig_network>().current();
-            oracle::pattern_view<mockturtle::mig_network> patt(ntk);
-            patt.foreach_xor([&]( auto xor_patt, int i ){
-              std::cout << "XOR number " << i << "\n";
-              std::cout << "Nodes = ";
-              for(int i = 0; i < xor_patt.size(); i++){
-                std::cout << xor_patt.at(i) << " ";
-              }
-              std::cout << "}\n";
-              auto inputs = patt.get_inputs(ntk, i);
-              std::cout << "Inputs = ";
-              for(int i = 0; i < inputs.size(); i++){
-                std::cout << inputs.at(i) << " ";
-              }
-              std::cout << "\n";
-
-              auto fanout = patt.get_fanout(ntk, i);
-              std::cout << "fanout = ";
-              for(int i = 0; i < fanout.size(); i++){
-                std::cout << fanout.at(i) << " ";
-              }
-              std::cout << "}\n";
-            });
-          }
-          else{
-            std::cout << "No MIG stored\n";
-          }
-        }
-        else{
-          if(!store<mockturtle::aig_network>().empty()){
-
-            auto ntk = store<mockturtle::aig_network>().current();
-            oracle::pattern_view<mockturtle::aig_network> patt(ntk);
-            patt.foreach_xor([&]( auto xor_patt, int i ){
-              std::cout << "XOR number " << i << "\n";
-              std::cout << "Nodes = {";
-              for(int i = 0; i < xor_patt.size(); i++){
-                std::cout << xor_patt.at(i) << " ";
-              }
-              std::cout << "}\n";
-              auto inputs = patt.get_inputs(ntk, i);
-              std::cout << "Inputs = {";
-              for(int i = 0; i < inputs.size(); i++){
-                std::cout << inputs.at(i) << " ";
-              }
-              std::cout << "}\n";
-
-              auto fanout = patt.get_fanout(ntk, i);
-              std::cout << "fanout = {";
-              for(int i = 0; i < fanout.size(); i++){
-                std::cout << fanout.at(i) << " ";
-              }
-              std::cout << "}\n";
-            });
-          }
-          else{
-            std::cout << "No AIG stored\n";
-          }
-        }
-        
-      }
-    private:
-        
-    };
-
-  ALICE_ADD_COMMAND(xor_pattern_rec, "Testing");
 
   class get_fanout_command : public alice::command{
 

@@ -89,31 +89,36 @@ namespace oracle
       return outputs;
     }
 
-    void add_to_cluster( Ntk const& ntk, node node2add ){
-      nodes.insert(node2add);
+    void add_to_cluster( Ntk const& ntk, std::vector<node> nodes2add ){
+
+      for(int i = 0; i < nodes2add.size(); i++){
+        node node2add = nodes2add.at(i);
+        nodes.insert(node2add);
       
-      auto start = std::chrono::high_resolution_clock::now();
-      if(outputs.find(node2add) != outputs.end()){
-        outputs.erase(node2add);
-      }
-      if(inputs.find(node2add) != inputs.end()){
-        inputs.erase(node2add);
-      }
-      mockturtle::fanout_view fanout{ntk};
-      fanout.foreach_fanout(node2add, [&](const auto& p){
-        if(nodes.find(p) == nodes.end() && outputs.find(p) == outputs.end()){
-          outputs.insert(p);
+        auto start = std::chrono::high_resolution_clock::now();
+        if(outputs.find(node2add) != outputs.end()){
+          outputs.erase(node2add);
         }
-      });
-      ntk.foreach_fanin(node2add, [&](auto conn, auto i){
-        node fanin = ntk.get_node(conn);
-        if(nodes.find(fanin) == nodes.end() && inputs.find(fanin) == inputs.end()){
-          inputs.insert(fanin);
+        if(inputs.find(node2add) != inputs.end()){
+          inputs.erase(node2add);
         }
-      });
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-      // std::cout << "Updating IO: " << duration.count() << "us\n";
+        mockturtle::fanout_view fanout{ntk};
+        fanout.foreach_fanout(node2add, [&](const auto& p){
+          if(nodes.find(p) == nodes.end() && outputs.find(p) == outputs.end()){
+            outputs.insert(p);
+          }
+        });
+        ntk.foreach_fanin(node2add, [&](auto conn, auto i){
+          node fanin = ntk.get_node(conn);
+          if(nodes.find(fanin) == nodes.end() && inputs.find(fanin) == inputs.end()){
+            inputs.insert(fanin);
+          }
+        });
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        // std::cout << "Updating IO: " << duration.count() << "us\n";
+      }
+      
     }
 
     int num_intersec( Ntk const& ntk, node node2add ){
@@ -131,6 +136,27 @@ namespace oracle
         }
       });
 
+      return num_intersec_nets;
+    }
+
+    int num_intersec( Ntk const& ntk, node output, std::vector<node> inputs ){
+      int num_intersec_nets = 0;
+      mockturtle::fanout_view fanout{ntk};
+      fanout.foreach_fanout(output, [&](const auto& p){
+        if(nodes.find(p) != nodes.end()){
+          num_intersec_nets++;
+        }
+      });
+      for(int i = 0; i < inputs.size(); i++){
+        node curr_input = inputs.at(i);
+        ntk.foreach_fanin(curr_input, [&](auto conn, auto ){
+          node fanin = ntk.get_node(conn);
+          if(nodes.find(fanin) != nodes.end()){
+            num_intersec_nets++;
+          }
+        });
+      }
+      
       return num_intersec_nets;
     }
 
