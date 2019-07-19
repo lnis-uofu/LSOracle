@@ -14,9 +14,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 
-add_executable(lstools lstools.cpp)
+add_executable(lsoracle lstools.cpp)
 
-target_include_directories(lstools PRIVATE ../lib/kahypar/include)
-#target_include_directories(lstools PRIVATE ../lib/darknet/include)
+target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
+#target_include_directories(lsoracle PRIVATE ../lib/darknet/include)
 #darklib removed
-target_link_libraries(lstools oracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar)
+target_link_libraries(lsoracle oracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar)
