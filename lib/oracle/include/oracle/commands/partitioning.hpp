@@ -37,6 +37,7 @@ namespace alice
           if(!store<mockturtle::mig_network>().empty()){
             std::cout << "Partitioning stored MIG network\n";
             auto ntk = store<mockturtle::mig_network>().current();
+
             if(config_direc != ""){
               oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions, config_direc);
               store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
@@ -45,7 +46,6 @@ namespace alice
               oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
               store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
             }
-            
           }
           else{
             std::cout << "MIG network not stored\n";
@@ -55,6 +55,7 @@ namespace alice
           if(!store<mockturtle::aig_network>().empty()){
             std::cout << "Partitioning stored AIG network\n";
             auto ntk = store<mockturtle::aig_network>().current();
+
             if(config_direc != ""){
               oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions, config_direc);
               store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
@@ -63,7 +64,6 @@ namespace alice
               oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions);
               store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
             }
-            
           }
           else{
             std::cout << "AIG network not stored\n";
