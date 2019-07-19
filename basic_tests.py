@@ -50,7 +50,7 @@ else:
 #Define our function to call the lstools executable
 def optimize(filename, mode, part_num, suffix):
     opt_file = filename + suffix + '.v'
-    cmd = ['./lstools','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
+    cmd = ['./lsoracle','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout).splitlines()
@@ -63,7 +63,7 @@ def compare(filename, suffix):
     new_file = filename + '.v'
     opt_file = filename + suffix + '.v'
     #need to create verilog file to compare to
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; write_verilog ' + new_file + ';']
+    cmd = ['./lsoracle','-c', 'read_aig ' + curr_file + '; write_verilog ' + new_file + ';']
     subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     #use cec to compare the pre and post optimization files
@@ -100,7 +100,7 @@ for curr_file in files:
     os.chdir(lstools_path)
    
     #report statistics
-    cmd = ['./lstools','-c', 'read_aig ' + curr_file + '; ps -a;']
+    cmd = ['./lsoracle','-c', 'read_aig ' + curr_file + '; ps -a;']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
