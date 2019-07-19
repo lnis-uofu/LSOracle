@@ -611,6 +611,7 @@ namespace alice{
             filename.erase(filename.end() - 2, filename.end());
             aig._storage->net_name = filename;
 
+            std::cout << "Verilog file written\n";
           }
 
         }
@@ -2449,3 +2450,4 @@ namespace alice{
 
 /* Main method for the Alice shell (with prefix) */
 ALICE_MAIN( lsoracle )
+
