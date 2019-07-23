@@ -22,8 +22,8 @@ namespace alice
 
     public:
       explicit get_all_partitions_command( const environment::ptr& env )
-          : command( env, "Exports every partition to a file format (default is AAG)" ){
-            opts.add_option( "--directory,directory", dir, "Directory to write aag files to" )->required();
+          : command( env, "Exports every partition to Verilog files" ){
+            opts.add_option( "--directory,directory", dir, "Directory to write Verilog files to" )->required();
             // add_flag("--cone,-c", "Writes out every cone of every partition");
             // add_flag("--verilog,-v", "Writes every partition or cone to a verilog file");
             add_flag("--mig,-m", "Write out all of the partitions of the sored MIG network");

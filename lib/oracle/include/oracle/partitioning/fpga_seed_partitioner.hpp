@@ -238,20 +238,6 @@ namespace oracle
 
       int net_intersec = curr_cluster.num_intersec(ntk, curr_node);
 
-      // int net_intersec = 0;
-      // mockturtle::fanout_view fanout{ntk};
-      // fanout.foreach_fanout(curr_node, [&](const auto& p){
-      //   if(mapped_part[curr_node] == num_part){
-      //     net_intersec++;
-      //   }
-      // });
-      // ntk.foreach_fanin(curr_node, [&](auto conn, auto i){
-      //   node fanin = ntk.get_node(conn);
-      //   if(mapped_part[fanin] == num_part){
-      //     net_intersec++;
-      //   }
-      // });
-
       return net_delay * connection_crit(curr_node) + (1 - net_delay) * net_intersec / max_net;
     }
 

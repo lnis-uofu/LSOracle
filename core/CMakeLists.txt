@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.9)                  # CMake minimum version
-project(lstools)
+project(lsoracle)
 
 include_directories(${PROJECT_SOURCE_DIR}/lib/kahypar/include)  # add OpenTimer include
 #include_directories(${PROJECT_SOURCE_DIR}/lib/darknet/include)
@@ -14,7 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 
-add_executable(lsoracle lstools.cpp)
+add_executable(lsoracle lsoracle.cpp)
+
 
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 #target_include_directories(lsoracle PRIVATE ../lib/darknet/include)

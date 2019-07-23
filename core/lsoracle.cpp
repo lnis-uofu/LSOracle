@@ -1020,21 +1020,21 @@ namespace alice{
               std::cout << "Number of PO = " << part.num_pos() << "\n";
               std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
               std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-              std::cout << "Inputs = {";
-              part.foreach_pi([&](auto pi){
-                std::cout << pi << " ";
-              });
-              std::cout << "}\n";
-              std::cout << "Outputs = {";
-              part.foreach_po([&](auto conn, auto i){
-                std::cout << conn.index << " ";
-              });
-              std::cout << "}\n";
-              std::cout << "Nodes = {";
-              part.foreach_gate([&](auto node){
-                std::cout << node << " ";
-              });
-              std::cout << "}\n";
+              // std::cout << "Inputs = {";
+              // part.foreach_pi([&](auto pi){
+              //   std::cout << pi << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Outputs = {";
+              // part.foreach_po([&](auto conn, auto i){
+              //   std::cout << conn.index << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Nodes = {";
+              // part.foreach_gate([&](auto node){
+              //   std::cout << node << " ";
+              // });
+              // std::cout << "}\n";
               std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
               std::set<int>::iterator it;
               std::cout << "connected partitions = {";
@@ -1273,7 +1273,6 @@ namespace alice{
           std::cout << "Optimizing stored AIG network\n";
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
-
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
@@ -1299,7 +1298,6 @@ namespace alice{
 
                 auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
                 mockturtle::depth_view part_aig_depth{opt_aig};
-
                 mockturtle::aig_script aigopt;
                 opt_aig = aigopt.run(opt_aig);
                 mockturtle::depth_view part_aig_opt_depth{opt_aig};
@@ -1334,7 +1332,7 @@ namespace alice{
               }
 
             }
-            
+
             mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig, 1);
             oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
@@ -1383,17 +1381,18 @@ namespace alice{
 
               partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
+
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-            std::cout << "AIG partitions = {";
-            for(int i = 0; i < aig_parts.size(); i++){
-              std::cout << aig_parts.at(i) << " ";
-            }
-            std::cout << "}\n";
-            std::cout << "MIG partitions = {";
-            for(int i = 0; i < mig_parts.size(); i++){
-              std::cout << mig_parts.at(i) << " ";
-            }
-            std::cout << "}\n";
+            // std::cout << "AIG partitions = {";
+            // for(int i = 0; i < aig_parts.size(); i++){
+            //   std::cout << aig_parts.at(i) << " ";
+            // }
+            // std::cout << "}\n";
+            // std::cout << "MIG partitions = {";
+            // for(int i = 0; i < mig_parts.size(); i++){
+            //   std::cout << mig_parts.at(i) << " ";
+            // }
+            // std::cout << "}\n";
             
             partitions_mig.connect_outputs(ntk_mig);
             
@@ -1565,7 +1564,12 @@ namespace alice{
                 std::cout << fanout.at(i) << " ";
               }
               std::cout << "}\n";
+
+              oracle::slack_view<mockturtle::mig_network> slack(ntk);
+              std::cout << "On critical path = " << slack.is_critical_path(patt.get_output(i)) << "\n";
             });
+
+            patt.run_partitioning(ntk, 16, 30);
           }
           else{
             std::cout << "No MIG stored\n";
@@ -1596,7 +1600,12 @@ namespace alice{
                 std::cout << fanout.at(i) << " ";
               }
               std::cout << "}\n";
+
+              oracle::slack_view<mockturtle::aig_network> slack(ntk);
+              std::cout << "On critical path = " << slack.is_critical_path(patt.get_output(i)) << "\n";
             });
+
+            patt.run_partitioning(ntk, 16, 30);
           }
           else{
             std::cout << "No AIG stored\n";

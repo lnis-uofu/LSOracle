@@ -135,7 +135,7 @@ namespace alice
     }
 
     part.foreach_pi( [&]( auto n ) {
-
+      // std::cout << "PI node = " << n << "\n";
       node2new[n] = mig.create_pi();
     } );
     // std::cout << "created all PIs\n";
