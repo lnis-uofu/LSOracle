@@ -11,6 +11,9 @@ CONFIG := clang
 # features (the more the better)
 ENABLE_TCL := 1
 ENABLE_ABC := 1
+
+ENABLE_LSO := 1
+
 ENABLE_GLOB := 1
 ENABLE_PLUGINS := 1
 ENABLE_READLINE := 1
@@ -32,6 +35,9 @@ ENABLE_NDEBUG := 0
 LINK_CURSES := 0
 LINK_TERMCAP := 0
 LINK_ABC := 0
+
+LINK_LSO := 0
+
 # Needed for environments that don't have proper thread support (i.e. emscripten)
 DISABLE_ABC_THREADS := 0
 
@@ -131,6 +137,14 @@ ABCMKARGS = CC="$(CXX)" CXX="$(CXX)" ABC_USE_LIBSTDCXX=1
 # set ABCEXTERNAL = <abc-command> to use an external ABC instance
 # Note: The in-tree ABC (yosys-abc) will not be installed when ABCEXTERNAL is set.
 ABCEXTERNAL ?=
+
+
+LSOEX = lsoracle
+LSOPULL = 1
+LSOURL ?= https://github.com/LNIS-Projects/LSOracle.git
+LSOMKARGS = CC="$(CXX)" CXX="$(CXX)"
+
+LSOEXTERNAL ?=
 
 define newline
 
@@ -237,6 +251,10 @@ EXTRA_TARGETS += yosysjs-$(YOSYS_VER).zip
 ifeq ($(ENABLE_ABC),1)
 LINK_ABC := 1
 DISABLE_ABC_THREADS := 1
+endif
+
+ifeq ($(ENABLE_LSO),1)
+LINK_LSO := 1
 endif
 
 viz.js:
@@ -450,6 +468,20 @@ endif
 endif
 endif
 
+ifeq ($(ENABLE_LSO),1)
+CXXFLAGS += -DYOSYS_ENABLE_LSO
+ifeq ($(LINK_LSO),1)
+CXXFLAGS += -DYOSYS_LINK_LSO
+ifeq ($(DISABLE_LSO_THREADS),0)
+LDLIBS += -lpthread
+endif
+else
+ifeq ($(LSOEXTERNAL),)
+TARGETS += yosys-lso$(EXE)
+endif
+endif
+endif
+
 ifeq ($(ENABLE_VERIFIC),1)
 VERIFIC_DIR ?= /usr/local/src/verific_lib
 VERIFIC_COMPONENTS ?= verilog vhdl database util containers hier_tree
@@ -580,6 +612,10 @@ ifeq ($(LINK_ABC),1)
 OBJS += yosys-libabc.a
 endif
 
+ifeq ($(LINK_LSO),1)
+OBJS += yosys-liblso.a
+endif
+
 top-all: $(TARGETS) $(EXTRA_TARGETS)
 	@echo ""
 	@echo "  Build successful."
@@ -641,6 +677,7 @@ yosys-config: misc/yosys-config.in
 abc/abc-$(ABCREV)$(EXE) abc/libabc-$(ABCREV).a:
 	$(P)
 ifneq ($(ABCREV),default)
+	echo 'ABC TIME'
 	$(Q) if test -d abc/.hg; then \
 		echo 'REEBE: NOP qverpgbel vf n ut jbexvat pbcl! Erzbir nop/ naq er-eha "znxr".' | tr 'A-Za-z' 'N-ZA-Mn-za-m'; false; \
 	fi
@@ -654,6 +691,8 @@ ifneq ($(ABCREV),default)
 		cd abc && $(MAKE) DEP= clean && git fetch origin master && git checkout $(ABCREV); \
 	fi
 endif
+	# echo "Fucking here"
+	# echo $(MAKE) $(S) $(ABCMKARGS) $(if $(filter %.a,$@),PROG="abc-$(ABCREV)",PROG="abc-$(ABCREV)$(EXE)") MSG_PREFIX="$(eval P_OFFSET = 5)$(call P_SHOW)$(eval P_OFFSET = 10)
 	$(Q) rm -f abc/abc-[0-9a-f]*
 	$(Q) cd abc && $(MAKE) $(S) $(ABCMKARGS) $(if $(filter %.a,$@),PROG="abc-$(ABCREV)",PROG="abc-$(ABCREV)$(EXE)") MSG_PREFIX="$(eval P_OFFSET = 5)$(call P_SHOW)$(eval P_OFFSET = 10) ABC: " $(if $(filter %.a,$@),libabc-$(ABCREV).a)
 
@@ -668,6 +707,29 @@ yosys-abc$(EXE): abc/abc-$(ABCREV)$(EXE)
 yosys-libabc.a: abc/libabc-$(ABCREV).a
 	$(P) cp abc/libabc-$(ABCREV).a yosys-libabc.a
 
+
+LSOracle/$(LSOEX)$(EXE) LSOracle/liblso.a:
+	$(P)
+ifneq ($(LSOREV),default)
+	echo 'LSORACLE TIME'
+	
+	# test $(LSOPULL) -ne 0 || { echo 'REEBE: NOP abg hc gb qngr naq NOPCHYY frg gb 0 va Znxrsvyr!' | tr 'A-Za-z' 'N-ZA-Mn-za-m'; exit 1; }; \
+	echo "Pulling LSOracle from $(LSOURL):"; set -x; \
+	test -d LSOracle || git clone $(LSOURL) LSOracle; \
+	cd LSOracle && mkdir "build/" && cd build && cmake .. -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) $(S)
+	
+endif
+	# echo 'HERE WE GO AGAIN'ls
+	# $(Q) rm -f LSOracle/lsoracle*
+	# $(Q) cd LSOracle && mkdir "build/" && cd build && cmake .. -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) $(S) $(LSOMKARGS) $(if $(filter %.a,$@),PROG="$(LSOEX)",PROG="$(LSOEX)$(EXE)") MSG_PREFIX="$(eval P_OFFSET = 5)$(call P_SHOW)$(eval P_OFFSET = 10) LSOracle: " $(if $(filter %.a,$@),liblso.a)
+
+yosys-lso$(EXE): LSOracle/$(LSOEX)$(EXE)
+	$(P) cp LSOracle/build/core/$(LSOEX)$(EXE) yosys-lso$(EXE)
+
+yosys-liblso.a: LSOracle/liblso.a
+	$(P) cp LSOracle/build/core/liblso.a yosys-liblso.a
+
+
 ifneq ($(SEED),)
 SEEDOPT="-S $(SEED)"
 else
@@ -678,6 +740,12 @@ ifneq ($(ABCEXTERNAL),)
 ABCOPT="-A $(ABCEXTERNAL)"
 else
 ABCOPT=""
+endif
+
+ifneq ($(LSOEXTERNAL),)
+LSOOPT="-A $(LSOEXTERNAL)"
+else
+LSOOPT=""
 endif
 
 test: $(TARGETS) $(EXTRA_TARGETS)
@@ -739,6 +807,9 @@ ifneq ($(filter yosys,$(TARGETS)),)
 endif
 ifneq ($(filter yosys-abc,$(TARGETS)),)
 	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-abc
+endif
+ifneq ($(filter yosys-lso,$(TARGETS)),)
+	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-lso
 endif
 ifneq ($(filter yosys-filterlib,$(TARGETS)),)
 	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-filterlib
@@ -831,6 +902,11 @@ mxebin: $(TARGETS) $(EXTRA_TARGETS)
 ifeq ($(ENABLE_ABC),1)
 	cp -r yosys-abc.exe abc/lib/x86/pthreadVC2.dll yosys-win32-mxebin-$(YOSYS_VER)/
 endif
+
+ifeq ($(ENABLE_LSO),1)
+	cp -r yosys-lso.exe LSOracle/lib/x86/pthreadVC2.dll yosys-win32-mxebin-$(YOSYS_VER)/
+endif
+
 	echo -en 'This is Yosys $(YOSYS_VER) for Win32.\r\n' > yosys-win32-mxebin-$(YOSYS_VER)/readme.txt
 	echo -en 'Documentation at http://www.clifford.at/yosys/.\r\n' >> yosys-win32-mxebin-$(YOSYS_VER)/readme.txt
 	zip -r yosys-win32-mxebin-$(YOSYS_VER).zip yosys-win32-mxebin-$(YOSYS_VER)/
