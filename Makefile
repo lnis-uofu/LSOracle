@@ -48,6 +48,7 @@ SANITIZER =
 # SANITIZER = undefined
 # SANITIZER = cfi
 
+CMAKE_COMMAND = /usr/local/stow/cmake/cmake-3.12.4/bin/cmake
 
 OS := $(shell uname -s)
 PREFIX ?= /usr/local
@@ -674,6 +675,24 @@ yosys-config: misc/yosys-config.in
 			-e 's#@BINDIR@#$(strip $(BINDIR))#;' -e 's#@DATDIR@#$(strip $(DATDIR))#;' < $< > yosys-config
 	$(Q) chmod +x yosys-config
 
+LSOracle/$(LSOEX)$(EXE) LSOracle/liblso.a:
+	$(P)
+ifneq ($(LSOREV),default)
+	echo 'LSORACLE TIME'
+	echo "$(CURDIR)";
+	echo "Pulling LSOracle from $(LSOURL):"; set -x; \
+	test -d LSOracle || git clone $(LSOURL) LSOracle; \
+	cd LSOracle && mkdir "build/" && cd build && $(CMAKE_COMMAND) .. -DCMAKE_CXX_COMPILER=/usr/local/stow/gcc/amd64_linux26/gcc-8.2.0/bin/g++ -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) -j
+	
+endif
+
+yosys-lso$(EXE): LSOracle/$(LSOEX)$(EXE)
+	$(P) cp LSOracle/build/core/$(LSOEX)$(EXE) yosys-lso$(EXE)
+
+yosys-liblso.a: LSOracle/liblso.a
+	$(P) cp LSOracle/build/core/liblso.a yosys-liblso.a
+
+
 abc/abc-$(ABCREV)$(EXE) abc/libabc-$(ABCREV).a:
 	$(P)
 ifneq ($(ABCREV),default)
@@ -708,44 +727,22 @@ yosys-libabc.a: abc/libabc-$(ABCREV).a
 	$(P) cp abc/libabc-$(ABCREV).a yosys-libabc.a
 
 
-LSOracle/$(LSOEX)$(EXE) LSOracle/liblso.a:
-	$(P)
-ifneq ($(LSOREV),default)
-	echo 'LSORACLE TIME'
-	
-	# test $(LSOPULL) -ne 0 || { echo 'REEBE: NOP abg hc gb qngr naq NOPCHYY frg gb 0 va Znxrsvyr!' | tr 'A-Za-z' 'N-ZA-Mn-za-m'; exit 1; }; \
-	echo "Pulling LSOracle from $(LSOURL):"; set -x; \
-	test -d LSOracle || git clone $(LSOURL) LSOracle; \
-	cd LSOracle && mkdir "build/" && cd build && cmake .. -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) $(S)
-	
-endif
-	# echo 'HERE WE GO AGAIN'ls
-	# $(Q) rm -f LSOracle/lsoracle*
-	# $(Q) cd LSOracle && mkdir "build/" && cd build && cmake .. -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) $(S) $(LSOMKARGS) $(if $(filter %.a,$@),PROG="$(LSOEX)",PROG="$(LSOEX)$(EXE)") MSG_PREFIX="$(eval P_OFFSET = 5)$(call P_SHOW)$(eval P_OFFSET = 10) LSOracle: " $(if $(filter %.a,$@),liblso.a)
-
-yosys-lso$(EXE): LSOracle/$(LSOEX)$(EXE)
-	$(P) cp LSOracle/build/core/$(LSOEX)$(EXE) yosys-lso$(EXE)
-
-yosys-liblso.a: LSOracle/liblso.a
-	$(P) cp LSOracle/build/core/liblso.a yosys-liblso.a
-
-
 ifneq ($(SEED),)
 SEEDOPT="-S $(SEED)"
 else
 SEEDOPT=""
 endif
 
-ifneq ($(ABCEXTERNAL),)
-ABCOPT="-A $(ABCEXTERNAL)"
-else
-ABCOPT=""
-endif
-
 ifneq ($(LSOEXTERNAL),)
 LSOOPT="-A $(LSOEXTERNAL)"
 else
 LSOOPT=""
+endif
+
+ifneq ($(ABCEXTERNAL),)
+ABCOPT="-A $(ABCEXTERNAL)"
+else
+ABCOPT=""
 endif
 
 test: $(TARGETS) $(EXTRA_TARGETS)
@@ -805,11 +802,11 @@ install: $(TARGETS) $(EXTRA_TARGETS)
 ifneq ($(filter yosys,$(TARGETS)),)
 	$(INSTALL_SUDO) $(STRIP) -S $(DESTDIR)$(BINDIR)/yosys
 endif
-ifneq ($(filter yosys-abc,$(TARGETS)),)
-	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-abc
-endif
 ifneq ($(filter yosys-lso,$(TARGETS)),)
 	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-lso
+endif
+ifneq ($(filter yosys-abc,$(TARGETS)),)
+	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-abc
 endif
 ifneq ($(filter yosys-filterlib,$(TARGETS)),)
 	$(INSTALL_SUDO) $(STRIP) $(DESTDIR)$(BINDIR)/yosys-filterlib
@@ -899,12 +896,13 @@ mxebin: $(TARGETS) $(EXTRA_TARGETS)
 	rm -rf yosys-win32-mxebin-$(YOSYS_VER){,.zip}
 	mkdir -p yosys-win32-mxebin-$(YOSYS_VER)
 	cp -r yosys.exe share/ yosys-win32-mxebin-$(YOSYS_VER)/
-ifeq ($(ENABLE_ABC),1)
-	cp -r yosys-abc.exe abc/lib/x86/pthreadVC2.dll yosys-win32-mxebin-$(YOSYS_VER)/
-endif
 
 ifeq ($(ENABLE_LSO),1)
 	cp -r yosys-lso.exe LSOracle/lib/x86/pthreadVC2.dll yosys-win32-mxebin-$(YOSYS_VER)/
+endif
+
+ifeq ($(ENABLE_ABC),1)
+	cp -r yosys-abc.exe abc/lib/x86/pthreadVC2.dll yosys-win32-mxebin-$(YOSYS_VER)/
 endif
 
 	echo -en 'This is Yosys $(YOSYS_VER) for Win32.\r\n' > yosys-win32-mxebin-$(YOSYS_VER)/readme.txt
@@ -980,6 +978,6 @@ echo-git-rev:
 -include kernel/*.d
 -include techlibs/*/*.d
 
-.PHONY: all top-all abc test install install-abc manual clean mrproper qtcreator coverage vcxsrc mxebin
+.PHONY: lsoracle all top-all abc test install install-abc manual clean mrproper qtcreator coverage vcxsrc mxebin
 .PHONY: config-clean config-clang config-gcc config-gcc-static config-gcc-4.8 config-afl-gcc config-gprof config-sudo
 
