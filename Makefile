@@ -682,7 +682,7 @@ ifneq ($(LSOREV),default)
 	echo "$(CURDIR)";
 	echo "Pulling LSOracle from $(LSOURL):"; set -x; \
 	test -d LSOracle || git clone $(LSOURL) LSOracle; \
-	cd LSOracle && mkdir "build/" && cd build && $(CMAKE_COMMAND) .. -DCMAKE_CXX_COMPILER=/usr/local/stow/gcc/amd64_linux26/gcc-8.2.0/bin/g++ -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) -j
+	cd LSOracle && mkdir -p "build/" && cd build && $(CMAKE_COMMAND) .. -DCMAKE_CXX_COMPILER=/usr/local/stow/gcc/amd64_linux26/gcc-8.2.0/bin/g++ -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) -j
 	
 endif
 
