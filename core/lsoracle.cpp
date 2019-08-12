@@ -611,7 +611,6 @@ namespace alice{
             filename.erase(filename.end() - 2, filename.end());
             aig._storage->net_name = filename;
 
-            std::cout << "Verilog file written\n";
           }
 
         }
