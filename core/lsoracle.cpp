@@ -611,7 +611,6 @@ namespace alice{
             filename.erase(filename.end() - 2, filename.end());
             aig._storage->net_name = filename;
 
-            std::cout << "Verilog file written\n";
           }
 
         }
@@ -1256,7 +1255,7 @@ namespace alice{
                 : command( env, "Classify partitions and perform corresponding optimization on stored AIG network (result is MIG network)" ){
 
             opts.add_option( "--nn_model,-c",nn_model, "Trained neural network model for classification" );
-            opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
+            opts.add_option( "--out,-o", out_file, "Verilog output" );
             add_flag("--brute,-b", "Uses a brute force approach instead of classification");
             add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
             add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
@@ -1407,7 +1406,9 @@ namespace alice{
             std::cout << "Full Optimization: " << duration.count() << "ms\n";
             std::cout << "Finished optimization\n";
             store<mockturtle::mig_network>().extend() = ntk_mig;
-            mockturtle::write_verilog(ntk_mig, out_file);
+
+            if(out_file != "")
+              mockturtle::write_verilog(ntk_mig, out_file);
         
           }
           else{
