@@ -41,7 +41,12 @@
 #define ABC_FAST_COMMAND_SOP "strash; dretime; retime {D}; cover -I {I} -P {P}"
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
-#define ABC_RESYN2 "strash; balance; rewrite; refactor; balance; rewrite; rewrite -z; balance; refactor -z; rewrite -z; balance"
+#define LSO_COMMAND_MIG "migscript"
+#define LSO_COMMAND_AIG "aigscript"
+#define LSO_COMMAND_PART_EXCLU_AIG "partitioning {P}; optimization -a "
+#define LSO_COMMAND_PART_EXCLU_MIG "partitioning {P}; optimization -m "
+#define LSO_COMMAND_PART_DEEP "partitioning {P}; optimization -c {D} "
+#define LSO_COMMAND_PART_HIGH_EFFORT "partitioning {P}; optimization -b "
 
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
@@ -721,10 +726,40 @@ struct abc_output_filter
 	}
 };
 
-void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir_name, bool show_tempdir){
+void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir_name, bool show_tempdir, std::string num_parts, bool partitioned, bool exclu_part, bool mig, bool deep){
+
+	std::string lso_script;
+
+	std::string config_direc = exe_file;
+	size_t pos = std::string::npos;
+	config_direc.erase(config_direc.begin() + config_direc.find("yosys-lso"), config_direc.end());
+
+	if(!partitioned)
+		lso_script += mig ? stringf("read_aig -m %s/abc.aig; ", tempdir_name.c_str()) : stringf("read_aig %s/abc.aig; ", tempdir_name.c_str());
+	else
+		lso_script += stringf("read_aig %s/abc.aig; ", tempdir_name.c_str());
 
 	//Conversion from RTLIL to AIG readable by LSOracle
-	std::string lso_script = stringf("read_aig -m %s/abc.aig; migscript; write_verilog -m %s/output.v", tempdir_name.c_str(), tempdir_name.c_str());
+	if(partitioned){
+		if(exclu_part)
+			lso_script += mig ? LSO_COMMAND_PART_EXCLU_MIG : LSO_COMMAND_PART_EXCLU_AIG;
+		else
+			lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+	}
+	else
+		lso_script += mig ? LSO_COMMAND_MIG : LSO_COMMAND_AIG;
+	
+	if(!partitioned)
+		lso_script += mig ? stringf("; write_verilog -m %s/output.v", tempdir_name.c_str()) : stringf("; write_verilog %s/output.v", tempdir_name.c_str());
+	else
+		lso_script += stringf("-o %s/output.v", tempdir_name.c_str());
+
+	for (size_t pos = lso_script.find("{P}"); pos != std::string::npos; pos = lso_script.find("{P}", pos))
+		lso_script = lso_script.substr(0, pos) + num_parts + " -c " + config_direc + "LSOracle/core/test.ini" + lso_script.substr(pos+3);
+
+	for (size_t pos = lso_script.find("{D}"); pos != std::string::npos; pos = lso_script.find("{D}", pos))
+		lso_script = lso_script.substr(0, pos) + config_direc + "LSOracle/deep_learn_model.json" + lso_script.substr(pos+3);
+
 
 	FILE *f = fopen(stringf("%s/lso.script", tempdir_name.c_str()).c_str(), "wt");
 	fprintf(f, "%s\n", lso_script.c_str());
@@ -732,7 +767,7 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 
 	std::string buffer = stringf("%s -f %s/lso.script 2>&1", exe_file.c_str(), tempdir_name.c_str());
 	log("Running LSOracle command: %s\n", replace_tempdir(buffer, tempdir_name, show_tempdir).c_str());
-
+	log("LSOracle script: %s\n", lso_script.c_str());
 	lso_output_filter filt(tempdir_name, show_tempdir);
 	int ret = run_command(buffer, std::bind(&lso_output_filter::next_line, filt, std::placeholders::_1));
 
@@ -778,9 +813,9 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 		}
 	}
 	//clear current design (temporary fix)
-	for (auto &it : design->modules_){
+	for (auto &it : design->modules_)
 		design->remove(it.second);
-	}
+	
 
 	AST::process(design, VERILOG_FRONTEND::current_ast, false, false, false, false, false, false, false,
 			false, false, false, false, false, false, false, false, false, false, false, false, true);
@@ -796,7 +831,7 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::string script_file, std::string abcexe_file,std::string lsoexe_file,
 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
-		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress)
+		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned, bool exclu_part, bool mig, bool deep)
 {
 	module = current_module;
 	map_autoidx = autoidx++;
@@ -1042,10 +1077,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		if (ifs.fail())
 			log_error("Can't open ABC output file `%s'.\n", buffer.c_str());
 
-		lso_module(design, lsoexe_file, tempdir_name, show_tempdir);
-		/*TODO Insert LSOracle code here to take abc.aig as input*/
-		/*TODO Write verilog from LSOracle*/
-		/*TODO Parse verilog into a RTLIL design*/
+		lso_module(design, lsoexe_file, tempdir_name, show_tempdir, num_parts, partitioned, exclu_part, mig, deep);
 
 	}
 	else
@@ -1057,32 +1089,47 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 	{
 		log("Removing temp directory.\n");
 		remove_directory(tempdir_name);
-		log("removed\n");
 	}
-	log("before pop\n");
 	log_pop();
-	log("after pop\n");
 
 }
 
-struct MIGPass : public Pass {
-	MIGPass() : Pass("mig", "use LSOracle for MIG optimization") { }
+struct ORACLEPass : public Pass {
+	ORACLEPass() : Pass("lsoracle", "use LSOracle for MIG optimization") { }
 	void help() YS_OVERRIDE
 	{
 		//   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
 		log("\n");
-		log("    mig [options] [selection]\n");
+		log("    lsoracle [options] [selection]\n");
 		log("\n");
 		log("This pass uses the LSOracle tool to perform an MIG optimiztation flow\n");
 		log("equivalent to ABC's resyn2 script.\n");
 		log("\n");
-		log("    -exe <command>\n");
+		log("    -abc_exe <command>\n");
 #ifdef ABCEXTERNAL
+		log("        use the specified command instead of \"" ABCEXTERNAL "\" to execute ABC.\n");
+#else
+		log("        use the specified command instead of \"<yosys-bindir>/yosys-abc\" to execute ABC.\n");
+#endif
+		log("    -lso_exe <command>\n");
+#ifdef LSOEXTERNAL
 		log("        use the specified command instead of \"" LSOEXTERNAL "\" to execute LSOracle.\n");
 #else
 		log("        use the specified command instead of \"<yosys-bindir>/yosys-lso\" to execute LSOracle.\n");
 #endif
 		log("        This can e.g. be used to call a specific version of LSOracle or a wrapper.\n");
+		log("\n");
+		log("    -partition <number of partitions>\n");
+		log("        use k-way hypergraph partitioning to partition circuit for optimization of partitions independently.\n");
+		log("\n");
+		log("    -exclu_part \n");
+		log("        exclusively use either AIG or MIG optimization on all partitions (AIG is default).\n");
+		log("\n");
+		log("    -deep \n");
+		log("        use Deep Neural Network for classification to determine what is best fit for each partition.\n");
+		log("\n");
+		log("    -mig \n");
+		log("        use MIG optimization instead of the default AIG optimization (script is MIG equivalent to ABC's resyn2 flow).\n");
 		log("\n");
 		log("    -script <file>\n");
 		log("        use the specified LSOracle script file instead of the default script.\n");
@@ -1126,6 +1173,9 @@ struct MIGPass : public Pass {
 		map_mux16 = false;
 		enabled_gates.clear();
 
+		std::string num_parts;
+		bool partitioned = false, exclu_part = false, mig = false, deep = false;
+
 #ifdef _WIN32
 #ifndef ABCEXTERNAL
 		if (!check_file_exists(abcexe_file + ".exe") && check_file_exists(proc_self_dirname() + "..\\yosys-abc.exe"))
@@ -1154,8 +1204,12 @@ struct MIGPass : public Pass {
 		}
 		for (argidx = 1; argidx < args.size(); argidx++) {
 			std::string arg = args[argidx];
-			if (arg == "-exe" && argidx+1 < args.size()) {
+			if (arg == "-abc_exe" && argidx+1 < args.size()) {
 				abcexe_file = args[++argidx];
+				continue;
+			}
+			if (arg == "-lso_exe" && argidx+1 < args.size()) {
+				lsoexe_file = args[++argidx];
 				continue;
 			}
 			if (arg == "-script" && argidx+1 < args.size()) {
@@ -1165,7 +1219,34 @@ struct MIGPass : public Pass {
 					script_file = std::string(pwd) + "/" + script_file;
 				continue;
 			}
-			
+			if (arg == "-partition" && argidx+1 < args.size()) {
+				num_parts = args[++argidx];
+				partitioned = true;
+				continue;
+			}
+			if (arg == "-exclu_part") {
+				if(!partitioned){
+					log("The circuit must be partitioned for this flag\n");
+					break;
+				}
+				else
+					exclu_part = true;
+				continue;
+			}
+			if (arg == "-deep") {
+				if(!partitioned){
+					log("The circuit must be partitioned for this flag\n");
+					break;
+				}
+				else{
+					deep = true;
+					continue;
+				}
+			}
+			if (arg == "-mig") {
+				mig = true;
+				continue;
+			}
 		}
 		extra_args(args, argidx, design);
 
@@ -1198,11 +1279,11 @@ struct MIGPass : public Pass {
 
 			if (!dff_mode || !clk_str.empty()) {
 				abc_module(design, mod, script_file, abcexe_file, lsoexe_file, liberty_file, constr_file, cleanup, lut_costs, dff_mode, clk_str, keepff,
-						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress);
+						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress,
+						num_parts, partitioned, exclu_part, mig, deep);
 				continue;
 			}
 		}
-		log("Done with pass\n");
 	}
 } MIGPass;
 

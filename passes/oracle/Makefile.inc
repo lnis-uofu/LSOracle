@@ -1,7 +1,7 @@
 
 ifeq ($(ENABLE_LSO),1)
-OBJS += passes/oracle/mig.o
+OBJS += passes/oracle/oracle.o
 ifneq ($(LSOEXTERNAL),)
-passes/oracle/mig.o: CXXFLAGS += -DABCEXTERNAL='"$(ABCEXTERNAL)"'
+passes/oracle/oracle.o: CXXFLAGS += -DLSOEXTERNAL='"$(LSOEXTERNAL)"'
 endif
 endif

@@ -41,8 +41,6 @@
 #define ABC_FAST_COMMAND_SOP "strash; dretime; retime {D}; cover -I {I} -P {P}"
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
-#define ABC_RESYN2 "strash; balance; rewrite; refactor; balance; rewrite; rewrite -z; balance; refactor -z; rewrite -z; balance"
-
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
 #include "kernel/celltypes.h"
@@ -741,20 +739,17 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		for (int this_cost : lut_costs)
 			if (this_cost != lut_costs.front())
 				all_luts_cost_same = false;
-		abc_script += fast_mode ? ABC_RESYN2 : ABC_COMMAND_LUT;
+		abc_script += fast_mode ? ABC_FAST_COMMAND_LUT : ABC_COMMAND_LUT;
 		if (all_luts_cost_same && !fast_mode)
 			abc_script += "; lutpack {S}";
 	} else if (!liberty_file.empty()){
-		log("Doing no lib file shit\n");
-		abc_script += constr_file.empty() ? (fast_mode ? ABC_RESYN2 : ABC_COMMAND_LIB) : (fast_mode ? ABC_RESYN2 : ABC_COMMAND_CTR);
+		abc_script += constr_file.empty() ? (fast_mode ? ABC_FAST_COMMAND_LIB : ABC_COMMAND_LIB) : (fast_mode ? ABC_FAST_COMMAND_CTR : ABC_COMMAND_CTR);
 	}
 	else if (sop_mode){
-		log("Doing sop mode shit\n");
-		abc_script += fast_mode ? ABC_RESYN2 : ABC_COMMAND_SOP;
+		abc_script += fast_mode ? ABC_FAST_COMMAND_SOP : ABC_COMMAND_SOP;
 	}
 	else{
-		log("Doing else shit\n");
-		abc_script += fast_mode ? ABC_RESYN2 : ABC_COMMAND_DFL;
+		abc_script += fast_mode ? ABC_FAST_COMMAND_DFL : ABC_COMMAND_DFL;
 	}
 
 	for (size_t pos = abc_script.find("{D}"); pos != std::string::npos; pos = abc_script.find("{D}", pos))
@@ -987,8 +982,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		}
 
 		buffer = stringf("%s -s -f %s/abc.script 2>&1", exe_file.c_str(), tempdir_name.c_str());
-		log("Doing the shit\n");
-		log("Fucking Running ABC command: %s\n", replace_tempdir(buffer, tempdir_name, show_tempdir).c_str());
+		log("Running ABC command: %s\n", replace_tempdir(buffer, tempdir_name, show_tempdir).c_str());
 
 #ifndef YOSYS_LINK_ABC
 		abc_output_filter filt(tempdir_name, show_tempdir);
