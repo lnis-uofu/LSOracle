@@ -54,6 +54,7 @@
 #include "commands/generate_truth_tables.hpp"
 #include "commands/print_karnaugh_map.hpp"
 #include "commands/utility.hpp"
+#include "commands/techmapping.hpp"
 // #include "commands/testing/test_aig_then_part.hpp"
 #include "commands/testing/test_combine_part.hpp"
 // #include "commands/testing/test_seed_partitioner.hpp"

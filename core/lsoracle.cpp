@@ -3,6 +3,7 @@
 #include <lorina/lorina.hpp>
 #include <alice/alice.hpp>
 #include <kitty/kitty.hpp>
+#include <kitty/print.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <oracle/oracle.hpp>
 #include <libkahypar.h>
@@ -2444,6 +2445,63 @@ namespace alice{
   	}
     return aig;
   }
+
+    class techmap_command : public alice::command{
+
+    public:
+      explicit techmap_command( const environment::ptr& env )
+          : command( env, "Performs ASIC technology mapping by first LUT mapping, then reading a json file with a techmapped list of NPN functions" ){
+
+        opts.add_option( "--filename,-o", filename, "Verilog file to write out to" )->required();
+        //opts.add_option( "--lut_size,-K", lut_size, "LUT size for mapping [DEFAULT = 6]" );
+        //opts.add_option( "--cut_size,-C", cut_size, "Max number of priority cuts [DEFAULT = 8]" );
+        add_flag("--mig,-m", "Read from the stored MIG network");
+      }
+
+    protected:
+      void execute(){
+        if(is_set("mig")){
+          if(!store<mockturtle::mig_network>().empty()){
+            auto& mig = store<mockturtle::mig_network>().current();
+            mockturtle::mapping_view<mockturtle::mig_network, true> mapped_mig{mig};
+            mockturtle::lut_mapping_params ps;
+            ps.cut_enumeration_ps.cut_size = 4;
+            ps.cut_enumeration_ps.cut_limit = 4;
+            mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
+            const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
+            auto const& klut = *klut_opt;
+            oracle::write_techmapped_verilog(klut, filename, "test_top");
+          
+          }
+          else{
+            std::cout << "There is not an MIG network stored.\n";
+          }
+        }
+        else{
+          if(!store<mockturtle::aig_network>().empty()){
+            auto& aig = store<mockturtle::aig_network>().current();
+            mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig};
+            mockturtle::lut_mapping_params ps;
+            ps.cut_enumeration_ps.cut_size = 4;
+            ps.cut_enumeration_ps.cut_limit = 4;
+            mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
+            const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
+            auto const& klut = *klut_opt;
+            oracle::write_techmapped_verilog(klut, filename, "test_top");
+          }
+          else{
+            std::cout << "There is not an AIG network stored.\n";
+          }
+        }
+            
+      }
+
+    private:
+      std::string filename{};
+    };
+
+  ALICE_ADD_COMMAND(techmap, "Output");
+
 } // namespace alice
 
 /* Main method for the Alice shell (with prefix) */
