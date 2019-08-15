@@ -57,7 +57,7 @@ def optimize(filename, mode, part_num, suffix):
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
-    return [int(s) for s in string_stdout[-4].split() if s.isdigit()]
+    return [int(s) for s in string_stdout[-5].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
