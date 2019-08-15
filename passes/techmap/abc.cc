@@ -41,6 +41,8 @@
 #define ABC_FAST_COMMAND_SOP "strash; dretime; retime {D}; cover -I {I} -P {P}"
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
+#define ABC_COMMAND_LIB_OPT "strash; balance; rewrite; refactor; balance; rewrite; rewrite -z; balance; refactor -z; rewrite -z; balance; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put"
+
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
 #include "kernel/celltypes.h"
@@ -660,7 +662,7 @@ struct abc_output_filter
 void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::string script_file, std::string exe_file,
 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
-		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress)
+		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool resyn2, bool abc_dress)
 {
 	module = current_module;
 	map_autoidx = autoidx++;
@@ -743,7 +745,11 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		if (all_luts_cost_same && !fast_mode)
 			abc_script += "; lutpack {S}";
 	} else if (!liberty_file.empty()){
-		abc_script += constr_file.empty() ? (fast_mode ? ABC_FAST_COMMAND_LIB : ABC_COMMAND_LIB) : (fast_mode ? ABC_FAST_COMMAND_CTR : ABC_COMMAND_CTR);
+		if(resyn2)
+			abc_script += constr_file.empty() ? (fast_mode ? ABC_FAST_COMMAND_LIB : ABC_COMMAND_LIB_OPT) : (fast_mode ? ABC_FAST_COMMAND_CTR : ABC_COMMAND_CTR);
+		else
+			abc_script += constr_file.empty() ? (fast_mode ? ABC_FAST_COMMAND_LIB : ABC_COMMAND_LIB) : (fast_mode ? ABC_FAST_COMMAND_CTR : ABC_COMMAND_CTR);
+
 	}
 	else if (sop_mode){
 		abc_script += fast_mode ? ABC_FAST_COMMAND_SOP : ABC_COMMAND_SOP;
@@ -1399,10 +1405,9 @@ struct AbcPass : public Pass {
 		log("    -sop\n");
 		log("        map to sum-of-product cells and inverters\n");
 		log("\n");
-		// log("    -mux4, -mux8, -mux16\n");
-		// log("        try to extract 4-input, 8-input, and/or 16-input muxes\n");
-		// log("        (ignored when used with -liberty or -lut)\n");
-		// log("\n");
+		log("    -resyn2\n");
+		log("        Optimize with resyn2 script before techmapping\n");
+		log("\n");
 		log("    -g type1,type2,...\n");
 		log("        Map to the specified list of gate types. Supported gates types are:\n");
 		log("        AND, NAND, OR, NOR, XOR, XNOR, ANDNOT, ORNOT, MUX, AOI3, OAI3, AOI4, OAI4.\n");
@@ -1483,7 +1488,7 @@ struct AbcPass : public Pass {
 		std::string script_file, liberty_file, constr_file, clk_str;
 		std::string delay_target, sop_inputs, sop_products, lutin_shared = "-S 1";
 		bool fast_mode = false, dff_mode = false, keepff = false, cleanup = true;
-		bool show_tempdir = false, sop_mode = false;
+		bool show_tempdir = false, sop_mode = false, resyn2 = false;
 		bool abc_dress = false;
 		vector<int> lut_costs;
 		markgroups = false;
@@ -1585,6 +1590,10 @@ struct AbcPass : public Pass {
 			}
 			if (arg == "-sop") {
 				sop_mode = true;
+				continue;
+			}
+			if (arg == "-resyn2") {
+				resyn2 = true;
 				continue;
 			}
 			if (arg == "-mux4") {
@@ -1752,7 +1761,7 @@ struct AbcPass : public Pass {
 
 			if (!dff_mode || !clk_str.empty()) {
 				abc_module(design, mod, script_file, exe_file, liberty_file, constr_file, cleanup, lut_costs, dff_mode, clk_str, keepff,
-						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress);
+						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, resyn2, abc_dress);
 				continue;
 			}
 
@@ -1897,7 +1906,7 @@ struct AbcPass : public Pass {
 				en_polarity = std::get<2>(it.first);
 				en_sig = assign_map(std::get<3>(it.first));
 				abc_module(design, mod, script_file, exe_file, liberty_file, constr_file, cleanup, lut_costs, !clk_sig.empty(), "$",
-						keepff, delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, it.second, show_tempdir, sop_mode, abc_dress);
+						keepff, delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, it.second, show_tempdir, sop_mode, resyn2, abc_dress);
 				assign_map.set(mod);
 			}
 		}

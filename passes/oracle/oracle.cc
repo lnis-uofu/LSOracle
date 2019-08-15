@@ -45,8 +45,10 @@
 #define LSO_COMMAND_AIG "aigscript"
 #define LSO_COMMAND_PART_EXCLU_AIG "partitioning {P}; optimization -a "
 #define LSO_COMMAND_PART_EXCLU_MIG "partitioning {P}; optimization -m "
-#define LSO_COMMAND_PART_DEEP "partitioning {P}; optimization -c {D} "
+#define LSO_COMMAND_PART_DEEP "partitioning {P}; optimization -n {D} "
 #define LSO_COMMAND_PART_HIGH_EFFORT "partitioning {P}; optimization -b "
+#define LSO_COMMAND_PART_DEEP_M "partitioning {P}; optimization -n {D} -c "
+#define LSO_COMMAND_PART_HIGH_EFFORT_M "partitioning {P}; optimization -b -c "
 
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
@@ -726,7 +728,9 @@ struct abc_output_filter
 	}
 };
 
-void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir_name, bool show_tempdir, std::string num_parts, bool partitioned, bool exclu_part, bool mig, bool deep){
+void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir_name, 
+	bool show_tempdir, std::string num_parts, bool partitioned, bool exclu_part, bool mig, 
+	bool deep, bool merge){
 
 	std::string lso_script;
 
@@ -743,8 +747,12 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 	if(partitioned){
 		if(exclu_part)
 			lso_script += mig ? LSO_COMMAND_PART_EXCLU_MIG : LSO_COMMAND_PART_EXCLU_AIG;
-		else
-			lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+		else{
+			if(merge)
+				lso_script += deep ? LSO_COMMAND_PART_DEEP_M : LSO_COMMAND_PART_HIGH_EFFORT_M;
+			else
+				lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+		}
 	}
 	else
 		lso_script += mig ? LSO_COMMAND_MIG : LSO_COMMAND_AIG;
@@ -831,7 +839,8 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::string script_file, std::string abcexe_file,std::string lsoexe_file,
 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
-		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned, bool exclu_part, bool mig, bool deep)
+		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned, 
+		bool exclu_part, bool mig, bool deep, bool merge)
 {
 	module = current_module;
 	map_autoidx = autoidx++;
@@ -1077,7 +1086,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		if (ifs.fail())
 			log_error("Can't open ABC output file `%s'.\n", buffer.c_str());
 
-		lso_module(design, lsoexe_file, tempdir_name, show_tempdir, num_parts, partitioned, exclu_part, mig, deep);
+		lso_module(design, lsoexe_file, tempdir_name, show_tempdir, num_parts, partitioned, exclu_part, mig, deep, merge);
 
 	}
 	else
@@ -1095,7 +1104,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 }
 
 struct ORACLEPass : public Pass {
-	ORACLEPass() : Pass("lsoracle", "use LSOracle for MIG optimization") { }
+	ORACLEPass() : Pass("lsoracle", "use LSOracle for mixed synthesis with AIG and MIG optimization") { }
 	void help() YS_OVERRIDE
 	{
 		//   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
@@ -1130,6 +1139,9 @@ struct ORACLEPass : public Pass {
 		log("\n");
 		log("    -mig \n");
 		log("        use MIG optimization instead of the default AIG optimization (script is MIG equivalent to ABC's resyn2 flow).\n");
+		log("\n");
+		log("    -merge \n");
+		log("        merge partitions classified for the same optimization technique before optimization\n");
 		log("\n");
 		log("    -script <file>\n");
 		log("        use the specified LSOracle script file instead of the default script.\n");
@@ -1174,7 +1186,7 @@ struct ORACLEPass : public Pass {
 		enabled_gates.clear();
 
 		std::string num_parts;
-		bool partitioned = false, exclu_part = false, mig = false, deep = false;
+		bool partitioned = false, exclu_part = false, mig = false, deep = false, merge = false;
 
 #ifdef _WIN32
 #ifndef ABCEXTERNAL
@@ -1243,6 +1255,10 @@ struct ORACLEPass : public Pass {
 					continue;
 				}
 			}
+			if (arg == "-merge") {
+				merge = true;
+				continue;
+			}
 			if (arg == "-mig") {
 				mig = true;
 				continue;
@@ -1280,7 +1296,7 @@ struct ORACLEPass : public Pass {
 			if (!dff_mode || !clk_str.empty()) {
 				abc_module(design, mod, script_file, abcexe_file, lsoexe_file, liberty_file, constr_file, cleanup, lut_costs, dff_mode, clk_str, keepff,
 						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress,
-						num_parts, partitioned, exclu_part, mig, deep);
+						num_parts, partitioned, exclu_part, mig, deep, merge);
 				continue;
 			}
 		}
