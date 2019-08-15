@@ -110,7 +110,7 @@ for curr_file in files:
     print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
    
     #mixed synthesis with classifier
-    cmdstr = 'optimization -c ' + training_file
+    cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
     print (mixed_size)
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
