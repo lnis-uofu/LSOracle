@@ -144,7 +144,7 @@ namespace oracle
       partitionOutputs = outputs;
     }
 
-    partition_manager( Ntk const& ntk, int part_num ) : Ntk( ntk )
+    partition_manager( Ntk const& ntk, int part_num, std::string config_direc="../../core/test.ini" ) : Ntk( ntk )
     {
 
       static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
@@ -208,7 +208,7 @@ namespace oracle
         ******************/
         //configures kahypar
         kahypar_context_t* context = kahypar_context_new();
-        kahypar_configure_context_from_file(context, "../../core/test.ini");
+        kahypar_configure_context_from_file(context, config_direc.c_str());
 
         //set number of hyperedges and vertices. These variables are defined by the hyperG command
         const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;

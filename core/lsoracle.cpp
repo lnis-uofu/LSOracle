@@ -611,7 +611,6 @@ namespace alice{
             filename.erase(filename.end() - 2, filename.end());
             aig._storage->net_name = filename;
 
-            std::cout << "Verilog file written\n";
           }
 
         }
@@ -1253,13 +1252,14 @@ namespace alice{
 
     public:
         explicit optimization_command( const environment::ptr& env )
-                : command( env, "Classify partitions and perform corresponding optimization on stored AIG network (result is MIG network)" ){
+                : command( env, "Brute force approach to finding best optimization methods" ){
 
-            opts.add_option( "--nn_model,-c",nn_model, "Trained neural network model for classification" );
-            opts.add_option( "--out,-o", out_file, "Verilog output" )->required();
-            add_flag("--brute,-b", "Uses a brute force approach instead of classification");
-            add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
-            add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
+                opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
+                opts.add_option( "--out,-o", out_file, "Verilog output" );
+                add_flag("--high,-b", "Uses a high effort approach instead of classification");
+                add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
+                add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
+                add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
         }
 
     protected:
@@ -1269,10 +1269,13 @@ namespace alice{
         mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
         std::vector<int> aig_parts;
         std::vector<int> mig_parts;
+        std::vector<int> comb_aig_parts;
+        std::vector<int> comb_mig_parts;
         if(!store<mockturtle::aig_network>().empty()){
-          std::cout << "Optimizing stored AIG network\n";
+
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
+          // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
@@ -1291,7 +1294,7 @@ namespace alice{
                 mig_parts.push_back(i);
               }
             }
-            else if(is_set("brute")){
+            else if(is_set("high")){
 
               for(int i = 0; i < num_parts; i++){
                 oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk_aig, i);
@@ -1324,75 +1327,175 @@ namespace alice{
             else{
               if(!nn_model.empty()){
                 partitions_aig.run_classification(ntk_aig, nn_model);
+
                 aig_parts = partitions_aig.get_aig_parts();
                 mig_parts = partitions_aig.get_mig_parts();
               }
               else{
-                std::cout << "Must include deep learning model json file\n";
+                std::cout << "Must include CNN model json file\n";
               }
 
             }
 
+            std::cout << "Scheduled optimization\n";
+            std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+
+            if(is_set("combine")){
+              std::vector<int> visited;
+              std::unordered_map<int, int> comb_part;
+              for(int i = 0; i < num_parts; i++){
+                if(std::find(visited.begin(), visited.end(), i) == visited.end()){
+                  std::vector<int> parts_to_combine;
+                  
+                  std::set<int>::iterator conn_it;
+                  std::set<int> conn_parts;
+                  conn_parts = partitions_aig.get_connected_parts(ntk_aig, i);
+                  if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
+                    for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
+                      if(std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end()){
+                        parts_to_combine.push_back(*conn_it);
+                      }
+                    }
+                  }
+                  else{
+                    for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
+                      if(std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end()){
+                        parts_to_combine.push_back(*conn_it);
+                      }
+                    }
+                  }
+
+                  if(parts_to_combine.size() == 0){
+                    if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
+                      if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), i) == comb_aig_parts.end()){
+                        comb_aig_parts.push_back(i);
+                      }
+                    }
+                    else{
+                      if(std::find(comb_mig_parts.begin(), comb_mig_parts.end(), i) == comb_mig_parts.end()){
+                        comb_mig_parts.push_back(i);
+                      }
+                    }
+                  }
+
+                  for(int idx = 0; idx < parts_to_combine.size(); idx++){
+                    int curr_part = parts_to_combine.at(idx);
+                    int part_1 = 0;
+                    int part_2 = 0;
+                    if(std::find(visited.begin(), visited.end(), curr_part) == visited.end()){
+                      part_1 = i;
+                      part_2 = curr_part;
+                    }
+                    else{
+                      if(std::find(visited.begin(), visited.end(), i) == visited.end()){
+                        part_1 = curr_part;
+                        part_2 = i;
+                      }
+                    }
+
+                    if(std::find(visited.begin(), visited.end(), part_2) == visited.end()){
+                      std::unordered_map<int,int>::const_iterator got = comb_part.find (part_1);
+                      if(got != comb_part.end()){
+                        part_1 = got->second;
+                      }
+                      std::set<int> connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
+                      std::set<int> connected_parts2 = partitions_aig.get_connected_parts(ntk_aig, part_2);
+                      std::set<int>::iterator conn_it;
+                      
+                      std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
+                      
+                      auto new_inputs = combined_io.at(0);
+                      auto new_outputs = combined_io.at(1);
+                      comb_part[part_2] = part_1;
+
+                      partitions_aig.set_part_inputs(part_1, new_inputs);
+                      partitions_aig.set_part_outputs(part_1, new_outputs);
+
+                      if(std::find(aig_parts.begin(), aig_parts.end(), part_1) != aig_parts.end()){
+                        if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), part_1) == comb_aig_parts.end()){
+                          comb_aig_parts.push_back(part_1);
+                        }
+                      }
+                      else{
+                        if(std::find(comb_mig_parts.begin(), comb_mig_parts.end(), part_1) == comb_mig_parts.end()){
+                          comb_mig_parts.push_back(part_1);
+                        }
+                      }
+
+                      visited.push_back(part_2); 
+
+                      connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
+                      for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
+                        if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
+                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                            std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end() &&
+                            std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
+
+                            parts_to_combine.push_back(*conn_it);
+                          }
+                        }
+                        else{
+                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                            std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end() &&
+                            std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
+
+                            parts_to_combine.push_back(*conn_it);
+                          }
+                        }
+                        
+                      } 
+                    }
+                    visited.push_back(i);
+
+                  }
+                }
+              }
+              aig_parts = comb_aig_parts;
+              mig_parts = comb_mig_parts;
+              std::cout << "Scheduled optimization after partition merging\n";
+              std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+            }
+            
             mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig, 1);
             oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
 
             // std::cout << "AIG Optimization\n";
             for(int i = 0; i < aig_parts.size(); i++){
-              // std::cout << "Optimize partition " << aig_parts.at(i) << "\n";
+              
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
               mockturtle::depth_view part_depth{part};
-              // std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
-              // auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>(part, resyn_aig);
               auto opt_part = part_to_mig(part, 1);
               auto opt = mig_to_aig(opt_part);
 
               mockturtle::depth_view opt_part_depth{opt};
-              // std::cout << "part size after resynthesis = " << opt.num_gates() << " and depth = " << opt_part_depth.depth() << "\n";
 
               mockturtle::aig_script aigopt;
               opt = aigopt.run(opt);
 
               auto opt_mig = aig_to_mig(opt, 0);
               mockturtle::depth_view part_opt_depth{opt_mig};
-              // std::cout << "new part size = " << opt_mig.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
 
               partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
             }
             // std::cout << "MIG Optimization\n";
             for(int i = 0; i < mig_parts.size(); i++){
-              // std::cout << "Optimize partition " << mig_parts.at(i) << "\n";
+              
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
               mockturtle::depth_view part_depth{part};
-              // std::cout << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
-              // auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part, resyn_mig);
               auto opt = part_to_mig(part, 0);
 
               mockturtle::depth_view opt_part_depth{opt};
-              // std::cout << "part size after resynthesis = " << opt.num_gates() << " and depth = " << opt_part_depth.depth() << "\n";
               
               mockturtle::mig_script migopt;
               opt = migopt.run(opt);
               
               mockturtle::depth_view part_opt_depth{opt};
-              // std::cout << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
 
               partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
-
-            std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-            // std::cout << "AIG partitions = {";
-            // for(int i = 0; i < aig_parts.size(); i++){
-            //   std::cout << aig_parts.at(i) << " ";
-            // }
-            // std::cout << "}\n";
-            // std::cout << "MIG partitions = {";
-            // for(int i = 0; i < mig_parts.size(); i++){
-            //   std::cout << mig_parts.at(i) << " ";
-            // }
-            // std::cout << "}\n";
             
             partitions_mig.connect_outputs(ntk_mig);
             
@@ -1407,7 +1510,11 @@ namespace alice{
             std::cout << "Full Optimization: " << duration.count() << "ms\n";
             std::cout << "Finished optimization\n";
             store<mockturtle::mig_network>().extend() = ntk_mig;
-            mockturtle::write_verilog(ntk_mig, out_file);
+
+            if(out_file != ""){
+              mockturtle::write_verilog(ntk_mig, out_file);
+              std::cout << "Resulting Verilog written to " << out_file << "\n";
+            }
         
           }
           else{
@@ -2386,7 +2493,6 @@ namespace alice{
   		auto it = update_output.find(in);
 
   		if(it!=update_output.end()){
-  			//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
   			signalOut = it->second;
   		}
 
@@ -2417,7 +2523,6 @@ namespace alice{
   		auto it = update_output.find(2*signal.index);
 
   		if(it!=update_output.end()){
-  			//std::cout << "Need to replace node " << in << " by " << it->second.index << std::endl;
   			auto ri = it->second;
   			aig.create_ri(ri, reset, name);
 
