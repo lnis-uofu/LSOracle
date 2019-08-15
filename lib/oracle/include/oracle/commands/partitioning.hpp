@@ -45,7 +45,7 @@ namespace alice
             else{
               oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
               store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
-            }
+            }           
           }
           else{
             std::cout << "MIG network not stored\n";
