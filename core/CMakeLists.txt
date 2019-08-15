@@ -16,7 +16,6 @@ find_package(Threads REQUIRED)                        # thread library (pthread)
 
 add_executable(lsoracle lsoracle.cpp)
 
-
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 #target_include_directories(lsoracle PRIVATE ../lib/darknet/include)
 #darklib removed
