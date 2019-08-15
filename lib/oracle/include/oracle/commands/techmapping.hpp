@@ -47,25 +47,34 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
 {
     //Right now, as a first effort, this will only work after LUT mapping, so ntk will always be klut
     //  and it will not support sequential circuits, because as far as I can tell, the klut network doesn't either yet.
-    /*
-    static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
-    static_assert( has_get_constant_v<Ntk>, "Ntk does not implement the get_constant method" );
-    static_assert( has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
-    static_assert( has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
-    static_assert( has_is_complemented_v<Ntk>, "Ntk does not implement the is_complemented method" );
-    static_assert( has_get_node_v<Ntk>, "Ntk does not implement the get_node method" );
-    static_assert( has_num_pos_v<Ntk>, "Ntk does not implement the num_pos method" );
-    static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
-    static_assert( has_node_function_v<Ntk>, "Ntk does not implement the node_function method" );
-    */
+    
+    static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
+    static_assert( mockturtle::has_get_constant_v<Ntk>, "Ntk does not implement the get_constant method" );
+    static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
+    static_assert( mockturtle::has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
+    static_assert( mockturtle::has_is_complemented_v<Ntk>, "Ntk does not implement the is_complemented method" );
+    static_assert( mockturtle::has_get_node_v<Ntk>, "Ntk does not implement the get_node method" );
+    static_assert( mockturtle::has_num_pos_v<Ntk>, "Ntk does not implement the num_pos method" );
+    static_assert( mockturtle::has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
+    static_assert( mockturtle::has_node_function_v<Ntk>, "Ntk does not implement the node_function method" );
+    
+
+    int netlistcount = 0;
+    nlohmann::json json_library;
+    regex in_match("\(F\)");
+    regex wire_match("new");
+    regex g_count("g[0-9]+");
+    regex o1("\(a\)");
+    regex o2("\(b\)");
+    regex o3("\(c\)");
+    regex o4("\(d\)");
 
     std::cout << "Loading json library ";
-    std::ifstream library("../../NPN_LUT4.json");
-    nlohmann::json json_library;
+    std::ifstream library("../../NPN_LUT4.json"); //make this generic once it's working
     library >> json_library; //might need to do something more sophisticated here as we get to larger function classes.  For LUT4s, the file is only 150K; but as we go to 5, 6, 8 inputs, this will be huge
-    std::cout << "testing:" << json_library.size();
-    std::vector <std::string> inputs;
-    std::vector <std::string> pos;
+    std::cout << "done. Library size: " << json_library.size() << "\n";
+
+    //populate pis and pos
     auto digitsIn  = std::to_string(ntk.num_pis()/* -ntk.num_latches()*/).length();
     auto digitsOut = std::to_string(ntk.num_pos()/*-ntk.num_latches()*/).length();
     const auto xs = mockturtle::map_and_join( ez::make_direct_iterator<decltype( ntk.num_pis() )>( 0 ),
@@ -76,15 +85,14 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
                                       [&digitsOut]( auto i ) { return fmt::format( "po{0:0{1}}", i, digitsOut ); }, ", "s );
             
     
-    
     os << fmt::format( "module top({}, {});\n", xs, ys )
         << fmt::format( "  input {};\n", xs )
         << fmt::format( "  output {};\n", ys );
     /*
     wire x, y, z, etc; 
     */
-    //not sure if this is handled correctly; this is taken from the verilog writer, but I'm pretty sure I should handle wires as I go in the next section. 
-    //maybe somehow collect the wires that I need and then insert them near the header again when I'm done
+    //Pretty sure that it's basically right, but the internal wires for each cell aren't handled; I'll need to add them after the fact
+
     if ( ntk.num_gates() > 0 )
     {
         os << "  wire ";
@@ -101,45 +109,55 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
         } );
         os << ";\n";
     }
-//do the actual 
+//do the actual mapping/substitution
     ntk.foreach_node( [&]( auto const& n ) {
         if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
             return; /* continue */
 
         auto func = ntk.node_function( n );
-        std::string children;
-        auto first = true;
+        std::vector <std::string> children;
+       // populate children, which will be function inputs
         ntk.foreach_fanin( n, [&]( auto const& c, auto i ) {
             if ( ntk.is_complemented( c ) )
             {
                 kitty::flip_inplace( func, i );
             }
-            if ( first )
-            {
-                first = false;
-            }
-            else
-            {
-                children += ", ";
-            }
-            children += fmt::format( "n{}", ntk.node_to_index( ntk.get_node( c ) ) );
+           
+            children.push_back(fmt::format( "n{}", ntk.node_to_index( ntk.get_node( c ) ) ));
         } );
-    //this is where I need to write the lookup
-    /*  Bench format looked like this:
-        os << fmt::format( "n{} = LUT 0x{} ({})\n",
-                       ntk.node_to_index( n ),
-                      kitty::to_hex(std::get<0>(kitty::exact_npn_canonization( func ))), children);
-        
-        In my case I want n{} to be mapped to the Y() pin, and the children to A, B, C, and D if applicable
-     */
+    
+    //lookup the function in the json database
         std::string tempstr = kitty::to_hex(std::get<0>(kitty::exact_npn_canonization(func)));
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
         tempstr.insert(tempstr.begin(), 4 - tempstr.length(), '0');
         std::string json_lookup = fmt::format("out_{}", tempstr);
         os << "// techmapping TT: " << json_lookup << "\n";
+        //handle the internal wires
         try{
+            std::string cell_wires = json_library[json_lookup]["wires"];
+           // std::string format_wires = 
+
+        } catch(nlohmann::json::type_error& er){
+            //cell does not exist (caught below), or has no internal wires, which is fine.
+        }
+        
+        //replace '(F)' with cell_out, '(a)' with '(<children[0]>)', '(b)' with '(<children[1]>)', and so on
+        try{
+            std::string cell_out = fmt::format("n{}", ntk.node_to_index(n));
             std::vector<std::string> test = json_library[json_lookup]["gates"];
             for (auto i : test){
+                netlistcount++;
+                i = regex_replace(i, in_match, cell_out);
+                i = regex_replace(i, wire_match, cell_out);
+                i = regex_replace(i, g_count, fmt::format("g{}", netlistcount));
+                if(children.size() == 4){
+                    i = regex_replace(i, o1, children.at(0));
+                    i = regex_replace(i, o2, children.at(1));
+                    i = regex_replace(i, o3, children.at(2));
+                    i = regex_replace(i, o4, children.at(3));
+                } else {
+                    std::cout << "Attempting to call a 4 input function with fewer than 4 inputs\n";
+                }
                 os << i <<"\n";
             }
         } catch(nlohmann::json::type_error& er){
@@ -149,7 +167,14 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
 
 
     } );
-
+    /*
+    ntk.foreach_po( [&]( auto const& s, auto i ) {
+        os << fmt::format( "po{} = LUT 0x{} (n{})\n",
+                         i,
+                         ntk.is_complemented( s ) ? 1 : 2,
+                         ntk.node_to_index( ntk.get_node( s ) ) );
+     } );
+     */
 }
 
 //file version
