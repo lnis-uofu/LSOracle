@@ -1515,7 +1515,7 @@ namespace alice{
               mockturtle::write_verilog(ntk_mig, out_file);
               std::cout << "Resulting Verilog written to " << out_file << "\n";
             }
-        
+  
           }
           else{
               std::cout << "AIG not partitioned yet\n";
