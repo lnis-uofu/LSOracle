@@ -68,13 +68,16 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
     regex o2("\(b\)");
     regex o3("\(c\)");
     regex o4("\(d\)");
-
+    
+    double area_total = 0;
+    
     std::cout << "Loading json library ";
     std::ifstream library("../../NPN_LUT4.json"); //make this generic once it's working
     library >> json_library; //might need to do something more sophisticated here as we get to larger function classes.  For LUT4s, the file is only 150K; but as we go to 5, 6, 8 inputs, this will be huge
     std::cout << "done. Library size: " << json_library.size() << "\n";
 
     //populate pis and pos
+    //this needs to be fixed.  I don't have a good way of knowing which node number is a PI or PO for now when I write out the netlist.  Better to just use the node index.
     auto digitsIn  = std::to_string(ntk.num_pis()/* -ntk.num_latches()*/).length();
     auto digitsOut = std::to_string(ntk.num_pos()/*-ntk.num_latches()*/).length();
     const auto xs = mockturtle::map_and_join( ez::make_direct_iterator<decltype( ntk.num_pis() )>( 0 ),
@@ -85,18 +88,39 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
                                       [&digitsOut]( auto i ) { return fmt::format( "po{0:0{1}}", i, digitsOut ); }, ", "s );
             
     
-    os << fmt::format( "module top({}, {});\n", xs, ys )
-        << fmt::format( "  input {};\n", xs )
-        << fmt::format( "  output {};\n", ys );
+  /*      os << fmt::format( "module top({}, {});\n", xs, ys )
+        << "\t" << fmt::format( "  input {};\n", xs )
+        << "\t" << fmt::format( "  output {};\n", ys );
+  */
+    os << "\t" << "input ";
+    auto first = true; 
+    ntk.foreach_pi( [&]( auto const& n ) {
+            if (first)
+                first = false;
+            else
+                os << ", ";
+            os << fmt::format("n{}", ntk.node_to_index(n));
+    });
+    first = true;
+    os << ";\n" << "\t" << "output ";
+    ntk.foreach_po( [&]( auto const& n ) {
+            if (first)
+                first = false;
+            else
+                os << ", ";
+            os << fmt::format("n{}", ntk.node_to_index(n));
+    });
+    os <<";\n";
     /*
     wire x, y, z, etc; 
     */
     //Pretty sure that it's basically right, but the internal wires for each cell aren't handled; I'll need to add them after the fact
+    //think this is now fixed.  Testing before I delete the reminder.
 
-    if ( ntk.num_gates() > 0 )
+    if ( ntk.num_gates() > 0 ) //should this be gate or node?
     {
-        os << "  wire ";
-        auto first = true;
+        os << "\t" << "  wire ";
+        first = true;
         ntk.foreach_gate( [&]( auto const& n ) {
             auto index = ntk.node_to_index( n );
             if(index > ntk.num_pis()) {
@@ -132,10 +156,15 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
         tempstr.insert(tempstr.begin(), 4 - tempstr.length(), '0');
         std::string json_lookup = fmt::format("out_{}", tempstr);
         os << "// techmapping TT: " << json_lookup << "\n";
+        
+        std::string cell_out = fmt::format("n{}", ntk.node_to_index(n));
+        
         //handle the internal wires
         try{
             std::string cell_wires = json_library[json_lookup]["wires"];
-           // std::string format_wires = 
+            //it would be nicer to have all wire declarations at the top, but this will do.
+            cell_wires = regex_replace(cell_wires, wire_match, cell_out);
+            os << "\t" << "wire "<< cell_wires <<";\n";
 
         } catch(nlohmann::json::type_error& er){
             //cell does not exist (caught below), or has no internal wires, which is fine.
@@ -143,7 +172,6 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
         
         //replace '(F)' with cell_out, '(a)' with '(<children[0]>)', '(b)' with '(<children[1]>)', and so on
         try{
-            std::string cell_out = fmt::format("n{}", ntk.node_to_index(n));
             std::vector<std::string> test = json_library[json_lookup]["gates"];
             for (auto i : test){
                 netlistcount++;
@@ -158,13 +186,20 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
                 } else {
                     std::cout << "Attempting to call a 4 input function with fewer than 4 inputs\n";
                 }
-                os << i <<"\n";
+                os << "\t" << i << "\n";
             }
         } catch(nlohmann::json::type_error& er){
                      std::cout << "\nmessage: " << er.what() << '\n'<< "exception id: " << er.id << std::endl;
                      std::cout << "Perhaps truth table "<<json_lookup<<" is not found in the techmapping library?\n\n";
         }
-
+        
+        //get area of each LUT equivalent set of gates
+        try{
+            std::string cell_area = json_library[json_lookup]["area"];
+            area_total += std::stod(cell_area, nullptr);
+        } catch(nlohmann::json::type_error& er){
+            std::cout << "Truth table " <<json_lookup<<" has no defined area.\n";
+        }
 
     } );
     /*
@@ -175,6 +210,9 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::string top
                          ntk.node_to_index( ntk.get_node( s ) ) );
      } );
      */
+
+     os << "endmodule\n";
+     os << "// design area: " << area_total <<"\n";
 }
 
 //file version

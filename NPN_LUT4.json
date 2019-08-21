@@ -2,6 +2,7 @@
 	"out_0001": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 1.399680",
 		"gates": [
 			"NOR4xp25_ASAP7_75t_R  g0(.A(d), .B(c), .C(b), .D(a), .Y(F));"
 		]
@@ -9,6 +10,7 @@
 	"out_0003": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 1.166400",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(d), .B(c), .C(b), .Y(F));"
 		]
@@ -16,6 +18,7 @@
 	"out_0006": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.265920",
 		"wires": "new_n6_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -25,6 +28,7 @@
 	"out_0007": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 2.566080",
 		"wires": "new_n6_",
 		"gates": [
 			"AND2x2_ASAP7_75t_R    g0(.A(b), .B(a), .Y(new_n6_));",
@@ -34,6 +38,7 @@
 	"out_000F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 0.933120",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(d), .B(c), .Y(F));"
 		]
@@ -41,6 +46,7 @@
 	"out_0016": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.065280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -54,6 +60,7 @@
 	"out_0017": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.032640",
 		"wires": "new_n6_",
 		"gates": [
 			"MAJx2_ASAP7_75t_R     g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -63,6 +70,7 @@
 	"out_0018": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.432320",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -76,6 +84,7 @@
 	"out_0019": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 4.665600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -88,6 +97,7 @@
 	"out_001B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.065280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -101,6 +111,7 @@
 	"out_001E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.065280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -114,6 +125,7 @@
 	"out_001F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.732480",
 		"wires": "new_n6_, new_n7_",
 		"gates": [
 			"OR2x2_ASAP7_75t_R     g0(.A(b), .B(a), .Y(new_n6_));",
@@ -124,6 +136,7 @@
 	"out_003C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.032640",
 		"wires": "new_n6_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -133,6 +146,7 @@
 	"out_003D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.132160",
 		"wires": "new_n6_, new_n7_, new_n8_",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -144,6 +158,7 @@
 	"out_003F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 2.332800",
 		"wires": "new_n6_",
 		"gates": [
 			"AND2x2_ASAP7_75t_R    g0(.A(c), .B(b), .Y(new_n6_));",
@@ -153,6 +168,7 @@
 	"out_0069": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -166,6 +182,7 @@
 	"out_006B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -179,6 +196,7 @@
 	"out_006F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.998400",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -191,6 +209,7 @@
 	"out_007E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.765120",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -206,6 +225,7 @@
 	"out_007F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 2.332800",
 		"wires": "new_n6_",
 		"gates": [
 			"AND3x1_ASAP7_75t_R    g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -215,6 +235,7 @@
 	"out_00FF": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.000000",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(F));"
 		]
@@ -222,6 +243,7 @@
 	"out_0116": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -239,6 +261,7 @@
 	"out_0117": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -251,6 +274,7 @@
 	"out_0118": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.531840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -263,6 +287,7 @@
 	"out_0119": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.832000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NAND2xp33_ASAP7_75t_R g0(.A(d), .B(c), .Y(new_n6_));",
@@ -276,6 +301,7 @@
 	"out_011A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -292,6 +318,7 @@
 	"out_011B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -309,6 +336,7 @@
 	"out_011E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.631360",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -326,6 +354,7 @@
 	"out_011F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 3.032640",
 		"wires": "new_n6_",
 		"gates": [
 			"OR2x2_ASAP7_75t_R     g0(.A(b), .B(a), .Y(new_n6_));",
@@ -335,6 +364,7 @@
 	"out_012C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -352,6 +382,7 @@
 	"out_012D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -369,6 +400,7 @@
 	"out_012F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -383,6 +415,7 @@
 	"out_013C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.832000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -395,6 +428,7 @@
 	"out_013D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -409,6 +443,7 @@
 	"out_013E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -425,6 +460,7 @@
 	"out_013F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.432320",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -437,6 +473,7 @@
 	"out_0168": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -453,6 +490,7 @@
 	"out_0169": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -469,6 +507,7 @@
 	"out_016A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -484,6 +523,7 @@
 	"out_016B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -500,6 +540,7 @@
 	"out_016E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -515,6 +556,7 @@
 	"out_016F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.964160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -531,6 +573,7 @@
 	"out_017E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -549,6 +592,7 @@
 	"out_017F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.665600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -561,6 +605,7 @@
 	"out_0180": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.965760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -574,6 +619,7 @@
 	"out_0181": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.732480",
 		"wires": "new_n6_, new_n7_, new_n8_",
 		"gates": [
 			"OR3x1_ASAP7_75t_R     g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -585,6 +631,7 @@
 	"out_0182": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.832000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -597,6 +644,7 @@
 	"out_0183": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -614,6 +662,7 @@
 	"out_0186": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -631,6 +680,7 @@
 	"out_0187": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -648,6 +698,7 @@
 	"out_0189": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"AND2x2_ASAP7_75t_R    g0(.A(b), .B(a), .Y(new_n6_));",
@@ -662,6 +713,7 @@
 	"out_018B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -678,6 +730,7 @@
 	"out_018F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.065280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NAND2xp33_ASAP7_75t_R g0(.A(b), .B(a), .Y(new_n6_));",
@@ -691,6 +744,7 @@
 	"out_0196": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -707,6 +761,7 @@
 	"out_0197": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.497600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -723,6 +778,7 @@
 	"out_0198": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.765120",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -739,6 +795,7 @@
 	"out_0199": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.832000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -751,6 +808,7 @@
 	"out_019A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -767,6 +825,7 @@
 	"out_019B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -784,6 +843,7 @@
 	"out_019E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -802,6 +862,7 @@
 	"out_019F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -820,6 +881,7 @@
 	"out_01A8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -832,6 +894,7 @@
 	"out_01A9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.765120",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(c), .B(a), .Y(new_n6_));",
@@ -846,6 +909,7 @@
 	"out_01AA": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.499200",
 		"wires": "new_n6_, new_n7_, new_n8_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -857,6 +921,7 @@
 	"out_01AB": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -873,6 +938,7 @@
 	"out_01AC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(b), .Y(new_n6_));",
@@ -888,6 +954,7 @@
 	"out_01AD": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -905,6 +972,7 @@
 	"out_01AE": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -920,6 +988,7 @@
 	"out_01AF": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(c), .B(a), .Y(new_n6_));",
@@ -933,6 +1002,7 @@
 	"out_01BC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"AND3x1_ASAP7_75t_R    g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -947,6 +1017,7 @@
 	"out_01BD": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -965,6 +1036,7 @@
 	"out_01BE": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.730880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -982,6 +1054,7 @@
 	"out_01BF": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -996,6 +1069,7 @@
 	"out_01E8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -1012,6 +1086,7 @@
 	"out_01E9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.497600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1028,6 +1103,7 @@
 	"out_01EA": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.765120",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -1042,6 +1118,7 @@
 	"out_01EB": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -1059,6 +1136,7 @@
 	"out_01EE": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.665600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1071,6 +1149,7 @@
 	"out_01EF": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -1084,6 +1163,7 @@
 	"out_01FE": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.898880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -1096,6 +1176,7 @@
 	"out_033C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1108,6 +1189,7 @@
 	"out_033D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.998400",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1121,6 +1203,7 @@
 	"out_033F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 1.632960",
 		"gates": [
 			"MAJIxp5_ASAP7_75t_R   g0(.A(d), .B(c), .C(b), .Y(F));"
 		]
@@ -1128,6 +1211,7 @@
 	"out_0356": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(d), .B(a), .Y(new_n6_));",
@@ -1144,6 +1228,7 @@
 	"out_0357": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.065280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -1158,6 +1243,7 @@
 	"out_0358": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(b), .Y(new_n6_));",
@@ -1174,6 +1260,7 @@
 	"out_0359": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(b), .Y(new_n6_));",
@@ -1189,6 +1276,7 @@
 	"out_035A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.298560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(a), .Y(new_n6_));",
@@ -1201,6 +1289,7 @@
 	"out_035B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -1215,6 +1304,7 @@
 	"out_035E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -1230,6 +1320,7 @@
 	"out_035F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"AND2x2_ASAP7_75t_R    g0(.A(c), .B(a), .Y(new_n6_));",
@@ -1242,6 +1333,7 @@
 	"out_0368": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.664000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -1262,6 +1354,7 @@
 	"out_0369": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.664000",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1278,6 +1371,7 @@
 	"out_036A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -1293,6 +1387,7 @@
 	"out_036B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.497600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1309,6 +1404,7 @@
 	"out_036C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1325,6 +1421,7 @@
 	"out_036D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.497600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1341,6 +1438,7 @@
 	"out_036E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.631360",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -1356,6 +1454,7 @@
 	"out_036F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.264320",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1371,6 +1470,7 @@
 	"out_037C": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1386,6 +1486,7 @@
 	"out_037D": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1400,6 +1501,7 @@
 	"out_037E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.797760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -1418,6 +1520,7 @@
 	"out_03C0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.499200",
 		"wires": "new_n6_, new_n7_, new_n8_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -1429,6 +1532,7 @@
 	"out_03C1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.365440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"OR4x1_ASAP7_75t_R     g0(.A(d), .B(c), .C(b), .D(a), .Y(new_n6_));",
@@ -1441,6 +1545,7 @@
 	"out_03C3": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 4.199040",
 		"wires": "new_n6_, new_n7_, new_n8_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1452,6 +1557,7 @@
 	"out_03C5": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"OR3x1_ASAP7_75t_R     g0(.A(d), .B(c), .C(a), .Y(new_n6_));",
@@ -1464,6 +1570,7 @@
 	"out_03C6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1477,6 +1584,7 @@
 	"out_03C7": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.598720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOT                   g0(.A(b), .Y(new_n6_));",
@@ -1490,6 +1598,7 @@
 	"out_03CF": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1502,6 +1611,7 @@
 	"out_03D4": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1515,6 +1625,7 @@
 	"out_03D5": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.531840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NAND2xp33_ASAP7_75t_R g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1529,6 +1640,7 @@
 	"out_03D6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -1547,6 +1659,7 @@
 	"out_03D7": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1560,6 +1673,7 @@
 	"out_03D8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -1576,6 +1690,7 @@
 	"out_03D9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1592,6 +1707,7 @@
 	"out_03DB": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.631360",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -1608,6 +1724,7 @@
 	"out_03DC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -1621,6 +1738,7 @@
 	"out_03DD": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.898880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"OR3x1_ASAP7_75t_R     g0(.A(d), .B(b), .C(a), .Y(new_n6_));",
@@ -1633,6 +1751,7 @@
 	"out_03DE": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.998400",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(a), .Y(new_n6_));",
@@ -1646,6 +1765,7 @@
 	"out_03FC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.132160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1658,6 +1778,7 @@
 	"out_0660": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 5.132160",
 		"wires": "new_n6_, new_n7_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1668,6 +1789,7 @@
 	"out_0661": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1680,6 +1802,7 @@
 	"out_0662": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.698240",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1693,6 +1816,7 @@
 	"out_0663": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1705,6 +1829,7 @@
 	"out_0666": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 4.432320",
 		"wires": "new_n6_, new_n7_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1715,6 +1840,7 @@
 	"out_0667": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.531840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1727,6 +1853,7 @@
 	"out_0669": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1740,6 +1867,7 @@
 	"out_066B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1754,6 +1882,7 @@
 	"out_066F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1767,6 +1896,7 @@
 	"out_0672": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1780,6 +1910,7 @@
 	"out_0673": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -1794,6 +1925,7 @@
 	"out_0676": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.531840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1807,6 +1939,7 @@
 	"out_0678": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.964160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1823,6 +1956,7 @@
 	"out_0679": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1839,6 +1973,7 @@
 	"out_067A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.964160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1855,6 +1990,7 @@
 	"out_067B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.597120",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1872,6 +2008,7 @@
 	"out_067E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.797760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -1888,6 +2025,7 @@
 	"out_0690": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.797760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -1907,6 +2045,7 @@
 	"out_0691": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -1926,6 +2065,7 @@
 	"out_0693": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.964160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -1946,6 +2086,7 @@
 	"out_0696": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.063680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1963,6 +2104,7 @@
 	"out_0697": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.363840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -1980,6 +2122,7 @@
 	"out_069F": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(c), .Y(new_n6_));",
@@ -1995,6 +2138,7 @@
 	"out_06B0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.897280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -2014,6 +2158,7 @@
 	"out_06B1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.130560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -2032,6 +2177,7 @@
 	"out_06B2": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.497600",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -2052,6 +2198,7 @@
 	"out_06B3": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -2069,6 +2216,7 @@
 	"out_06B4": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -2085,6 +2233,7 @@
 	"out_06B5": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -2103,6 +2252,7 @@
 	"out_06B6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2117,6 +2267,7 @@
 	"out_06B7": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOR3xp33_ASAP7_75t_R  g0(.A(d), .B(b), .C(a), .Y(new_n6_));",
@@ -2133,6 +2284,7 @@
 	"out_06B9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.897280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(d), .B(b), .Y(new_n6_));",
@@ -2151,6 +2303,7 @@
 	"out_06BD": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(d), .B(b), .Y(new_n6_));",
@@ -2169,6 +2322,7 @@
 	"out_06F0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2183,6 +2337,7 @@
 	"out_06F1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.730880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2198,6 +2353,7 @@
 	"out_06F2": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.763520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2215,6 +2371,7 @@
 	"out_06F6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2229,6 +2386,7 @@
 	"out_06F9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2242,6 +2400,7 @@
 	"out_0776": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"NAND2xp33_ASAP7_75t_R g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2255,6 +2414,7 @@
 	"out_0778": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 6.998400",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2268,6 +2428,7 @@
 	"out_0779": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.398080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2281,6 +2442,7 @@
 	"out_077A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.298560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2294,6 +2456,7 @@
 	"out_077E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -2309,6 +2472,7 @@
 	"out_07B0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -2326,6 +2490,7 @@
 	"out_07B1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(d), .B(a), .Y(new_n6_));",
@@ -2342,6 +2507,7 @@
 	"out_07B4": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2357,6 +2523,7 @@
 	"out_07B5": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.730880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -2377,6 +2544,7 @@
 	"out_07B6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -2393,6 +2561,7 @@
 	"out_07BC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.430720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -2412,6 +2581,7 @@
 	"out_07E0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2426,6 +2596,7 @@
 	"out_07E1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2440,6 +2611,7 @@
 	"out_07E2": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -2455,6 +2627,7 @@
 	"out_07E3": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 23.696640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g00(.A(c), .B(b), .Y(new_n6_));",
@@ -2475,6 +2648,7 @@
 	"out_07E6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.564480",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -2493,6 +2667,7 @@
 	"out_07E9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.430720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -2512,6 +2687,7 @@
 	"out_07F0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.298560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2525,6 +2701,7 @@
 	"out_07F1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.797760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2540,6 +2717,7 @@
 	"out_07F2": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.164800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2554,6 +2732,7 @@
 	"out_07F8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 14.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -2569,6 +2748,7 @@
 	"out_0FF0": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 2.099520",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(F));"
 		]
@@ -2576,6 +2756,7 @@
 	"out_1668": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2591,6 +2772,7 @@
 	"out_1669": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.897280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2606,6 +2788,7 @@
 	"out_166A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.797760",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -2621,6 +2804,7 @@
 	"out_166B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.730880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOR2xp33_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2636,6 +2820,7 @@
 	"out_166E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.363840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -2654,6 +2839,7 @@
 	"out_167E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.931520",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -2669,6 +2855,7 @@
 	"out_1681": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 18.363840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -2688,6 +2875,7 @@
 	"out_1683": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -2707,6 +2895,7 @@
 	"out_1686": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -2722,6 +2911,7 @@
 	"out_1687": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.730880",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -2741,6 +2931,7 @@
 	"out_1689": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.230080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -2760,6 +2951,7 @@
 	"out_168B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.063680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -2779,6 +2971,7 @@
 	"out_168E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.264320",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(d), .Y(new_n6_));",
@@ -2795,6 +2988,7 @@
 	"out_1696": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.231680",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -2809,6 +3003,7 @@
 	"out_1697": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.197440",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"AND3x1_ASAP7_75t_R    g0(.A(c), .B(b), .C(a), .Y(new_n6_));",
@@ -2825,6 +3020,7 @@
 	"out_1698": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.031040",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -2843,6 +3039,7 @@
 	"out_1699": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.964160",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(b), .B(a), .Y(new_n6_));",
@@ -2859,6 +3056,7 @@
 	"out_169A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.631360",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(a), .Y(new_n6_));",
@@ -2874,6 +3072,7 @@
 	"out_169B": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 15.130560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -2891,6 +3090,7 @@
 	"out_169E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 10.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(c), .B(b), .Y(new_n6_));",
@@ -2905,6 +3105,7 @@
 	"out_16A9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.230080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(d), .B(c), .Y(new_n6_));",
@@ -2925,6 +3126,7 @@
 	"out_16AC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.296960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -2945,6 +3147,7 @@
 	"out_16AD": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 19.296960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -2964,6 +3167,7 @@
 	"out_16BC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(c), .B(b), .Y(new_n6_));",
@@ -2980,6 +3184,7 @@
 	"out_16E9": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.230080",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"NOT                   g00(.A(d), .Y(new_n6_));",
@@ -2998,6 +3203,7 @@
 	"out_177E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.897280",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(c), .B(b), .Y(new_n6_));",
@@ -3017,6 +3223,7 @@
 	"out_178E": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 9.998400",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XNOR2xp5_ASAP7_75t_R  g0(.A(b), .B(a), .Y(new_n6_));",
@@ -3030,6 +3237,7 @@
 	"out_1796": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 17.631360",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_;",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -3046,6 +3254,7 @@
 	"out_1798": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 21.331200",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -3065,6 +3274,7 @@
 	"out_179A": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 21.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(b), .Y(new_n6_));",
@@ -3084,6 +3294,7 @@
 	"out_17AC": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 20.430720",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"NOT                   g00(.A(c), .Y(new_n6_));",
@@ -3103,6 +3314,7 @@
 	"out_17E8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 11.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -3117,6 +3329,7 @@
 	"out_18E7": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 21.130560",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_, new_n17_, new_n18_;",
 		"gates": [
 			"NOT                   g00(.A(a), .Y(new_n6_));",
@@ -3138,6 +3351,7 @@
 	"out_19E1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 16.996800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_, new_n16_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(d), .B(c), .Y(new_n6_));",
@@ -3157,6 +3371,7 @@
 	"out_19E3": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 13.996800",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_, new_n12_, new_n13_, new_n14_, new_n15_;",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g00(.A(d), .B(c), .Y(new_n6_));",
@@ -3175,6 +3390,7 @@
 	"out_19E6": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.097920",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -3189,6 +3405,7 @@
 	"out_1BD8": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 12.531840",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_, new_n11_",
 		"gates": [
 			"NOT                   g0(.A(a), .Y(new_n6_));",
@@ -3203,6 +3420,7 @@
 	"out_1BE4": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -3215,6 +3433,7 @@
 	"out_1EE1": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 8.864640",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_, new_n10_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
@@ -3228,6 +3447,7 @@
 	"out_3CC3": {
 		"inputs": ["a", "b", "c", "d"],
 		"outputs": "F",
+		"area": " 7.464960",
 		"wires": "new_n6_, new_n7_, new_n8_, new_n9_",
 		"gates": [
 			"XOR2xp5_ASAP7_75t_R   g0(.A(d), .B(c), .Y(new_n6_));",
