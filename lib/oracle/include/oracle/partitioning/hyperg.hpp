@@ -83,7 +83,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
 template<class Ntk>
 void hypergraph<Ntk>::dump() {
-  ofstream myfile;
+  std::ofstream myfile;
   myfile.open ("hypergraph.txt");
   myfile << hyperEdges.size() << " " << ntk.size()-1 << "\n";
   for (int i = 0; i < hyperEdges.size(); i++) {
