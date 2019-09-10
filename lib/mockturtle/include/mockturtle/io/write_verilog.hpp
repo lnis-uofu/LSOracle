@@ -38,6 +38,8 @@
 
 #include <ez/direct_iterator.hpp>
 #include <fmt/format.h>
+#include <oracle/partitioning/partition_manager.hpp>
+#include <oracle/partitioning/partition_view.hpp>
 
 #include "../traits.hpp"
 #include "../utils/node_map.hpp"
