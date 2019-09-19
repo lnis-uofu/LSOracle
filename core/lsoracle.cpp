@@ -1267,15 +1267,16 @@ namespace alice{
 
         mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
         mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
+
         std::vector<int> aig_parts;
         std::vector<int> mig_parts;
         std::vector<int> comb_aig_parts;
         std::vector<int> comb_mig_parts;
+        
         if(!store<mockturtle::aig_network>().empty()){
 
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
-          // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
@@ -1442,11 +1443,9 @@ namespace alice{
                             parts_to_combine.push_back(*conn_it);
                           }
                         }
-                        
                       } 
                     }
                     visited.push_back(i);
-
                   }
                 }
               }
@@ -1458,9 +1457,9 @@ namespace alice{
             
             mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig, 1);
             oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                    partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
+                    partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
+                    partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
-            // std::cout << "AIG Optimization\n";
             for(int i = 0; i < aig_parts.size(); i++){
               
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));

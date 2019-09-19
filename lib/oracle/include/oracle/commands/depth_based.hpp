@@ -73,8 +73,10 @@ protected:
       std::cout << "MIG created from AIG. There are " << ntk_mig.num_latches() << " latches on the new network " << std::endl;
       std::cout << "There are " << ntk.num_latches() << " latches on the source " << std::endl;
 
-      oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(),
-      partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
+       oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
+                    partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
+                    partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
+
       partitions_aig.connect_outputs(ntk);
 
       // Deal with MIG partitions

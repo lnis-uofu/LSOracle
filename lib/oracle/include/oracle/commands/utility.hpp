@@ -83,7 +83,6 @@ namespace alice
 
   mockturtle::mig_network aig_to_mig(mockturtle::aig_network aig, int skip_edge_min){
     mockturtle::mig_network mig;
-
     mockturtle::node_map<mockturtle::mig_network::signal, mockturtle::aig_network> node2new( aig );
 
     node2new[aig.get_node( aig.get_constant( false ) )] = mig.get_constant( false );
@@ -93,6 +92,9 @@ namespace alice
     }
 
     aig.foreach_pi( [&]( auto n ) {
+      if(aig.is_ro(n)){
+        mig._storage->data.latches.emplace_back(0);
+      }
       node2new[n] = mig.create_pi();
     } );
         
@@ -111,8 +113,6 @@ namespace alice
       else{
         node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
       }
-      
-          
     } );
 
     /* map primary outputs */
