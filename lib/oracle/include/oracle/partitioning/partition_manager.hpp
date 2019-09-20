@@ -78,16 +78,16 @@ namespace oracle
           _part_pis.insert(std::pair<int, node>(partition[curr_node], curr_node));
         }
 
-        if (ntk.is_ro(curr_node)) {
+        if (ntk.is_ro(curr_node) && !ntk.is_constant(curr_node)) {
           // std::cout << "RO\n";
           _part_scope[partition[curr_node]].insert(curr_node);
           _part_pis.insert(std::pair<int, node>(partition[curr_node], curr_node));
-          if(ntk.is_po(curr_node)){
+          if(ntk.is_po(curr_node) && !ntk.is_constant(curr_node)){
             _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
           }
         }
         //get rid of circuit POs
-        else if (ntk.is_po(curr_node)) {
+        else if (ntk.is_po(curr_node) && !ntk.is_constant(curr_node)) {
           // std::cout << "PO\n";
           _part_scope[partition[curr_node]].insert(curr_node);
           _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
@@ -265,12 +265,14 @@ namespace oracle
         });
 
         for(auto i=0; i < ntk.num_pos(); i++){
-          if(i<ntk.num_pos()-ntk.num_latches()){
+          if(i<ntk.num_pos()-ntk.num_latches() && !ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))){
             _part_pos.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index], ntk.index_to_node(ntk._storage->outputs[i].index)));
           }
           else {
-            _part_ris.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index], ntk.index_to_node(ntk._storage->outputs[i].index)));
-          }
+			if(!ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))){
+            	_part_ris.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index], ntk.index_to_node(ntk._storage->outputs[i].index)));
+            }
+		  }
         }
 
         for(int i = 0; i < part_num; i++){
@@ -369,23 +371,21 @@ namespace oracle
       }
       cone_size[output] = size;
       logic_cone_inputs[output] = inputs;
-
     }//BFS_traversal()
 
     int computeLevel( Ntk const& ntk, node curr_node, int partition ) {
       //if node not visited
-      if(ntk._storage->nodes[curr_node].data[1].h1==0) {
-
+      if(ntk._storage->nodes[curr_node].data[1].h1==0 && !ntk.is_constant(curr_node))  {
         //set node as visited
         ntk._storage->nodes[curr_node].data[1].h1=1;
-
         //if is input
         if (partitionInputs[partition].find(curr_node) != partitionInputs[partition].end()) {
-          return 0;
+		  return 0;
         }
 
         auto inIdx2 = ntk._storage->nodes[curr_node].children[1].data;
-        if (inIdx2 & 1)
+		
+		if (inIdx2 & 1)
           inIdx2 = inIdx2 - 1;
 
         //calculate input node index
@@ -589,17 +589,14 @@ namespace oracle
 
     void generate_truth_tables(Ntk const& ntk){
       for(int i = 0; i < num_partitions; i++){                  
-                  
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
-
           auto curr_output = *it;   
           BFS_traversal(ntk, curr_output, i); 
           if(ntk.is_constant(curr_output)){
             std::cout << "CONSTANT\n";
           }
           else if(logic_cone_inputs[curr_output].size() <= 16 && !ntk.is_constant(curr_output)){
-
             int idx = 0;
             std::set<int>::iterator input_it;
             for(input_it = logic_cone_inputs[curr_output].begin(); input_it != logic_cone_inputs[curr_output].end(); ++input_it){
@@ -612,7 +609,6 @@ namespace oracle
             }
 
             tt_build(ntk, i, curr_output, curr_output);
-                              
             output_tt[curr_output] = tt_map[curr_output];
             ntk.foreach_node( [&]( auto node ) {
               int index = ntk.node_to_index(node);
@@ -760,17 +756,14 @@ namespace oracle
         auto average_nodes = 0;
         auto average_depth = 0;
 
-        // std::cout << "Current partition = " << partition << "\n";
-
         mockturtle::depth_view ntk_depth{ntk};
 
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
           auto output = *it;
-          // std::cout << "curr output = " << output << "\n";
-          total_depth += computeLevel(ntk, output, partition);
-          // std::cout << "updated total depth\n";
-          total_outputs++;
+		  if(ntk.is_constant(output)) continue;  	
+          	total_depth += computeLevel(ntk, output, partition);
+          	total_outputs++;
         }
         if(total_outputs>0) {
            average_nodes = _num_nodes_cone / total_outputs;
@@ -779,16 +772,15 @@ namespace oracle
 
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
           auto output = *it;
-          // std::cout << "current output = " << output << "\n";
           _num_nodes_cone = 0;
           std::vector<float> image = get_km_image(ntk, partition, output);
-          // std::cout << "received image of size = " << image.size() << "\n";
+          //std::cout << "received image of size = " << image.size() << "\n";
           if(image.size() > 0){
             const fdeep::shared_float_vec sv(fplus::make_shared_ref<fdeep::float_vec>(std::move(image)));
             fdeep::tensor5 input(fdeep::shape5(1, 1, row_num, col_num, chann_num), sv);
             const auto result = model.predict_class({input});
-            // std::cout << "Result\n";
-            // std::cout << labels.at(result) << "\n";
+            //std::cout << "Result\n";
+            //std::cout << labels.at(result) << "\n";
 
             weight = 1;
             weight_nodes = 1;

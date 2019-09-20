@@ -1328,17 +1328,15 @@ namespace alice{
             else{
               if(!nn_model.empty()){
                 partitions_aig.run_classification(ntk_aig, nn_model);
-
                 aig_parts = partitions_aig.get_aig_parts();
-                mig_parts = partitions_aig.get_mig_parts();
-              }
+				mig_parts = partitions_aig.get_mig_parts();
+			  }
               else{
                 std::cout << "Must include CNN model json file\n";
               }
 
             }
 
-            std::cout << "Scheduled optimization\n";
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
 
             if(is_set("combine")){
