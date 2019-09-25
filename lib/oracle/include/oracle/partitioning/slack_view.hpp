@@ -101,7 +101,19 @@ namespace oracle
         return max_slack;
       }
 
+      std::vector<node> get_critical_path( Ntk const& ntk ){
+        std::vector<node> crit_path;
+        ntk.foreach_node( [&]( auto curr_node ){
+          if(is_critical_path(curr_node)){
+            crit_path.push_back(curr_node);
+          }
+        });
+        return crit_path;
+      }
+
   private:
+
+    
 
     void get_required_arrival( Ntk const& ntk ){
 

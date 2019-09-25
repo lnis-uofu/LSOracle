@@ -21,6 +21,16 @@ namespace alice
   class mixed_2step_command : public alice::command{
 
     public:
+      using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+      using aig_ntk = std::shared_ptr<aig_names>;
+      using part_man_aig = oracle::partition_manager<aig_names>;
+      using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+
+      using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+      using mig_ntk = std::shared_ptr<mig_names>;
+      using part_man_mig = oracle::partition_manager<mig_names>;
+      using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
       explicit mixed_2step_command( const environment::ptr& env )
         : command( env, "Performs AIG optimization on corresponding partitions and then repartition for MIG optimization" ){
         opts.add_option( "--nn_model,-c", nn_model, "Trained neural network model for classification" );
@@ -33,8 +43,8 @@ namespace alice
       void execute(){
 
         //read AIG to generate hypergraph
-        if(!store<mockturtle::aig_network>().empty()) {
-          auto ntk = store<mockturtle::aig_network>().current();
+        if(!store<aig_ntk>().empty()) {
+          auto ntk = *store<aig_ntk>().current();
           std::cout << "AIG initial size = " << ntk.num_gates() << std::endl;
           mockturtle::depth_view depth{ntk};
           std::cout << "AIG initial size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
@@ -42,7 +52,7 @@ namespace alice
           mockturtle::mig_npn_resynthesis resyn_mig;
           mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
 
-          oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk, num_parts);
+          oracle::partition_manager<aig_names> partitions_aig(ntk, num_parts);
 
           std::vector<int> aig_parts1;
           std::vector<int> mig_parts1;
@@ -50,7 +60,7 @@ namespace alice
           if(is_set("brute")){
 
             for(int i = 0; i < num_parts; i++){
-              oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk, i);
+              oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk, i);
 
               auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
               mockturtle::depth_view part_aig_depth{opt_aig};
@@ -98,7 +108,7 @@ namespace alice
           std::cout << "Total number of partitions for MIG 1 " << mig_parts1.size() << std::endl;
 
           for (int i = 0; i < aig_parts1.size(); i++) {
-            oracle::partition_view<mockturtle::aig_network> part_aig = partitions_aig.create_part(ntk, aig_parts1.at(i));
+            oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk, aig_parts1.at(i));
 
             std::cout << "\nPartition " << i << "\n";
             mockturtle::depth_view part_depth{part_aig};
@@ -122,14 +132,14 @@ namespace alice
 
           std::cout << "Final AIG size = " << ntk_final.num_gates() << " and depth = " << depth_final.depth() << "\n";
 
-          oracle::partition_manager<mockturtle::aig_network> tmp(ntk_final, num_parts);
+          oracle::partition_manager<aig_names> tmp(ntk_final, num_parts);
 
           std::vector<int> aig_parts2;
           std::vector<int> mig_parts2;
           if(is_set("brute")){
 
             for(int i = 0; i < num_parts; i++){
-              oracle::partition_view<mockturtle::aig_network> part_aig = tmp.create_part(ntk_final, i);
+              oracle::partition_view<aig_names> part_aig = tmp.create_part(ntk_final, i);
 
               auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
               mockturtle::depth_view part_aig_depth{opt_aig};
@@ -180,13 +190,13 @@ namespace alice
           auto mig = mockturtle::node_resynthesis<mockturtle::mig_network>(ntk_final, convert_mig);
           std::cout << "Initial MIG size = " << mig.num_gates() << "\n";
 
-          oracle::partition_manager<mockturtle::mig_network> partitions_mig(mig, num_parts);
+          oracle::partition_manager<mig_names> partitions_mig(mig, num_parts);
 
           //Deal with AIG partitions
           std::cout << "Total number of partitions for AIG 2 " << aig_parts2.size() << std::endl;
           std::cout << "Total number of partitions for MIG 2 " << mig_parts2.size() << std::endl;
           for (int i = 0; i < mig_parts2.size(); i++) {
-            oracle::partition_view<mockturtle::mig_network> part_mig = partitions_mig.create_part(mig, mig_parts2.at(i));
+            oracle::partition_view<mig_names> part_mig = partitions_mig.create_part(mig, mig_parts2.at(i));
 
             std::cout << "\nPartition " << i << "\n";
             mockturtle::depth_view part_depth{part_mig};

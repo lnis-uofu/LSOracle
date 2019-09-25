@@ -41,19 +41,19 @@
 #include "partitioning/fpga_seed_partitioner.hpp"
 #include "partitioning/slack_view.hpp"
 
-/*
-#include "commands/testing/level_partition_manager.hpp"
-#include "commands/testing/test_sort_fanout.hpp"
-#include "commands/testing/test_cad_proj_part.hpp"
-*/
-
-#include "commands/depth_based.hpp"
-#include "commands/mixed_2steps.hpp"
+// #include "commands/depth_based.hpp"
+// #include "commands/mixed_2steps.hpp"
 #include "commands/get_all_partitions.hpp"
 #include "commands/partitioning.hpp"
 #include "commands/generate_truth_tables.hpp"
 #include "commands/print_karnaugh_map.hpp"
 #include "commands/utility.hpp"
+#include "commands/refactor.hpp"
+#include "commands/balancing.hpp"
+#include "commands/balance.hpp"
+#include "commands/crit_path_stats.hpp"
+#include "commands/ntk_stats.hpp"
+
 // #include "commands/testing/test_aig_then_part.hpp"
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"

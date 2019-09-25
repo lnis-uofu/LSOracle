@@ -18,6 +18,26 @@
 
 namespace alice
 {   
+  // using aig_names = mockturtle::mapping_view<mockturtle::names_view<mockturtle::aig_network>, true>;
+  // using aig_ntk = std::shared_ptr<aig_names>;
+  // using part_man_aig = oracle::partition_manager<aig_names>;
+  // using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+
+  // using mig_names = mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>;
+  // using mig_ntk = std::shared_ptr<mig_names>;
+  // using part_man_mig = oracle::partition_manager<mig_names>;
+  // using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
+  using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+  using aig_ntk = std::shared_ptr<aig_names>;
+  using part_man_aig = oracle::partition_manager<aig_names>;
+  using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+
+  using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+  using mig_ntk = std::shared_ptr<mig_names>;
+  using part_man_mig = oracle::partition_manager<mig_names>;
+  using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
   /***************************************************
     Truth Table
   ***************************************************/
@@ -80,9 +100,13 @@ namespace alice
   /***************************************************
     Network conversion
   ***************************************************/
+  mig_ntk aig_to_mig(aig_names aig, int skip_edge_min){
 
-  mockturtle::mig_network aig_to_mig(mockturtle::aig_network aig, int skip_edge_min){
-    mockturtle::mig_network mig;
+    using NtkSource = aig_names;
+    using NtkDest = mig_names;
+    mockturtle::mig_network ntk;
+    NtkDest mig( ntk );
+
 
     mockturtle::node_map<mockturtle::mig_network::signal, mockturtle::aig_network> node2new( aig );
 
@@ -94,6 +118,12 @@ namespace alice
 
     aig.foreach_pi( [&]( auto n ) {
       node2new[n] = mig.create_pi();
+
+      if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
+      {
+        if ( aig.has_name( aig.make_signal( n ) ) )
+          mig.set_name( node2new[n], aig.get_name( aig.make_signal( n ) ) );
+      }
     } );
         
     aig.foreach_node( [&]( auto n ) {
@@ -112,18 +142,31 @@ namespace alice
         node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
       }
       
+      if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
+      {
+        if ( aig.has_name( aig.make_signal( n ) ) )
+          mig.set_name( node2new[n], aig.get_name( aig.make_signal( n ) ) );
+      }
           
     } );
 
     /* map primary outputs */
-    aig.foreach_po( [&]( auto const& f ) {
+    aig.foreach_po( [&]( auto const& f, auto index ) {
       mig.create_po( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
+
+      if constexpr ( mockturtle::has_has_output_name_v<NtkSource> && mockturtle::has_get_output_name_v<NtkSource> && mockturtle::has_set_output_name_v<NtkDest> )
+      {
+        if ( aig.has_output_name( index ) )
+        {
+          mig.set_output_name( index, aig.get_output_name( index ) );
+        }
+      }
     } );
 
-    return mig;
+    return std::make_shared<mig_names>( mig );
   }
 
-  mockturtle::mig_network part_to_mig(oracle::partition_view<mockturtle::mig_network> part, int skip_edge_min){
+  mig_ntk part_to_mig(oracle::partition_view<mig_names> part, int skip_edge_min){
     mockturtle::mig_network mig;
 
     std::unordered_map<mockturtle::mig_network::node, mockturtle::mig_network::signal> node2new;
@@ -175,11 +218,14 @@ namespace alice
     } );
     // std::cout << "created POs\n";
 
-    return mig;
+    return std::make_shared<mig_names>( mig );
   }
 
-  mockturtle::aig_network mig_to_aig(mockturtle::mig_network mig){
-    mockturtle::aig_network aig;
+  aig_ntk mig_to_aig(mig_names mig){
+    using NtkSource = mig_names;
+    using NtkDest = aig_names;
+    mockturtle::aig_network ntk;
+    NtkDest aig( ntk );
 
     mockturtle::node_map<mockturtle::aig_network::signal, mockturtle::mig_network> node2new( mig );
 
@@ -191,6 +237,12 @@ namespace alice
 
     mig.foreach_pi( [&]( auto n ) {
       node2new[n] = aig.create_pi();
+
+      if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
+      {
+        if ( mig.has_name( mig.make_signal( n ) ) )
+          aig.set_name( node2new[n], mig.get_name( mig.make_signal( n ) ) );
+      }
     } );
     
     std::set<mockturtle::mig_network::node> nodes_to_change;    
@@ -223,15 +275,29 @@ namespace alice
         }
       }
       node2new[n] = aig.create_and(children.at(0), children.at(1));
+
+      if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
+      {
+        if ( mig.has_name( mig.make_signal( n ) ) )
+          aig.set_name( node2new[n], mig.get_name( mig.make_signal( n ) ) );
+      }
           
     } );
 
     /* map primary outputs */
-    mig.foreach_po( [&]( auto const& f ) {
+    mig.foreach_po( [&]( auto const& f, auto index ) {
       aig.create_po( mig.is_complemented( f ) ? aig.create_not( node2new[f] ) : node2new[f] );
+
+      if constexpr ( mockturtle::has_has_output_name_v<NtkSource> && mockturtle::has_get_output_name_v<NtkSource> && mockturtle::has_set_output_name_v<NtkDest> )
+      {
+        if ( mig.has_output_name( index ) )
+        {
+          aig.set_output_name( index, mig.get_output_name( index ) );
+        }
+      }
     } );
 
-    return aig;
+    return std::make_shared<aig_names>( aig );
   }
 
   /***************************************************/

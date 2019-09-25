@@ -21,6 +21,17 @@ namespace alice
   class get_all_partitions_command : public alice::command{
 
     public:
+
+      using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+      using aig_ntk = std::shared_ptr<aig_names>;
+      using part_man_aig = oracle::partition_manager<aig_names>;
+      using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+
+      using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+      using mig_ntk = std::shared_ptr<mig_names>;
+      using part_man_mig = oracle::partition_manager<mig_names>;
+      using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
       explicit get_all_partitions_command( const environment::ptr& env )
           : command( env, "Exports every partition to Verilog files" ){
             opts.add_option( "--directory,directory", dir, "Directory to write Verilog files to" )->required();
@@ -34,11 +45,11 @@ namespace alice
         mockturtle::mig_npn_resynthesis resyn_mig;
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
         if(is_set("mig")){
-          if(!store<mockturtle::mig_network>().empty()){
-            auto ntk = store<mockturtle::mig_network>().current(); 
+          if(!store<mig_ntk>().empty()){
+            auto ntk = *store<mig_ntk>().current(); 
             std::cout << "\n";
-            if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-              auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current(); 
+            if(!store<part_man_mig_ntk>().empty()){
+              auto partitions = *store<part_man_mig_ntk>().current(); 
               for(int i = 0; i < partitions.get_part_num(); i++){
                 std::vector<mockturtle::mig_network> parts;
                 std::vector<std::string> filenames;
@@ -48,7 +59,7 @@ namespace alice
                 std::cout << "Number of Logic Cones = " << part_outputs.size() << "\n";
                 mkdir(dir.c_str(), 0777);
                 
-                oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, partition);
+                oracle::partition_view<mig_names> part = partitions.create_part(ntk, partition);
                 auto part_ntk = mockturtle::node_resynthesis<mockturtle::mig_network>(part, resyn_mig);
                 
                 std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";;
@@ -71,15 +82,11 @@ namespace alice
           }
         }
         else{
-          if(!store<mockturtle::aig_network>().empty()){
-            auto ntk = store<mockturtle::aig_network>().current(); 
+          if(!store<aig_ntk>().empty()){
+            auto ntk = *store<aig_ntk>().current(); 
             std::cout << "\n";
-            if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-              auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-              mockturtle::node_map<std::string, mockturtle::aig_network> node_names( ntk );
-              mockturtle::node_map<std::string, mockturtle::aig_network> input_names( ntk );
-              std::string toplevel_module = std::filesystem::path(ntk._storage->net_name).filename();
-              std::string toplevel_file = dir + "/" + toplevel_module + ".v"; 
+            if(!store<part_man_aig_ntk>().empty()){
+              auto partitions = *store<part_man_aig_ntk>().current(); 
               for(int i = 0; i < partitions.get_part_num(); i++){
                 std::vector<mockturtle::aig_network> parts;
                 std::vector<std::string> filenames;
@@ -89,34 +96,19 @@ namespace alice
                 std::cout << "Number of Logic Cones = " << part_outputs.size() << "\n";
                 mkdir(dir.c_str(), 0777);
 
-                oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, partition);
+                oracle::partition_view<aig_names> part = partitions.create_part(ntk, partition);
                 auto part_ntk = mockturtle::node_resynthesis<mockturtle::aig_network>(part, resyn_aig);
                 
-                std::string modulename = std::filesystem::path( ntk._storage->net_name + "_" + std::to_string(partition) ).filename();
                 std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";
                 filenames.push_back(filename);
                 parts.push_back(part_ntk);
-
-                if ( part_ntk.num_pos() == 0 )
-                    continue;
                 
                 assert(parts.size() == filenames.size());
                 for(int j = 0; j < parts.size(); j++){
-                    mockturtle::write_verilog(parts.at(j), filenames.at(j), modulename);
+                    mockturtle::write_verilog(parts.at(j), filenames.at(j));
                 }
-
-                if (i == 0)
-                    mockturtle::write_toplevel_verilog(ntk, partitions, toplevel_file, node_names, input_names, toplevel_module);
-                
-                mockturtle::call_submodule( ntk, part_ntk, toplevel_file, modulename, i, part, node_names, input_names);
-
                 std::cout << "\n";
               }
-              std::ofstream os( toplevel_file.c_str(), std::ofstream::app);
-              os << "endmodule\n"
-                 << std::flush;
-
-              os.close();
             }
             else{
                 std::cout << "Partitions have not been mapped\n";

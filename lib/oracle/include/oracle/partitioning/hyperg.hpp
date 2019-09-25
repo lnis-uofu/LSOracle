@@ -5,6 +5,8 @@
 
 #pragma once
 #include <stdio.h>
+#include <fstream>
+#include <iostream>
 #include <mockturtle/traits.hpp>
 
 namespace oracle {
@@ -14,7 +16,7 @@ class hypergraph {
 
   Ntk const& ntk;
   std::vector<std::vector<uint32_t>> hyperEdges;
-  std::set<Ntk::node> nodes;
+  std::set<typename Ntk::node> nodes;
   std::vector<uint32_t> connections;
 
 public:

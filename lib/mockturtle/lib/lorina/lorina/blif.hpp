@@ -52,6 +52,40 @@ public:
   using output_cover_t = std::vector<std::pair<std::string, std::string>>;
 
 public:
+
+  /*! \brief Callback method for parsed input name.
+   *
+   * \param index Index of the input
+   * \param name Input name
+   */
+  virtual void on_input_name( uint32_t index, const std::string& name ) const
+  {
+    (void)index;
+    (void)name;
+  }
+
+  /*! \brief Callback method for parsed latch name.
+   *
+   * \param index Index of the latch
+   * \param name Latch name
+   */
+  virtual void on_latch_name( uint32_t index, const std::string& name ) const
+  {
+    (void)index;
+    (void)name;
+  }
+
+  /*! \brief Callback method for parsed output name.
+   *
+   * \param index Index of the output
+   * \param name Output name
+   */
+  virtual void on_output_name( uint32_t index, const std::string& name ) const
+  {
+    (void)index;
+    (void)name;
+  }
+  
   /*! \brief Callback method for parsed model.
    *
    * \param model_name Name of the model
@@ -191,6 +225,13 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
 {
   return_code result = return_code::success;
 
+  const auto dispatch_function = [&]( std::vector<std::string> inputs, std::string output, std::vector<std::pair<std::string, std::string>> tt )
+    {
+      reader.on_gate( inputs, output, tt );
+    };
+
+  detail::call_in_topological_order<std::vector<std::string>, std::string, std::vector<std::pair<std::string, std::string>>> on_action( dispatch_function );
+
   std::smatch m;
   detail::foreach_line_in_file_escape( in, [&]( std::string line ) {
     redo:
@@ -227,7 +268,7 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
           return false;
         } );
 
-        reader.on_gate( args, output, tt );
+        on_action.call_deferred( args, output, args, output, tt );
 
         if ( in.eof() )
         {
@@ -253,7 +294,9 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
       {
         for ( const auto& input : detail::split( detail::trim_copy( m[1] ), " " ) )
         {
-          reader.on_input( detail::trim_copy( input ) );
+          auto const s = detail::trim_copy( input );
+          on_action.declare_known( s );
+          reader.on_input( s );
         }
         return true;
       }

@@ -21,6 +21,16 @@ namespace alice
   class partitioning_command : public alice::command{
 
     public:
+      using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+      using aig_ntk = std::shared_ptr<aig_names>;
+      using part_man_aig = oracle::partition_manager<aig_names>;
+      using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+
+      using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+      using mig_ntk = std::shared_ptr<mig_names>;
+      using part_man_mig = oracle::partition_manager<mig_names>;
+      using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
       explicit partitioning_command( const environment::ptr& env )
         : command( env, "Partitionins current network using k-means hypergraph partitioner" ) {
 
@@ -33,36 +43,36 @@ namespace alice
       void execute(){
         mockturtle::mig_npn_resynthesis resyn_mig;
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
+        
         if(is_set("mig")){
-          if(!store<mockturtle::mig_network>().empty()){
+          if(!store<mig_ntk>().empty()){
             std::cout << "Partitioning stored MIG network\n";
-            auto ntk = store<mockturtle::mig_network>().current();
-
+            auto ntk = store<mig_ntk>().current();
             if(config_direc != ""){
-              oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions, config_direc);
-              store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
+              oracle::partition_manager<mig_names> partitions(*ntk, num_partitions, config_direc);
+              store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
             }
             else{
-              oracle::partition_manager<mockturtle::mig_network> partitions(ntk, num_partitions);
-              store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
-            }           
+              oracle::partition_manager<mig_names> partitions(*ntk, num_partitions);
+              store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+            }
           }
           else{
             std::cout << "MIG network not stored\n";
           }
         }
-        else{
-          if(!store<mockturtle::aig_network>().empty()){
-            std::cout << "Partitioning stored AIG network\n";
-            auto ntk = store<mockturtle::aig_network>().current();
 
+        else{
+          if(!store<aig_ntk>().empty()){
+            std::cout << "Partitioning stored AIG network\n";
+            auto ntk = store<aig_ntk>().current();
             if(config_direc != ""){
-              oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions, config_direc);
-              store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+              oracle::partition_manager<aig_names> partitions(*ntk, num_partitions, config_direc);
+              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
             }
             else{
-              oracle::partition_manager<mockturtle::aig_network> partitions(ntk, num_partitions);
-              store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+              oracle::partition_manager<aig_names> partitions(*ntk, num_partitions);
+              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
             }
           }
           else{

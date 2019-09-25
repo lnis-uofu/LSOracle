@@ -9,9 +9,11 @@
 #include <stdlib.h>
 
 namespace mockturtle{
+    
     class aig_script{
     public:
         mockturtle::aig_network run(mockturtle::aig_network& aig){
+
             // std::cout << "HERE\n";
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::cut_rewriting_params ps;
@@ -71,8 +73,6 @@ namespace mockturtle{
             //DEPTH REWRITING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
-
-            // std::cout << "AND nodes " << aig.num_gates() << " AIG depth " << mig_depth3.depth() << std::endl;
 
             return aig;
         }

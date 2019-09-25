@@ -430,7 +430,6 @@ static inline int Vec_IntEntry( Vec_Int_t * p, int i )
 ***********************************************************************/
 static inline int * Vec_IntEntryP( Vec_Int_t * p, int i )
 {
-    printf("i = %d and p's size is %d\n", i, p->nSize);
     assert( i >= 0 && i < p->nSize );
     return p->pArray + i;
 }

@@ -60,9 +60,9 @@ namespace oracle
 
     public:
 
-      partition_view(){
-        add_node(get_node(get_constant(false)));
-      }
+      // partition_view(){
+      //   add_node(get_node(get_constant(false)));
+      // }
 
       explicit partition_view( Ntk const& ntk, std::set<node> const& leaves, std::set<node> const& pivots, bool auto_extend = true )
               : Ntk( ntk )
@@ -106,7 +106,7 @@ namespace oracle
 
           auto sig = this->make_signal(n);
           if(ntk.is_complemented(sig)) {
-            sig = ntk.create_not(sig);
+            sig = this->create_not(sig);
           }
           _roots.push_back(sig);
         }

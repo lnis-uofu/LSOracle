@@ -595,7 +595,6 @@ void Cba_BlastSqrt( Gia_Man_t * pNew, int * pNum, int nNum, Vec_Int_t * vTmp, Ve
 ***********************************************************************/
 Gia_Man_t * Cba_NtkBlast( Cba_Ntk_t * p, int fSeq )
 {
-    printf("p's size is %d\n", abc::Cba_NtkObjNum(p));
     int fUseOldMultiplierBlasting = 0;
     Gia_Man_t * pTemp, * pNew;
     Vec_Int_t * vTemp0, * vTemp1, * vTemp2, * vRes;
@@ -622,10 +621,8 @@ Gia_Man_t * Cba_NtkBlast( Cba_Ntk_t * p, int fSeq )
     Cba_NtkForEachObj( p, i )
     {
         Type = Cba_ObjType(p, i);
-        printf("Type = %d i = %d\n", Type, i);
-        if ( Type == CBA_OBJ_PO ){
+        if ( Type == CBA_OBJ_PO )
             continue;
-        }
         assert( Vec_IntSize(vBits) == Cba_FonCopy(p, Cba_ObjFon0(p, i)) );
         nRange = Cba_ObjRangeSize(p, i); assert( nRange > 0 );
         if ( Cba_ObjIsPi(p, i) || Cba_ObjIsSeq(p, i) )
@@ -940,10 +937,7 @@ Gia_Man_t * Cba_NtkBlast( Cba_Ntk_t * p, int fSeq )
             assert( 0 );
             //Cba_BlastTable( pNew, Cba_ObjTable(p, p, i), pFans0, nRange0, nRange, vRes );
         }
-        else{
-            printf("YO\n");
-            assert( 0 );
-        }
+        else assert( 0 );
         Vec_IntAppend( vBits, vRes );
         p->pDesign->nAnds[Type] += Gia_ManAndNum(pNew) - nAndPrev;
     }
@@ -965,7 +959,6 @@ Gia_Man_t * Cba_NtkBlast( Cba_Ntk_t * p, int fSeq )
     {
         if ( fSeq )
         {
-            printf("HERE!!");
             assert( Cba_ObjType(p, iObj) == CBA_BOX_DFFCPL );
             iFon0 = Cba_ObjFinFon( p, iObj, 0 );
             iFon1 = Cba_ObjFinFon( p, iObj, 1 );

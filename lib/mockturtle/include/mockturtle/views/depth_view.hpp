@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,6 +26,7 @@
 /*!
   \file depth_view.hpp
   \brief Implements depth and level for a network
+
   \author Mathias Soeken
 */
 
@@ -40,6 +41,11 @@
 
 namespace mockturtle
 {
+
+struct depth_view_params
+{
+  bool count_complements{false};
+};
 
 /*! \brief Implements `depth` and `level` methods for networks.
  *
@@ -59,11 +65,15 @@ namespace mockturtle
  * Example
  *
    \verbatim embed:rst
+
    .. code-block:: c++
+
       // create network somehow
       aig_network aig = ...;
+
       // create a depth view on the network
       depth_view aig_depth{aig};
+
       // print depth
       std::cout << "Depth: " << aig_depth.depth() << "\n";
    \endverbatim
@@ -77,8 +87,9 @@ template<typename Ntk>
 class depth_view<Ntk, true> : public Ntk
 {
 public:
-  depth_view( Ntk const& ntk ) : Ntk( ntk )
+  depth_view( Ntk const& ntk, depth_view_params const& ps = {} ) : Ntk( ntk )
   {
+    (void)ps;
   }
 };
 
@@ -95,10 +106,11 @@ public:
    * \param ntk Base network
    * \param count_complements Count inverters as 1
    */
-  explicit depth_view( Ntk const& ntk, bool count_complements = false )
+  explicit depth_view( Ntk const& ntk, depth_view_params const& ps = {} )
       : Ntk( ntk ),
-        _count_complements( count_complements ),
-        _levels( ntk )
+        _ps( ps ),
+        _levels( ntk ),
+        _crit_path( ntk )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( has_size_v<Ntk>, "Ntk does not implement the size method" );
@@ -122,6 +134,11 @@ public:
     return _levels[n];
   }
 
+  bool is_on_critical_path( node const& n ) const
+  {
+    return _crit_path[n];
+  }
+
   void set_level( node const& n, uint32_t level )
   {
     _levels[n] = level;
@@ -130,6 +147,7 @@ public:
   void update_levels()
   {
     _levels.reset( 0 );
+    _crit_path.reset( false );
 
     this->incr_trav_id();
     compute_levels();
@@ -156,9 +174,8 @@ private:
 
     uint32_t level{0};
     this->foreach_fanin( n, [&]( auto const& f ) {
-      // std::cout << "fanin = " << f.index << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
-      if ( _count_complements && this->is_complemented( f ) )
+      if ( _ps.count_complements && this->is_complemented( f ) )
       {
         clevel++;
       }
@@ -172,25 +189,50 @@ private:
   {
     _depth = 0;
     this->foreach_po( [&]( auto const& f ) {
-      // std::cout << "PO = " << f.index << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
-      if ( _count_complements && this->is_complemented( f ) )
+      if ( _ps.count_complements && this->is_complemented( f ) )
       {
         clevel++;
       }
       _depth = std::max( _depth, clevel );
     } );
+
+    this->foreach_po( [&]( auto const& f ) {
+      const auto n = this->get_node( f );
+      if ( _levels[n] == _depth )
+      {
+        set_critical_path( n );
+      }
+    } );
   }
 
-  bool _count_complements{false};
+  void set_critical_path( node const& n )
+  {
+    _crit_path[n] = true;
+    if ( !this->is_constant( n ) && !this->is_pi( n ) )
+    {
+      const auto lvl = _levels[n];
+      this->foreach_fanin( n, [&]( auto const& f ) {
+        const auto cn = this->get_node( f );
+        const auto offset = _ps.count_complements && this->is_complemented( f ) ? 2u : 1u;
+        if ( _levels[cn] + offset == lvl && !_crit_path[cn] )
+        {
+          set_critical_path( cn );
+        }
+      } );
+    }
+  }
+
+  depth_view_params _ps;
   node_map<uint32_t, Ntk> _levels;
+  node_map<uint32_t, Ntk> _crit_path;
   uint32_t _depth;
 };
 
 template<class T>
-depth_view( T const& ) -> depth_view<T>;
+depth_view( T const& )->depth_view<T>;
 
 template<class T>
-depth_view( T const&, bool ) -> depth_view<T>;
+depth_view( T const&, depth_view_params const& )->depth_view<T>;
 
 } // namespace mockturtle

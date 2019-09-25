@@ -45,7 +45,7 @@ namespace lorina
 
 /*! \brief A reader visitor for the PLA format.
  *
- * Callbacks for the PLA format.
+ * Callbacks for reading the PLA format.
  */
 class pla_reader
 {
@@ -54,7 +54,7 @@ public:
    *
    * \param number_of_inputs Number of inputs
    */
-  virtual void on_number_of_inputs( std::size_t number_of_inputs ) const
+  virtual void on_number_of_inputs( uint64_t number_of_inputs ) const
   {
     (void)number_of_inputs;
   }
@@ -63,7 +63,7 @@ public:
    *
    * \param number_of_outputs Number of outputs
    */
-  virtual void on_number_of_outputs( std::size_t number_of_outputs ) const
+  virtual void on_number_of_outputs( uint64_t number_of_outputs ) const
   {
     (void)number_of_outputs;
   }
@@ -72,9 +72,22 @@ public:
    *
    * \param number_of_terms Number of terms
    */
-  virtual void on_number_of_terms( std::size_t number_of_terms ) const
+  virtual void on_number_of_terms( uint64_t number_of_terms ) const
   {
     (void)number_of_terms;
+  }
+
+  /*! \brief Callback method for parsed keyword-value pair.
+   *
+   * \param keyword Parsed keyword
+   * \param value Parsed value
+   * \return true if keyword is recognized and handled, false if keyword is not supported
+   */
+  virtual bool on_keyword( const std::string& keyword, const std::string& value ) const
+  {
+    (void)keyword;
+    (void)value;
+    return false;
   }
 
   /*! \brief Callback method for parsed end.
@@ -94,6 +107,81 @@ public:
   }
 }; /* pla_reader */
 
+/*! \brief A writer for the PLA format.
+ *
+ * Callbacks for writing the PLA format.
+ *
+ */
+class pla_writer
+{
+public:
+  /*! \brief Constructs a PLA writer.
+   *
+   * \param os Output stream
+   */
+  pla_writer( std::ostream& os )
+    : _os( os )
+  {}
+
+  /*! \brief Callback method for writing number of inputs.
+   *
+   * \param number_of_inputs Number of inputs
+   */
+  virtual void on_number_of_inputs( uint64_t number_of_inputs ) const
+  {
+    _os << fmt::format( ".i {}\n", number_of_inputs );
+  }
+
+  /*! \brief Callback method for writing number of outputs.
+   *
+   * \param number_of_outputs Number of outputs
+   */
+  virtual void on_number_of_outputs( uint64_t number_of_outputs ) const
+  {
+    _os << fmt::format( ".o {}\n", number_of_outputs );
+  }
+
+  /*! \brief Callback method for writing number of terms.
+   *
+   * \param number_of_terms Number of terms
+   */
+  virtual void on_number_of_terms( uint64_t number_of_terms ) const
+  {
+    _os << fmt::format( ".p {}\n", number_of_terms );
+  }
+
+  /*! \brief Callback method for writing keyword-value pair.
+   *
+   * \param keyword Keyword
+   * \param value Value
+   */
+  virtual void on_keyword( const std::string& keyword, const std::string& value ) const
+  {
+    _os << fmt::format( ".{} {}\n", keyword, value );
+  }
+
+  /*! \brief Callback method for writing end.
+   *
+   */
+  virtual void on_end() const
+  {
+    _os << ".e\n";
+  }
+
+  /*! \brief Callback method for writing term.
+   *
+   * \param term A term of a logic function
+   * \param out Output bit of term
+   */
+  virtual void on_term( const std::string& term, const std::string& out ) const
+  {
+    _os << term << ' ' << out << '\n';
+  }
+
+protected:
+  std::ostream& _os; /*!< Output stream */
+}; /* pla_writer */
+
 /*! \brief A PLA reader for prettyprinting PLA.
  *
  * Callbacks for prettyprinting of PLA.
@@ -111,19 +199,25 @@ public:
   {
   }
 
-  virtual void on_number_of_inputs( std::size_t number_of_inputs ) const override
+  virtual void on_number_of_inputs( uint64_t number_of_inputs ) const override
   {
     _os << ".i " << number_of_inputs << std::endl;
   }
 
-  virtual void on_number_of_outputs( std::size_t number_of_outputs ) const override
+  virtual void on_number_of_outputs( uint64_t number_of_outputs ) const override
   {
     _os << ".o " << number_of_outputs << std::endl;
   }
 
-  virtual void on_number_of_terms( std::size_t number_of_terms ) const override
+  virtual void on_number_of_terms( uint64_t number_of_terms ) const override
   {
     _os << ".p " << number_of_terms << std::endl;
+  }
+
+  virtual bool on_keyword( const std::string& keyword, const std::string& value ) const override
+  {
+    _os << fmt::format( ".{} {}", keyword, value ) << std::endl;
+    return true;
   }
 
   virtual void on_end() const override
@@ -193,6 +287,11 @@ inline return_code read_pla( std::istream& in, const pla_reader& reader, diagnos
       }
       else
       {
+        if ( reader.on_keyword( std::string( m[1] ), std::string( m[2] ) ) )
+        {
+          return true;
+        }
+
         if ( diag )
           diag->report( diagnostic_level::error,
                         fmt::format( "Unsupported keyword `{2}`\n"

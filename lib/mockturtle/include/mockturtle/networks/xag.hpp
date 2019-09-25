@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,7 +26,8 @@
 /*!
   \file xag.hpp
   \brief Xor-And Graph (XAG) logic network implementation
-  \author Eleonora Testa 
+
+  \author Eleonora Testa
 */
 
 #pragma once
@@ -73,9 +74,11 @@ struct xag_storage_data
 };
 
 /*! \brief XAG storage container
+
   XAGs have nodes with fan-in 2.  We split of one bit of the index pointer to
   store a complemented attribute.  Every node has 64-bit of additional data
   used for the following purposes:
+
   `data[0].h1`: Fan-out size (we use MSB to indicate whether a node is dead)
   `data[0].h2`: Application-specific value
   `data[1].h1`: Visited flag
@@ -181,15 +184,6 @@ public:
   signal get_constant( bool value ) const
   {
     return {0, static_cast<uint64_t>( value ? 1 : 0 )};
-  }
-
-  void create_in_name(unsigned index, const std::string& name){
-    // std::cout << "input index " << (int)index << " name " << name << "\n";
-    _storage->inputNames[index] = name;
-  }
-  void create_out_name(unsigned index, const std::string& name){
-    // std::cout << "output index " << (int)index << " name " << name << "\n";
-    _storage->outputNames[index] = name;
   }
 
   signal create_pi( std::string const& name = {} )
@@ -361,6 +355,16 @@ public:
     return create_and( !a, !b );
   }
 
+  signal create_lt( signal const& a, signal const& b )
+  {
+    return create_and( !a, b );
+  }
+
+  signal create_le( signal const& a, signal const& b )
+  {
+    return !create_and( a, !b );
+  }
+
   signal create_xor( signal a, signal b )
   {
     /* order inputs a > b it is a XOR */
@@ -415,6 +419,11 @@ public:
     auto c2 = create_xor( a, c );
     auto c3 = create_and( c1, c2 );
     return create_xor( a, c3 );
+  }
+
+  signal create_xor3( signal const& a, signal const& b, signal const& c )
+  {
+    return create_xor( create_xor( a, b ), c );
   }
 #pragma endregion
 
@@ -637,11 +646,6 @@ public:
   auto num_pis() const
   {
     return _storage->data.num_pis;
-  }
-
-  uint32_t num_latches() const
-  {
-      return _storage->data.latches.size();
   }
 
   auto num_pos() const
