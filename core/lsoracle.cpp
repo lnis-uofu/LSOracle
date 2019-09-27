@@ -2487,7 +2487,8 @@ namespace alice{
             mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
             const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
             auto const& klut = *klut_opt;
-            oracle::write_techmapped_verilog(klut, filename, "test_top");
+            std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut); 
+            mockturtle::write_bench(std::get<0>(techmap_test), filename);
           }
           else{
             std::cout << "There is not an AIG network stored.\n";

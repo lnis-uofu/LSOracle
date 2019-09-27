@@ -55,6 +55,7 @@
 #include "commands/print_karnaugh_map.hpp"
 #include "commands/utility.hpp"
 #include "commands/techmapping.hpp"
+#include "commands/collapse_techmap.hpp"
 // #include "commands/testing/test_aig_then_part.hpp"
 #include "commands/testing/test_combine_part.hpp"
 // #include "commands/testing/test_seed_partitioner.hpp"

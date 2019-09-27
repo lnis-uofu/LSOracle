@@ -1,3 +1,27 @@
+ /* LSOracle
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 /*
 example verilog file
 
@@ -9,23 +33,11 @@ output F;
 //wire [...];
 NOR4xp25_ASAP7_75t_R  g0(.A(d), .B(c), .C(b), .D(a), .Y(F));
 endmodule
-    */
+*/
+
 #pragma once
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
-#include <mockturtle/utils/string_utils.hpp>
-
-
 #include <stdio.h>
-#include <fstream>
-
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <fstream>
@@ -33,6 +45,8 @@ endmodule
 #include <string>
 
 #include <fmt/format.h>
+#include <mockturtle/algorithms/cleanup.hpp>
+#include <mockturtle/utils/string_utils.hpp>
 #include <kitty/operations.hpp>
 #include <kitty/print.hpp>
 #include <nlohmann/json.hpp>
