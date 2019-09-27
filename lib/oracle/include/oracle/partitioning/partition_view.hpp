@@ -64,7 +64,7 @@ namespace oracle
       //   add_node(get_node(get_constant(false)));
       // }
 
-      explicit partition_view( Ntk const& ntk, std::set<node> const& leaves, std::set<node> const& pivots, bool auto_extend = true )
+      explicit partition_view( Ntk const& ntk, std::set<node> const& leaves, std::set<node> const& pivots, std::set<node> const& latches, std::set<node> const& latches_in, bool auto_extend = true )
               : Ntk( ntk )
       {
         static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
@@ -86,6 +86,18 @@ namespace oracle
           ++_num_constants;
         }
 
+        /* latches */
+        for ( auto const& reg : latches ) {
+          if ( this->visited( reg ) == 1 )
+            continue;
+
+          _ris[reg] = ntk.ro_to_ri(ntk.make_signal(reg));
+          add_node( reg );
+          _latches.insert(reg);
+          this->set_visited( reg, 1 );
+          ++_num_regs;
+        }
+
         /* primary inputs */
         for ( auto const& leaf : leaves ) {
 
@@ -98,8 +110,11 @@ namespace oracle
         }
 
         for ( auto const& p : pivots ) {
-          // std::cout << "pivot = " << p << "\n";
           traverse( p );
+        }
+
+        for (auto const& ri : latches_in){
+            traverse(ri);
         }
 
         for (auto n : pivots){
@@ -107,6 +122,15 @@ namespace oracle
           auto sig = this->make_signal(n);
           if(ntk.is_complemented(sig)) {
             sig = this->create_not(sig);
+          }
+          _roots.push_back(sig);
+        }
+
+        //registers inputs (pseudo POs)
+        for (auto ri : latches_in){
+          auto sig = this->make_signal(ri);
+          if(ntk.is_complemented(sig)) {
+            sig = ntk.create_not(sig);
           }
           _roots.push_back(sig);
         }
@@ -120,9 +144,11 @@ namespace oracle
       inline auto size() const { return static_cast<uint32_t>( _nodes.size() ); }
       inline auto num_pis() const { return _num_leaves; }
       inline auto num_pos() const { return _roots.size(); }
+      inline auto num_latches() const { return _num_regs; }
+
       
       inline auto num_gates() const { 
-        return _nodes.size() - _num_leaves - _num_constants;
+        return _nodes.size() - _num_leaves - _num_constants - _num_regs;
       }
 
       inline auto node_to_index( const node& n ) const { return _node_to_index.at( n ); }
@@ -134,9 +160,14 @@ namespace oracle
         this->foreach_fanin( pi, [&]( const auto& f ) {
           children.push_back(f);
         });
-        const auto beg = _nodes.begin() + _num_constants;
-        // std::cout << "is_pi children size = " << children.size() << "\n";
+        const auto beg = _nodes.begin() + _num_constants + _num_regs;
         return std::find( beg, beg + _num_leaves, pi ) != beg + _num_leaves;// || children.size() == 0;
+      }
+
+      inline bool is_ro( node const& ro ) const
+      {
+        const auto beg = _latches.begin();
+        return std::find( beg, _latches.end(), ro ) != _latches.end();
       }
 
       inline bool is_ci( node const& pi ) const 
@@ -153,7 +184,7 @@ namespace oracle
       template<typename Fn>
       void foreach_pi( Fn&& fn ) const
       {
-          mockturtle::detail::foreach_element( _nodes.begin() + _num_constants, _nodes.begin() + _num_constants + _num_leaves, fn );
+          mockturtle::detail::foreach_element( _nodes.begin() + _num_constants, _nodes.begin() + _num_constants + _num_leaves + _num_regs, fn );
       }
 
       template<typename Fn>
@@ -193,7 +224,6 @@ namespace oracle
 
     void add_node( node const& n )
     {
-      // std::cout << "adding node " << n << "\n";
       _node_to_index[n] = _nodes.size();
       _nodes.push_back( n );
       _nodes_lut.insert(n);
@@ -209,12 +239,10 @@ namespace oracle
     }
 
       void traverse( node const& n ) {
-        // std::cout << "Node = " << n << "\n";
         if ( this->visited( n ) == 1 )
           return;
 
         this->foreach_fanin( n, [&]( const auto& f ) {
-          // std::cout << "fanin of " << n << " = " << f.index << "\n";
           traverse( this->get_node( f ) );
         } );
 
@@ -243,10 +271,16 @@ namespace oracle
     public:
       unsigned _num_constants{1};
       unsigned _num_leaves{0};
+      unsigned _num_regs{0};
+
+      std::unordered_set<node> _latches;
+
       std::vector<node> _nodes;
       std::unordered_map<int, uint32_t> _visited;
       std::unordered_map<int, std::vector<signal>> _children;
       std::unordered_map<node, uint32_t> _node_to_index;
+      std::unordered_map<node, signal> _ris;
+
       std::vector<signal> _outputs;
       std::vector<signal> _roots;
       std::vector<unsigned> _fanout_size;

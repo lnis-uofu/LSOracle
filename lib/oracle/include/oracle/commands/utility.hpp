@@ -107,7 +107,6 @@ namespace alice
     mockturtle::mig_network ntk;
     NtkDest mig( ntk );
 
-
     mockturtle::node_map<mockturtle::mig_network::signal, mockturtle::aig_network> node2new( aig );
 
     node2new[aig.get_node( aig.get_constant( false ) )] = mig.get_constant( false );
@@ -117,6 +116,9 @@ namespace alice
     }
 
     aig.foreach_pi( [&]( auto n ) {
+      if(aig.is_ro(n)){
+        mig._storage->data.latches.emplace_back(0);
+      }
       node2new[n] = mig.create_pi();
 
       if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )

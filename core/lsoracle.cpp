@@ -638,14 +638,21 @@ namespace alice{
           else{
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ));
-
+            lorina::diagnostic_engine diag;
+            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ), &diag);
+            
+            if(result == lorina::return_code::success){
+              std::cout << "parsing successful\n";
+            }
+            else{
+              std::cout << "parsing failed\n";
+            }
             mockturtle::direct_resynthesis<mockturtle::aig_network> resyn;
-
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network>named_dest ( ntk );
 
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
+            std::cout << "Finished resynthesis\n";
 
             // std::cout << "Blif Inputs:\n";
             // klut_name_view.foreach_pi([&](auto pi){
@@ -1312,16 +1319,17 @@ namespace alice{
 
         mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
         mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
+
         std::vector<int> aig_parts;
         std::vector<int> mig_parts;
         std::vector<int> comb_aig_parts;
         std::vector<int> comb_mig_parts;
+
         if(!store<aig_ntk>().empty()){
 
           auto ntk_aig = *store<aig_ntk>().current();
 
           std::string file_base = ntk_aig._storage->net_name;
-          // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<part_man_aig_ntk>().empty()){
@@ -1379,17 +1387,15 @@ namespace alice{
             else{
               if(!nn_model.empty()){
                 partitions_aig.run_classification(ntk_aig, nn_model);
-
                 aig_parts = partitions_aig.get_aig_parts();
-                mig_parts = partitions_aig.get_mig_parts();
-              }
+				mig_parts = partitions_aig.get_mig_parts();
+			  }
               else{
                 std::cout << "Must include Neural Network model json file\n";
               }
 
             }
 
-            std::cout << "Scheduled optimization\n";
             std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
 
             if(is_set("combine")){
@@ -1494,11 +1500,9 @@ namespace alice{
                             parts_to_combine.push_back(*conn_it);
                           }
                         }
-                        
                       } 
                     }
                     visited.push_back(i);
-
                   }
                 }
               }
@@ -1507,22 +1511,12 @@ namespace alice{
               std::cout << "Scheduled optimization after partition merging\n";
               std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
             }
-            
+
             auto ntk_mig = *aig_to_mig(ntk_aig, 1);
             oracle::partition_manager<mig_names> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
-                    partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
+                    partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
+                    partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
-            // std::cout << "MIG Inputs:\n";
-            // ntk_mig.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << " name: " << ntk_mig.get_name(ntk_mig.make_signal(pi)) << "\n";
-            // });
-
-            // std::cout << "MIG Outputs:\n";
-            // ntk_mig.foreach_po([&](auto po, auto i){
-            //   std::cout << "PO: " << po.index << " name: " << ntk_mig.get_output_name(i) << "\n";
-            // });
-
-            // std::cout << "AIG Optimization\n";
             for(int i = 0; i < aig_parts.size(); i++){
               
               oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
@@ -2199,6 +2193,7 @@ namespace alice{
 
         opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
         add_flag("--mig,-m", "Read from the MIG network");
+        add_flag("--xag,-x", "Read from the XAG network");
       }
 
     protected:
@@ -2208,6 +2203,15 @@ namespace alice{
             if(!store<mig_ntk>().empty()){
               auto& mig = *store<mig_ntk>().current();
               mockturtle::write_verilog(mig, filename);
+            }
+            else{
+              std::cout << "There is not an MIG network stored.\n";
+            }
+          }
+          else if(is_set("xag")){
+            if(!store<xag_ntk>().empty()){
+              auto& xag = *store<xag_ntk>().current();
+              mockturtle::write_verilog(xag, filename);
             }
             else{
               std::cout << "There is not an MIG network stored.\n";
