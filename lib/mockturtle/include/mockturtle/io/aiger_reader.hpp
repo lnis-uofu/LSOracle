@@ -368,6 +368,7 @@ public:
   {
     (void)index;
     int8_t r = reset == latch_init_value::NONDETERMINISTIC ? -1 : ( reset == latch_init_value::ONE ? 1 : 0 );
+    // std::cout << "Pushing latch\n";
     latches.push_back( std::make_tuple( next, r, "" ) );
   }
 

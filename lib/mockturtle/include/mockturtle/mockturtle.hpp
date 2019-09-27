@@ -36,6 +36,7 @@
 #include "mockturtle/algorithms/simulation.hpp"
 #include "mockturtle/algorithms/dont_cares.hpp"
 //#include "mockturtle/algorithms/equivalence_checking.hpp"
+#include "mockturtle/algorithms/balancing.hpp"
 #include "mockturtle/algorithms/lut_mapping.hpp"
 #include "mockturtle/algorithms/bi_decomposition.hpp"
 #include "mockturtle/algorithms/cut_rewriting.hpp"
