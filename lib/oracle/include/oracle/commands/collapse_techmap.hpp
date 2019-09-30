@@ -64,7 +64,7 @@ public:
     nlohmann::json json_library; //LUT -> verilog
 
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk );
-   std::unordered_map <int, std::string> cell_names; //for printing verilog
+    std::unordered_map <int, std::string> cell_names; //for printing verilog
 
     int netlistcount = 0;
     
@@ -78,22 +78,16 @@ public:
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
 
     /* primary inputs */
-    std::cout << "PIs\n";
     ntk.foreach_pi( [&]( auto n ) {
         //not sure if I should handle complemented inputs/outputs here, or at the truth table level.
         //I'm concerned that I'll invert twice. 
-        std::cout << "before: " << node_to_signal[n] << " ";
         node_to_signal[n] = dest.create_pi();
-        std::cout << "after: " << node_to_signal[n] << "\n";
     } );
 
     /* nodes */
-    std::cout << "nodes\n";
-    int nodecount = 0;
     ntk.foreach_node( [&]( auto const n ) {
-      std::cout << "\n\n\nstart: "<< n << "  "<< node_to_signal[n] << "\n";
         if ( ntk.is_constant( n ) || ntk.is_pi( n ) ){
-             ++nodecount;
+             ++netlistcount;
             return;
         }
         auto func = ntk.node_function( n );
@@ -103,9 +97,7 @@ public:
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
         
-        std::cout <<"fanin\n";
         ntk.foreach_fanin( n, [&]( auto fanin ) {
-          std::cout <<"fanin " << node_to_signal[fanin] << "  ";
           cell_children.push_back( node_to_signal[fanin] );
         } );
         
@@ -114,7 +106,6 @@ public:
             std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
             std::unordered_map<std::string, mockturtle::signal<NtkDest>> gate_tmp_outputs;
             for (int i = 0; i < node_gates.size(); i++){
-                ++nodecount;
                 std::vector<mockturtle::signal<NtkDest>> gate_children;
                 const std::sregex_token_iterator end;
 
@@ -152,14 +143,18 @@ public:
                         if (arg_match[2] == "F"){ 
                           //the output of the last standard cell becomes the node_to_signal of the parent LUT so that the fanin of the next LUT is correct
                           node_to_signal[n] = dest.create_node(gate_children, make_truth_table(dest, gate_children, node_gates.at(i).substr(0, 3)));
+                          std::cout << "making node " << node_to_signal[n] << " with " << gate_children.size() << " children\n";
                           std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                           cell_names.insert({netlistcount, stcell});
+                          std::cout << "index " << netlistcount << "  " << stcell << "\n\n";
                         } else {
                           //otherwise it goes to an internal map to link standard cells within a LUT
                           mockturtle::signal<NtkDest> LUT_member_node = dest.create_node(gate_children, make_truth_table(dest, gate_children, node_gates.at(i).substr(0, 3)));
+                          std::cout << "making node " << dest.get_node(LUT_member_node) << " with " << gate_children.size() << " children\n";
                           gate_tmp_outputs.insert({arg_match[2], LUT_member_node});
                           std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                           cell_names.insert({netlistcount, stcell});
+                          std::cout << "index " << netlistcount<< "  " << stcell << "\n\n";
                         }
                       } else {
                         std::cout << "Error: assignment to standard cell must be A, B, C, D, or Y. Techmapper was passed: " << arg_match[1] << "\n";
@@ -185,24 +180,29 @@ public:
             } catch (const std::exception& ex){
               std::cout << "caught other exception: "<< ex.what() << "\n";
             }
-            std::cout << "\n nod_to_signal at end " << node_to_signal[n] <<"\n\n";
+          dest.foreach_fanin(n, [&](auto fanin){
+
+              std::cout << "node " << n << " has fanin node " << fanin << "\n";
+          });
+           
       } ); //foreach node
 
     //ignoring constants at the moment.  Not sure if this is correct long term.
   
     std::cout<<"POs\n";
     ntk.foreach_po( [&]( auto const& f ) {
-         //++nodecount;
-        std::cout << std::to_string(f);
+       // std::cout << std::to_string(f);
         //V.S. for not handling inversion yet.
         dest.create_po( node_to_signal[f] );
     } );
     
     //test
-    std::cout << "\n\n\n";
+    //std::cout << "\n\n\n";
     dest.foreach_node( [&]( auto const n ) {
      if (cell_names.find(n) != cell_names.end()){
-      std::cout << cell_names.at(n) << '\n';
+       dest.foreach_fanin( n, [&]( auto fanin ){
+         std::cout << "TWO: node " << n << " has fanin node " << fanin << "\n";
+       } );
      }
     });
     return std::tuple<NtkDest, std::unordered_map<int, std::string>> (dest, cell_names);
@@ -212,15 +212,10 @@ private:
   NtkSource const& ntk;
 
   kitty::dynamic_truth_table make_truth_table (NtkSource const& dest, std::vector <mockturtle::signal <NtkDest> > children, std::string func){
-    std::cout << "HERE. Func = " << func << "\n";
     std::vector <kitty::dynamic_truth_table> tt_vec;
-    std::cout << "making tt vector  ";
     for (auto child : children){
       tt_vec.push_back(dest.node_function(dest.get_node(child)));
-      kitty::print_hex(tt_vec.back(), std::cout);
-      std::cout << " ";
     }
-    std::cout << "\n";
     kitty::dynamic_truth_table result;
     if (func == "NOT"){
       result = ~dest.node_function(dest.get_node(children[0]));
@@ -240,11 +235,7 @@ private:
       result =  (tt_vec.at(0) & tt_vec.at(1)) | (tt_vec.at(0) & tt_vec.at(2)) | (tt_vec.at(1) & tt_vec.at(2));
     }else {
       result = kitty::dynamic_truth_table(8);
-    }
-
-    std::cout << "tt at end: ";
-    kitty::print_hex(result, std::cout);
-    std::cout <<"\n";
+    };
     return result;
   }
 

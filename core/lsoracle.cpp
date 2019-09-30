@@ -2470,7 +2470,7 @@ namespace alice{
             mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
             const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
             auto const& klut = *klut_opt;
-            oracle::write_techmapped_verilog(klut, filename, "test_top");
+            //oracle::write_techmapped_verilog(klut, filename, "test_top");
           
           }
           else{
@@ -2488,7 +2488,9 @@ namespace alice{
             const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
             auto const& klut = *klut_opt;
             std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut); 
-            mockturtle::write_bench(std::get<0>(techmap_test), filename);
+            oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+
+            //mockturtle::write_bench(std::get<0>(techmap_test), filename);
           }
           else{
             std::cout << "There is not an AIG network stored.\n";
