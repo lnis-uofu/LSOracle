@@ -53,6 +53,7 @@ def optimize(filename, mode, part_num, suffix):
     cmd = ['./lsoracle','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
+    print( stdout )
     string_stdout = str(stdout).splitlines()
     string_stderr = str(stderr)
     if 'None' not in string_stderr:

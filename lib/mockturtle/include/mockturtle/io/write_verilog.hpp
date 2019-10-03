@@ -117,26 +117,24 @@ namespace mockturtle
         static_assert( has_is_maj_v<Ntk>, "Ntk does not implement the is_maj method" );
         static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
 //        static_assert( has_ri_index_v<Ntk>, "Ntk does not implement the ri_index method" );
-        std::cout << "HERE\n";
+        
         //counting number of digits to add leading 0's
         auto digitsIn  = std::to_string(ntk.num_pis()-ntk.num_latches()).length();
         auto digitsOut = std::to_string(ntk.num_pos()-ntk.num_latches()).length();
-        std::cout << "created digits In and Out\n";
-        std::cout << "Inputs: " << ntk.num_pis() << " Outputs: " << ntk.num_pos() << " Latches: " << ntk.num_latches() << "\n";
+
         const auto xs = map_and_join( ez::make_direct_iterator<decltype( ntk.num_pis() )>( 0 ),
                                       ez::make_direct_iterator( ntk.num_pis() - ntk.num_latches() ),
                                       [&digitsIn]( auto i ) { return fmt::format( "pi{0:0{1}}", i, digitsIn ); }, ", "s );
-        std::cout << "created xs\n";
+        
         const auto ys = map_and_join( ez::make_direct_iterator<decltype( ntk.num_pis() )>( 0 ),
                                       ez::make_direct_iterator( ntk.num_pos() - ntk.num_latches() ),
                                       [&digitsOut]( auto i ) { return fmt::format( "po{0:0{1}}", i, digitsOut ); }, ", "s );
 
-        std::cout << "created xs and ys\n";
         if(ntk.num_latches()>0) {
             const auto rs = map_and_join(ez::make_direct_iterator<decltype(ntk.num_latches())>(0),
                                          ez::make_direct_iterator(ntk.num_latches()),
                                          [](auto i) { return fmt::format("lo{}", i+1); }, ", "s);
-            std::cout << "created rs\n";
+            
             std::string clk = "clock";
             os << fmt::format( "module top({}, {}, {});\n", clk, xs, ys )
                << fmt::format( "  input {};\n", clk )
@@ -150,7 +148,6 @@ namespace mockturtle
                << fmt::format( "  input {};\n", xs )
                << fmt::format( "  output {};\n", ys );
         }
-        std::cout << "finished declaring header\n";
 
         node_map<std::string, Ntk> node_names( ntk );
 
@@ -199,9 +196,7 @@ namespace mockturtle
             }
             os << ";\n";
         }
-        std::cout << "finished declaring wires\n";
         ntk_topo.foreach_node( [&]( auto const& n ) {
-            std::cout << "Node: " << n << "\n";
             if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
                 return true;
 
@@ -231,7 +226,6 @@ namespace mockturtle
             }
             else if ( ntk.is_maj( n ) )
             {   
-                std::cout << "maj: " << n << "\n";
                 signal<Ntk> first_child;
                 ntk.foreach_fanin( n, [&]( auto const& f ) { first_child = f; return false; } );
 
@@ -260,7 +254,6 @@ namespace mockturtle
         } );
 
         ntk.foreach_po( [&]( auto const& f, auto i ) {
-            std::cout << "PO: " << f.index << "\n";
             if(i < ntk.num_pos() - ntk.num_latches())
                 os << fmt::format( "  assign po{0:0{1}} = {2}{3};\n", i, digitsOut, ntk.is_complemented( f ) ? "~" : "", node_names[f] );
             else{
