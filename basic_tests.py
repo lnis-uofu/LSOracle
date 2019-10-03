@@ -112,6 +112,7 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
+    print( mixed_size )
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)
