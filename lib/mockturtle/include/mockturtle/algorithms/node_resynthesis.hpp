@@ -114,7 +114,7 @@ public:
     /* map nodes */
     topo_view ntk_topo{ntk};
     ntk_topo.foreach_node( [&]( auto n ) {
-      if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+      if ( ntk.is_constant( n ) || ntk.is_pi( n ) || ntk.is_ci( n ) || ntk.is_ro( n ))
         return;
 
       std::vector<signal<NtkDest>> children;
@@ -122,6 +122,7 @@ public:
         children.push_back( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
       } );
 
+      // std::cout << "got to resynthesis function\n";
       resynthesis_fn( ntk_dest, ntk.node_function( n ), children.begin(), children.end(), [&]( auto const& f ) {
         node2new[n] = f;
 
@@ -133,7 +134,10 @@ public:
 
         return false;
       } );
+      // std::cout << "Finished resynthesis function\n";
     } );
+
+
 
     /* map primary outputs */
     ntk.foreach_po( [&]( auto const& f, auto index ) {

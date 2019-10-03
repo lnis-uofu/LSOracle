@@ -167,19 +167,21 @@ private:
     }
     this->set_visited( n, this->trav_id() );
 
-    if ( this->is_constant( n ) || this->is_pi( n ) )
+    if ( this->is_constant( n ) || this->is_pi( n ) || this->is_ro( n ) )
     {
       return _levels[n] = 0;
     }
 
     uint32_t level{0};
     this->foreach_fanin( n, [&]( auto const& f ) {
+      // std::cout << "fanin: " << this->get_node( f ) << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
       if ( _ps.count_complements && this->is_complemented( f ) )
       {
         clevel++;
       }
       level = std::max( level, clevel );
+      // std::cout << "Level of " << this->get_node( f ) << " is " << level << "\n";
     } );
 
     return _levels[n] = level + 1;
@@ -189,6 +191,7 @@ private:
   {
     _depth = 0;
     this->foreach_po( [&]( auto const& f ) {
+      // std::cout << "PO: " << this->get_node( f ) << "\n";
       auto clevel = compute_levels( this->get_node( f ) );
       if ( _ps.count_complements && this->is_complemented( f ) )
       {
@@ -209,7 +212,7 @@ private:
   void set_critical_path( node const& n )
   {
     _crit_path[n] = true;
-    if ( !this->is_constant( n ) && !this->is_pi( n ) )
+    if ( !this->is_constant( n ) && !this->is_pi( n ) && !this->is_ro( n ) )
     {
       const auto lvl = _levels[n];
       this->foreach_fanin( n, [&]( auto const& f ) {

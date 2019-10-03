@@ -648,6 +648,11 @@ public:
     return _storage->data.num_pis;
   }
 
+  uint32_t num_latches() const
+  {
+      return _storage->data.latches.size();
+  }
+
   auto num_pos() const
   {
     return _storage->data.num_pos;

@@ -208,12 +208,12 @@ public:
 
   bool is_ro( node const& n ) const
   {
-    std::cout << "!!!!! NOT YET SUPPORTED !!!!!" << std::endl;
+    return n > 1 && _storage->nodes[n].children.empty();
   }
 
   bool is_ci( node const& n ) const
   {
-    std::cout << "!!!!! NOT YET SUPPORTED !!!!!" << std::endl;
+    return n > 1 && _storage->nodes[n].children.empty();
   }
 
   bool constant_value( node const& n ) const

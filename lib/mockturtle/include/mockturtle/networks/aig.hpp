@@ -626,12 +626,12 @@ public:
 
   auto num_pis() const
   {
-    return _storage->data.num_pis;
+    return static_cast<uint32_t>( _storage->inputs.size() );
   }
 
   auto num_pos() const
   {
-    return _storage->data.num_pos;
+    return static_cast<uint32_t>( _storage->outputs.size() );
   }
 
   auto num_registers() const
@@ -642,7 +642,7 @@ public:
 
   auto num_gates() const
   {
-    return static_cast<uint32_t>( _storage->hash.size() );
+    return static_cast<uint32_t>( _storage->nodes.size() - _storage->inputs.size() - 1 );
   }
 
   uint32_t fanin_size( node const& n ) const
@@ -855,9 +855,9 @@ public:
   template<typename Fn>
   void foreach_node( Fn&& fn ) const
   {
-    detail::foreach_element_if( ez::make_direct_iterator<uint64_t>( 0 ),
+    detail::foreach_element( ez::make_direct_iterator<uint64_t>( 0 ),
                                 ez::make_direct_iterator<uint64_t>( _storage->nodes.size() ),
-                                [this]( auto n ) { return !is_dead( n ); },
+                                /*[this]( auto n ) { return !is_dead( n ); },*/
                                 fn );
   }
 
@@ -876,25 +876,25 @@ public:
   template<typename Fn>
   void foreach_pi( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin(), _storage->inputs.begin() + _storage->data.num_pis, fn );
+    detail::foreach_element( _storage->inputs.begin(), _storage->inputs.end(), fn );
   }
 
   template<typename Fn>
   void foreach_po( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->outputs.begin(), _storage->outputs.begin() + _storage->data.num_pos, fn );
+    detail::foreach_element( _storage->outputs.begin(), _storage->outputs.end(), fn );
   }
 
   template<typename Fn>
   void foreach_ro( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin() + _storage->data.num_pis, _storage->inputs.end(), fn );
+    detail::foreach_element( _storage->inputs.begin() /*+ _storage->data.num_pis*/, _storage->inputs.end(), fn );
   }
 
   template<typename Fn>
   void foreach_ri( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->outputs.begin() + _storage->data.num_pos, _storage->outputs.end(), fn );
+    detail::foreach_element( _storage->outputs.begin() /*+ _storage->data.num_pos*/, _storage->outputs.end(), fn );
   }
 
   template<typename Fn>
@@ -947,14 +947,14 @@ public:
   {
     detail::foreach_element_if( ez::make_direct_iterator<uint64_t>( 1 ), /* start from 1 to avoid constant */
                                 ez::make_direct_iterator<uint64_t>( _storage->nodes.size() ),
-                                [this]( auto n ) { return !is_ci( n ) && !is_dead( n ); },
+                                [this]( auto n ) { return !is_pi( n ) /*&& !is_dead( n )*/; },
                                 fn );
   }
 
   template<typename Fn>
   void foreach_fanin( node const& n, Fn&& fn ) const
   {
-    if ( n == 0 || is_ci( n ) )
+    if ( n == 0 || is_pi( n ) )
       return;
 
     static_assert( detail::is_callable_without_index_v<Fn, signal, bool> ||

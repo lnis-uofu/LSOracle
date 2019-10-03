@@ -247,21 +247,22 @@ namespace oracle
         }
         
         ntk.foreach_node( [&](auto curr_node){
-         if (!ntk.is_constant(curr_node)) {
-           _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
-         }
+          if (!ntk.is_constant(curr_node)) {
+            _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+          }
 
-        //look to partition inputs (those that are not circuit PIs)
-        if (!ntk.is_pi(curr_node) && !ntk.is_ro(curr_node)){
-          ntk.foreach_fanin(curr_node, [&](auto const &conn, auto j) {
-            if (partition[conn.index] != partition[ntk.node_to_index(curr_node)] && !ntk.is_constant(ntk.index_to_node(conn.index))) {
-              _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
-              _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], ntk.index_to_node(conn.index)));
-              _part_pos.insert(std::pair<int, node>(partition[conn.index],ntk.index_to_node(conn.index)));
-              
-            }
-          });
-        }
+          //look to partition inputs (those that are not circuit PIs)
+          if (!ntk.is_pi(curr_node) && !ntk.is_ro(curr_node)){
+            ntk.foreach_fanin(curr_node, [&](auto const &conn, auto j) {
+              if (partition[conn.index] != partition[ntk.node_to_index(curr_node)] && !ntk.is_constant(ntk.index_to_node(conn.index))) {
+                _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+                _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], ntk.index_to_node(conn.index)));
+                _part_pos.insert(std::pair<int, node>(partition[conn.index],ntk.index_to_node(conn.index)));
+                
+              }
+            });
+          }
+          // std::cout << "Node " << curr_node << " partition " << partition[ntk.node_to_index(curr_node)] << "\n";
         });
 
         for(auto i=0; i < ntk.num_pos(); i++){

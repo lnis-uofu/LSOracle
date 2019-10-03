@@ -474,7 +474,9 @@ namespace alice{
             mockturtle::mig_network ntk;
             mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+            
+            mockturtle::depth_view depth{names_view};
+
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk );
 
             filename.erase(filename.end() - 4, filename.end());
@@ -516,21 +518,23 @@ namespace alice{
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
+
+            mockturtle::depth_view depth{names_view};
                 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( ntk );
 
             filename.erase(filename.end() - 4, filename.end());
             ntk._storage->net_name = filename;
 
-            // std::cout << "AIG Inputs:\n";
-            // names_view.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << " name: " << names_view.get_name(names_view.make_signal(pi)) << "\n";
-            // });
+            std::cout << "AIG Inputs:\n";
+            names_view.foreach_pi([&](auto pi){
+              std::cout << "PI: " << pi << " name: " << names_view.get_name(names_view.make_signal(pi)) << "\n";
+            });
 
-            // std::cout << "AIG Outputs:\n";
-            // names_view.foreach_po([&](auto po, auto i){
-            //   std::cout << "PO: " << po.index << " name: " << names_view.get_output_name(i) << "\n";
-            // });
+            std::cout << "AIG Outputs:\n";
+            names_view.foreach_po([&](auto po, auto i){
+              std::cout << "PO: " << po.index << " name: " << names_view.get_output_name(i) << "\n";
+            });
 
           }
           
@@ -647,6 +651,17 @@ namespace alice{
             else{
               std::cout << "parsing failed\n";
             }
+
+            std::cout << "Blif Inputs:\n";
+            klut_name_view.foreach_pi([&](auto pi){
+              std::cout << "PI: " << pi << " name: " << klut_name_view.get_name(klut_name_view.make_signal(pi)) << "\n";
+            });
+
+            std::cout << "Blif Outputs:\n";
+            klut_name_view.foreach_po([&](auto po, auto i){
+              std::cout << "PO: " << po << " name: " << klut_name_view.get_output_name(i) << "\n";
+            });
+            
             mockturtle::direct_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network>named_dest ( ntk );
@@ -654,25 +669,17 @@ namespace alice{
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
             std::cout << "Finished resynthesis\n";
 
-            // std::cout << "Blif Inputs:\n";
-            // klut_name_view.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << " name: " << klut_name_view.get_name(klut_name_view.make_signal(pi)) << "\n";
-            // });
+            
 
-            // std::cout << "Blif Outputs:\n";
-            // klut_name_view.foreach_po([&](auto po, auto i){
-            //   std::cout << "PO: " << po << " name: " << klut_name_view.get_output_name(i) << "\n";
-            // });
+            std::cout << "AIG Inputs:\n";
+            named_dest.foreach_pi([&](auto pi){
+              std::cout << "PI: " << pi << " name: " << named_dest.get_name(named_dest.make_signal(pi)) << "\n";
+            });
 
-            // std::cout << "AIG Inputs:\n";
-            // named_dest.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << " name: " << named_dest.get_name(named_dest.make_signal(pi)) << "\n";
-            // });
-
-            // std::cout << "AIG Outputs:\n";
-            // named_dest.foreach_po([&](auto po, auto i){
-            //   std::cout << "PO: " << po.index << " name: " << named_dest.get_output_name(i) << "\n";
-            // });
+            std::cout << "AIG Outputs:\n";
+            named_dest.foreach_po([&](auto po, auto i){
+              std::cout << "PO: " << po.index << " name: " << named_dest.get_output_name(i) << "\n";
+            });
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
 
@@ -1349,27 +1356,21 @@ namespace alice{
               }
             }
             else if(is_set("high")){
-
+              // std::cout << "determining best fit\n";
               for(int i = 0; i < num_parts; i++){
                 oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
 
-                mockturtle::aig_network aig;
-                mockturtle::names_view<mockturtle::aig_network>opt_aig ( aig );
-
-                opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-                // mockturtle::depth_view part_aig_depth{opt_aig};
-                mockturtle::test_aig_script aigopt;
+                auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
+                
+                mockturtle::aig_script aigopt;
                 opt_aig = aigopt.run(opt_aig);
                 mockturtle::depth_view part_aig_opt_depth{opt_aig};
                 int aig_opt_size = opt_aig.num_gates();
                 int aig_opt_depth = part_aig_opt_depth.depth();
 
-                mockturtle::mig_network mig;
-                mockturtle::names_view<mockturtle::mig_network>opt_mig ( mig );
-
-                opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-                // mockturtle::depth_view part_mig_depth{opt_mig};
-                mockturtle::test_mig_script migopt;
+                auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+                
+                mockturtle::mig_script migopt;
                 opt_mig = migopt.run(opt_mig);
                 mockturtle::depth_view part_mig_opt_depth{opt_mig};
                 int mig_opt_size = opt_mig.num_gates();
@@ -1388,7 +1389,7 @@ namespace alice{
               if(!nn_model.empty()){
                 partitions_aig.run_classification(ntk_aig, nn_model);
                 aig_parts = partitions_aig.get_aig_parts();
-				mig_parts = partitions_aig.get_mig_parts();
+				        mig_parts = partitions_aig.get_mig_parts();
 			  }
               else{
                 std::cout << "Must include Neural Network model json file\n";
@@ -1527,7 +1528,7 @@ namespace alice{
 
               mockturtle::depth_view opt_part_depth{opt};
 
-              mockturtle::test_aig_script aigopt;
+              mockturtle::aig_script aigopt;
               opt = aigopt.run(opt);
 
               auto opt_mig = *aig_to_mig(opt, 0);
@@ -1545,7 +1546,7 @@ namespace alice{
 
               mockturtle::depth_view opt_part_depth{opt};
               
-              mockturtle::test_mig_script migopt;
+              mockturtle::mig_script migopt;
               opt = migopt.run(opt);
               
               mockturtle::depth_view part_opt_depth{opt};
@@ -1560,6 +1561,7 @@ namespace alice{
             ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
             mockturtle::depth_view ntk_depth2{ntk_mig};
             std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
+            std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
             std::cout << "Area Delay Product = " << ntk_mig.num_gates() * ntk_depth2.depth() << "\n";
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
@@ -1935,6 +1937,7 @@ namespace alice{
           : command( env, "Displays the depth of the stored network" ){
 
         add_flag("--mig,-m", "Display depth of stored MIG (AIG is default)");
+        add_flag("--xag,-x", "Display depth of stored XAG (AIG is default)");
       }
 
     protected:
@@ -1949,6 +1952,17 @@ namespace alice{
           }
           else{
             std::cout << "There is not an MIG network stored.\n";
+          }
+        }
+        else if(is_set("xag")){
+          if(!store<xag_ntk>().empty()){
+            auto& xag = *store<xag_ntk>().current();
+            mockturtle::depth_view xag_depth{xag};
+
+            std::cout << "XAG level " << xag_depth.depth()  << std::endl;
+          }
+          else{
+            std::cout << "There is not an XAG network stored.\n";
           }
         }
         else{
@@ -2220,6 +2234,7 @@ namespace alice{
           else{
             if(!store<aig_ntk>().empty()){
               auto& aig = *store<aig_ntk>().current();
+              std::cout << "Latches = " << aig.num_latches() << "\n";
               mockturtle::write_verilog(aig, filename);
             }
             else{
@@ -2406,6 +2421,66 @@ namespace alice{
       std::cout << "MIG logic depth " << mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
 
       mockturtle::mig_script migopt;
+      opt = migopt.run(opt);
+
+      mockturtle::depth_view new_mig_depth{opt};
+      std::cout << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+      std::cout << "Final ntk size = " << opt.num_gates() << " and depth = " << new_mig_depth.depth() << "\n";
+      std::cout << "Area Delay Product = " << opt.num_gates() * new_mig_depth.depth() << "\n";
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+      std::cout << "Full Optimization: " << duration.count() << "ms\n";
+      std::cout << "Finished optimization\n";
+
+    }
+    else{
+      std::cout << "There is not an MIG network stored.\n";
+    }
+
+  }
+
+  ALICE_COMMAND(migscript2, "Modification", "Exact NPN MIG rewriting") {
+    if(!store<mig_ntk>().empty()){
+      auto& opt = *store<mig_ntk>().current();
+
+      auto start = std::chrono::high_resolution_clock::now();
+      mockturtle::depth_view mig_depth{opt};
+
+      //DEPTH REWRITING
+      std::cout << "MIG logic depth " << mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+      mockturtle::mig_script2 migopt;
+      opt = migopt.run(opt);
+
+      mockturtle::depth_view new_mig_depth{opt};
+      std::cout << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+      std::cout << "Final ntk size = " << opt.num_gates() << " and depth = " << new_mig_depth.depth() << "\n";
+      std::cout << "Area Delay Product = " << opt.num_gates() * new_mig_depth.depth() << "\n";
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+      std::cout << "Full Optimization: " << duration.count() << "ms\n";
+      std::cout << "Finished optimization\n";
+
+    }
+    else{
+      std::cout << "There is not an MIG network stored.\n";
+    }
+
+  }
+
+  ALICE_COMMAND(migscript3, "Modification", "Exact NPN MIG rewriting") {
+    if(!store<mig_ntk>().empty()){
+      auto& opt = *store<mig_ntk>().current();
+
+      auto start = std::chrono::high_resolution_clock::now();
+      mockturtle::depth_view mig_depth{opt};
+
+      //DEPTH REWRITING
+      std::cout << "MIG logic depth " << mig_depth.depth() << " Majority nodes " << opt.num_gates() << std::endl;
+
+      mockturtle::mig_script3 migopt;
       opt = migopt.run(opt);
 
       mockturtle::depth_view new_mig_depth{opt};

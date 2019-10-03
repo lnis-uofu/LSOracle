@@ -112,6 +112,8 @@
 #include "mockturtle/utils/aig_script.hpp"
 #include "mockturtle/utils/aig_script2.hpp"
 #include "mockturtle/utils/mig_script.hpp"
+#include "mockturtle/utils/mig_script2.hpp"
+#include "mockturtle/utils/mig_script3.hpp"
 #include "mockturtle/views/names_view.hpp"
 #include "mockturtle/utils/test_mig_script.hpp"
 #include "mockturtle/utils/test_aig_script.hpp"

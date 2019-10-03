@@ -734,7 +734,7 @@ public:
 
   auto num_pis() const
   {
-    return _storage->data.num_pis;
+    return static_cast<uint32_t>( _storage->inputs.size() );
   }
 
   uint32_t num_latches() const
@@ -744,7 +744,7 @@ public:
 
   auto num_pos() const
   {
-    return _storage->data.num_pos;
+    return static_cast<uint32_t>( _storage->outputs.size() );
   }
 
   auto num_registers() const
@@ -996,13 +996,13 @@ public:
   template<typename Fn>
   void foreach_ro( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin() + _storage->data.num_pis, _storage->inputs.end(), fn );
+    detail::foreach_element( _storage->inputs.begin() /*+ _storage->data.num_pis*/, _storage->inputs.end(), fn );
   }
 
   template<typename Fn>
   void foreach_ri( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->outputs.begin() + _storage->data.num_pos, _storage->outputs.end(), fn );
+    detail::foreach_element( _storage->outputs.begin() /*+ _storage->data.num_pos*/, _storage->outputs.end(), fn );
   }
 
   template<typename Fn>

@@ -5,8 +5,6 @@
 
 #pragma once
 #include <stdio.h>
-#include <fstream>
-#include <iostream>
 #include <mockturtle/traits.hpp>
 
 namespace oracle {
@@ -16,7 +14,7 @@ class hypergraph {
 
   Ntk const& ntk;
   std::vector<std::vector<uint32_t>> hyperEdges;
-  std::set<typename Ntk::node> nodes;
+  std::set<Ntk::node> nodes;
   std::vector<uint32_t> connections;
 
 public:
@@ -85,7 +83,7 @@ void hypergraph<Ntk>::get_hypergraph(Ntk const& ntk) {
 
 template<class Ntk>
 void hypergraph<Ntk>::dump() {
-  std::ofstream myfile;
+  ofstream myfile;
   myfile.open ("hypergraph.txt");
   myfile << hyperEdges.size() << " " << ntk.size()-1 << "\n";
   for (int i = 0; i < hyperEdges.size(); i++) {

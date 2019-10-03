@@ -52,7 +52,10 @@ namespace alice
         else{
           if(!store<aig_ntk>().empty()){
             auto& ntk = *store<aig_ntk>().current(); 
-            oracle::balancing( ntk );
+            mockturtle::depth_view ntk_depth{ntk};
+            // oracle::balancing( ntk );
+            mockturtle::balancing(ntk_depth);
+            ntk = mockturtle::cleanup_dangling(ntk);
           }
           else{
             std::cout << "There is no AIG network stored\n";
