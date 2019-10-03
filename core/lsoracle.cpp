@@ -526,15 +526,15 @@ namespace alice{
             filename.erase(filename.end() - 4, filename.end());
             ntk._storage->net_name = filename;
 
-            std::cout << "AIG Inputs:\n";
-            names_view.foreach_pi([&](auto pi){
-              std::cout << "PI: " << pi << " name: " << names_view.get_name(names_view.make_signal(pi)) << "\n";
-            });
+            // std::cout << "AIG Inputs:\n";
+            // names_view.foreach_pi([&](auto pi){
+            //   std::cout << "PI: " << pi << " name: " << names_view.get_name(names_view.make_signal(pi)) << "\n";
+            // });
 
-            std::cout << "AIG Outputs:\n";
-            names_view.foreach_po([&](auto po, auto i){
-              std::cout << "PO: " << po.index << " name: " << names_view.get_output_name(i) << "\n";
-            });
+            // std::cout << "AIG Outputs:\n";
+            // names_view.foreach_po([&](auto po, auto i){
+            //   std::cout << "PO: " << po.index << " name: " << names_view.get_output_name(i) << "\n";
+            // });
 
           }
           

@@ -30,8 +30,8 @@ if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
     training_file = lstools_path + '/../../deep_learn_model.json'
 else:
-    lstools_path = home_path + '/LSOracle/build/core'
-    training_file = home_path + args.training_model
+    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/LSOracle/build/core'
+    training_file = lstools_path + '/../../deep_learn_model.json'
 
 #configure logging
 timestamp = datetime.now()
@@ -57,7 +57,7 @@ def optimize(filename, mode, part_num, suffix):
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
-    return [int(s) for s in string_stdout[-5].split() if s.isdigit()]
+    return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
@@ -112,7 +112,6 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print (mixed_size)
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)
