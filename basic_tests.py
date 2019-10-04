@@ -28,10 +28,10 @@ args = parser.parse_args()
 home_path = os.getenv('HOME')
 if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
-    training_file = lstools_path + '/../../deep_learn_model.json'
+    training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 else:
     lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/LSOracle/build/core'
-    training_file = lstools_path + '/../../deep_learn_model.json'
+    training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 
 #configure logging
 timestamp = datetime.now()
@@ -53,7 +53,6 @@ def optimize(filename, mode, part_num, suffix):
     cmd = ['./lsoracle','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    print( stdout )
     string_stdout = str(stdout).splitlines()
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
@@ -113,7 +112,6 @@ for curr_file in files:
     #mixed synthesis with classifier
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print( mixed_size )
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)

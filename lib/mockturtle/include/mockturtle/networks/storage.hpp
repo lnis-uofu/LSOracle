@@ -199,50 +199,9 @@ struct storage
   std::vector<uint64_t> inputs;
   std::vector<typename node_type::pointer_type> outputs;
 
-  std::map<int, std::string> inputNames;
-    std::map<int, std::string> outputNames;
+  // std::string net_name;
 
-    std::string net_name;
-
-    int num_partitions;
-    //Map of each node's partition number
-    std::map<int, int> partitionMap;
-    //Map of each node's respective connection indeces
-    std::map<int, std::vector<int>> connections;
-
-    //Map of each node's respective connection indeces in each respective partition
-    std::map<int, std::map<int, std::vector<int>>> partitionConn;
-    //The connections coming into a specific partition
-    std::map<int, std::vector<int>> partitionInputs;
-    //The connections coming out of a specific partition
-    std::map<int, std::vector<int>> partitionOutputs;
-    //Stores the size of each partition
-    std::map<int, int> partitionSize;
-
-    //Stores the node indeces that each index in the truth table correspond to
-    std::map<int, std::vector<int>> index;
-    //Stores truth table data for the outputs of each partition
-    std::map<int, std::vector<std::vector<int>>> tt;
-    //Keeps track of the outputs needed for each gate in order to build a truth table
-    std::map<int, std::vector<int>> wantedOut;
-
-    //Stores truth table data for the onset and offset of each node respectively
-    std::map<int, std::vector<std::vector<int>>> onset;
-    std::map<int, std::vector<std::vector<int>>> offset;
-
-    std::map<int, float> test_runtime;
-
-    std::map<int, int> output_cone_depth;
-    std::map<int, std::vector<int>> logic_cone_inputs;
-    bool test_timeout;
-
-    spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
-
-    std::map<int,kitty::dynamic_truth_table> tt_map;
-    std::map<int,kitty::dynamic_truth_table> output_tt;
-
-    std::vector<std::pair<std::string, uint32_t>> input_names;
-    std::vector<std::pair<std::string, uint32_t>> output_names;
+  spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
 
   T data;
 };
