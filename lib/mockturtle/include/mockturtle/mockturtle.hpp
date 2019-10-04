@@ -110,8 +110,6 @@
 #include "mockturtle/utils/cuts.hpp"
 #include "mockturtle/utils/union_find.hpp"
 #include "mockturtle/views/names_view.hpp"
-#include "mockturtle/utils/test_mig_script.hpp"
-#include "mockturtle/utils/test_aig_script.hpp"
 #include "mockturtle/properties/migcost.hpp"
 #include "mockturtle/properties/mccost.hpp"
 #include "mockturtle/views/mffc_view.hpp"
