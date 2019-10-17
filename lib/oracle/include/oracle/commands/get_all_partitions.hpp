@@ -93,7 +93,7 @@ namespace alice
                 auto part_ntk = mockturtle::node_resynthesis<mockturtle::aig_network>(part, resyn_aig);
                 
                 std::string modulename = std::filesystem::path( ntk._storage->net_name + "_" + std::to_string(partition) ).filename();
-                std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";
+                std::string filename = dir + "/" + modulename + ".v";
                 filenames.push_back(filename);
                 parts.push_back(part_ntk);
 
