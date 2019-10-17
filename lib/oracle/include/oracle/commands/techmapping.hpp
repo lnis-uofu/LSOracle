@@ -100,9 +100,9 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
     });
 
     os << "module " << top_name <<"("<<input_list <<", " << output_list<< ");\n";
-    os << "\tinputs " << input_list<< ";\n";
-    os << "\toutputs " << output_list << ";\n";
-    os << "\twires "<< wire_list << ";\n\n";
+    os << "\tinput " << input_list<< ";\n";
+    os << "\toutput " << output_list << ";\n";
+    os << "\twire "<< wire_list << ";\n\n";
 //body
 
     ntk.foreach_node( [&]( auto const& n ) {
@@ -132,7 +132,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
             if (children.size() > 3){
                 os << ", .D(" << children.at(3) << ")";
             }
-            os << ", .Y(" << fmt::format("n{}",n) << ");\n";
+            os << ", .Y(" << fmt::format("n{}",n) << ") );\n";
      }
 
 
@@ -154,7 +154,6 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
 template<class Ntk>
 void write_techmapped_verilog( Ntk const& ntk, std::string const& filename, std::unordered_map<int, std::string> cell_names, std::string top_name )
 {
-      std::cout << "##################################################################\n";
       std::ofstream os( filename.c_str(), std::ofstream::out );
       write_techmapped_verilog( ntk, os, cell_names, top_name );
       os.close();
