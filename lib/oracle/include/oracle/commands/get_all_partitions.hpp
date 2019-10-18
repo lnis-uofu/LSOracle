@@ -75,7 +75,11 @@ namespace alice
             auto ntk = store<mockturtle::aig_network>().current(); 
             std::cout << "\n";
             if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-              auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current(); 
+              auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
+              mockturtle::node_map<std::string, mockturtle::aig_network> node_names( ntk );
+              mockturtle::node_map<std::string, mockturtle::aig_network> input_names( ntk );
+              std::string toplevel_module = std::filesystem::path(ntk._storage->net_name).filename();
+              std::string toplevel_file = dir + "/" + toplevel_module + ".v"; 
               for(int i = 0; i < partitions.get_part_num(); i++){
                 std::vector<mockturtle::aig_network> parts;
                 std::vector<std::string> filenames;
@@ -88,16 +92,31 @@ namespace alice
                 oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, partition);
                 auto part_ntk = mockturtle::node_resynthesis<mockturtle::aig_network>(part, resyn_aig);
                 
-                std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";
+                std::string modulename = std::filesystem::path( ntk._storage->net_name + "_" + std::to_string(partition) ).filename();
+                std::string filename = dir + "/" + modulename + ".v";
                 filenames.push_back(filename);
                 parts.push_back(part_ntk);
+
+                if ( part_ntk.num_pos() == 0 )
+                    continue;
                 
                 assert(parts.size() == filenames.size());
                 for(int j = 0; j < parts.size(); j++){
-                    mockturtle::write_verilog(parts.at(j), filenames.at(j));
+                    mockturtle::write_verilog(parts.at(j), filenames.at(j), modulename);
                 }
+
+                if (i == 0)
+                    mockturtle::write_toplevel_verilog(ntk, partitions, toplevel_file, node_names, input_names, toplevel_module);
+                
+                mockturtle::call_submodule( ntk, part_ntk, toplevel_file, modulename, i, part, node_names, input_names);
+
                 std::cout << "\n";
               }
+              std::ofstream os( toplevel_file.c_str(), std::ofstream::app);
+              os << "endmodule\n"
+                 << std::flush;
+
+              os.close();
             }
             else{
                 std::cout << "Partitions have not been mapped\n";
