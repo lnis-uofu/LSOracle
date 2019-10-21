@@ -12,6 +12,7 @@
 /*** Algorithms ***/
 #include "algorithms/optimization_scripts/aig_script.hpp"
 #include "algorithms/optimization_scripts/aig_script2.hpp"
+#include "algorithms/optimization_scripts/aig_script3.hpp"
 #include "algorithms/optimization_scripts/mig_script.hpp"
 #include "algorithms/optimization_scripts/mig_script2.hpp"
 #include "algorithms/optimization_scripts/mig_script3.hpp"
@@ -28,22 +29,26 @@
 #include "store/aig.hpp"
 #include "store/mig.hpp"
 #include "store/xag.hpp"
+#include "store/klut.hpp"
 
 /*** Commands ***/
 //Input
 #include "commands/input/read_aig.hpp"
 #include "commands/input/read_blif.hpp"
 #include "commands/input/read_verilog.hpp"
+#include "commands/input/read_bench.hpp"
 
 //Optimization
 #include "commands/optimization/aigscript.hpp"
 #include "commands/optimization/aigscript2.hpp"
+#include "commands/optimization/aigscript3.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/migscript2.hpp"
 #include "commands/optimization/migscript3.hpp"
 #include "commands/optimization/optimization.hpp"
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
+#include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/interleaving.hpp"
 #include "commands/optimization/balance.hpp"
 #include "commands/optimization/refactor.hpp"
