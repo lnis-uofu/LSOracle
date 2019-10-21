@@ -47,14 +47,16 @@ namespace alice
               std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
             }
 
-            std::cout << "Inputs\n";
-            mig.foreach_pi([&](auto pi){
-              std::cout << "PI: " << pi << " name: " << mig.get_name(mig.make_signal(pi)) << "\n";
+            std::cout << "Inputs:\n";
+            mig.foreach_pi([&](auto pi, auto i){
+              if( i < mig.num_pis() - mig.num_latches() )
+                std::cout << "PI: " << pi << " name: " << mig.get_name(mig.make_signal(pi)) << "\n";
             });
 
-            std::cout << "Outputs\n";
+            std::cout << "Outputs:\n";
             mig.foreach_po([&](auto po, auto i){
-              std::cout << "PO: " << po.index << " name: " << mig.get_output_name(i) << "\n";
+              if( i < mig.num_pos() - mig.num_latches() )
+                std::cout << "PO: " << po.index << " name: " << mig.get_output_name(i) << "\n";
             });
 
           }
@@ -86,14 +88,16 @@ namespace alice
               std::cout << "Register " << aig.ri_index(fi) << " data " << fi.data << std::endl;
             });
 
-            std::cout << "Inputs\n";
-            aig.foreach_pi([&](auto pi){
-              std::cout << "PI: " << pi << " name: " << aig.get_name(aig.make_signal(pi)) << "\n";
+            std::cout << "Inputs:\n";
+            aig.foreach_pi([&](auto pi, auto i){
+              if( i < aig.num_pis() - aig.num_latches() )
+                std::cout << "PI: " << pi << " name: " << aig.get_name(aig.make_signal(pi)) << "\n";
             });
 
-            std::cout << "Outputs\n";
+            std::cout << "Outputs:\n";
             aig.foreach_po([&](auto po, auto i){
-              std::cout << "PO: " << po.index << " name: " << aig.get_output_name(i) << "\n";
+              if( i < aig.num_pos() - aig.num_latches() )
+                std::cout << "PO: " << po.index << " name: " << aig.get_output_name(i) << "\n";
             });
             
           }

@@ -101,15 +101,30 @@ public:
     }
 
     /* map primary inputs */
-    ntk.foreach_pi( [&]( auto n ) {
-      node2new[n] = ntk_dest.create_pi();
+    // ntk.foreach_pi( [&]( auto n ) {
+    //   node2new[n] = ntk_dest.create_pi();
 
+    //   if constexpr ( has_has_name_v<NtkSource> && has_get_name_v<NtkSource> && has_set_name_v<NtkDest> )
+    //   {
+    //     if ( ntk.has_name( ntk.make_signal( n ) ) )
+    //       ntk_dest.set_name( node2new[n], ntk.get_name( ntk.make_signal( n ) ) );
+    //   }
+    //   } );
+
+    ntk.foreach_pi( [&]( auto n, auto index ) {
+      if(ntk.num_latches() > 0 && (index + 1) > ntk.num_pis() - ntk.num_latches()) {
+        node2new[n] = ntk_dest.create_ro();
+      }
+      else if ((index + 1) <= ntk.num_pis() - ntk.num_latches()){
+        node2new[n] = ntk_dest.create_pi();
+      }
       if constexpr ( has_has_name_v<NtkSource> && has_get_name_v<NtkSource> && has_set_name_v<NtkDest> )
       {
         if ( ntk.has_name( ntk.make_signal( n ) ) )
           ntk_dest.set_name( node2new[n], ntk.get_name( ntk.make_signal( n ) ) );
       }
-      } );
+    } );
+    
 
     /* map nodes */
     topo_view ntk_topo{ntk};
@@ -140,18 +155,33 @@ public:
 
 
     /* map primary outputs */
-    ntk.foreach_po( [&]( auto const& f, auto index ) {
-        auto const o = ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f];
-        ntk_dest.create_po( o );
+    // ntk.foreach_po( [&]( auto const& f, auto index ) {
+    //     auto const o = ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f];
+    //     ntk_dest.create_po( o );
 
-        if constexpr ( has_has_output_name_v<NtkSource> && has_get_output_name_v<NtkSource> && has_set_output_name_v<NtkDest> )
-        {
-          if ( ntk.has_output_name( index ) )
-          {
-            ntk_dest.set_output_name( index, ntk.get_output_name( index ) );
-          }
-        }
-      } );
+    //     if constexpr ( has_has_output_name_v<NtkSource> && has_get_output_name_v<NtkSource> && has_set_output_name_v<NtkDest> )
+    //     {
+    //       if ( ntk.has_output_name( index ) )
+    //       {
+    //         ntk_dest.set_output_name( index, ntk.get_output_name( index ) );
+    //       }
+    //     }
+    //   } );
+
+    ntk.foreach_po( [&]( auto const& f, auto index ) {
+     if (index < ntk.num_pos() - ntk.num_latches())
+       ntk_dest.create_po( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
+     else if(ntk.num_latches()>0)
+       ntk_dest.create_ri( ntk.is_complemented( f ) ? ntk_dest.create_not( node2new[f] ) : node2new[f] );
+
+     if constexpr ( has_has_output_name_v<NtkSource> && has_get_output_name_v<NtkSource> && has_set_output_name_v<NtkDest> )
+    {
+      if ( ntk.has_output_name( index ) )
+      {
+        ntk_dest.set_output_name( index, ntk.get_output_name( index ) );
+      }
+    }
+   });
 
     return ntk_dest;
   }

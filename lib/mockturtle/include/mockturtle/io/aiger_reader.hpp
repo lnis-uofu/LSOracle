@@ -154,6 +154,15 @@ public:
       if ( _names )
         _names->insert( signal, std::get<1>( out ) );
       _ntk.create_po( signal );
+      // set default name for POs
+      if constexpr ( has_set_output_name_v<Ntk> )
+      {
+        if ( !_ntk.has_output_name( signal.index ) ){
+          // std::cout << "signal index = " << signal.index << " should be named po" << _ntk.num_pos() - _ntk.num_latches() - 1 << "\n";
+          std::string name = "po" + std::to_string(_ntk.num_pos() - _ntk.num_latches() - 1);
+          _ntk.set_output_name( _ntk.num_pos() - _ntk.num_latches() - 1, name );
+        }
+      }
     }
 
     for ( auto latch : latches )
@@ -184,6 +193,15 @@ public:
     for ( auto i = 0u; i < num_inputs; ++i )
     {
       signals.push_back( _ntk.create_pi() );
+      // set default name for PIs
+      if constexpr ( has_set_name_v<Ntk> )
+      {
+        if( !_ntk.has_name(signals.back() )){
+          // std::cout << "signal " << signals.back().index << " with name pi" << i << "\n";
+          std::string name = "pi" + std::to_string(i);
+          _ntk.set_name( signals.back(), name );
+        }
+      }
     }
 
     /* create latch outputs (ro) */
@@ -195,17 +213,21 @@ public:
 
   void on_input_name( unsigned index, const std::string& name ) const override
   {
-    if ( _names )
+    if constexpr ( has_set_name_v<Ntk> )
     {
-      _names->insert( signals[1 + index], name );
+      _ntk.set_name( signals[1 + index], name );
     }
   }
 
   void on_output_name( unsigned index, const std::string& name ) const override
   {
-    auto const lit = std::get<0>( outputs[index] );
-    auto signal = signals[lit >> 1];
-    std::get<1>( outputs[index] ) = name;
+    // auto const lit = std::get<0>( outputs[index] );
+    // auto signal = signals[lit >> 1];
+    // std::get<1>( outputs[index] ) = name;
+    if constexpr ( has_set_output_name_v<Ntk> )
+    {
+      _ntk.set_output_name( index, name );
+    }
   }
 
   void on_latch_name( unsigned index, const std::string& name ) const override

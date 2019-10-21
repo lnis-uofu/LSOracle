@@ -22,16 +22,6 @@ namespace alice
   class refactor_command : public alice::command{
 
     public:
-      using aig_names = mockturtle::names_view<mockturtle::aig_network>;
-      using aig_ntk = std::shared_ptr<aig_names>;
-      using part_man_aig = oracle::partition_manager<aig_names>;
-      using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
-
-      using mig_names = mockturtle::names_view<mockturtle::mig_network>;
-      using mig_ntk = std::shared_ptr<mig_names>;
-      using part_man_mig = oracle::partition_manager<mig_names>;
-      using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
-
       explicit refactor_command( const environment::ptr& env )
           : command( env, "Perform refactoring on stored network" ){
             add_flag("--zero,-z", "Allow zero-gain substitution");
@@ -58,7 +48,8 @@ namespace alice
         }
         else{
           if(!store<aig_ntk>().empty()){
-            mockturtle::akers_resynthesis<mockturtle::aig_network> resyn;
+            mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> fallback;
+            mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype( fallback )> resyn( fallback );
             auto& ntk = *store<aig_ntk>().current(); 
             mockturtle::refactoring( ntk, resyn, ps );
             ntk = mockturtle::cleanup_dangling(ntk);

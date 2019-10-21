@@ -81,6 +81,15 @@ public:
     {
       ntk_.create_po( signals[o], o );
     }
+
+    for ( auto const& latch : latches )
+    {
+      auto const lit = std::get<0>( latch );
+      auto const reset = std::get<1>( latch );
+
+      auto signal = signals[lit];
+      ntk_.create_ri( signal, reset );
+    }
   }
 
   virtual void on_model( const std::string& model_name ) const override
@@ -104,6 +113,13 @@ public:
       ntk_.set_output_name( outputs.size(), name );
     }
     outputs.emplace_back( name );
+  }
+
+  virtual void on_latch( const std::string& input, const std::string& output, const latch_init_value& reset ) const override
+  {
+    signals[output] = ntk_.create_ro();
+    int8_t r = reset == latch_init_value::NONDETERMINISTIC ? -1 : ( reset == latch_init_value::ONE ? 1 : 0 );
+    latches.emplace_back( std::make_tuple( input, r, "" ) );
   }
 
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const override
@@ -158,6 +174,7 @@ public:
       assert( signals.find( i ) != signals.end() );
       input_signals.push_back( signals.at( i ) );
     }
+
     signals[output] = ntk_.create_node( input_signals, tt );
   }
 
@@ -173,6 +190,7 @@ private:
 
   mutable std::map<std::string, signal<Ntk>> signals;
   mutable std::vector<std::string> outputs;
+  mutable std::vector<std::tuple<std::string, int8_t, std::string>> latches;
 }; /* blif_reader */
 
 } /* namespace mockturtle */

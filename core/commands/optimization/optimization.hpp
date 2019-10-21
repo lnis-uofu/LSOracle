@@ -67,7 +67,6 @@ namespace alice
               }
             }
             else if(is_set("high")){
-              // std::cout << "determining best fit\n";
               for(int i = 0; i < num_parts; i++){
                 oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
 

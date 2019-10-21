@@ -53,7 +53,6 @@ namespace alice
           else{
             if(!store<aig_ntk>().empty()){
               auto& aig = *store<aig_ntk>().current();
-              std::cout << "Latches = " << aig.num_latches() << "\n";
               mockturtle::write_verilog(aig, filename);
             }
             else{

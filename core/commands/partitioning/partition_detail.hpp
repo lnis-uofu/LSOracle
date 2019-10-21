@@ -31,195 +31,99 @@ namespace alice
   protected:
     void execute(){
 
-      if(is_set("names")){
-        if(is_set("mig")){
-          if(!store<mig_ntk>().empty()){
-            auto ntk = store<mig_ntk>().current();
-            if(!store<part_man_mig_ntk>().empty()){
-              auto partitions = store<part_man_mig_ntk>().current();
-              int num_part = partitions->get_part_num();
-              for(int i = 0; i < num_part; i++){
-                oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
-                std::cout << "\n\nPartition " << i << "\n";
-                std::cout << "Number of PI = " << part.num_pis() << "\n";
-                std::cout << "Number of PO = " << part.num_pos() << "\n";
-                std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-                std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-                // std::cout << "Inputs = {";
-                // part.foreach_pi([&](auto pi){
-                //   std::cout << pi << " ";
-                // });
-                // std::cout << "}\n";
-                // std::cout << "Outputs = {";
-                // part.foreach_po([&](auto conn, auto i){
-                //   std::cout << conn.index << " ";
-                // });
-                // std::cout << "}\n";
-                // std::cout << "Nodes = {";
-                // part.foreach_gate([&](auto node){
-                //   std::cout << node << " ";
-                // });
-                // std::cout << "}\n";
-                std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
-                std::set<int>::iterator it;
-                std::cout << "connected partitions = {";
-                for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-                  std::cout << *it << " ";
-                } 
-                std::cout << "}\n";
-              }
-            }
-            else{
-              std::cout << "MIG not partitioned yet\n";
+      if(is_set("mig")){
+        if(!store<mig_ntk>().empty()){
+          auto ntk = store<mig_ntk>().current();
+          if(!store<part_man_mig_ntk>().empty()){
+            auto partitions = store<part_man_mig_ntk>().current();
+            int num_part = partitions->get_part_num();
+            for(int i = 0; i < num_part; i++){
+              oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
+              std::cout << "\n\nPartition " << i << "\n";
+              std::cout << "Number of PI = " << part.num_pis() << "\n";
+              std::cout << "Number of PO = " << part.num_pos() << "\n";
+              std::cout << "Number of latches = " << part.num_latches() << "\n";
+              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
+              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              // std::cout << "Inputs = {";
+              // part.foreach_pi([&](auto pi){
+              //   std::cout << pi << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Outputs = {";
+              // part.foreach_po([&](auto conn, auto i){
+              //   std::cout << conn.index << " ";
+              // });
+              // std::cout << "}\n";
+              // std::cout << "Nodes = {";
+              // part.foreach_gate([&](auto node){
+              //   std::cout << node << " ";
+              // });
+              // std::cout << "}\n";
+              std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
+              std::set<int>::iterator it;
+              std::cout << "connected partitions = {";
+              for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
+                std::cout << *it << " ";
+              } 
+              std::cout << "}\n";
             }
           }
           else{
-            std::cout << "There is no MIG network stored\n";
+            std::cout << "MIG not partitioned yet\n";
           }
         }
         else{
-          if(!store<aig_ntk>().empty()){
-            auto ntk = store<aig_ntk>().current();
-            if(!store<part_man_aig_ntk>().empty()){
-              auto partitions = store<part_man_aig_ntk>().current();
-              int num_part = partitions->get_part_num();
-              for(int i = 0; i < num_part; i++){
-                oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
-                std::cout << "\n\nPartition " << i << "\n";
-                std::cout << "Number of PI = " << part.num_pis() << "\n";
-                std::cout << "Number of PO = " << part.num_pos() << "\n";
-                std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-                std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-                std::cout << "Inputs = {";
-                part.foreach_pi([&](auto pi){
-                  std::cout << pi << " ";
-                });
-                std::cout << "}\n";
-                std::cout << "Outputs = {";
-                part.foreach_po([&](auto conn, auto i){
-                  std::cout << conn.index << " ";
-                });
-                std::cout << "}\n";
-                std::cout << "Nodes = {";
-                part.foreach_gate([&](auto node){
-                  std::cout << node << " ";
-                });
-                std::cout << "}\n";
-                std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
-                std::set<int>::iterator it;
-                std::cout << "connected partitions = {";
-                for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-                  std::cout << *it << " ";
-                } 
-                std::cout << "}\n";
-              }
-            }
-            else{
-              std::cout << "AIG not partitioned yet\n";
+          std::cout << "There is no MIG network stored\n";
+        }
+      }
+      else{
+        if(!store<aig_ntk>().empty()){
+          auto ntk = store<aig_ntk>().current();
+          if(!store<part_man_aig_ntk>().empty()){
+            auto partitions = store<part_man_aig_ntk>().current();
+            int num_part = partitions->get_part_num();
+            for(int i = 0; i < num_part; i++){
+              oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
+              std::cout << "\n\nPartition " << i << "\n";
+              std::cout << "Number of PI = " << part.num_pis() << "\n";
+              std::cout << "Number of PO = " << part.num_pos() << "\n";
+              std::cout << "Number of latches = " << part.num_latches() << "\n";
+              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
+              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              std::cout << "Inputs = {";
+              part.foreach_pi([&](auto pi){
+                std::cout << pi << " ";
+              });
+              std::cout << "}\n";
+              std::cout << "Outputs = {";
+              part.foreach_po([&](auto conn, auto i){
+                std::cout << conn.index << " ";
+              });
+              std::cout << "}\n";
+              std::cout << "Nodes = {";
+              part.foreach_gate([&](auto node){
+                std::cout << node << " ";
+              });
+              std::cout << "}\n";
+              std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
+              std::set<int>::iterator it;
+              std::cout << "connected partitions = {";
+              for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
+                std::cout << *it << " ";
+              } 
+              std::cout << "}\n";
             }
           }
           else{
-            std::cout << "There is no AIG network stored\n";
+            std::cout << "AIG not partitioned yet\n";
           }
         }
-
+        else{
+          std::cout << "There is no AIG network stored\n";
+        }
       }
-      // else{
-      //   if(is_set("mig")){
-      //     if(!store<mockturtle::mig_network>().empty()){
-      //       auto ntk = store<mockturtle::mig_network>().current();
-      //       if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-      //         auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
-      //         int num_part = partitions.get_part_num();
-      //         for(int i = 0; i < num_part; i++){
-      //           oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
-      //           std::cout << "\n\nPartition " << i << "\n";
-      //           std::cout << "Number of PI = " << part.num_pis() << "\n";
-      //           std::cout << "Number of PO = " << part.num_pos() << "\n";
-      //           std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-      //           std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-      //           // std::cout << "Inputs = {";
-      //           // part.foreach_pi([&](auto pi){
-      //           //   std::cout << pi << " ";
-      //           // });
-      //           // std::cout << "}\n";
-      //           // std::cout << "Outputs = {";
-      //           // part.foreach_po([&](auto conn, auto i){
-      //           //   std::cout << conn.index << " ";
-      //           // });
-      //           // std::cout << "}\n";
-      //           // std::cout << "Nodes = {";
-      //           // part.foreach_gate([&](auto node){
-      //           //   std::cout << node << " ";
-      //           // });
-      //           // std::cout << "}\n";
-      //           std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
-      //           std::set<int>::iterator it;
-      //           std::cout << "connected partitions = {";
-      //           for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-      //             std::cout << *it << " ";
-      //           } 
-      //           std::cout << "}\n";
-      //         }
-      //       }
-      //       else{
-      //         std::cout << "MIG not partitioned yet\n";
-      //       }
-      //     }
-      //     else{
-      //       std::cout << "There is no MIG network stored\n";
-      //     }
-      //   }
-      //   else{
-      //     if(!store<mockturtle::aig_network>().empty()){
-      //       auto ntk = store<mockturtle::aig_network>().current();
-      //       if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-      //         auto partitions = store<oracle::partition_manager<mockturtle::aig_network>>().current();
-      //         int num_part = partitions.get_part_num();
-      //         for(int i = 0; i < num_part; i++){
-      //           oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
-      //           std::cout << "\n\nPartition " << i << "\n";
-      //           std::cout << "Number of PI = " << part.num_pis() << "\n";
-      //           std::cout << "Number of PO = " << part.num_pos() << "\n";
-      //           std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-      //           std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
-      //           std::cout << "Inputs = {";
-      //           part.foreach_pi([&](auto pi){
-      //             std::cout << pi << " ";
-      //           });
-      //           std::cout << "}\n";
-      //           std::cout << "Outputs = {";
-      //           part.foreach_po([&](auto conn, auto i){
-      //             std::cout << conn.index << " ";
-      //           });
-      //           std::cout << "}\n";
-      //           std::cout << "Nodes = {";
-      //           part.foreach_gate([&](auto node){
-      //             std::cout << node << " ";
-      //           });
-      //           std::cout << "}\n";
-      //           std::set<int> connected_parts = partitions.get_connected_parts(ntk, i);
-      //           std::set<int>::iterator it;
-      //           std::cout << "connected partitions = {";
-      //           for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-      //             std::cout << *it << " ";
-      //           } 
-      //           std::cout << "}\n";
-      //         }
-      //       }
-      //       else{
-      //         std::cout << "AIG not partitioned yet\n";
-      //       }
-      //     }
-      //     else{
-      //       std::cout << "There is no AIG network stored\n";
-      //     }
-      //   }
-
-      // }
-      
     }
-
   private:
   };
 

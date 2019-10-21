@@ -36,29 +36,22 @@ namespace alice
             mockturtle::mig_network mig;
             mockturtle::names_view<mockturtle::mig_network> names_view{mig};
             lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
-            std::cout << "MIG network stored" << std::endl;
+            
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
-
-            // filename.erase(filename.end() - 4, filename.end());
-            // mig._storage->net_name = filename;
+            std::cout << "MIG network stored" << std::endl;
           }
           else{
             mockturtle::aig_network aig;
             mockturtle::names_view<mockturtle::aig_network> names_view{aig};
             lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
-            std::cout << "AIG network stored" << std::endl;
+            
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
-
-            // filename.erase(filename.end() - 2, filename.end());
-            // aig._storage->net_name = filename;
-
+            std::cout << "AIG network stored" << std::endl;
           }
-
         }
         else{
           std::cout << filename << " is not a valid Verilog file\n";
         }
-        
       }
     private:
       std::string filename{};
