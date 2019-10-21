@@ -2548,6 +2548,12 @@ namespace alice{
     };
 
   ALICE_ADD_COMMAND(techmap, "Output");
+  
+  ALICE_COMMAND(npn_enumeration, "Testing", "Enumerate all 2, 3, and 4 input NPN classes"){
+    oracle::npn_enumeration(2);
+    std::cout << "\n\n";
+    oracle::npn_enumeration(3);
+  }
 
 } // namespace alice
 

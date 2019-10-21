@@ -60,6 +60,7 @@
 #include "commands/testing/test_combine_part.hpp"
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
+#include "commands/npn_enumeration.hpp"
 
 #include "commands/testing/pattern_view.hpp"
 

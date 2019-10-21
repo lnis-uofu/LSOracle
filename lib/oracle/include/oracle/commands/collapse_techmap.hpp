@@ -65,7 +65,7 @@ public:
     int netlistcount = 0; //node count.  Used as index in cell_names
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
     std::regex gate_inputs("\\.([ABCDY])\\((.+?)\\)");  //regex to handle signals
-    std::ifstream library("../../NPN_LUT4.json"); //make this generic once it's working
+    std::ifstream library("../../NPN_LUT234.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
 /*
     kitty::dynamic_truth_table<4> test;
@@ -82,7 +82,7 @@ public:
         //std::cout << "making pi: " << n << "  nlc:  " << netlistcount << "\n";
     } );
 
-    /* nodes */
+    /* LUT nodes */
     ntk.foreach_node( [&]( auto const n ) {
         if ( ntk.is_constant( n ) || ntk.is_pi( n ) ){
           std::cout << "\npi or const: " << n <<" nlc:  " << netlistcount << "\n";
@@ -94,15 +94,9 @@ public:
         auto NPNconfig = kitty::exact_npn_canonization(func);
         std::string tempstr = kitty::to_hex(std::get<0>(NPNconfig));
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
-        tempstr.insert(tempstr.begin(), 4 - tempstr.length(), '0');
+        //tempstr.insert(tempstr.begin(), 4 - tempstr.length(), '0');
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
-        
-        /*** the NPN thing in mockturle complements the entire LUT truth table before
-        **  doing anything else.
-
-        ***/
-
         std::cout << "LUT function: " << tempstr << "\n";
         std::cout << "fanin: ";
         ntk.foreach_fanin( n, [&]( auto fanin ) {
@@ -110,24 +104,7 @@ public:
           std::cout << cell_children.back() << " ";
         } );
         std::cout << "\n";
-        //input permutation
-        for (int j = 0; j < cell_children.size(); ++j){
-          if (std::get<2>(NPNconfig)[j] == j)
-            continue;
-          int k = j;
-          while (std::get<2>(NPNconfig)[k] != j ){
-            ++k;
-          }
-          kitty::swap_inplace( std::get<0>(NPNconfig), j, k );
-
-          std::swap(std::get<2>(NPNconfig)[j], std::get<2>(NPNconfig)[k]);
-          std::swap(cell_children.at(j), cell_children.at(k));
-        }
-        std::cout << "After permutation ";
-        for (int j = 0; j < cell_children.size(); ++j){
-          std::cout << cell_children.at(j) <<" ";
-        }
-        std::cout << "\n" << kitty::to_hex(std::get<0>(NPNconfig)) << "\t" << std::get<1>(NPNconfig) <<"\n\n";
+        
         //input negation
         for (int j = 0; j< cell_children.size(); ++j){
           if ( (std::get<1>(NPNconfig) >> j) & 1){
@@ -147,6 +124,19 @@ public:
             }
           }
         }
+   
+      //input permutation
+        for (int j = 0; j < cell_children.size(); ++j){
+          if (std::get<2>(NPNconfig)[j] == j)
+            continue;
+          int k = j;
+          while (std::get<2>(NPNconfig)[k] != j ){
+            ++k;
+          }
+          std::swap(std::get<2>(NPNconfig)[j], std::get<2>(NPNconfig)[k]);
+          std::swap(cell_children.at(j), cell_children.at(k));
+        }
+        std::cout << "After permutation ";
 
         //get array of standard cells here from json file
         try{
@@ -269,11 +259,7 @@ public:
         std::cout << "Creating PO: " << node_to_signal[f] << "\n";
         dest.create_po( node_to_signal[f] );
     } );
-    std::cout << "\n dest network size: " << dest.size() << "  "<< "Netlist count:  " << netlistcount << "\n"; 
-    std::cout << "Printing cell map: \n";
-    for ( auto it = cell_names.begin(); it != cell_names.end(); ++it){
-      std::cout << it->first << " " << it->second << "\n";
-    }
+    
     std::cout << "###################\nLOOPING THROUGH DEST\n\n"; 
     dest.foreach_node( [&]( auto const& n ) {
       if (cell_names.find(n) != cell_names.end()){
