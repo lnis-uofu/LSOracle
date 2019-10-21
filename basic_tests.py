@@ -30,7 +30,7 @@ if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
     training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 else:
-    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/LSOracle/build/core'
+    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/test/curr_repo/refactor/LSOracle/build/core'
     training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 
 #configure logging
@@ -105,7 +105,7 @@ for curr_file in files:
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     #calculate number of nodes
-    unoptimized_size = float(string_stdout[7:string_stdout.find('\n')])
+    unoptimized_size = float(string_stdout.splitlines()[1][7:string_stdout.find('\n')])
     num_part = math.ceil(unoptimized_size / 300)
     print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
    
