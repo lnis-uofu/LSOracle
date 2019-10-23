@@ -117,7 +117,12 @@ public:
 
   virtual void on_latch( const std::string& input, const std::string& output, const latch_init_value& reset ) const override
   {
-    signals[output] = ntk_.create_ro();
+    signals[output] = ntk_.create_ro( output );
+    if constexpr ( has_set_name_v<Ntk> && has_set_output_name_v<Ntk>)
+    {
+      ntk_.set_name( signals[output], output );
+      ntk_.set_output_name( outputs.size() + latches.size(), input );
+    }
     int8_t r = reset == latch_init_value::NONDETERMINISTIC ? -1 : ( reset == latch_init_value::ONE ? 1 : 0 );
     latches.emplace_back( std::make_tuple( input, r, "" ) );
   }

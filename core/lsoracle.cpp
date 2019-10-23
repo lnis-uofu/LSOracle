@@ -62,6 +62,7 @@
 //Output
 #include "commands/output/write_verilog.hpp"
 #include "commands/output/write_bench.hpp"
+#include "commands/output/write_blif.hpp"
 #include "commands/output/write_dot.hpp"
 #include "commands/output/write_hypergraph.hpp"
 #include "commands/output/show_ntk.hpp"

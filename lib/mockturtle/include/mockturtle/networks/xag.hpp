@@ -872,7 +872,7 @@ public:
 
   node ri_to_ro( signal const& s ) const
   {
-    return *( _storage->inputs.begin() + ri_index( s ) );
+    return *( _storage->inputs.begin() + num_pis() + ri_index( s ) );
   }
 #pragma endregion
 

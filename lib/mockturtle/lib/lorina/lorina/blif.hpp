@@ -280,8 +280,8 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
         {
           auto const s = detail::trim_copy( input );
           on_action.declare_known( s );
-          if( s != "clock" )
-            reader.on_input( s );
+          
+          reader.on_input( s );
         }
         return true;
       }

@@ -296,7 +296,7 @@ std::tuple<graph, std::vector<std::pair<node<Ntk>, uint32_t>>> network_cuts_grap
   ntk.clear_visited();
 
   ntk.foreach_node( [&]( auto const& n, auto index ) {
-    if ( index >= cuts.nodes_size() || ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( index >= cuts.nodes_size() || ntk.is_constant( n ) || ntk.is_ci( n ) )
       return;
 
     if ( mffc_size( ntk, n ) == 1 )
@@ -427,7 +427,7 @@ public:
         return false;
 
       /* do not iterate over constants or PIs */
-      if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+      if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
         return true;
 
       /* skip cuts with small MFFC */
@@ -559,7 +559,7 @@ private:
   uint32_t recursive_deref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -576,7 +576,7 @@ private:
   uint32_t recursive_ref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -593,7 +593,7 @@ private:
   std::pair<int32_t, bool> recursive_ref_contains( node<Ntk> const& n, node<Ntk> const& repl )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return {0, false};
 
     /* recursively collect nodes */

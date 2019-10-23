@@ -847,7 +847,7 @@ public:
 
   node ri_to_ro( signal const& s ) const
   {
-    return *( _storage->inputs.begin() + ri_index( s ) );
+    return *( _storage->inputs.begin() + _storage->data.num_pis + ri_index( s ) );
   }
 #pragma endregion
 
@@ -888,13 +888,13 @@ public:
   template<typename Fn>
   void foreach_ro( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin() /*+ _storage->data.num_pis*/, _storage->inputs.end(), fn );
+    detail::foreach_element( _storage->inputs.begin() + _storage->data.num_pis, _storage->inputs.end(), fn );
   }
 
   template<typename Fn>
   void foreach_ri( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->outputs.begin() /*+ _storage->data.num_pos*/, _storage->outputs.end(), fn );
+    detail::foreach_element( _storage->outputs.begin() + _storage->data.num_pos, _storage->outputs.end(), fn );
   }
 
   template<typename Fn>

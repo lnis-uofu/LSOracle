@@ -39,7 +39,7 @@ namespace alice
             mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
-            store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk );
+            store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
             std::cout << "MIG network stored\n";
           }
           else if(is_set("xag")){
@@ -47,7 +47,7 @@ namespace alice
             mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
                 
-            store<xag_ntk>().extend() = std::make_shared<xag_names>( ntk );
+            store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
             std::cout << "XAG network stored\n";
           }
           else{
@@ -55,7 +55,7 @@ namespace alice
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
                 
-            store<aig_ntk>().extend() = std::make_shared<aig_names>( ntk );
+            store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             std::cout << "AIG network stored\n";
           }
         }

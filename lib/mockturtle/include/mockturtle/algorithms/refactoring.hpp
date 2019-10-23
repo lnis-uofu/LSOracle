@@ -235,7 +235,7 @@ private:
   uint32_t recursive_deref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -252,7 +252,7 @@ private:
   uint32_t recursive_ref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return 0;
 
     /* recursively collect nodes */

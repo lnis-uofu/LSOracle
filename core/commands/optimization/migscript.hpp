@@ -39,7 +39,6 @@ namespace alice
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
       std::cout << "Full Optimization: " << duration.count() << "ms\n";
       std::cout << "Finished optimization\n";
-
     }
     else{
       std::cout << "There is not an MIG network stored.\n";

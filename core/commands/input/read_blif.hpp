@@ -90,6 +90,25 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, names_view, resyn );
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
+
+            named_dest.foreach_node([&]( auto node ){
+
+              auto signal = named_dest.make_signal( node );
+              std::string const name = named_dest.has_name( signal ) ? named_dest.get_name( signal ) : fmt::format( "n{}", node );
+              std::cout << "Node " << node << "; name = " << name << "\n";
+              if(named_dest.is_pi(node)){
+                std::cout << "PI\n";
+              }
+              if(named_dest.is_ro(node)){
+                std::cout << "RO\n";
+              }
+            });
+
+            named_dest.foreach_po([&]( auto po, auto index ){
+
+              std::string const name = named_dest.has_output_name( index ) ? named_dest.get_output_name( index ) : fmt::format( "n{}", po.index );
+              std::cout << "Output " << po.index << "; name = " << name << "\n";
+            });
             std::cout << "AIG network stored\n";
           }
           else{
