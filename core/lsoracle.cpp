@@ -2502,9 +2502,10 @@ namespace alice{
 
             /******************************/
             //added for testing 
-            /*
+            
             mockturtle::write_bench(klut, filename + "KLUT.bench");
             mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
+            /*
             mockturtle::default_simulator<kitty::dynamic_truth_table> sim2 (klut.num_pis());
             const auto tt2 = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (klut, sim2);
 

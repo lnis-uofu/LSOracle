@@ -60,32 +60,22 @@ public:
   std::tuple <NtkDest, std::unordered_map<int, std::string>>  run()
   {
     NtkDest dest;
-    nlohmann::json json_library; //LUT -> verilog
+    nlohmann::json json_library; //LUT -> verilog database
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
     int netlistcount = 0; //node count.  Used as index in cell_names
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
     std::regex gate_inputs("\\.([ABCDY])\\((.+?)\\)");  //regex to handle signals
     std::ifstream library("../../NPN_LUT234.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
-/*
-    kitty::dynamic_truth_table<4> test;
-    kitty::create_from_hex_string(test, "E8");
-    std::cout << "##############TEST##############\n" << kitty::to_hex(test) << "\n####################################\n";
-*/
 
-    std::cout << "Begin. Dest size: " << dest.size() << "\n";
     /* primary inputs */
     ntk.foreach_pi( [&]( auto n ) {
         node_to_signal[n] = dest.create_pi();
-        std::cout << "Adding PI. Dest size: " << dest.size() << "\n";
-
-        //std::cout << "making pi: " << n << "  nlc:  " << netlistcount << "\n";
     } );
 
     /* LUT nodes */
     ntk.foreach_node( [&]( auto const n ) {
         if ( ntk.is_constant( n ) || ntk.is_pi( n ) ){
-          std::cout << "\npi or const: " << n <<" nlc:  " << netlistcount << "\n";
           ++netlistcount;
           return;
         }
@@ -94,16 +84,12 @@ public:
         auto NPNconfig = kitty::exact_npn_canonization(func);
         std::string tempstr = kitty::to_hex(std::get<0>(NPNconfig));
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
-        //tempstr.insert(tempstr.begin(), 4 - tempstr.length(), '0');
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
-        std::cout << "LUT function: " << tempstr << "\n";
-        std::cout << "fanin: ";
+        std::cout << "NPN Class: " << tempstr << "\n";
         ntk.foreach_fanin( n, [&]( auto fanin ) {
           cell_children.push_back( node_to_signal[fanin] );
-          std::cout << cell_children.back() << " ";
         } );
-        std::cout << "\n";
         
         //input negation
         for (int j = 0; j< cell_children.size(); ++j){
@@ -114,18 +100,16 @@ public:
             mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
             cell_children.at(j) = tmpsig;
             int after = dest.size();
-            std::cout << "\tInput negation.  Input: "<< j << "  Dest size: " << dest.size() << " netlistcount: " << netlistcount << "\n";
             if (before != after){
-              std::cout << "Added NOT gate\n";
               cell_names.insert({netlistcount, "NOT"});
               ++netlistcount;
             } else {
-              std::cout << "equivalent node already exists.  Not placing.";
+              std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
             }
           }
         }
    
-      //input permutation
+        //input permutation
         for (int j = 0; j < cell_children.size(); ++j){
           if (std::get<2>(NPNconfig)[j] == j)
             continue;
@@ -136,13 +120,12 @@ public:
           std::swap(std::get<2>(NPNconfig)[j], std::get<2>(NPNconfig)[k]);
           std::swap(cell_children.at(j), cell_children.at(k));
         }
-        std::cout << "After permutation ";
 
         //get array of standard cells here from json file
         try{
             std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
             std::unordered_map<std::string, mockturtle::signal<NtkDest>> gate_tmp_outputs;
-            
+    
             for (int i = 0; i < node_gates.size(); i++){
                 std::vector<mockturtle::signal<NtkDest>> gate_children;
                 const std::sregex_token_iterator end;
@@ -154,7 +137,6 @@ public:
                   std::smatch arg_match;
                   if (std::regex_search(current_token, arg_match, gate_inputs)){
                     if (arg_match.ready()){
-                      /***************************/
                       //handle standard cell inputs
                       //can be input from the LUT (a, b, c, d for LUT4) or internal wire
                       //the inputs should always appear in the json file in alphabetical order (A, (optionally B, C, D,) then Y)
@@ -177,7 +159,7 @@ public:
                             std::cout << "Guru Meditation: " << e.what() <<"\n";
                           }
                         }
-                      /******************************/
+
                       //outputs and populating network
                       } else if (arg_match[1] == "Y"){
                         if (arg_match[2] == "F"){ 
@@ -189,22 +171,17 @@ public:
                           if (before != after){
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                             cell_names.insert({netlistcount, stcell});
-                            std::cout << "Placing cell. nlc: " << netlistcount << "  cell: " << stcell << "\n"; 
-                            std::cout << "\tLUT end.  Dest size: " << dest.size() << " netlistcount: " << netlistcount << "\n";
                             ++netlistcount;
                           } else {
-                            std::cout << "equivalent cell already exists.  Skipping duplicate node.\n";
+                            std::cout << "equivalent cell already exists, but should not at LUT end.\n";
                           }
-
-                          if ( ( std::get<1>(NPNconfig) >> gate_children.size() ) & 1 ){
+                          if ( ( ( std::get<1>(NPNconfig) >> cell_children.size() ) & 1 )){
                             int before = dest.size();
                             std::vector <mockturtle::signal<NtkDest>> NegVec;
                             NegVec.push_back(node_to_signal[n]);
                             node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
                             int after = dest.size();
-                            std::cout << " output of LUT in negated.";
                             if (before != after){
-                              std::cout << "placing NOT gate\n";
                               cell_names.insert({netlistcount, "NOT"});
                               ++netlistcount;
                             } else {
@@ -220,11 +197,9 @@ public:
                           if (before != after){
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                             cell_names.insert({netlistcount, stcell});
-                            std::cout << "Placing cell. nlc: " << netlistcount << "  cell: " << stcell << "\n"; 
-                            std::cout << "\tDest size: " << dest.size() << " netlistcount: " << netlistcount<<  "\n";
                             ++netlistcount;
                           } else {
-                            std::cout << "equivalent cell already exists.  Not placing.\n";
+                            std::cout << "equivalent cell already exists.  Not placing node " << i << " in parent klut node " << n << "\n";
                           }
                         }
                       /***************************/
@@ -255,12 +230,10 @@ public:
       } ); //foreach node
 
     ntk.foreach_po( [&]( auto const& f ) {
-        //V.S. for not handling inversion yet.
-        std::cout << "Creating PO: " << node_to_signal[f] << "\n";
         dest.create_po( node_to_signal[f] );
     } );
     
-    std::cout << "###################\nLOOPING THROUGH DEST\n\n"; 
+    std::cout << "###################\nLOOPING THROUGH DEST NTK (DEBUG)\n\n"; 
     dest.foreach_node( [&]( auto const& n ) {
       if (cell_names.find(n) != cell_names.end()){
         std::cout << "\t" << n << "\t" << cell_names.at(n) << " \n";
