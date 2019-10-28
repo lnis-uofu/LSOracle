@@ -86,11 +86,17 @@ public:
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
-        std::cout << "NPN Class: " << tempstr << "\n";
+        std::cout << "NPN Class: " << tempstr << "\n fanin: ";
         ntk.foreach_fanin( n, [&]( auto fanin ) {
           cell_children.push_back( node_to_signal[fanin] );
+          std::cout << fanin << "   nts: " << node_to_signal[fanin] << "\n";
         } );
+        std::cout << "phase: " << std::get<1>(NPNconfig) << "\nPerm. Order: ";
         
+        for (int k = 0; k < std::get<2>(NPNconfig).size(); ++k ){
+          std::cout << std::to_string(std::get<2>(NPNconfig)[k]) << ", ";
+        }
+        std::cout << "\n\n";
         //input negation
         for (int j = 0; j< cell_children.size(); ++j){
           if ( (std::get<1>(NPNconfig) >> j) & 1){
@@ -109,18 +115,25 @@ public:
           }
         }
    
-        //input permutation
+        std::cout << "input negation: ";
         for (int j = 0; j < cell_children.size(); ++j){
-          if (std::get<2>(NPNconfig)[j] == j)
-            continue;
-          int k = j;
-          while (std::get<2>(NPNconfig)[k] != j ){
-            ++k;
-          }
-          std::swap(std::get<2>(NPNconfig)[j], std::get<2>(NPNconfig)[k]);
-          std::swap(cell_children.at(j), cell_children.at(k));
+          std::cout << cell_children.at(j) << " ";
         }
+        std::cout << "\n\n";
 
+        //input permutation
+        std::vector<mockturtle::signal<NtkDest>> temp_cell_children(cell_children.size());
+        for (int j = 0; j < cell_children.size(); ++j){
+          int temp_index = std::get<2>(NPNconfig)[j];
+          std::cout << std::to_string(temp_index);
+          temp_cell_children[j] = cell_children[temp_index];
+        }
+        cell_children = temp_cell_children;
+        std::cout << "input permutation: ";
+        for (int j = 0; j < cell_children.size(); ++j){
+          std::cout << cell_children.at(j) << " ";
+        }
+        std::cout << "\n\n";
         //get array of standard cells here from json file
         try{
             std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
@@ -173,7 +186,9 @@ public:
                             cell_names.insert({netlistcount, stcell});
                             ++netlistcount;
                           } else {
-                            std::cout << "equivalent cell already exists, but should not at LUT end.\n";
+                            std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
+                            std::cout << "ERROR:  equivalent cell already exists, but should not at LUT end.\n";
+                            std::cout << "node: " << i << " in parent klut node " << n <<"\n std cell " << stcell << "\n\n\n";
                           }
                           if ( ( ( std::get<1>(NPNconfig) >> cell_children.size() ) & 1 )){
                             int before = dest.size();
