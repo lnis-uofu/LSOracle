@@ -4,7 +4,7 @@ dist: trusty
 sudo: required
 cache: 
   directories:
-    - $HOME/deps/abc
+    - $HOME/deps/
     - $HOME/.ccache
 
 env:
