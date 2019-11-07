@@ -2486,16 +2486,16 @@ namespace alice{
             const auto tts = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (aig, sim);
             */
             /****************************/
-
-            mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig};
+            mockturtle::topo_view aig_topo{aig};
+            mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
             mockturtle::lut_mapping_params ps;
             ps.cut_enumeration_ps.cut_size = 4;
             ps.cut_enumeration_ps.cut_limit = 4;
             mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
             const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
             auto const& klut = *klut_opt;
-            std::cout << "here \n\n";
-            std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut); 
+            mockturtle::topo_view klut_topo{klut};
+            std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
             oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
             mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
             std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
@@ -2503,8 +2503,9 @@ namespace alice{
             /******************************/
             //added for testing 
             
-            mockturtle::write_bench(klut, filename + "KLUT.bench");
+            mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
             mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
+
             /*
             mockturtle::default_simulator<kitty::dynamic_truth_table> sim2 (klut.num_pis());
             const auto tt2 = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (klut, sim2);

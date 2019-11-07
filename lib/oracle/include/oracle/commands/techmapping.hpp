@@ -73,7 +73,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 first = false;
             else
                 input_list += ", ";
-            input_list += fmt::format("n{}", n);
+            input_list += fmt::format("n{}", ntk.node_to_index( n ) );
 
     });
 
@@ -84,7 +84,11 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
             else
                 output_list += ", ";
             output_list += fmt::format("po{}", i);
-            po_assignments += fmt::format("\tassign po{} = n{};\n", i, n);
+            if ( ntk.is_constant( ntk.get_node( n ) ) ){
+                po_assignments += fmt::format( "\tassign po{} = {};\n", i, ntk.is_complemented( n ) ? "1'b1" : "1'b0" );
+            } else {
+                po_assignments += fmt::format("\tassign po{} = n{};\n", i, n);
+            }
     });
     
     first = true;
@@ -106,18 +110,20 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
 //body
 
     ntk.foreach_node( [&]( auto const& n ) {
-    /*
-        if ( ntk.is_constant( n ) || ntk.is_pi( n ) ){
-            std::cout << "pi or const: " << n << "\n";
-            return;
-        }
-*/
+
         if (cell_names.find(n) != cell_names.end()){
 
             std::vector <std::string> children;
             // populate children, which will be function inputs
             ntk.foreach_fanin( n, [&]( auto fanin ) {
-                children.push_back(fmt::format( "n{}",fanin ));
+                //handle constants in fanin
+                if (fanin == 0){
+                    children.push_back("1'b0");
+                } else if (fanin == 1){
+                    children.push_back("1'b1");
+                } else {
+                    children.push_back(fmt::format( "n{}",fanin ));
+                }
             } );
             os << "\t" << cell_names.at(n) << " ";
             if(children.size() > 0){
@@ -138,14 +144,6 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
 
     } );
    
-    /*
-    ntk.foreach_po( [&]( auto const& s, auto i ) {
-        os << fmt::format( "po{} = LUT 0x{} (n{})\n",
-                         i,
-                         ntk.is_complemented( s ) ? 1 : 2,
-                         ntk.node_to_index( ntk.get_node( s ) ) );
-     } );
-     */
     os << po_assignments;
     os << "endmodule\n";
 }

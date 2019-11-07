@@ -86,17 +86,31 @@ public:
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
-        std::cout << "NPN Class: " << tempstr << "\n fanin: ";
+        std::cout << "NPN Class: " << tempstr << "\n";
         ntk.foreach_fanin( n, [&]( auto fanin ) {
           cell_children.push_back( node_to_signal[fanin] );
-          std::cout << fanin << "   nts: " << node_to_signal[fanin] << "\n";
         } );
-        std::cout << "phase: " << std::get<1>(NPNconfig) << "\nPerm. Order: ";
-        
-        for (int k = 0; k < std::get<2>(NPNconfig).size(); ++k ){
-          std::cout << std::to_string(std::get<2>(NPNconfig)[k]) << ", ";
+
+        //Handling special cases.  NOT LUTs and Constants
+        if (cell_children.size() == 1){
+          if (json_lookup == "out_1"){
+            int before = dest.size();
+            std::vector <mockturtle::signal<NtkDest>> NegVec;
+            NegVec.push_back(cell_children.at(0));
+            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+            int after = dest.size();
+            if (before != after){
+              cell_names.insert({netlistcount, "NOT"});
+              ++netlistcount;
+            } else {
+              std::cout << "ERROR: Not placing 1 input function, NOT.  Equivalent already exists.\n";
+            }
+          } else if (json_lookup == "out_0" || json_lookup == "out_00"){
+            node_to_signal[n] = dest.get_constant(false);
+          }
+          return;
         }
-        std::cout << "\n\n";
+
         //input negation
         for (int j = 0; j< cell_children.size(); ++j){
           if ( (std::get<1>(NPNconfig) >> j) & 1){
@@ -114,26 +128,14 @@ public:
             }
           }
         }
-   
-        std::cout << "input negation: ";
-        for (int j = 0; j < cell_children.size(); ++j){
-          std::cout << cell_children.at(j) << " ";
-        }
-        std::cout << "\n\n";
 
         //input permutation
         std::vector<mockturtle::signal<NtkDest>> temp_cell_children(cell_children.size());
         for (int j = 0; j < cell_children.size(); ++j){
           int temp_index = std::get<2>(NPNconfig)[j];
-          std::cout << std::to_string(temp_index);
           temp_cell_children[j] = cell_children[temp_index];
         }
         cell_children = temp_cell_children;
-        std::cout << "input permutation: ";
-        for (int j = 0; j < cell_children.size(); ++j){
-          std::cout << cell_children.at(j) << " ";
-        }
-        std::cout << "\n\n";
         //get array of standard cells here from json file
         try{
             std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
@@ -268,23 +270,53 @@ private:
     for (auto child : children){
       tt_vec.push_back(dest.node_function(dest.get_node(child)));
     }
-    kitty::dynamic_truth_table result;
+    kitty::dynamic_truth_table result (tt_vec.size());
     if (func == "NOT"){
-      result = kitty::unary_not(dest.node_function(dest.get_node(children[0])) );
+       kitty::create_from_hex_string(result, "1");
     } else if (func == "AND"){
-      result = std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return kitty::binary_and(a, d); });
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "8");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "80");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "8000");
     } else if (func == "NOR"){
-      result = kitty::unary_not(std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return kitty::binary_or (a, d); }));
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "1");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "01");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "0001");
     } else if (func == "NAN"){
-      result = kitty::unary_not(std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return kitty::binary_and(a, d); }));
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "7");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "7F");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "7FFF");
     } else if (func == "XOR"){
-      result = std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return a ^ d; });  
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "6");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "96");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "6996");
     } else if (func == "XNO"){
-      result = kitty::unary_not(std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return a ^ d; }));  
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "9");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "69");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "9669");
     } else if (func.substr(0,2) == "OR"){
-      result = std::accumulate( tt_vec.begin(), tt_vec.end(), tt_vec.at(0), [](kitty::dynamic_truth_table a, kitty::dynamic_truth_table d) { return kitty::binary_or ( a, d); });  
+      if (tt_vec.size() == 2)
+        kitty::create_from_hex_string(result, "E");
+      if (tt_vec.size() == 3)
+        kitty::create_from_hex_string(result, "FE");
+      if (tt_vec.size() == 4)
+        kitty::create_from_hex_string(result, "FFFE");
     } else if (func == "MAJ"){
-      result =  kitty::ternary_majority(tt_vec.at(0), tt_vec.at(1), tt_vec.at(2) );
+       kitty::create_from_hex_string(result, "E8");
     }else {
       result = kitty::dynamic_truth_table(8);
     };
