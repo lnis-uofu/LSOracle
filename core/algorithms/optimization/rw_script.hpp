@@ -10,67 +10,59 @@
 
 namespace oracle{
     
-    class aig_script{
+    class rw_script{
     public:
-        mockturtle::aig_network run(mockturtle::aig_network& aig){
+        mockturtle::aig_network run(mockturtle::aig_network& aig, bool zero_gain = false){
 
             // std::cout << "HERE\n";
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::cut_rewriting_params ps;
             ps.cut_enumeration_ps.cut_size = 4;
+            if(zero_gain)
+                ps.allow_zero_gain = true;
 
-            mockturtle::cut_rewriting(aig, resyn, ps);
-            // std::cout << "done cut rewriting\n";
-            aig = mockturtle::cleanup_dangling(aig);
-            // std::cout << "done cleaning up\n";
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "2nd round area recovering " << std::endl;
-
-            // AREA RECOVERING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "2nd round depth optimization" << std::endl;
-
-            //DEPTH REWRITING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "3rd round area recovering" << std::endl;
-
-            // AREA RECOVERING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "4th round area recovering" << std::endl;
-
-            // AREA RECOVERING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "3rd round depth optimization" << std::endl;
-
-            //DEPTH REWRITING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "5th round area recovering" << std::endl;
-
-            // AREA RECOVERING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "6th round area recovering" << std::endl;
-
-            // AREA RECOVERING
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
-            // std::cout << "Final depth optimization" << std::endl;
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
 
-            //DEPTH REWRITING
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
+
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
+
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
+
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
+
+            mockturtle::cut_rewriting(aig, resyn, ps);
+            aig = mockturtle::cleanup_dangling(aig);
+
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 

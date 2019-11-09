@@ -57,6 +57,9 @@ namespace alice
 
             mockturtle::cut_rewriting(ntk_aig, resyn, ps);
             ntk_aig = mockturtle::cleanup_dangling(ntk_aig);
+
+            mockturtle::depth_view depth{ntk_aig};
+            std::cout << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " << depth.depth() << "\n";
           }
           else{
             std::cout << "No AIG stored\n";

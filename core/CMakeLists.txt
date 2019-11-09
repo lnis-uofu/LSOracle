@@ -16,4 +16,4 @@ find_package(Threads REQUIRED)                        # thread library (pthread)
 add_executable(lsoracle lsoracle.cpp)
 
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
-target_link_libraries(lsoracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar)
+target_link_libraries(lsoracle alice mockturtle OpenTimer Threads::Threads stdc++fs kahypar)

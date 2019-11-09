@@ -30,7 +30,7 @@ namespace alice
 
     protected:
       void execute(){
-        if(checkExt(filename, "blif")){
+        if(oracle::checkExt(filename, "blif")){
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
               auto& mig = *store<mig_ntk>().current();

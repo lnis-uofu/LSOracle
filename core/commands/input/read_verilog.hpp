@@ -31,7 +31,7 @@ namespace alice
     protected:
       void execute(){
 
-        if(checkExt(filename, "v")){
+        if(oracle::checkExt(filename, "v")){
           if(is_set("mig")){
             mockturtle::mig_network mig;
             mockturtle::names_view<mockturtle::mig_network> names_view{mig};
@@ -39,6 +39,9 @@ namespace alice
             
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
             std::cout << "MIG network stored" << std::endl;
+
+            filename.erase(filename.end() - 2, filename.end());
+            names_view._storage->net_name = filename;
           }
           else{
             mockturtle::aig_network aig;
@@ -47,6 +50,9 @@ namespace alice
             
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             std::cout << "AIG network stored" << std::endl;
+
+            filename.erase(filename.end() - 2, filename.end());
+            names_view._storage->net_name = filename;
           }
         }
         else{

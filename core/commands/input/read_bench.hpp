@@ -34,7 +34,7 @@ namespace alice
     protected:
       void execute(){
 
-        if(checkExt(filename, "bench")){
+        if(oracle::checkExt(filename, "bench")){
           
            if(is_set("mig")){
             mockturtle::klut_network klut_ntk;
@@ -54,6 +54,9 @@ namespace alice
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( named_dest );
             std::cout << "MIG network stored\n";
+
+            filename.erase(filename.end() - 6, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else if(is_set("xag")){
             mockturtle::klut_network klut_ntk;
@@ -73,6 +76,9 @@ namespace alice
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( named_dest );
             std::cout << "XAG network stored\n";
+
+            filename.erase(filename.end() - 6, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else if(is_set("aig")){
 
@@ -92,6 +98,9 @@ namespace alice
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
             std::cout << "AIG network stored\n";
+
+            filename.erase(filename.end() - 6, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else{
             mockturtle::klut_network ntk;
@@ -104,6 +113,9 @@ namespace alice
 
             store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
             std::cout << "KLUT network stored\n";
+
+            filename.erase(filename.end() - 6, filename.end());
+            names_view._storage->net_name = filename;
           }
         }
         else{

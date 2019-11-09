@@ -199,7 +199,7 @@ struct storage
   std::vector<uint64_t> inputs;
   std::vector<typename node_type::pointer_type> outputs;
 
-  // std::string net_name;
+  std::string net_name;
 
   spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
 

@@ -53,14 +53,14 @@ namespace alice
     		inIdx = inIdx >> 1;
 
     		//call DFS
-    		compute_cone(aig, inIdx, po_nodes, outIndex, po_ins);
+    		oracle::compute_cone(aig, inIdx, po_nodes, outIndex, po_ins);
 
     		aig.foreach_node([&](auto node) {
     			//set all nodes as not visited
     			aig._storage->nodes[node].data[1].h1 = 0;
     		});
 
-    		int level = computeLevel(aig, inIdx);
+    		int level = oracle::computeLevel(aig, inIdx);
     		int nodes = 0;
     		int inputs = 0;
 
@@ -104,14 +104,14 @@ namespace alice
     		inIndex = inIndex >> 1;
 
     		//call DFS
-        compute_cone(aig, inIndex, ri_nodes, outIndex, ri_ins);
+        oracle::compute_cone(aig, inIndex, ri_nodes, outIndex, ri_ins);
 
         aig.foreach_node([&](auto node) {
             //set all nodes as not visited
             aig._storage->nodes[node].data[1].h1 = 0;
         });
 
-        int level = computeLevel(aig, inIndex);
+        int level = oracle::computeLevel(aig, inIndex);
         int nodes = 0;
     		int inputs = 0;
 

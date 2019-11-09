@@ -34,7 +34,7 @@ namespace alice
       if(is_set("mig")){
         if(!store<mig_ntk>().empty()){
 
-          if(checkExt(filename, "hpg")){
+          if(oracle::checkExt(filename, "hpg")){
             std::ofstream output;
             output.open(filename);
 
@@ -95,7 +95,7 @@ namespace alice
       else{
         if(!store<aig_ntk>().empty()){
 
-          if(checkExt(filename, "hpg")){
+          if(oracle::checkExt(filename, "hpg")){
             std::ofstream output;
             output.open(filename);
 

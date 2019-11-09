@@ -20,7 +20,7 @@ public:
         this->timer.read_sdc(sdc);
     }
 
-    bool run_slack(){
+    void run_slack(){
         this->timer.update_timing();                          // update timing (O(1) builder)
 
         if(auto tns = this->timer.report_tns(); tns) std::cout << "TNS: " << *tns << '\n';  // (O(N) action)
@@ -29,7 +29,7 @@ public:
         this->timer.dump_timer(std::cout);                    // dump the timer details (O(1) accessor)
     }
 
-    bool run_report_timing(){
+    void run_report_timing(){
         this->timer.update_timing();                          // update timing (O(1) builder)
 
         std::vector<ot::Path> critical = this->timer.report_timing(1);

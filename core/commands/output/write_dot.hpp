@@ -30,7 +30,7 @@ namespace alice
 
     protected:
       void execute(){
-        if(checkExt(filename, "dot")){
+        if(oracle::checkExt(filename, "dot")){
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
               auto& mig = *store<mig_ntk>().current();

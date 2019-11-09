@@ -37,7 +37,8 @@ namespace alice
 
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
-            mockturtle::akers_resynthesis<mockturtle::mig_network> resyn;
+            mockturtle::mig_npn_resynthesis resyn;
+            ps.max_pis = 4;
             auto& ntk = *store<mig_ntk>().current(); 
             mockturtle::refactoring( ntk, resyn, ps );
             ntk = mockturtle::cleanup_dangling(ntk);
@@ -48,11 +49,16 @@ namespace alice
         }
         else{
           if(!store<aig_ntk>().empty()){
-            mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> fallback;
-            mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype( fallback )> resyn( fallback );
             auto& ntk = *store<aig_ntk>().current(); 
+            // mockturtle::shannon_resynthesis<mockturtle::aig_network> fallback;
+            // mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype( fallback )> resyn( fallback );
+            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+            ps.max_pis = 4;
             mockturtle::refactoring( ntk, resyn, ps );
             ntk = mockturtle::cleanup_dangling(ntk);
+
+            mockturtle::depth_view depth{ntk};
+            std::cout << "Final ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
           }
           else{
             std::cout << "There is no AIG network stored\n";

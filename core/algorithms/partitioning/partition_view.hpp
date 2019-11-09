@@ -64,7 +64,7 @@ namespace oracle
       //   add_node(get_node(get_constant(false)));
       // }
 
-      explicit partition_view( Ntk const& ntk, std::set<node> const& leaves, std::set<node> const& pivots, std::set<node> const& latches, std::set<node> const& latches_in, bool auto_extend = true )
+      explicit partition_view( Ntk& ntk, std::set<node>& leaves, std::set<node>& pivots, std::set<node>& latches, std::set<node>& latches_in, bool auto_extend = true )
               : Ntk( ntk )
       {
         static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );

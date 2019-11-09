@@ -34,7 +34,7 @@ namespace alice
     protected:
       void execute(){
 
-        if(checkExt(filename, "blif")){
+        if(oracle::checkExt(filename, "blif")){
           if(is_set("mig")){
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
@@ -53,6 +53,9 @@ namespace alice
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( named_dest );
             std::cout << "MIG network stored\n";
+
+            filename.erase(filename.end() - 5, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else if(is_set("xag")){
             mockturtle::klut_network klut_ntk;
@@ -72,6 +75,9 @@ namespace alice
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( named_dest );
             std::cout << "XAG network stored\n";
+
+            filename.erase(filename.end() - 5, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else if(is_set("aig")){
 
@@ -90,26 +96,10 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, names_view, resyn );
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
-
-            named_dest.foreach_node([&]( auto node ){
-
-              auto signal = named_dest.make_signal( node );
-              std::string const name = named_dest.has_name( signal ) ? named_dest.get_name( signal ) : fmt::format( "n{}", node );
-              std::cout << "Node " << node << "; name = " << name << "\n";
-              if(named_dest.is_pi(node)){
-                std::cout << "PI\n";
-              }
-              if(named_dest.is_ro(node)){
-                std::cout << "RO\n";
-              }
-            });
-
-            named_dest.foreach_po([&]( auto po, auto index ){
-
-              std::string const name = named_dest.has_output_name( index ) ? named_dest.get_output_name( index ) : fmt::format( "n{}", po.index );
-              std::cout << "Output " << po.index << "; name = " << name << "\n";
-            });
             std::cout << "AIG network stored\n";
+
+            filename.erase(filename.end() - 5, filename.end());
+            named_dest._storage->net_name = filename;
           }
           else{
             mockturtle::klut_network ntk;
@@ -122,6 +112,9 @@ namespace alice
 
             store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
             std::cout << "KLUT network stored\n";
+
+            filename.erase(filename.end() - 5, filename.end());
+            names_view._storage->net_name = filename;
           }
         }
         else{

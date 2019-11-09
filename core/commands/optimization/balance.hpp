@@ -56,6 +56,9 @@ namespace alice
             // oracle::balancing( ntk );
             mockturtle::balancing(ntk_depth);
             ntk = mockturtle::cleanup_dangling(ntk);
+
+            mockturtle::depth_view depth{ntk};
+            std::cout << "Final ntk size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
           }
           else{
             std::cout << "There is no AIG network stored\n";

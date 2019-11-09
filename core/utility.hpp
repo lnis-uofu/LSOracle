@@ -15,60 +15,81 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-
-namespace alice
+namespace oracle
 {   
-  // using aig_names = mockturtle::mapping_view<mockturtle::names_view<mockturtle::aig_network>, true>;
-  // using aig_ntk = std::shared_ptr<aig_names>;
-  // using part_man_aig = oracle::partition_manager<aig_names>;
-  // using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
-
-  // using mig_names = mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>;
-  // using mig_ntk = std::shared_ptr<mig_names>;
-  // using part_man_mig = oracle::partition_manager<mig_names>;
-  // using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
-
   using aig_names = mockturtle::names_view<mockturtle::aig_network>;
   using aig_ntk = std::shared_ptr<aig_names>;
-  using part_man_aig = oracle::partition_manager<aig_names>;
-  using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
 
   using mig_names = mockturtle::names_view<mockturtle::mig_network>;
   using mig_ntk = std::shared_ptr<mig_names>;
-  using part_man_mig = oracle::partition_manager<mig_names>;
-  using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 
-  int computeLevel( mockturtle::aig_network aig, int index ) {
+  template<typename Ntk>
+  int computeLevel( Ntk const& ntk, int index ) {
 	 //if node not visited
-    if(aig._storage->nodes[index].data[1].h1==0) {
+    if(ntk._storage->nodes[index].data[1].h1==0) {
 
       //set node as visited
-      aig._storage->nodes[index].data[1].h1=1;
+      ntk._storage->nodes[index].data[1].h1=1;
 
       //if is input
-      if (aig.is_ci(index)) {
-          return 0;
+      if (ntk.is_ci(index)) {
+        return 0;
       }
 
-  		auto inIdx2 = aig._storage->nodes[index].children[1].data;
+  		auto inIdx2 = ntk._storage->nodes[index].children[1].data;
   		if (inIdx2 & 1)
   			inIdx2 = inIdx2 - 1;
 
   		//calculate input node index
   		auto inNode1 = inIdx2 >> 1;
-  		int levelNode1 = computeLevel(aig, inNode1);
+  		int levelNode1 = computeLevel(ntk, inNode1);
 
-      auto inIdx = aig._storage->nodes[index].children[0].data;
+      auto inIdx = ntk._storage->nodes[index].children[0].data;
       if (inIdx & 1)
           inIdx = inIdx - 1;
 
       //calculate input node index
       auto inNode0 = inIdx >> 1;
-      int levelNode0 = computeLevel(aig, inNode0);
+      int levelNode0 = computeLevel(ntk, inNode0);
 
       int level = 1 + std::max(levelNode0, levelNode1);
       return level;
     } 
+    return 0;
+  }
+
+  template<typename Ntk>
+  int computeLevel( Ntk const& ntk, typename Ntk::node curr_node, std::set<typename Ntk::node> partition_inputs ) {
+    //if node not visited
+    if(ntk._storage->nodes[curr_node].data[1].h1==0 && !ntk.is_constant(curr_node))  {
+      //set node as visited
+      ntk._storage->nodes[curr_node].data[1].h1=1;
+      //if is input
+      if (partition_inputs.find(curr_node) != partition_inputs.end()) {
+        return 0;
+      }
+
+      auto inIdx2 = ntk._storage->nodes[curr_node].children[1].data;
+  
+      if (inIdx2 & 1)
+        inIdx2 = inIdx2 - 1;
+
+      //calculate input node index
+      auto inNode1 = inIdx2 >> 1;
+      int levelNode1 = computeLevel(ntk, inNode1, partition_inputs);
+
+      auto inIdx = ntk._storage->nodes[curr_node].children[0].data;
+      if (inIdx & 1)
+        inIdx = inIdx - 1;
+
+      //calculate input node index
+      auto inNode0 = inIdx >> 1;
+      int levelNode0 = computeLevel(ntk, inNode0, partition_inputs);
+
+      int level = 1 + std::max(levelNode0, levelNode1);
+      return level;
+    }
+    return 0;
   }
 
   void dfs (mockturtle::aig_network aig, uint64_t index, UnionFind uf){
@@ -321,45 +342,30 @@ namespace alice
     }
 
     part.foreach_pi( [&]( auto n ) {
-      // std::cout << "PI node = " << n << "\n";
       node2new[n] = mig.create_pi();
     } );
-    // std::cout << "created all PIs\n";
         
     part.foreach_node( [&]( auto n ) {
-      // std::cout << "Node = " << n << "\n";
       if ( part.is_constant( n ) || part.is_pi( n ) || part.is_ci( n ) || part.is_ro( n ))
         return;
 
       std::vector<mockturtle::mig_network::signal> children;
-      // std::cout << "before foreach_fanin\n";
       part.foreach_fanin( n, [&]( auto const& f ) {
-        // std::cout << "before pushing " << f.index << " to children\n";
         children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
-        // std::cout << "after pushing to children\n";
       } );
-      // std::cout << "after foreach_fanin\n";
 
-      // if(children.size() == 0){
-      //   node2new[n] = mig.create_pi();
-      // }
-      // else{
-        if(skip_edge_min == 1){
-          node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
-        }
-        else{
-          node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
-        }
-      // }
-      
-      // std::cout << "created majority\n";
+      if(skip_edge_min == 1){
+        node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
+      }
+      else{
+        node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
+      }
     } );
-    // std::cout << "completed nodes\n";
+
     /* map primary outputs */
     part.foreach_po( [&]( auto const& f ) {
       mig.create_po( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
     } );
-    // std::cout << "created POs\n";
 
     return std::make_shared<mig_names>( mig );
   }
@@ -457,24 +463,26 @@ namespace alice
       return false;
   }
 
-  int get_output_index(mockturtle::aig_network aig, int nodeIdx){
+  template<typename Ntk>
+  int get_output_index(Ntk const& ntk, int nodeIdx){
 
-    assert(aig.is_po(nodeIdx));
+    assert(ntk.is_po(nodeIdx));
 
-    for(int i = 0; i < aig._storage->outputs.size(); i++){
-      if(aig._storage->outputs.at(i).index == nodeIdx){
+    for(int i = 0; i < ntk._storage->outputs.size(); i++){
+      if(ntk._storage->outputs.at(i).index == nodeIdx){
         return i;
-
       }
     }
+    return 0;
   }
 
-  std::vector<int> get_output_indeces(mockturtle::aig_network aig, int nodeIdx){
+  template<typename Ntk>
+  std::vector<int> get_output_indeces(Ntk const& ntk, int nodeIdx){
 
-    assert(aig.is_po(nodeIdx));
+    assert(ntk.is_po(nodeIdx));
     std::vector<int> indeces;
-    for(int i = 0; i < aig._storage->outputs.size(); i++){
-      if(aig._storage->outputs.at(i).index == nodeIdx){
+    for(int i = 0; i < ntk._storage->outputs.size(); i++){
+      if(ntk._storage->outputs.at(i).index == nodeIdx){
         indeces.push_back(i);
       }
     }

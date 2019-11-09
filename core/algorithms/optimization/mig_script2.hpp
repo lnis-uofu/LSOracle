@@ -29,9 +29,7 @@ namespace oracle{
 
             //rw
             mockturtle::cut_rewriting(mig, resyn, ps);
-            // std::cout << "done cut rewriting\n";
             mig = mockturtle::cleanup_dangling(mig);
-            // std::cout << "2\n";
 
             //rf
             mockturtle::refactoring(mig, rf_resyn, rp);
@@ -46,14 +44,12 @@ namespace oracle{
             //rw
             mockturtle::cut_rewriting(mig, resyn, ps);
             mig = mockturtle::cleanup_dangling(mig);
-            // std::cout << "5\n";
 
             ps.allow_zero_gain = true;
 
             //rwz
             mockturtle::cut_rewriting(mig, resyn, ps);
             mig = mockturtle::cleanup_dangling(mig);
-            // std::cout << "6\n";
 
             mockturtle::depth_view mig_depth2{mig};
             
@@ -63,19 +59,14 @@ namespace oracle{
 
             //rfz
             rp.allow_zero_gain = true;
-            // std::cout << "activate zero gain\n";
             mockturtle::refactoring(mig, rf_resyn, rp);
-            // std::cout << "refactored\n";
             mig = mockturtle::cleanup_dangling(mig);
-            // std::cout << "8\n";
 
             //rwz
             mockturtle::cut_rewriting(mig, resyn, ps);
             mig = mockturtle::cleanup_dangling(mig);
-            // std::cout << "9\n";
 
             mockturtle::depth_view mig_depth3{mig};
-            
             //b
             mockturtle::balancing(mig_depth3);
             mig = mockturtle::cleanup_dangling(mig);

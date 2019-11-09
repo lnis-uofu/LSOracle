@@ -67,7 +67,7 @@ namespace alice
             auto inIndex = indata >> 1;
 
             if(inIndex>aig.num_pis()) {
-              dfs(aig, inIndex, uf);
+              oracle::dfs(aig, inIndex, uf);
             }
           });
 
@@ -84,7 +84,7 @@ namespace alice
             //calculate the index of the node driving the output
             inIdx = inIdx >> 1;
             if(inIdx>aig.num_pis()) {
-              dfs(aig, inIdx, uf);
+              oracle::dfs(aig, inIdx, uf);
             }
           }
 

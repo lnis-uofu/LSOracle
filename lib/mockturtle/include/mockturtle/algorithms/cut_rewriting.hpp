@@ -500,7 +500,7 @@ public:
           {
             rewriting_fn( ntk, cuts.truth_table( *cut ), children.begin(), children.end(), on_signal );
           }
-
+          
           if ( best_gain > 0 )
           {
             max_total_gain += best_gain;
@@ -509,6 +509,7 @@ public:
 
         recursive_ref( n );
       }
+      // std::cout << "Node: " << index << " Best gain = " << max_total_gain << "\n";
 
       return true;
     } );

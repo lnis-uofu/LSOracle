@@ -17,33 +17,80 @@
 
 namespace alice
 {
-  ALICE_COMMAND(aigscript, "Optimization", "NPN XAG cut rewriting") {
-    if(!store<aig_ntk>().empty()){
-      auto& opt = *store<aig_ntk>().current();
+  class aigscript_command : public alice::command{
 
-      auto start = std::chrono::high_resolution_clock::now();
-      mockturtle::depth_view aig_depth{opt};
+    public:
+        explicit aigscript_command( const environment::ptr& env )
+                : command( env, "Perform AIG based optimization script" ){
 
-      //DEPTH REWRITING
-      std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+                opts.add_option( "--strategy", strategy, "Optimization strategy [0-4]" );
+        }
 
-      oracle::aig_script aigopt;
-      opt = aigopt.run(opt);
+    protected:
+      void execute(){
 
-      mockturtle::depth_view new_aig_depth{opt};
-      std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+        if(!store<aig_ntk>().empty()){
+          auto& opt = *store<aig_ntk>().current();
 
-      std::cout << "Final ntk size = " << opt.num_gates() << " and depth = " << new_aig_depth.depth() << "\n";
-      std::cout << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth() << "\n";
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-      std::cout << "Full Optimization: " << duration.count() << "ms\n";
-      std::cout << "Finished optimization\n";
+          auto start = std::chrono::high_resolution_clock::now();
+          mockturtle::depth_view aig_depth{opt};
 
-    }
-    else{
-      std::cout << "There is not an AIG network stored.\n";
-    }
+          //DEPTH REWRITING
+          std::cout << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
 
-  }
+          switch(strategy){
+            default:
+            case 0:
+            {
+              oracle::aig_script aigopt;
+              opt = aigopt.run(opt);
+            }
+            break;
+            case 1:
+            {
+              oracle::aig_script2 aigopt;
+              opt = aigopt.run(opt);
+            }
+            break;
+            case 2:
+            {
+              oracle::aig_script3 aigopt;
+              opt = aigopt.run(opt);
+            }
+            break;
+            case 3:
+            {
+              oracle::aig_script4 aigopt;
+              opt = aigopt.run(opt);
+            }
+            break;
+            case 4:
+            {
+              oracle::aig_script5 aigopt;
+              opt = aigopt.run(opt);
+            }
+            break;
+          }
+          
+          mockturtle::depth_view new_aig_depth{opt};
+          std::cout << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+
+          std::cout << "Final ntk size = " << opt.num_gates() << " and depth = " << new_aig_depth.depth() << "\n";
+          std::cout << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth() << "\n";
+          auto stop = std::chrono::high_resolution_clock::now();
+          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+          std::cout << "Full Optimization: " << duration.count() << "ms\n";
+          std::cout << "Finished optimization\n";
+
+        }
+        else{
+          std::cout << "There is not an AIG network stored.\n";
+        }
+        
+      }
+    private:
+        unsigned strategy{0u};
+    };
+
+  ALICE_ADD_COMMAND(aigscript, "Optimization");
 }

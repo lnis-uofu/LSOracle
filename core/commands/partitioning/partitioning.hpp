@@ -39,6 +39,14 @@ namespace alice
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
         }
 
+      void execute(int num_partitions, std::string config_direc, bool mig_flag = false){
+        this->num_partitions = num_partitions;
+        this->config_direc = config_direc;
+        add_flag("--mig,-m", mig_flag, "Partitions stored MIG network (AIG network is default)");
+
+        execute();
+      }
+
     protected:
       void execute(){
         mockturtle::mig_npn_resynthesis resyn_mig;
