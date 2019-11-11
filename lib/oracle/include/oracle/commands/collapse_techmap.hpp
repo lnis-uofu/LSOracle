@@ -133,6 +133,7 @@ public:
         std::vector<mockturtle::signal<NtkDest>> temp_cell_children(cell_children.size());
         for (int j = 0; j < cell_children.size(); ++j){
           int temp_index = std::get<2>(NPNconfig)[j];
+          std::cout << std::to_string(temp_index);
           temp_cell_children[j] = cell_children[temp_index];
         }
         cell_children = temp_cell_children;
@@ -258,7 +259,7 @@ public:
         std::cout << "\tno cell found for " << n << "\n";
       }
       });
-
+    //NtkDest dest_clean = mockturtle::cleanup_dangling(dest); Would like to have this, but currently no support for klut networks.
     return std::tuple<NtkDest, std::unordered_map<int, std::string>> (dest, cell_names);
   }
 

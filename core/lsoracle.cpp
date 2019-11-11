@@ -2470,8 +2470,14 @@ namespace alice{
             mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
             const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
             auto const& klut = *klut_opt;
-            //oracle::write_techmapped_verilog(klut, filename, "test_top");
-          
+            mockturtle::topo_view klut_topo{klut};
+            std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
+            oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+            mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
+            std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
+
+            mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
+            mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");          
           }
           else{
             std::cout << "There is not an MIG network stored.\n";
@@ -2480,12 +2486,6 @@ namespace alice{
         else{
           if(!store<mockturtle::aig_network>().empty()){
             auto& aig = store<mockturtle::aig_network>().current();
-            /************************  Adding simulation/testing here ***************/
-            /*
-            mockturtle::default_simulator<kitty::dynamic_truth_table> sim (aig.num_pis() );
-            const auto tts = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (aig, sim);
-            */
-            /****************************/
             mockturtle::topo_view aig_topo{aig};
             mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
             mockturtle::lut_mapping_params ps;
@@ -2499,44 +2499,8 @@ namespace alice{
             oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
             mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
             std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
-
-            /******************************/
-            //added for testing 
-            
             mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
             mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
-
-            /*
-            mockturtle::default_simulator<kitty::dynamic_truth_table> sim2 (klut.num_pis());
-            const auto tt2 = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (klut, sim2);
-
-            aig.foreach_node ( [&] (auto const& n, auto i) {
-              std::cout << fmt::format("AIG: truth table of node {} is {}\n", i, kitty::to_hex(tts[n]));
-            });
-*/
-/*
-            klut.foreach_node ( [&] (auto const& n, auto i) {
-              std::cout << fmt::format("KLUT: truth table of node {} is {}\n", i, kitty::to_hex(tt2[n]));
-            });
-            */
-           /* klut.foreach_po ( [&] (auto const&, auto i) {
-              std::cout << fmt::format("KLUT: truth table of output {} is {}\n", i, kitty::to_hex(tt2[i]));
-            });
-            /*
-            std::cout << "Print node truth tables before simulation:\n";
-            std::get<0>(techmap_test).foreach_node( [&] (auto const& n){
-              std::cout << fmt::format("node index {} \t tt {}\n", n, kitty::to_hex( std::get<0>(techmap_test).node_function (n) ));
-            });
-            */
-            /*
-            mockturtle::default_simulator <kitty::dynamic_truth_table> sim3 (std::get<0>(techmap_test).num_pis() );
-            const auto tt3 = mockturtle::simulate_nodes <kitty::dynamic_truth_table> (std::get<0>(techmap_test), sim3 );
-          
-           // std::cout << "standard cell: tt3 size: " << tt3.size() <<"\n";
-            std::get<0>(techmap_test).foreach_node( [&] (auto const&, auto i){
-              std::cout << fmt::format("STANDARD CELL: truth table of node {} is {}\n", i, kitty::to_hex(tt3[i]));
-            });
-            /********************************/
           }
           else{
             std::cout << "There is not an AIG network stored.\n";
