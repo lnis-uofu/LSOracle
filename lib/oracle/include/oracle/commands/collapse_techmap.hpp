@@ -97,10 +97,10 @@ public:
             int before = dest.size();
             std::vector <mockturtle::signal<NtkDest>> NegVec;
             NegVec.push_back(cell_children.at(0));
-            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INVx2_ASAP7_75t_R" ));
             int after = dest.size();
             if (before != after){
-              cell_names.insert({netlistcount, "NOT"});
+              cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
               ++netlistcount;
             } else {
               std::cout << "ERROR: Not placing 1 input function, NOT.  Equivalent already exists.\n";
@@ -117,11 +117,11 @@ public:
             int before = dest.size();
             std::vector <mockturtle::signal<NtkDest>> NegVec;
             NegVec.push_back(cell_children.at(j));
-            mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+            mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INVx2_ASAP7_75t_R" ));
             cell_children.at(j) = tmpsig;
             int after = dest.size();
             if (before != after){
-              cell_names.insert({netlistcount, "NOT"});
+              cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
               ++netlistcount;
             } else {
               std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
@@ -197,10 +197,10 @@ public:
                             int before = dest.size();
                             std::vector <mockturtle::signal<NtkDest>> NegVec;
                             NegVec.push_back(node_to_signal[n]);
-                            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+                            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INVx2_ASAP7_75t_R" ));
                             int after = dest.size();
                             if (before != after){
-                              cell_names.insert({netlistcount, "NOT"});
+                              cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                               ++netlistcount;
                             } else {
                               std::cout << "ERROR: gate equivalent to negated klut output already exists.  Not placing not gate.\n";
@@ -272,7 +272,7 @@ private:
       tt_vec.push_back(dest.node_function(dest.get_node(child)));
     }
     kitty::dynamic_truth_table result (tt_vec.size());
-    if (func == "NOT"){
+    if (func == "INV"){
        kitty::create_from_hex_string(result, "1");
     } else if (func == "AND"){
       if (tt_vec.size() == 2)
