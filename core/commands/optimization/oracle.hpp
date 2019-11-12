@@ -14,6 +14,7 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <math.h>
 
 
 namespace alice
@@ -25,7 +26,7 @@ namespace alice
                 : command( env, "Reads a File into AIG, Partitions It, and Performs Mixed Synthesis on Network" ){
 
                 opts.add_option( "--filename,filename", filename, "file to read in [.aig, .blif, .v]" )->required();
-                opts.add_option( "--partition,partition", num_partitions, "Number of partitions" )->required();
+                opts.add_option( "--partition,partition", num_partitions, "Number of partitions (Network Size / 300 set as partitition number if not specified)" );
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
@@ -63,7 +64,13 @@ namespace alice
           std::cout << filename << " is not an accepted network file {.aig, .blif, .v}\n";
           return;
         }
-          
+
+        //If number of partitions is not specified
+        if(num_partitions == 0){
+          double size = ( (double) ntk.size() ) / 300.0;
+          num_partitions = ceil(size);
+        }
+
         mockturtle::depth_view orig_depth{names_view};
         oracle::partition_manager<aig_names> partitions(names_view, num_partitions);
         store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
@@ -115,7 +122,7 @@ namespace alice
       }
     private:
       std::string filename{};
-      int num_partitions{};
+      int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};
       unsigned strategy{0u};
