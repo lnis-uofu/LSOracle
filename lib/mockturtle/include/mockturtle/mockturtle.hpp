@@ -99,7 +99,6 @@
 #include "mockturtle/networks/xag.hpp"
 #include "mockturtle/networks/storage.hpp"
 #include "mockturtle/networks/mig.hpp"
-#include "mockturtle/networks/sta.hpp"
 #include "mockturtle/utils/stopwatch.hpp"
 #include "mockturtle/utils/truth_table_cache.hpp"
 #include "mockturtle/utils/string_utils.hpp"
