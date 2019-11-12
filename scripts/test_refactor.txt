@@ -1,0 +1,77 @@
+
+max
+refactor
+Final ntk size = 2865 and depth = 287
+Networks are equivalent after structural hashing.  Time =     0.00 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =287
+
+sin
+refactor
+Final ntk size = 5283 and depth = 224
+Networks are equivalent.  Time =     1.88 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5416  lev =225
+
+voter
+refactor
+Final ntk size = 12789 and depth = 71
+Networks are equivalent.  Time =     0.85 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  13758  lev = 70
+
+picorvcomb
+refactor
+Final ntk size = 16987 and depth = 41
+Networks are equivalent.  Time =     0.82 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  17010  lev = 36
+
+c3540
+refactor
+Final ntk size = 983 and depth = 37
+Networks are equivalent.  Time =     0.21 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =   1038  lev = 41
+
+chip_bridge_comb
+refactor
+Final ntk size = 76442 and depth = 41
+Networks are equivalent.  Time =    10.23 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and = 124565  lev = 39
+
+dynamic_node
+refactor
+Final ntk size = 20758 and depth = 36
+
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  21216  lev = 37
+
+fpga_bridge
+refactor
+Final ntk size = 265932 and depth = 37
+Networks are equivalent.  Time =     0.55 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265918  lev = 37
+
+fpu
+refactor
+Final ntk size = 64151 and depth = 145
+Networks are equivalent.  Time =     1.15 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  63576  lev =145
+
+oc_aquarius_comb
+refactor
+Final ntk size = 24557 and depth = 275
+Networks are equivalent.  Time =     3.15 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  20830  lev =212
+
+oc_des_perf_comb
+refactor
+Final ntk size = 29377 and depth = 17
+Networks are equivalent.  Time =     0.51 sec
+ABC refactor
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  25230  lev = 17

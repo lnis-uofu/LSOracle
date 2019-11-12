@@ -1,0 +1,169 @@
+
+c17
+
+Node x Depth
+0 AIGs and 1 MIGs
+Final ntk size = 5 and depth = 3
+Networks are equivalent.  Time =     0.02 sec
+
+Node
+0 AIGs and 1 MIGs
+Final ntk size = 5 and depth = 3
+Networks are equivalent.  Time =     0.01 sec
+
+Depth
+1 AIGs and 0 MIGs
+
+
+c432
+
+Node x Depth
+1 AIGs and 0 MIGs
+Final ntk size = 145 and depth = 25
+Networks are equivalent.  Time =     0.01 sec
+
+Node
+1 AIGs and 0 MIGs
+Final ntk size = 145 and depth = 25
+Networks are equivalent.  Time =     0.02 sec
+
+Depth
+0 AIGs and 1 MIGs
+Final ntk size = 343 and depth = 20
+Networks are equivalent.  Time =     0.02 sec
+
+c499
+
+Node x Depth
+0 AIGs and 2 MIGs
+Final ntk size = 411 and depth = 20
+Networks are equivalent.  Time =     0.03 sec
+
+Node
+0 AIGs and 2 MIGs
+Final ntk size = 411 and depth = 20
+Networks are equivalent.  Time =     0.04 sec
+
+Depth
+0 AIGs and 2 MIGs
+Final ntk size = 411 and depth = 20
+Networks are equivalent.  Time =     0.04 sec
+
+c880
+
+Node x Depth
+0 AIGs and 2 MIGs
+Final ntk size = 310 and depth = 15
+Networks are equivalent.  Time =     0.16 sec
+
+Node
+1 AIGs and 1 MIGs
+Final ntk size = 305 and depth = 24
+Networks are equivalent.  Time =     0.10 sec
+
+Depth
+0 AIGs and 2 MIGs
+Final ntk size = 310 and depth = 15
+Networks are equivalent.  Time =     0.16 sec
+
+c1908
+
+Node x Depth
+0 AIGs and 2 MIGs
+Final ntk size = 342 and depth = 27
+Networks are equivalent.  Time =     0.06 sec
+
+Node
+0 AIGs and 2 MIGs
+Final ntk size = 342 and depth = 27
+Networks are equivalent.  Time =     0.06 sec
+
+Depth
+0 AIGs and 2 MIGs
+Final ntk size = 342 and depth = 27
+Networks are equivalent.  Time =     0.06 sec
+
+c2670
+
+Node x Depth
+0 AIGs and 3 MIGs
+Final ntk size = 500 and depth = 18
+
+
+Node
+0 AIGs and 3 MIGs
+Final ntk size = 500 and depth = 18
+
+
+Depth
+0 AIGs and 3 MIGs
+Final ntk size = 500 and depth = 18
+
+
+c3540
+
+Node x Depth
+0 AIGs and 4 MIGs
+Final ntk size = 969 and depth = 29
+Networks are equivalent.  Time =     0.35 sec
+
+Node
+1 AIGs and 3 MIGs
+Final ntk size = 953 and depth = 30
+Networks are equivalent.  Time =     0.38 sec
+
+Depth
+1 AIGs and 3 MIGs
+Final ntk size = 992 and depth = 29
+Networks are equivalent.  Time =     0.31 sec
+
+c5315
+
+Node x Depth
+3 AIGs and 3 MIGs
+Final ntk size = 1305 and depth = 29
+Networks are equivalent.  Time =     0.29 sec
+
+Node
+2 AIGs and 4 MIGs
+Final ntk size = 1275 and depth = 32
+Networks are equivalent.  Time =     0.42 sec
+
+Depth
+4 AIGs and 2 MIGs
+Final ntk size = 1344 and depth = 29
+Networks are equivalent.  Time =     0.43 sec
+
+c6288
+
+Node x Depth
+3 AIGs and 5 MIGs
+Final ntk size = 2058 and depth = 80
+Networks are equivalent.  Time =     1.44 sec
+
+Node
+8 AIGs and 0 MIGs
+Final ntk size = 1902 and depth = 91
+Networks are equivalent.  Time =     0.70 sec
+
+Depth
+1 AIGs and 7 MIGs
+Final ntk size = 2229 and depth = 82
+Networks are equivalent.  Time =     1.63 sec
+
+c7552
+
+Node x Depth
+3 AIGs and 4 MIGs
+Final ntk size = 1517 and depth = 26
+
+
+Node
+4 AIGs and 3 MIGs
+Final ntk size = 1500 and depth = 28
+
+
+Depth
+0 AIGs and 7 MIGs
+Final ntk size = 1674 and depth = 22
+

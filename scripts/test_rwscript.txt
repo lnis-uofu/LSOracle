@@ -1,0 +1,33 @@
+max
+Final ntk size = 2862 and depth = 289
+Networks are equivalent.  Time =     0.18 sec
+sin
+Final ntk size = 5188 and depth = 222
+Networks are equivalent.  Time =     2.09 sec
+voter
+Final ntk size = 9898 and depth = 61
+Networks are equivalent.  Time =     3.25 sec
+picorvcomb
+Final ntk size = 16857 and depth = 65
+Networks are equivalent.  Time =     0.37 sec
+c3540
+Final ntk size = 947 and depth = 38
+Networks are equivalent.  Time =     0.24 sec
+chip_bridge_comb
+Final ntk size = 72437 and depth = 31
+Networks are equivalent.  Time =    13.97 sec
+dynamic_node
+Final ntk size = 19264 and depth = 34
+
+fpga_bridge
+Final ntk size = 265696 and depth = 37
+Networks are equivalent.  Time =    34.27 sec
+fpu
+Final ntk size = 63968 and depth = 145
+Networks are equivalent.  Time =     2.88 sec
+oc_aquarius_comb
+Final ntk size = 20561 and depth = 180
+Networks are equivalent.  Time =     4.04 sec
+oc_des_perf_comb
+Final ntk size = 22830 and depth = 16
+Networks are equivalent.  Time =     2.76 sec

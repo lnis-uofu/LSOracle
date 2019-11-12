@@ -1,0 +1,77 @@
+
+max
+balance
+Final ntk size = 3140 and depth = 249
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+balance
+Final ntk size = 2865 and depth = 287
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =287
+balance
+Final ntk size = 2862 and depth = 289
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =287
+
+sin
+balance
+Final ntk size = 5775 and depth = 176
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5392  lev =186
+balance
+Final ntk size = 5282 and depth = 224
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5321  lev =224
+balance
+Final ntk size = 5255 and depth = 222
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5337  lev =223
+
+voter
+balance
+Final ntk size = 13758 and depth = 70
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  13582  lev = 70
+balance
+Final ntk size = 12190 and depth = 72
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  12681  lev = 63
+balance
+Final ntk size = 11573 and depth = 68
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  11408  lev = 62
+
+picorvcomb
+balance
+Final ntk size = 17018 and depth = 35
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  17010  lev = 36
+balance
+Final ntk size = 16953 and depth = 53
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16836  lev = 36
+balance
+Final ntk size = 16913 and depth = 54
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16985  lev = 36
+
+c3540
+balance
+Final ntk size = 1072 and depth = 36
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =   1030  lev = 35
+balance
+Final ntk size = 977 and depth = 38
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    979  lev = 37
+balance
+Final ntk size = 965 and depth = 38
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    963  lev = 37
+
+chip_bridge_comb
+balance
+Final ntk size = 124601 and depth = 35
+ABC balance
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and = 124234  lev = 34
+balance

@@ -1,0 +1,286 @@
+max
+AIG network stored
+b
+Size = 3140 and lev = 249
+rw
+Size = 2866 and lev = 258
+rf
+Size = 2866 and lev = 258
+b
+Size = 3134 and lev = 252
+rw
+Size = 2866 and lev = 258
+rwz
+Size = 2770 and lev = 388
+b
+Size = 3056 and lev = 343
+rfz
+Size = 2912 and lev = 354
+rwz
+Size = 2766 and lev = 391
+b
+Size = 3047 and lev = 347
+Final ntk size = 3047 and depth = 347
+Area Delay Product = 1057309
+
+Networks are equivalent.  Time =     0.59 sec
+sin
+AIG network stored
+b
+Size = 5775 and lev = 176
+rw
+Size = 5428 and lev = 185
+rf
+Size = 5407 and lev = 184
+b
+Size = 5827 and lev = 172
+rw
+Size = 5705 and lev = 180
+rwz
+Size = 5580 and lev = 168
+b
+Size = 5896 and lev = 151
+rfz
+Size = 5834 and lev = 155
+rwz
+Size = 5670 and lev = 180
+b
+Size = 6159 and lev = 154
+Final ntk size = 6159 and depth = 154
+Area Delay Product = 948486
+
+Networks are equivalent.  Time =     2.45 sec
+voter
+AIG network stored
+b
+Size = 13758 and lev = 70
+rw
+Size = 9898 and lev = 61
+rf
+Size = 9898 and lev = 61
+b
+Size = 9990 and lev = 60
+rw
+Size = 9897 and lev = 60
+rwz
+Size = 9097 and lev = 67
+b
+Size = 9113 and lev = 62
+rfz
+Size = 9036 and lev = 63
+rwz
+Size = 8992 and lev = 67
+b
+Size = 9005 and lev = 62
+Final ntk size = 9005 and depth = 62
+Area Delay Product = 558310
+
+Networks are equivalent.  Time =     3.30 sec
+picorvcomb
+AIG network stored
+b
+Size = 17018 and lev = 35
+rw
+Size = 16857 and lev = 65
+rf
+Size = 16853 and lev = 65
+b
+Size = 17002 and lev = 49
+rw
+Size = 16966 and lev = 50
+rwz
+Size = 16679 and lev = 75
+b
+Size = 16683 and lev = 71
+rfz
+Size = 16675 and lev = 71
+rwz
+Size = 16551 and lev = 72
+b
+Size = 16560 and lev = 70
+Final ntk size = 16560 and depth = 70
+Area Delay Product = 1159200
+
+Networks are equivalent.  Time =     2.18 sec
+c3540
+AIG network stored
+b
+Size = 1072 and lev = 36
+rw
+Size = 956 and lev = 37
+rf
+Size = 956 and lev = 37
+b
+Size = 991 and lev = 34
+rw
+Size = 963 and lev = 36
+rwz
+Size = 938 and lev = 39
+b
+Size = 953 and lev = 37
+rfz
+Size = 948 and lev = 38
+rwz
+Size = 941 and lev = 38
+b
+Size = 956 and lev = 34
+Final ntk size = 956 and depth = 34
+Area Delay Product = 32504
+
+Networks are equivalent.  Time =     0.22 sec
+chip_bridge_comb
+AIG network stored
+b
+Size = 124601 and lev = 35
+rw
+Size = 72518 and lev = 34
+rf
+Size = 72516 and lev = 34
+b
+Size = 72556 and lev = 30
+rw
+Size = 72523 and lev = 32
+rwz
+Size = 72349 and lev = 32
+b
+Size = 72365 and lev = 27
+rfz
+Size = 72342 and lev = 28
+rwz
+Size = 72286 and lev = 28
+b
+Size = 72327 and lev = 24
+Final ntk size = 72327 and depth = 24
+Area Delay Product = 1735848
+
+Networks are equivalent.  Time =    15.92 sec
+dynamic_node
+AIG network stored
+b
+Size = 21352 and lev = 35
+rw
+Size = 19434 and lev = 36
+rf
+Size = 19428 and lev = 36
+b
+Size = 19460 and lev = 34
+rw
+Size = 19341 and lev = 34
+rwz
+Size = 18995 and lev = 44
+b
+Size = 19026 and lev = 39
+rfz
+Size = 19002 and lev = 41
+rwz
+Size = 18949 and lev = 42
+b
+Size = 18990 and lev = 39
+Final ntk size = 18990 and depth = 39
+Area Delay Product = 740610
+
+
+fpga_bridge
+AIG network stored
+b
+Size = 273619 and lev = 36
+rw
+Size = 268350 and lev = 37
+rf
+Size = 268350 and lev = 37
+b
+Size = 272554 and lev = 36
+rw
+Size = 268702 and lev = 37
+rwz
+Size = 266845 and lev = 41
+b
+Size = 267905 and lev = 39
+rfz
+Size = 267117 and lev = 40
+rwz
+Size = 267065 and lev = 40
+b
+Size = 267639 and lev = 39
+Final ntk size = 267639 and depth = 39
+Area Delay Product = 10437921
+
+Networks are equivalent.  Time =  1463.27 sec
+fpu
+AIG network stored
+b
+Size = 64818 and lev = 143
+rw
+Size = 63968 and lev = 145
+rf
+Size = 63703 and lev = 145
+b
+Size = 63707 and lev = 143
+rw
+Size = 63520 and lev = 145
+rwz
+Size = 62312 and lev = 148
+b
+Size = 62321 and lev = 142
+rfz
+Size = 62219 and lev = 143
+rwz
+Size = 62065 and lev = 146
+b
+Size = 62073 and lev = 140
+Final ntk size = 62073 and depth = 140
+Area Delay Product = 8690220
+
+Networks are equivalent.  Time =    11.70 sec
+oc_aquarius_comb
+AIG network stored
+b
+Size = 25078 and lev = 271
+rw
+Size = 20566 and lev = 177
+rf
+Size = 20552 and lev = 177
+b
+Size = 20578 and lev = 161
+rw
+Size = 20505 and lev = 177
+rwz
+Size = 20189 and lev = 179
+b
+Size = 20233 and lev = 156
+rfz
+Size = 20157 and lev = 157
+rwz
+Size = 20017 and lev = 177
+b
+Size = 20057 and lev = 157
+Final ntk size = 20057 and depth = 157
+Area Delay Product = 3148949
+
+Networks are equivalent.  Time =     6.93 sec
+oc_des_perf_comb
+AIG network stored
+b
+Size = 30030 and lev = 17
+rw
+Size = 22852 and lev = 16
+rf
+Size = 22835 and lev = 16
+b
+Size = 22837 and lev = 15
+rw
+Size = 22835 and lev = 15
+rwz
+Size = 21283 and lev = 18
+b
+Size = 21278 and lev = 17
+rfz
+Size = 21233 and lev = 17
+rwz
+Size = 21045 and lev = 18
+b
+Size = 21067 and lev = 17
+Final ntk size = 21067 and depth = 17
+Area Delay Product = 358139
+
+Networks are equivalent.  Time =     4.20 sec

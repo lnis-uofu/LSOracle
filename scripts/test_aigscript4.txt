@@ -1,0 +1,16 @@
+max
+Final ntk size = 3151 and depth = 258
+Networks are equivalent.  Time =     0.54 sec
+sin
+Final ntk size = 5931 and depth = 163
+Networks are equivalent.  Time =     2.12 sec
+voter
+Final ntk size = 9988 and depth = 70
+Networks are equivalent.  Time =     4.01 sec
+picorvcomb
+Final ntk size = 16738 and depth = 70
+Networks are equivalent.  Time =     2.65 sec
+c3540
+Final ntk size = 984 and depth = 34
+Networks are equivalent.  Time =     0.19 sec
+chip_bridge_comb

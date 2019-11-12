@@ -1,0 +1,253 @@
+
+
+max
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =229
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =217
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2865  lev =210
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2834  lev =210
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/max:[0m i/o =  512/  130  lat =    0  and =   2834  lev =204
+
+
+sin
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5392  lev =186
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5250  lev =184
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5192  lev =184
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5184  lev =183
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5158  lev =183
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5084  lev =181
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5082  lev =179
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5045  lev =179
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5042  lev =178
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/sin:[0m i/o =   24/   25  lat =    0  and =   5039  lev =177
+
+
+voter
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  13582  lev = 70
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  11369  lev = 61
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10741  lev = 61
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10732  lev = 57
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10441  lev = 57
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10271  lev = 57
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10271  lev = 57
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =  10211  lev = 57
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =   9756  lev = 57
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/voter:[0m i/o = 1001/    1  lat =    0  and =   9756  lev = 57
+
+
+picorvcomb
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  17010  lev = 36
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16984  lev = 36
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16812  lev = 36
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16809  lev = 36
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16735  lev = 36
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16721  lev = 36
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16719  lev = 36
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16564  lev = 36
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16484  lev = 36
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/picorvcomb:[0m i/o = 1788/ 1993  lat =    0  and =  16483  lev = 36
+
+
+c3540
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =   1030  lev = 35
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    967  lev = 35
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    958  lev = 35
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    958  lev = 34
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    955  lev = 34
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    944  lev = 32
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    944  lev = 31
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    942  lev = 31
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    941  lev = 31
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/c3540:[0m i/o =   50/   22  lat =    0  and =    941  lev = 31
+
+
+chip_bridge_comb
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and = 124234  lev = 34
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72717  lev = 28
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72618  lev = 26
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72614  lev = 26
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72513  lev = 26
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72271  lev = 26
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72267  lev = 26
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72229  lev = 26
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72190  lev = 26
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/chip_bridge_comb:[0m i/o =10024/10020  lat =    0  and =  72190  lev = 26
+
+
+dynamic_node
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  21078  lev = 33
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19835  lev = 31
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19494  lev = 31
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19481  lev = 30
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19300  lev = 30
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19257  lev = 30
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19247  lev = 30
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19116  lev = 30
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19008  lev = 30
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/dynamic_node:[0m i/o = 2637/ 2606  lat =    0  and =  19002  lev = 29
+
+
+fpga_bridge
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265952  lev = 37
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265729  lev = 37
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265721  lev = 37
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265721  lev = 37
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265703  lev = 37
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265682  lev = 37
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265681  lev = 37
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265677  lev = 37
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265662  lev = 37
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpga_bridge:[0m i/o =52639/157998  lat =    0  and = 265661  lev = 34
+
+
+fpu
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  64701  lev =145
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  63213  lev =145
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  62684  lev =145
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  62676  lev =145
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  62594  lev =145
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  61995  lev =145
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  61988  lev =145
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  61685  lev =145
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  61434  lev =145
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/fpu:[0m i/o = 6748/19970  lat =    0  and =  61424  lev =145
+
+
+oc_aquarius_comb
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  25001  lev =276
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  21145  lev =209
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  20350  lev =209
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19986  lev =209
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19876  lev =209
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19826  lev =209
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19818  lev =207
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19745  lev =207
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19661  lev =207
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_aquarius_comb:[0m i/o = 1941/ 4805  lat =    0  and =  19653  lev =206
+
+
+oc_des_perf_comb
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  29889  lev = 17
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  23367  lev = 15
+rf
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  22651  lev = 15
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  22508  lev = 14
+rw
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  22110  lev = 14
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  21774  lev = 14
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  21767  lev = 14
+rfz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  21520  lev = 14
+rwz
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  20981  lev = 14
+b
+[1;37m/research/ece/lnis/USERS/austin/LSOracle/benchmarks/ERI_bench/oc_des_perf_comb:[0m i/o = 2097/ 2040  lat =    0  and =  20970  lev = 14

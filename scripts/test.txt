@@ -1,0 +1,24 @@
+out
+
+Node x Depth
+0 AIGs and 1 MIGs
+Final ntk size = 60 and depth = 9
+Networks are equivalent.  Time =     0.02 sec
+
+Node
+0 AIGs and 1 MIGs
+Final ntk size = 60 and depth = 9
+Networks are equivalent.  Time =     0.02 sec
+
+Depth
+0 AIGs and 1 MIGs
+Final ntk size = 60 and depth = 9
+Networks are equivalent.  Time =     0.02 sec
+sin
+
+Node x Depth
+4 AIGs and 15 MIGs
+Final ntk size = 5650 and depth = 156
+Networks are equivalent.  Time =     2.12 sec
+
+Node
