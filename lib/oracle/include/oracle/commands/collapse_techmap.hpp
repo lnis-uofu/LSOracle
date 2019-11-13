@@ -97,13 +97,13 @@ public:
               int before = dest.size();
               std::vector <mockturtle::signal<NtkDest>> NegVec;
               NegVec.push_back(cell_children.at(0));
-              node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+              node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV" ));
               int after = dest.size();
               if (before != after){
-                cell_names.insert({netlistcount, "NOT"});
+                cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                 ++netlistcount;
               } else {
-                std::cout << "ERROR: Not placing 1 input function, NOT.  Equivalent already exists.\n";
+                std::cout << "ERROR: Not placing 1 input function, INVx2_ASAP7_75t_R.  Equivalent already exists.\n";
               }
             } else if (json_lookup == "out_0" || json_lookup == "out_00"){
               node_to_signal[n] = dest.get_constant(false);
@@ -115,7 +115,7 @@ public:
         for (int j = 0; j< cell_children.size(); ++j){
           if ( (std::get<1>(NPNconfig) >> j) & 1){
            /* if (cell_names.find(cell_children.at(j)) != cell_names.end()){
-              if( cell_names.at(cell_children.at(j)) == "NOT"){
+              if( cell_names.at(cell_children.at(j)) == "INVx2_ASAP7_75t_R"){
                 std::cout << "Potential duplicate NOT gate.  index: " << std::to_string(cell_children.at(j)) << "  cell_name:  " << cell_names.at(cell_children.at(j)) << "\n";
                 std::vector<mockturtle::signal<NtkDest>> grandchildren;
                 dest.foreach_fanin(cell_children.at(j), [&](auto fanin) {
@@ -135,11 +135,11 @@ public:
               int before = dest.size();
               std::vector <mockturtle::signal<NtkDest>> NegVec;
               NegVec.push_back(cell_children.at(j));
-              mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+              mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV" ));
               cell_children.at(j) = tmpsig;
               int after = dest.size();
               if (before != after){
-                cell_names.insert({netlistcount, "NOT"});
+                cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                 ++netlistcount;
               } else {
                 std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
@@ -215,10 +215,10 @@ public:
                             int before = dest.size();
                             std::vector <mockturtle::signal<NtkDest>> NegVec;
                             NegVec.push_back(node_to_signal[n]);
-                            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+                            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV" ));
                             int after = dest.size();
                             if (before != after){
-                              cell_names.insert({netlistcount, "NOT"});
+                              cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                               ++netlistcount;
                             } else {
                               std::cout << "ERROR: gate equivalent to negated klut output already exists.  Not placing not gate.\n";
@@ -323,7 +323,7 @@ private:
       tt_vec.push_back(dest.node_function(dest.get_node(child)));
     }
     kitty::dynamic_truth_table result (tt_vec.size());
-    if (func == "NOT"){
+    if (func == "INV"){
        kitty::create_from_hex_string(result, "1");
     } else if (func == "AND"){
       if (tt_vec.size() == 2)
