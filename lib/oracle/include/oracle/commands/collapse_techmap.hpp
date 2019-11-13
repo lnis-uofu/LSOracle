@@ -94,38 +94,56 @@ public:
         //Handling special cases.  NOT LUTs and Constants
         if (cell_children.size() == 1){
           if (json_lookup == "out_1"){
-            int before = dest.size();
-            std::vector <mockturtle::signal<NtkDest>> NegVec;
-            NegVec.push_back(cell_children.at(0));
-            node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
-            int after = dest.size();
-            if (before != after){
-              cell_names.insert({netlistcount, "NOT"});
-              ++netlistcount;
-            } else {
-              std::cout << "ERROR: Not placing 1 input function, NOT.  Equivalent already exists.\n";
+              int before = dest.size();
+              std::vector <mockturtle::signal<NtkDest>> NegVec;
+              NegVec.push_back(cell_children.at(0));
+              node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+              int after = dest.size();
+              if (before != after){
+                cell_names.insert({netlistcount, "NOT"});
+                ++netlistcount;
+              } else {
+                std::cout << "ERROR: Not placing 1 input function, NOT.  Equivalent already exists.\n";
+              }
+            } else if (json_lookup == "out_0" || json_lookup == "out_00"){
+              node_to_signal[n] = dest.get_constant(false);
             }
-          } else if (json_lookup == "out_0" || json_lookup == "out_00"){
-            node_to_signal[n] = dest.get_constant(false);
-          }
           return;
         }
 
         //input negation
         for (int j = 0; j< cell_children.size(); ++j){
           if ( (std::get<1>(NPNconfig) >> j) & 1){
-            int before = dest.size();
-            std::vector <mockturtle::signal<NtkDest>> NegVec;
-            NegVec.push_back(cell_children.at(j));
-            mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
-            cell_children.at(j) = tmpsig;
-            int after = dest.size();
-            if (before != after){
-              cell_names.insert({netlistcount, "NOT"});
-              ++netlistcount;
-            } else {
-              std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
-            }
+           /* if (cell_names.find(cell_children.at(j)) != cell_names.end()){
+              if( cell_names.at(cell_children.at(j)) == "NOT"){
+                std::cout << "Potential duplicate NOT gate.  index: " << std::to_string(cell_children.at(j)) << "  cell_name:  " << cell_names.at(cell_children.at(j)) << "\n";
+                std::vector<mockturtle::signal<NtkDest>> grandchildren;
+                dest.foreach_fanin(cell_children.at(j), [&](auto fanin) {
+                  std::cout << "child of " << std::to_string(cell_children.at(j)) << ": " << fanin << "\n";
+                  grandchildren.push_back(node_to_signal[fanin]);
+                });
+                std::cout << "grandchildren size: " << std::to_string(grandchildren.size()) << "\n\n";
+                if (grandchildren.size() != 1){
+                  std::cout << "ERROR: NOT gate must have only 1 child\n";
+                  return;
+                } else {
+                  cell_children.at(j) = grandchildren.at(0);
+                  return;
+                }
+              }
+            }*/
+              int before = dest.size();
+              std::vector <mockturtle::signal<NtkDest>> NegVec;
+              NegVec.push_back(cell_children.at(j));
+              mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "NOT" ));
+              cell_children.at(j) = tmpsig;
+              int after = dest.size();
+              if (before != after){
+                cell_names.insert({netlistcount, "NOT"});
+                ++netlistcount;
+              } else {
+                std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
+              }
           }
         }
 
@@ -259,7 +277,40 @@ public:
         std::cout << "\tno cell found for " << n << "\n";
       }
       });
+
+    int dup_count = 0;
+
+    dest.foreach_node( [&](auto const& n){
+      if ( dest.is_constant( n ) || dest.is_pi( n ) ){
+          return;
+      }
+      auto func = dest.node_function( n );
+      std::vector<mockturtle::signal<NtkDest>> check_node_children;
+      std::vector<mockturtle::signal<NtkDest>> check_node_grandchildren;
+        
+      if (kitty::to_hex(func) == "1"){
+        dest.foreach_fanin( n, [&]( auto fanin ) {
+          check_node_children.push_back(fanin);
+        } );
+        if (check_node_children.size() == 1){
+          if (kitty::to_hex(dest.node_function(check_node_children.at(0))) == "1"){
+            dest.foreach_fanin( check_node_children.at(0), [&]( auto fanin2 ) {
+              check_node_grandchildren.push_back(fanin2);
+            } );
+            if (check_node_grandchildren.size() == 1){
+              dup_count += 2;
+              std::cout << "\n\nDuplicated NOT gates.  Signal: " << n << " child: " << check_node_children.at(0) << " original signal before double inversion: " << check_node_grandchildren.at(0) << "\n\n\n";
+              dest.substitute_node(n, check_node_grandchildren.at(0));
+              //to do: if fanout of check_node_children(0) is 1, remove both check_node_children(0) and n; no other nodes depend on the first not gate.
+              //dest.take_out_node(n); //this is not implemented in the KLUT network in my version of mock turtle.  Will try again after refactoring.
+            }
+          }
+        }
+      }
+    });
     //NtkDest dest_clean = mockturtle::cleanup_dangling(dest); Would like to have this, but currently no support for klut networks.
+
+    std::cout << "duplicate NOTs:  " << dup_count <<"\n";
     return std::tuple<NtkDest, std::unordered_map<int, std::string>> (dest, cell_names);
   }
 
