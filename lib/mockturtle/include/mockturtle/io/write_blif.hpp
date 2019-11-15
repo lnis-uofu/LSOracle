@@ -49,6 +49,11 @@
 namespace mockturtle
 {
 
+  struct write_blif_params
+  {
+    uint32_t skip_feedthrough = 0u;
+  };
+
 /*! \brief Writes network in BLIF format into output stream
  *
  * An overloaded variant exists that writes the network into a file.
@@ -70,7 +75,7 @@ namespace mockturtle
  * \param os Output stream
  */
 template<class Ntk>
-void write_blif( Ntk const& ntk, std::ostream& os )
+void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps = {} )
 {
   static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( has_fanin_size_v<Ntk>, "Ntk does not implement the fanin_size method" );
@@ -140,25 +145,25 @@ void write_blif( Ntk const& ntk, std::ostream& os )
         auto const ro_sig = topo_ntk.make_signal( topo_ntk.ri_to_ro( f ) );
         if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
         {
-          std::string const ri_name = topo_ntk.has_output_name( index ) ? topo_ntk.get_output_name( index ) : fmt::format( "n{}", topo_ntk.get_node( f ) );
-          std::string const ro_name = topo_ntk.has_name( ro_sig ) ? topo_ntk.get_name( ro_sig ) : fmt::format( "n{}", topo_ntk.get_node( ro_sig ) );
+          std::string const ri_name = topo_ntk.has_output_name( index ) ? topo_ntk.get_output_name( index ) : fmt::format( "new_n{}", topo_ntk.get_node( f ) );
+          std::string const ro_name = topo_ntk.has_name( ro_sig ) ? topo_ntk.get_name( ro_sig ) : fmt::format( "new_n{}", topo_ntk.get_node( ro_sig ) );
           os << ri_name << " " << ro_name << " 0\n";
         }
         else
         {
-          os << fmt::format( "n{} n{} 0\n", topo_ntk.node_to_index( topo_ntk.get_node( f ) ), topo_ntk.node_to_index( topo_ntk.get_node( ro_sig ) ) );
+          os << fmt::format( "new_n{} new_n{} 0\n", topo_ntk.node_to_index( topo_ntk.get_node( f ) ), topo_ntk.node_to_index( topo_ntk.get_node( ro_sig ) ) );
         }
       }
     }) ;
   }
 
   /* write constants */
-  os << ".names n0\n";
+  os << ".names new_n0\n";
   os << "0\n";
 
   if ( ntk.get_constant( false ) != ntk.get_constant( true ) )
   {
-    os << ".names n1\n";
+    os << ".names new_n1\n";
     os << "1\n";
   }
 
@@ -173,12 +178,12 @@ void write_blif( Ntk const& ntk, std::ostream& os )
           if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
           {
             signal<Ntk> const s = topo_ntk.make_signal( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) );
-            std::string const name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "n{}", topo_ntk.get_node( s ) );
+            std::string const name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "new_n{}", topo_ntk.get_node( s ) );
             os << name << ' ';
           }
           else
           {
-            os << fmt::format( "n{} ", topo_ntk.node_to_index( topo_ntk.get_node( f ) ) );
+            os << fmt::format( "new_n{} ", topo_ntk.node_to_index( topo_ntk.get_node( f ) ) );
           }
         });
 
@@ -186,12 +191,12 @@ void write_blif( Ntk const& ntk, std::ostream& os )
       if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
       {
         auto const s = topo_ntk.make_signal( topo_ntk.node_to_index( n ) );
-        std::string const name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "n{}", topo_ntk.get_node( s ) );
+        std::string const name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "new_n{}", topo_ntk.get_node( s ) );
         os << name << '\n';
       }
       else
       {
-        os << fmt::format( "n{}\n", topo_ntk.node_to_index( n ) );
+        os << fmt::format( "new_n{}\n", topo_ntk.node_to_index( n ) );
       }
 
       /* write truth table of node */
@@ -212,19 +217,21 @@ void write_blif( Ntk const& ntk, std::ostream& os )
   if ( topo_ntk.num_pos() > 0u )
   {
     topo_ntk.foreach_po( [&]( auto const& f, auto index ){
-        auto const minterm_string = topo_ntk.is_complemented( f ) ? "0" : "1";
-        if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> && has_has_output_name_v<Ntk> && has_get_output_name_v<Ntk> )
-        {
-          signal<Ntk> const s = topo_ntk.make_signal( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) );
-          std::string const node_name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "n{}", topo_ntk.get_node( s ) );
-          std::string const output_name = topo_ntk.has_output_name( index ) ? topo_ntk.get_output_name( index ) : fmt::format( "po{}", index );
+      auto const minterm_string = topo_ntk.is_complemented( f ) ? "0" : "1";
+      if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> && has_has_output_name_v<Ntk> && has_get_output_name_v<Ntk> )
+      {
+        signal<Ntk> const s = topo_ntk.make_signal( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) );
+        std::string const node_name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "new_n{}", topo_ntk.get_node( s ) );
+        std::string const output_name = topo_ntk.has_output_name( index ) ? topo_ntk.get_output_name( index ) : fmt::format( "po{}", index );
+        if(!ps.skip_feedthrough || (node_name != output_name))
           os << fmt::format( ".names {} {}\n{} 1\n", node_name, output_name, minterm_string, index );
-        }
-        else
-        {
-          os << fmt::format( ".names n{} po{}\n{} 1\n", topo_ntk.node_to_index( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) ), index, minterm_string );
-        }
-      });
+      }
+      else
+      {
+        if(!ps.skip_feedthrough || (topo_ntk.node_to_index( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) ) != index))
+          os << fmt::format( ".names new_n{} po{}\n{} 1\n", topo_ntk.node_to_index( topo_ntk.node_to_index( topo_ntk.get_node( f ) ) ), index, minterm_string );
+      }
+    });
   }
 
   os << ".end\n";
@@ -250,10 +257,10 @@ void write_blif( Ntk const& ntk, std::ostream& os )
  * \param filename Filename
  */
 template<class Ntk>
-void write_blif( Ntk const& ntk, std::string const& filename )
+void write_blif( Ntk const& ntk, std::string const& filename, write_blif_params const& ps = {} )
 {
   std::ofstream os( filename.c_str(), std::ofstream::out );
-  write_blif( ntk, os );
+  write_blif( ntk, os, ps );
   os.close();
 }
 

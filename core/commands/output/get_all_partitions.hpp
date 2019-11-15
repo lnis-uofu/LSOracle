@@ -76,6 +76,7 @@ namespace alice
             auto ntk = *store<aig_ntk>().current(); 
             std::cout << "\n";
             if(!store<part_man_aig_ntk>().empty()){
+              mockturtle::write_verilog_params ps;
               auto partitions = *store<part_man_aig_ntk>().current();
               mockturtle::node_map<std::string, aig_names> node_names( ntk );
               mockturtle::node_map<std::string, aig_names> input_names( ntk );
@@ -103,7 +104,8 @@ namespace alice
                 
                 assert(parts.size() == filenames.size());
                 for(int j = 0; j < parts.size(); j++){
-                  mockturtle::write_verilog(parts.at(j), filenames.at(j), modulename);
+                  ps.module_name = modulename;
+                  mockturtle::write_verilog(parts.at(j), filenames.at(j), ps);
                 }
 
                 if (i == 0)

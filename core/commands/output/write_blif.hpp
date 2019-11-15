@@ -26,15 +26,19 @@ namespace alice
 
         opts.add_option( "--filename,filename", filename, "BLIF file to write out to" )->required();
         add_flag("--mig,-m", "Read from the MIG network");
+        add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
       }
 
     protected:
       void execute(){
         if(oracle::checkExt(filename, "blif")){
+          mockturtle::write_blif_params ps;
+          if(is_set("skip-feedthrough"))
+            ps.skip_feedthrough = 1u;
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
               auto& mig = *store<mig_ntk>().current();
-              mockturtle::write_blif(mig, filename);
+              mockturtle::write_blif(mig, filename, ps);
             }
             else{
               std::cout << "There is not an MIG network stored.\n";
@@ -43,7 +47,7 @@ namespace alice
           else{
             if(!store<aig_ntk>().empty()){
               auto& aig = *store<aig_ntk>().current();
-              mockturtle::write_blif(aig, filename);
+              mockturtle::write_blif(aig, filename, ps);
             }
             else{
               std::cout << "There is not an AIG network stored.\n";

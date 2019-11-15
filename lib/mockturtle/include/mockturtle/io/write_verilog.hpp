@@ -64,6 +64,14 @@ namespace mockturtle
     }
   } // namespace detail
 
+  struct write_verilog_params
+  {
+    std::string module_name = "top";
+    std::vector<std::pair<std::string, uint32_t>> input_names;
+    std::vector<std::pair<std::string, uint32_t>> output_names;
+    uint32_t skip_feedthrough = 0u;
+  };
+
 /*! \brief Writes network in structural Verilog format into output stream
  *
  * An overloaded variant exists that writes the network into a file.
@@ -93,7 +101,7 @@ namespace mockturtle
  * \param os Output stream
  */
   template<class Ntk>
-  void write_verilog( Ntk const& ntk, std::ostream& os, std::string const& modulename )
+  void write_verilog( Ntk const& ntk, std::ostream& os, write_verilog_params const& ps = {} )
   {
     static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
     static_assert( has_num_latches_v<Ntk>, "Ntk does not implement the has_latches method" );
@@ -198,14 +206,14 @@ namespace mockturtle
     } );
 
     if(ntk.num_latches()>0) {
-        os << fmt::format( "module {}({} , {} );\n", modulename, fmt::join(xs, " , "), fmt::join(ys, " , ") )
+        os << fmt::format( "module {}({} , {} );\n", ps.module_name, fmt::join(xs, " , "), fmt::join(ys, " , ") )
            << fmt::format( "  input {} ;\n", fmt::join(xs, " , ") )
            << fmt::format( "  output {} ;\n", fmt::join(ys, " , ") )
            << fmt::format( "  reg {} ;\n", fmt::join(ros, " , ") );
     }
 
     else {
-        os << fmt::format( "module {}({} , {} );\n", modulename, fmt::join(xs, " , "), fmt::join(ys, " , ") )
+        os << fmt::format( "module {}({} , {} );\n", ps.module_name, fmt::join(xs, " , "), fmt::join(ys, " , ") )
            << fmt::format( "  input {} ;\n", fmt::join(xs, " , ") )
            << fmt::format( "  output {} ;\n", fmt::join(ys, " , ") );
     }
@@ -231,7 +239,7 @@ namespace mockturtle
             first = false;
           else
             os << ", ";
-          os << fmt::format("n{}", ntk.node_to_index(n));
+          os << fmt::format("new_n{}", ntk.node_to_index(n));
         }
       } );
 
@@ -248,25 +256,25 @@ namespace mockturtle
       if ( ntk.is_and( n ) )
       {
         const auto [children, inv] = detail::format_fanin<2, Ntk>( ntk, n, node_names );
-        os << fmt::format( "  assign n{} = {}{} & {}{} ;\n", ntk.node_to_index( n ),
+        os << fmt::format( "  assign new_n{} = {}{} & {}{} ;\n", ntk.node_to_index( n ),
                            inv[0], children[0], inv[1], children[1] );
       }
       else if ( ntk.is_or( n ) )
       {
         const auto [children, inv] = detail::format_fanin<2, Ntk>( ntk, n, node_names );
-        os << fmt::format( "  assign n{} = {}{} | {}{} ;\n", ntk.node_to_index( n ),
+        os << fmt::format( "  assign new_n{} = {}{} | {}{} ;\n", ntk.node_to_index( n ),
                            inv[0], children[0], inv[1], children[1] );
       }
       else if ( ntk.is_xor( n ) )
       {
         const auto [children, inv] = detail::format_fanin<2, Ntk>( ntk, n, node_names );
-        os << fmt::format( "  assign n{} = {}{} ^ {}{} ;\n", ntk.node_to_index( n ),
+        os << fmt::format( "  assign new_n{} = {}{} ^ {}{} ;\n", ntk.node_to_index( n ),
                            inv[0], children[0], inv[1], children[1] );
       }
       else if ( ntk.is_xor3( n ) )
       {
         const auto [children, inv] = detail::format_fanin<3, Ntk>( ntk, n, node_names );
-        os << fmt::format( "  assign n{} = {}{} ^ {}{} ^ {}{} ;\n", ntk.node_to_index( n ),
+        os << fmt::format( "  assign new_n{} = {}{} ^ {}{} ^ {}{} ;\n", ntk.node_to_index( n ),
                            inv[0], children[0], inv[1], children[1], inv[2], children[2] );
       }
       else if ( ntk.is_maj( n ) )
@@ -277,37 +285,41 @@ namespace mockturtle
         const auto [children, inv] = detail::format_fanin<3, Ntk>( ntk, n, node_names );
         if ( ntk.is_constant( ntk.get_node( first_child ) ) )
         {
-          os << fmt::format( "  assign n{0} = {1}{3} {5} {2}{4} ;\n",
+          os << fmt::format( "  assign new_n{0} = {1}{3} {5} {2}{4} ;\n",
                              ntk.node_to_index( n ),
                              inv[1], inv[2], children[1], children[2],
                              ntk.is_complemented( first_child ) ? "|" : "&" );
         }
         else
         {
-          os << fmt::format( "  assign n{0} = ( {1}{4} & {2}{5} ) | ( {1}{4} & {3}{6} ) | ( {2}{5} & {3}{6} );\n",
+          os << fmt::format( "  assign new_n{0} = ( {1}{4} & {2}{5} ) | ( {1}{4} & {3}{6} ) | ( {2}{5} & {3}{6} );\n",
                              ntk.node_to_index( n ),
                              inv[0], inv[1], inv[2], children[0], children[1], children[2] );
         }
       }
       else
       {
-        os << fmt::format( "  assign n{} = unknown gate;\n", ntk.node_to_index( n ) );
+        os << fmt::format( "  assign new_n{} = unknown gate;\n", ntk.node_to_index( n ) );
       }
 
-      node_names[n] = fmt::format( "n{}", ntk.node_to_index( n ) );
+      node_names[n] = fmt::format( "new_n{}", ntk.node_to_index( n ) );
       return true;
     } );
 
     latch_index = 1u;
     ntk.foreach_po( [&]( auto const& f, auto i ) {
+      
       if(i < ntk.num_pos() - ntk.num_latches())
-        os << fmt::format( "  assign {} = {}{} ;\n", output_names[i], ntk.is_complemented( f ) ? "~" : "", node_names[f] );
+        if(!ps.skip_feedthrough || (output_names[i] != node_names[f]))
+          os << fmt::format( "  assign {} = {}{} ;\n", output_names[i], ntk.is_complemented( f ) ? "~" : "", node_names[f] );
       else{
         if(ntk.num_latches()>0){
-          os << fmt::format( "  assign {} = {}{} ;\n", ri_names[latch_index], ntk.is_complemented( f ) ? "~" : "", node_names[f] );
+          if(!ps.skip_feedthrough || (ri_names[latch_index] != node_names[f]))
+            os << fmt::format( "  assign {} = {}{} ;\n", ri_names[latch_index], ntk.is_complemented( f ) ? "~" : "", node_names[f] );
           latch_index++;
         }
       }
+      
     } );
 
     if(ntk.num_latches() > 0) {
@@ -360,10 +372,10 @@ namespace mockturtle
  * \param filename Filename
  */
   template<class Ntk>
-  void write_verilog( Ntk const& ntk, std::string const& filename, std::string const& modulename = "top" )
+  void write_verilog( Ntk const& ntk, std::string const& filename, write_verilog_params const& ps = {} )
   {
     std::ofstream os( filename.c_str(), std::ofstream::out );
-    write_verilog( ntk, os, modulename );
+    write_verilog( ntk, os, ps );
     os.close();
   }
 } /* namespace mockturtle */

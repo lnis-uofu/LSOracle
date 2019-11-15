@@ -34,6 +34,7 @@ namespace alice
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
+                add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
         }
 
     protected:
@@ -104,11 +105,19 @@ namespace alice
 
           if(out_file != ""){
             if(oracle::checkExt(out_file, "v")){
-              mockturtle::write_verilog(ntk_mig, out_file);
+              mockturtle::write_verilog_params ps;
+              if(is_set("skip-feedthrough"))
+                ps.skip_feedthrough = 1u;  
+
+              mockturtle::write_verilog(ntk_mig, out_file, ps);
               std::cout << "Resulting network written to " << out_file << "\n";
             }
             else if(oracle::checkExt(out_file, "blif")){
-              mockturtle::write_blif(ntk_mig, out_file);
+              mockturtle::write_blif_params ps;
+              if(is_set("skip-feedthrough"))
+                ps.skip_feedthrough = 1u;
+              
+              mockturtle::write_blif(ntk_mig, out_file, ps);
               std::cout << "Resulting network written to " << out_file << "\n";
             }
             else{
