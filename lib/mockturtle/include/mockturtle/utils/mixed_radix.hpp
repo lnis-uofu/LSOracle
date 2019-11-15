@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -81,13 +81,26 @@ void foreach_mixed_radix_tuple( Iterator begin, Iterator end, Fn&& fn )
 
     auto itm = end - 1;
     auto itp = positions.end() - 1;
-    while ( itm >= begin && *itp == ( *itm - 1 ) )
+    auto ret = false;
+    while ( !ret && *itp == ( *itm - 1 ) )
     {
-      *itp-- = 0;
-      --itm;
+      *itp = 0;
+      if ( itp != positions.begin() )
+      {
+        --itp;
+      }
+
+      if ( itm == begin )
+      {
+        ret = true;
+      }
+      else
+      {
+        --itm;
+      }
     }
 
-    if ( itm < begin )
+    if ( ret )
     {
       break;
     }

@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -32,8 +32,10 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 
+#include <kitty/hash.hpp>
 #include <kitty/operations.hpp>
 #include <kitty/operators.hpp>
 
@@ -57,11 +59,11 @@ namespace mockturtle
  * complement.
  *
    \verbatim embed:rst
-  
+
    Example
-   
+
    .. code-block:: c++
-   
+
       truth_table_cache cache;
 
       kitty::dynamic_truth_table maj( 3 );
@@ -79,7 +81,7 @@ class truth_table_cache
 {
 public:
   /*! \brief Creates a truth table cache and reserves memory. */
-  truth_table_cache( std::size_t capacity = 1000u );
+  truth_table_cache( uint32_t capacity = 1000u );
 
   /*! \brief Inserts a truth table and returns a literal.
    *
@@ -107,12 +109,14 @@ public:
   auto size() const { return _data.size(); }
 
 private:
+  std::unordered_map<TT, uint32_t, kitty::hash<TT>> _indexes;
   std::vector<TT> _data;
 };
 
 template<typename TT>
-truth_table_cache<TT>::truth_table_cache( std::size_t capacity )
+truth_table_cache<TT>::truth_table_cache( uint32_t capacity )
 {
+  _indexes.reserve( capacity );
   _data.reserve( capacity );
 }
 
@@ -128,15 +132,17 @@ uint32_t truth_table_cache<TT>::insert( TT tt )
   }
 
   /* is truth table already in cache? */
-  const auto it = std::find( _data.begin(), _data.end(), tt );
-  if ( it != _data.end() )
+  const auto it = _indexes.find( tt );
+  if ( it != _indexes.end() )
   {
-    return 2 * std::distance( _data.begin(), it ) + is_compl;
+    return static_cast<uint32_t>( 2 * it->second + is_compl );
   }
 
   /* add truth table to end of cache */
-  const auto index = 2 * _data.size() + is_compl;
+  const auto size = _data.size();
+  const auto index = static_cast<uint32_t>( 2 * size + is_compl );
   _data.push_back( tt );
+  _indexes[tt] = size;
   return index;
 }
 

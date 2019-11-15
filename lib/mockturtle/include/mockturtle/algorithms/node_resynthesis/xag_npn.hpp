@@ -26,6 +26,7 @@
 /*!
   \file xag_npn.hpp
   \brief Replace with size-optimum XAGs and AIGs from NPN (from ABC rewrite)
+
   \author Mathias Soeken
 */
 
@@ -80,12 +81,17 @@ struct xag_npn_resynthesis_stats
  * 4.
  *
    \verbatim embed:rst
+
    Example
+
    .. code-block:: c++
+
       const aig_network aig = ...;
       xag_npn_resynthesis<aig_network> resyn;
       cut_rewriting( aig, resyn );
+
    .. note::
+
       The implementation of this algorithm was heavily inspired buy the rewrite
       command in AIG.  It uses the same underlying database of subcircuits.
    \endverbatim
@@ -257,8 +263,6 @@ private:
     {
       auto entry0 = *p++;
       auto entry1 = *p++;
-      // std::cout << "entry0 = " << entry0 << "\n";
-      // std::cout << "entry1 = " << entry1 << "\n";
 
       if ( entry0 == 0 && entry1 == 0 )
         break;

@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,12 +26,14 @@
 /*!
   \file mig_resub.hpp
   \brief Resubstitution
+
   \author Heinz Riener
 */
 
 #pragma once
 
 #include <mockturtle/algorithms/resubstitution.hpp>
+#include <mockturtle/networks/mig.hpp>
 
 namespace kitty
 {
@@ -135,7 +137,7 @@ struct mig_resub_stats
                               num_div12_accepts, num_div12_accepts, to_seconds( time_resub12 ) );
     std::cout << fmt::format( "[i]            collect binate divisors                          ({:>5.2f} secs)\n", to_seconds( time_collect_binate_divisors ) );
     std::cout << fmt::format( "[i]            2-resub {:6d} = {:6d} 2MAJ                     ({:>5.2f} secs)\n",
-                              num_div2_accepts, num_div2_accepts, to_seconds( time_resub2 ) );
+                               num_div2_accepts, num_div2_accepts, to_seconds( time_resub2 ) );
     std::cout << fmt::format( "[i]            total   {:6d}\n",
                               (num_const_accepts + num_div0_accepts + num_divR_accepts + num_div1_accepts + num_div12_accepts + num_div2_accepts) );
   }
@@ -201,8 +203,8 @@ public:
   {
     /* consider constants */
     auto g = call_with_stopwatch( st.time_resubC, [&]() {
-      return resub_const( root, required );
-    } );
+        return resub_const( root, required );
+      } );
     if ( g )
     {
       ++st.num_const_accepts;
@@ -212,8 +214,8 @@ public:
 
     /* consider equal nodes */
     g = call_with_stopwatch( st.time_resub0, [&]() {
-      return resub_div0( root, required );
-    } );
+        return resub_div0( root, required );
+      } );
     if ( g )
     {
       ++st.num_div0_accepts;
@@ -223,8 +225,8 @@ public:
 
     /* consider relevance optimization */
     g = call_with_stopwatch( st.time_resubR, [&]() {
-      return resub_divR( root, required );
-    });
+        return resub_divR( root, required );
+      });
     if ( g )
     {
       ++st.num_divR_accepts;
@@ -237,13 +239,13 @@ public:
 
     /* collect level one divisors */
     call_with_stopwatch( st.time_collect_unate_divisors, [&]() {
-      collect_unate_divisors( root, required );
-    });
+        collect_unate_divisors( root, required );
+      });
 
     /* consider equal nodes */
     g = call_with_stopwatch( st.time_resub1, [&]() {
-      return resub_div1( root, required );
-    } );
+        return resub_div1( root, required );
+      } );
     if ( g )
     {
       ++st.num_div1_accepts;
@@ -256,7 +258,7 @@ public:
 
     /* consider triples */
     g = call_with_stopwatch( st.time_resub12, [&]() {
-      return resub_div12( root, required ); });
+        return resub_div12( root, required ); });
     if ( g )
     {
       ++st.num_div12_accepts;
@@ -266,12 +268,12 @@ public:
 
     /* collect level two divisors */
     call_with_stopwatch( st.time_collect_binate_divisors, [&]() {
-      collect_binate_divisors( root, required );
-    });
+        collect_binate_divisors( root, required );
+      });
 
     /* consider two nodes */
     g = call_with_stopwatch( st.time_resub2, [&]() {
-      return resub_div2( root, required ); });
+        return resub_div2( root, required ); });
     if ( g )
     {
       ++st.num_div2_accepts;
@@ -316,8 +318,8 @@ public:
 
     std::vector<signal> fs;
     ntk.foreach_fanin( root, [&]( const auto& f ){
-      fs.emplace_back( f );
-    });
+        fs.emplace_back( f );
+      });
 
     for ( auto i = 0u; i < divs.size(); ++i )
     {
@@ -338,8 +340,8 @@ public:
         auto const c = sim.get_phase( ntk.get_node( fs[2] ) ) ? !fs[2] : fs[2];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, b, c ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? !s : s, b, c );
+          !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, b, c ) :
+           ntk.create_maj( sim.get_phase( d0 ) ? !s : s, b, c );
       }
       else if ( ntk.get_node( fs[1] ) != d0 && ntk.fanout_size( ntk.get_node( fs[1] ) ) == 1 && relevance( tt1, tt0, tt2, tt ) )
       {
@@ -347,8 +349,8 @@ public:
         auto const c = sim.get_phase( ntk.get_node( fs[2] ) ) ? !fs[2] : fs[2];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, c ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, c );
+          !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, c ) :
+           ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, c );
       }
       else if ( ntk.get_node( fs[2] ) != d0 && ntk.fanout_size( ntk.get_node( fs[2] ) ) == 1 && relevance( tt2, tt0, tt1, tt ) )
       {
@@ -356,8 +358,8 @@ public:
         auto const b = sim.get_phase( ntk.get_node( fs[1] ) ) ? !fs[1] : fs[1];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, b ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, b );
+          !ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, b ) :
+          ntk.create_maj( sim.get_phase( d0 ) ? !s : s, a, b );
       }
       else if ( ntk.get_node( fs[0] ) != d0 && ntk.fanout_size( ntk.get_node( fs[0] ) ) == 1 && relevance( ~tt0, tt1, tt2, tt ) )
       {
@@ -365,8 +367,8 @@ public:
         auto const c = sim.get_phase( ntk.get_node( fs[2] ) ) ? !fs[2] : fs[2];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, b, c ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? s : !s, b, c );
+          !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, b, c ) :
+           ntk.create_maj( sim.get_phase( d0 ) ? s : !s, b, c );
       }
       else if ( ntk.get_node( fs[1] ) != d0 && ntk.fanout_size( ntk.get_node( fs[1] ) ) == 1 && relevance( ~tt1, tt0, tt2, tt ) )
       {
@@ -374,8 +376,8 @@ public:
         auto const c = sim.get_phase( ntk.get_node( fs[2] ) ) ? !fs[2] : fs[2];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, c ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, c );
+          !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, c ) :
+           ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, c );
       }
       else if ( ntk.get_node( fs[2] ) != d0 && ntk.fanout_size( ntk.get_node( fs[2] ) ) == 1 && relevance( ~tt2, tt0, tt1, tt ) )
       {
@@ -383,8 +385,8 @@ public:
         auto const b = sim.get_phase( ntk.get_node( fs[1] ) ) ? !fs[1] : fs[1];
 
         return sim.get_phase( root ) ?
-               !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, b ) :
-               ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, b );
+          !ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, b ) :
+           ntk.create_maj( sim.get_phase( d0 ) ? s : !s, a, b );
       }
     }
 
@@ -673,8 +675,8 @@ public:
         if ( kitty::ternary_majority( kitty::ternary_majority( tt_s0, tt_s1, tt_s2 ), tt_s3, tt_s4 ) == tt )
         {
           return sim.get_phase( root ) ?
-                 !ntk.create_maj( a, b, ntk.create_maj( c, d, e ) ) :
-                 ntk.create_maj( a, b, ntk.create_maj( c, d, e ) );
+            !ntk.create_maj( a, b, ntk.create_maj( c, d, e ) ) :
+             ntk.create_maj( a, b, ntk.create_maj( c, d, e ) );
         }
       }
     }
@@ -706,8 +708,8 @@ public:
         if ( kitty::ternary_majority( ~kitty::ternary_majority( tt_s0, tt_s1, tt_s2 ), tt_s3, tt_s4 ) == tt )
         {
           return sim.get_phase( root ) ?
-                 !ntk.create_maj( a, b, ntk.create_maj( c, d, e ) ) :
-                 ntk.create_maj( a, b, ntk.create_maj( c, d, e ) );
+            !ntk.create_maj( a, b, ntk.create_maj( c, d, e ) ) :
+             ntk.create_maj( a, b, ntk.create_maj( c, d, e ) );
         }
       }
     }
@@ -740,7 +742,6 @@ void mig_resubstitution( Ntk& ntk, resubstitution_params const& ps = {}, resubst
   static_assert( has_get_node_v<Ntk>, "Ntk does not implement the get_node method" );
   static_assert( has_is_complemented_v<Ntk>, "Ntk does not implement the is_complemented method" );
   static_assert( has_is_pi_v<Ntk>, "Ntk does not implement the is_pi method" );
-  static_assert( has_level_v<Ntk>, "Ntk does not implement the has_level method" );
   static_assert( has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
   static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
   static_assert( has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
@@ -749,14 +750,18 @@ void mig_resubstitution( Ntk& ntk, resubstitution_params const& ps = {}, resubst
   static_assert( has_value_v<Ntk>, "Ntk does not implement the has_value method" );
   static_assert( has_visited_v<Ntk>, "Ntk does not implement the has_visited method" );
 
+  using resub_view_t = fanout_view2<depth_view<Ntk>>;
+  depth_view<Ntk> depth_view{ntk};
+  resub_view_t resub_view{depth_view};
+
   resubstitution_stats st;
   if ( ps.max_pis == 8 )
   {
     using truthtable_t = kitty::static_truth_table<8>;
-    using simulator_t = detail::simulator<Ntk,truthtable_t>;
-    using resubstitution_functor_t = mig_resub_functor<Ntk,simulator_t>;
+    using simulator_t = detail::simulator<resub_view_t, truthtable_t>;
+    using resubstitution_functor_t = mig_resub_functor<resub_view_t, simulator_t>;
     typename resubstitution_functor_t::stats resub_st;
-    detail::resubstitution_impl<Ntk,simulator_t,resubstitution_functor_t> p( ntk, ps, st, resub_st );
+    detail::resubstitution_impl<resub_view_t, simulator_t, resubstitution_functor_t> p( resub_view, ps, st, resub_st );
     p.run();
     if ( ps.verbose )
     {
@@ -767,10 +772,10 @@ void mig_resubstitution( Ntk& ntk, resubstitution_params const& ps = {}, resubst
   else
   {
     using truthtable_t = kitty::dynamic_truth_table;
-    using simulator_t = detail::simulator<Ntk,truthtable_t>;
-    using resubstitution_functor_t = mig_resub_functor<Ntk,simulator_t>;
+    using simulator_t = detail::simulator<resub_view_t, truthtable_t>;
+    using resubstitution_functor_t = mig_resub_functor<resub_view_t, simulator_t>;
     typename resubstitution_functor_t::stats resub_st;
-    detail::resubstitution_impl<Ntk,simulator_t,resubstitution_functor_t> p( ntk, ps, st, resub_st );
+    detail::resubstitution_impl<resub_view_t, simulator_t, resubstitution_functor_t> p( resub_view, ps, st, resub_st );
     p.run();
     if ( ps.verbose )
     {

@@ -25,7 +25,7 @@
 
 /*!
   \file lorina.hpp
-  \brief Common data structures.
+  \brief Main header for lorina
 
   \author Heinz Riener
 */

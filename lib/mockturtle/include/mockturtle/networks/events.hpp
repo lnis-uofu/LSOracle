@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -45,21 +45,21 @@ namespace mockturtle
  * to network events to call code whenever an event occurs.  Events are adding
  * a node, modifying a node, and deleting a node.
  */
-    template<class Ntk>
-    struct network_events
-    {
-        /*! \brief Event when node `n` is added. */
-        std::vector<std::function<void( node<Ntk> const& n )>> on_add;
+template<class Ntk>
+struct network_events
+{
+  /*! \brief Event when node `n` is added. */
+  std::vector<std::function<void( node<Ntk> const& n )>> on_add;
 
-        /*! \brief Event when `n` is modified.
-         *
-         * The event also informs about the previous children.  Note that the new
-         * children are already available at the time the event is triggered.
-         */
-        std::vector<std::function<void( node<Ntk> const& n, std::vector<signal<Ntk>> const& previous_children )>> on_modified;
+  /*! \brief Event when `n` is modified.
+   *
+   * The event also informs about the previous children.  Note that the new
+   * children are already available at the time the event is triggered.
+   */
+  std::vector<std::function<void( node<Ntk> const& n, std::vector<signal<Ntk>> const& previous_children )>> on_modified;
 
-        /*! \brief Event when `n` is deleted. */
-        std::vector<std::function<void( node<Ntk> const& n )>> on_delete;
-    };
+  /*! \brief Event when `n` is deleted. */
+  std::vector<std::function<void( node<Ntk> const& n )>> on_delete;
+};
 
 } // namespace mockturtle

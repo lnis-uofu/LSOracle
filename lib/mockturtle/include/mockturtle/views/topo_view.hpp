@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,6 +26,7 @@
 /*!
   \file topo_view.hpp
   \brief Reimplements foreach_node to guarantee topological order
+
   \author Mathias Soeken
 */
 
@@ -68,11 +69,15 @@ namespace mockturtle
  * Example
  *
    \verbatim embed:rst
+
    .. code-block:: c++
+
       // create network somehow; aig may not be in topological order
       aig_network aig = ...;
+
       // create a topological view on the network
       topo_view aig_topo{aig};
+
       // call algorithm that requires topological order
       cut_enumeration( aig_topo );
    \endverbatim
@@ -106,7 +111,7 @@ public:
     static_assert( has_value_v<Ntk>, "Ntk does not implement the value method" );
     static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
 
-    update();
+    update_topo();
   }
 
   /*! \brief Default constructor.
@@ -128,7 +133,7 @@ public:
     static_assert( has_value_v<Ntk>, "Ntk does not implement the value method" );
     static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
 
-    update();
+    update_topo();
   }
 
   /*! \brief Reimplementation of `foreach_node`. */
@@ -140,7 +145,8 @@ public:
                              fn );
   }
 
-  std::vector<node> get_node_vec(){
+  std::vector<node> get_node_vec()
+  {
     return topo_order;
   }
 
@@ -168,7 +174,7 @@ public:
     return start_signal ? 1 : Ntk::num_pos();
   }
 
-  void update()
+  void update_topo()
   {
     this->clear_values();
     topo_order.reserve( this->size() );
@@ -204,7 +210,7 @@ public:
         /* node was already visited */
         if ( this->value( this->get_node( f ) ) == 2 )
           return;
-        // std::cout << "TOPO PO = " << f.index << "\n";
+
         create_topo_rec( this->get_node( f ) );
       } );
     }
@@ -213,11 +219,6 @@ public:
 private:
   void create_topo_rec( node const& n )
   {
-    // std::cout << "node = " << n << "\n";
-    // this->foreach_fanin( n, [this]( auto f, auto i) {
-    //   std::cout << "child[" << i << "] = " << f.index << "\n";
-    // } );
-
     /* is permanently marked? */
     if ( this->value( n ) == 2 )
       return;
@@ -229,8 +230,7 @@ private:
     this->set_value( n, 1 );
 
     /* mark children */
-    this->foreach_fanin( n, [this]( auto f, auto ) {
-      // std::cout << "fanin = " << f.index << "\n";
+    this->foreach_fanin( n, [this]( auto f ) {
       create_topo_rec( this->get_node( f ) );
     } );
 

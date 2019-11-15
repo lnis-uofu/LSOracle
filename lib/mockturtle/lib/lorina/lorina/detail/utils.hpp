@@ -35,8 +35,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <functional>
-#include <functional>
-#include <libgen.h>
 #include <locale>
 #include <memory>
 #include <numeric>
@@ -44,7 +42,12 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+
+#ifndef _WIN32
+#include <libgen.h>
 #include <wordexp.h>
+#endif
 
 namespace lorina
 {
@@ -162,11 +165,6 @@ inline std::string join( const T& t, const std::string& sep )
       [&]( const std::string& s, const typename T::value_type& v ) { return s + sep + std::string( v ); } );
 }
 
-inline bool file_exists( const std::string& filename )
-{
-  return std::ifstream( filename ).good();
-}
-
 /* string utils are from https://stackoverflow.com/a/217605 */
 
 inline void ltrim( std::string& s )
@@ -189,18 +187,6 @@ inline void trim( std::string& s )
 {
   ltrim( s );
   rtrim( s );
-}
-
-inline std::string ltrim_copy( std::string s )
-{
-  ltrim( s );
-  return s;
-}
-
-inline std::string rtrim_copy( std::string s )
-{
-  rtrim( s );
-  return s;
 }
 
 inline std::string trim_copy( std::string s )
@@ -235,98 +221,6 @@ inline void foreach_line_in_file_escape( std::istream& in, const std::function<b
   }
 }
 
-/* format with vector (see https://stackoverflow.com/questions/39493542/building-a-dynamic-list-of-named-arguments-for-fmtlib) */
-inline std::string format_with_vector( const std::string& fmtstr, const std::vector<std::string>& values )
-{
-  assert( values.size() <= 16u );
-
-  std::vector<fmt::internal::Value> data( values.size() );
-  fmt::ULongLong types = 0;
-
-  for ( auto i = 0u; i < values.size(); ++i )
-  {
-    types |= static_cast<uint64_t>( fmt::internal::Value::STRING ) << ( i * 4 );
-    data[i].string.value = values[i].data();
-    data[i].string.size = values[i].size();
-  }
-
-  return fmt::format( fmtstr, fmt::ArgList( types, &data[0] ) );
-}
-
-template<char sep>
-inline std::vector<std::string> split_with_quotes( const std::string& commands )
-{
-  std::vector<std::string> result;
-  std::string current;
-
-  enum _state
-  {
-    normal,
-    quote,
-    escape
-  };
-
-  _state s = normal;
-
-  for ( auto c : commands )
-  {
-    switch ( s )
-    {
-    case normal:
-      switch ( c )
-      {
-      case '"':
-        current += c;
-        s = quote;
-        break;
-
-      case sep:
-        trim( current );
-        result.push_back( current );
-        current.clear();
-        break;
-
-      default:
-        current += c;
-        break;
-      }
-      break;
-
-    case quote:
-      switch ( c )
-      {
-      case '"':
-        current += c;
-        s = normal;
-        break;
-
-      case '\\':
-        current += c;
-        s = escape;
-        break;
-
-      default:
-        current += c;
-        break;
-      };
-      break;
-
-    case escape:
-      current += c;
-      s = quote;
-      break;
-    }
-  }
-
-  trim( current );
-  if ( !current.empty() )
-  {
-    result.push_back( current );
-  }
-
-  return result;
-}
-
 // https://stackoverflow.com/a/14266139
 inline std::vector<std::string> split( const std::string& str, const std::string& sep )
 {
@@ -336,56 +230,18 @@ inline std::vector<std::string> split( const std::string& str, const std::string
   size_t next = 0;
   while ( ( next = str.find( sep, last ) ) != std::string::npos )
   {
-    result.push_back( trim_copy( str.substr( last, next - last ) ) );
+    std::string substring = str.substr( last, next - last );
+    if ( substring.length() > 0 ){
+      result.push_back( str.substr( last, next - last ) );
+    }
     last = next + 1;
   }
-  result.push_back( trim_copy( str.substr( last ) ) );
+  result.push_back( str.substr( last ) );
 
   return result;
 }
 
-// from http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c-using-posix
-inline std::pair<int, std::string> execute_program( const std::string& cmd )
-{
-  char buffer[128];
-  std::string result;
-  int exit_status;
-
-  std::shared_ptr<FILE> pipe( popen( cmd.c_str(), "r" ), [&exit_status]( FILE* fp ) { auto status = pclose( fp ); exit_status = WEXITSTATUS( status ); } );
-  if ( !pipe )
-  {
-    throw std::runtime_error( "[e] popen() failed" );
-  }
-  while ( !feof( pipe.get() ) )
-  {
-    if ( fgets( buffer, 128, pipe.get() ) != NULL )
-    {
-      result += buffer;
-    }
-  }
-  return {exit_status, result};
-}
-
-// based on https://stackoverflow.com/questions/5612182/convert-string-with-explicit-escape-sequence-into-relative-character
-inline std::string unescape_quotes( const std::string& s )
-{
-  std::string res;
-  std::string::const_iterator it = s.begin();
-
-  while ( it != s.end() )
-  {
-    char c = *it++;
-    if ( c == '\\' && it != s.end() && *it == '"' )
-    {
-      c = '"';
-      ++it;
-    }
-    res += c;
-  }
-
-  return res;
-}
-
+#ifndef _WIN32
 inline std::string word_exp_filename( const std::string& filename )
 {
   std::string result;
@@ -406,10 +262,23 @@ inline std::string word_exp_filename( const std::string& filename )
 
   return result;
 }
+#else
+inline const std::string& word_exp_filename( const std::string& filename )
+{
+  return filename;
+}
+#endif
 
+#ifndef _WIN32
 inline std::string basename( const std::string& filepath )
 {
   return std::string( ::basename( const_cast<char*>( filepath.c_str() ) ) );
+}
+#endif
+
+inline bool starts_with( std::string const& s, std::string const& match )
+{
+  return ( s.substr( 0, match.size() ) == match );
 }
 
 } // namespace detail

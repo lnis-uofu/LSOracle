@@ -190,13 +190,17 @@ inline std::vector<std::string> split( const std::string& str, const std::string
   size_t next = 0;
   while ( ( next = str.find( sep, last ) ) != std::string::npos )
   {
-    result.push_back( str.substr( last, next - last ) );
+    std::string substring = str.substr( last, next - last );
+    if ( substring.length() > 0 ){
+      result.push_back( str.substr( last, next - last ) );
+    }
     last = next + 1;
   }
   result.push_back( str.substr( last ) );
 
   return result;
 }
+
 
 #ifdef _WIN32
 inline std::pair<int, std::string> execute_program( const std::string& cmd )

@@ -4,10 +4,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -DNDEBUG")
 add_executable(demo demo.cpp)
 target_link_libraries(demo alice)
 target_compile_definitions(demo PUBLIC ALICE_ENV_HOME=ALICE_HOME)
-
-#python extension doesn't work with c++17
-#add_alice_python_module(demo demo.cpp)
-
+add_alice_python_module(demo demo.cpp)
 add_alice_c_library(demo demo.cpp)
 
 # tutorial 1

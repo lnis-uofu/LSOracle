@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,6 +26,7 @@
 /*!
   \file algorithm.hpp
   \brief STL-like algorithm extensions
+
   \author Mathias Soeken
 */
 
@@ -36,53 +37,69 @@
 namespace mockturtle
 {
 
-    template<class Iterator, class T, class BinaryOperation>
-    T tree_reduce( Iterator first, Iterator last, T const& init, BinaryOperation&& op )
+template<class Iterator, class T, class BinaryOperation>
+T tree_reduce( Iterator first, Iterator last, T const& init, BinaryOperation&& op )
+{
+  const auto len = std::distance( first, last );
+
+  switch ( len )
+  {
+  case 0u:
+    return init;
+  case 1u:
+    return *first;
+  case 2u:
+    return op( *first, *( first + 1 ) );
+  default:
+  {
+    const auto m = len / 2;
+    return op( tree_reduce( first, first + m, init, op ), tree_reduce( first + m, last, init, op ) );
+  }
+  break;
+  }
+}
+
+template<class Iterator, class T, class TernaryOperation>
+T ternary_tree_reduce( Iterator first, Iterator last, T const& init, TernaryOperation&& op )
+{
+  const auto len = std::distance( first, last );
+
+  switch ( len )
+  {
+  case 0u:
+    return init;
+  case 1u:
+    return *first;
+  case 2u:
+    return op( init, *first, *( first + 1 ) );
+  case 3u:
+    return op( *first, *( first + 1 ), *( first + 2 ) );
+  default:
+  {
+    const auto m1 = len / 3;
+    const auto m2 = ( len - m1 ) / 2;
+    return op( ternary_tree_reduce( first, first + m1, init, op ),
+               ternary_tree_reduce( first + m1, first + m1 + m2, init, op ),
+               ternary_tree_reduce( first + m1 + m2, last, init, op ) );
+  }
+  break;
+  }
+}
+
+template<class Iterator, class UnaryOperation, class T>
+Iterator max_element_unary( Iterator first, Iterator last, UnaryOperation&& fn, T const& init )
+{
+  auto best = last;
+  auto max = init;
+  for ( ; first != last; ++first )
+  {
+    if ( const auto v = fn( *first ) > max )
     {
-        const auto len = std::distance( first, last );
-
-        switch ( len )
-        {
-            case 0u:
-                return init;
-            case 1u:
-                return *first;
-            case 2u:
-                return op( *first, *( first + 1 ) );
-            default:
-            {
-                const auto m = len / 2;
-                return op( tree_reduce( first, first + m, init, op ), tree_reduce( first + m, last, init, op ) );
-            }
-                break;
-        }
+      max = v;
+      best = first;
     }
-
-    template<class Iterator, class T, class TernaryOperation>
-    T ternary_tree_reduce( Iterator first, Iterator last, T const& init, TernaryOperation&& op )
-    {
-        const auto len = std::distance( first, last );
-
-        switch ( len )
-        {
-            case 0u:
-                return init;
-            case 1u:
-                return *first;
-            case 2u:
-                return op( init, *first, *( first + 1 ) );
-            case 3u:
-                return op( *first, *( first + 1 ), *( first + 2 ) );
-            default:
-            {
-                const auto m1 = len / 3;
-                const auto m2 = ( len - m1 ) / 2;
-                return op( ternary_tree_reduce( first, first + m1, init, op ),
-                           ternary_tree_reduce( first + m1, first + m1 + m2, init, op ),
-                           ternary_tree_reduce( first + m1 + m2, last, init, op ) );
-            }
-                break;
-        }
-    }
+  }
+  return best;
+}
 
 } /* namespace mockturtle */

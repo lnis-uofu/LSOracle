@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
-option(ALICE_EXAMPLES "Build examples" ON)
+option(ALICE_EXAMPLES "Build examples" OFF)
 option(ALICE_TEST "Build tests" OFF)
 
 set(ALICE_READLINE_LIBRARY READLINE CACHE STRING "Readline library")
@@ -28,11 +28,11 @@ include(AliceTools)
 add_subdirectory(lib)
 add_subdirectory(include)
 
-#if(ALICE_EXAMPLES)
-#  add_subdirectory(examples)
-#endif()
+if(ALICE_EXAMPLES)
+  add_subdirectory(examples)
+endif()
 
-#if(ALICE_TEST)
-#  add_subdirectory(test)
-#endif()
+if(ALICE_TEST)
+  add_subdirectory(test)
+endif()
 
