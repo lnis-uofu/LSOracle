@@ -26,7 +26,6 @@
 /*!
   \file blif.hpp
   \brief Implements blif parser
-
   \author Heinz Riener
 */
 
@@ -50,6 +49,14 @@ class blif_reader
 public:
   /*! \brief Type of the output cover as truth table. */
   using output_cover_t = std::vector<std::pair<std::string, std::string>>;
+  /*! Latch input values */
+  enum latch_init_value
+  {
+    ZERO = 0 /*!< Initialized with 0 */
+  , ONE /*!< Initialized with 1 */
+  , NONDETERMINISTIC /*!< Not initialized (non-deterministic value) */
+  , UNKNOWN
+  };
 
 public:
   /*! \brief Callback method for parsed model.
@@ -77,6 +84,13 @@ public:
   virtual void on_output( const std::string& name ) const
   {
     (void)name;
+  }
+
+  virtual void on_latch( const std::string& input, const std::string& output, const latch_init_value& reset ) const
+  {
+    (void)input;
+    (void)output;
+    (void)reset;
   }
 
   /*! \brief Callback method for parsed gate.
@@ -143,6 +157,11 @@ public:
     first_output = false;
   }
 
+  virtual void on_latch( const std::string& input, const std::string& output, const latch_init_value& init ) const
+  {
+    _os << std::endl << fmt::format( ".latch {0} {1} {2}", input, output, init ) << std::endl;
+  }
+
   virtual void on_gate( const std::vector<std::string>& inputs, const std::string& output, const output_cover_t& cover ) const
   {
     _os << std::endl << fmt::format( ".names {0} {1}", detail::join( inputs, "," ), output ) << std::endl;
@@ -170,8 +189,6 @@ public:
 namespace blif_regex
 {
 static std::regex model( R"(.model\s+(.*))" );
-static std::regex inputs( R"(.inputs\s+(.*))" );
-static std::regex outputs( R"(.outputs\s+(.*))" );
 static std::regex names( R"(.names\s+(.*))" );
 static std::regex line_of_truthtable( R"(([01\-]*)\s*([01\-]))" );
 static std::regex end( R"(.end)" );
@@ -190,6 +207,13 @@ static std::regex end( R"(.end)" );
 inline return_code read_blif( std::istream& in, const blif_reader& reader, diagnostic_engine* diag = nullptr )
 {
   return_code result = return_code::success;
+
+  const auto dispatch_function = [&]( std::vector<std::string> inputs, std::string output, std::vector<std::pair<std::string, std::string>> tt )
+    {
+      reader.on_gate( inputs, output, tt );
+    };
+
+  detail::call_in_topological_order<std::vector<std::string>, std::string, std::vector<std::pair<std::string, std::string>>> on_action( dispatch_function );
 
   std::smatch m;
   detail::foreach_line_in_file_escape( in, [&]( std::string line ) {
@@ -227,7 +251,7 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
           return false;
         } );
 
-        reader.on_gate( args, output, tt );
+        on_action.call_deferred( args, output, args, output, tt );
 
         if ( in.eof() )
         {
@@ -249,21 +273,73 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
       }
 
       /* .inputs <list of whitespace separated strings> */
-      if ( std::regex_search( line, m, blif_regex::inputs ) )
+      if ( detail::starts_with( line, ".inputs" ) )
       {
-        for ( const auto& input : detail::split( detail::trim_copy( m[1] ), " " ) )
+        std::string const input_declaration = line.substr( 7 );
+        for ( const auto& input : detail::split( detail::trim_copy( input_declaration ), " " ) )
         {
-          reader.on_input( detail::trim_copy( input ) );
+          auto const s = detail::trim_copy( input );
+          on_action.declare_known( s );
+          
+          reader.on_input( s );
         }
         return true;
       }
 
-      /* .outputs <list of whitespace separated strings> */
-      if ( std::regex_search( line, m, blif_regex::outputs ) )
+      /* .inputs <list of whitespace separated strings> */
+      if ( detail::starts_with( line, ".latch" ) )
       {
-        for ( const auto& output : detail::split( detail::trim_copy( m[1] ), " " ) )
+        std::string const latch_declaration = line.substr( 6 );
+        std::string elements;
+        std::vector<std::string> latch_elements = detail::split( detail::trim_copy( latch_declaration ), " " );
+        if ( latch_elements.size() == 3 )
         {
-          reader.on_output( detail::trim_copy( output ) );
+          std::string input = latch_elements[0];
+          std::string output = latch_elements[1];
+          std::string latch_init = latch_elements[2];
+
+          blif_reader::latch_init_value reset;
+          if ( latch_init == "0" )
+          {
+            reset = blif_reader::latch_init_value::ZERO;
+          }
+          else if ( latch_init == "1" )
+          {
+            reset = blif_reader::latch_init_value::ONE;
+          }
+          else if ( latch_init == "2" )
+          {
+            reset = blif_reader::latch_init_value::NONDETERMINISTIC;
+          }
+          else{
+            reset = blif_reader::latch_init_value::UNKNOWN;
+          }
+
+          on_action.declare_known( output );
+          reader.on_latch(input, output, reset);
+
+          return true;
+        }
+        else
+        {
+          if ( diag ){
+            diag->report( diagnostic_level::error,
+                      fmt::format( "latch format not supported `{0}`", line ) );
+          }
+
+          result = return_code::parse_error;
+          return true;
+        }
+      }
+
+      /* .outputs <list of whitespace separated strings> */
+      if ( detail::starts_with( line, ".outputs" ) )
+      {
+        std::string const output_declaration = line.substr( 8 );
+        for ( const auto& output : detail::split( detail::trim_copy( output_declaration ), " " ) )
+        {
+          auto const s = detail::trim_copy( output );
+          reader.on_output( s );
         }
         return true;
       }
@@ -283,7 +359,21 @@ inline return_code read_blif( std::istream& in, const blif_reader& reader, diagn
 
       result = return_code::parse_error;
       return true;
-  } );
+    } );
+
+  /* check dangling objects */
+  auto const& deps = on_action.unresolved_dependencies();
+  if ( deps.size() > 0 )
+    result = return_code::parse_error;
+
+  for ( const auto& r : deps )
+  {
+    if ( diag )
+    {
+      diag->report( diagnostic_level::warning,
+                    fmt::format( "unresolved dependencies: `{0}` requires `{1}`",  r.first, r.second ) );
+    }
+  }
 
   return result;
 }

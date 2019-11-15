@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,7 +26,9 @@
 /*!
   \file reconv_cut.hpp
   \brief Reconvergence-driven cut
+
   Based on `abcReconv.c`
+
   \author Heinz Riener
 */
 
@@ -78,8 +80,8 @@ int node_get_leaf_cost_one( Ntk const& ntk, typename Ntk::node const &node, int 
   /* get the cost of the cone */
   uint32_t cost = 0;
   ntk.foreach_fanin( node, [&]( const auto& f ){
-    cost += ( ntk.visited( ntk.get_node( f ) ) == ntk.trav_id() ) ? 0 : 1;
-  } );
+      cost += ( ntk.visited( ntk.get_node( f ) ) == ntk.trav_id() ) ? 0 : 1;
+    } );
 
   /* always accept if the number of leaves does not increase */
   if ( cost < ntk.fanin_size( node ) )
@@ -87,7 +89,7 @@ int node_get_leaf_cost_one( Ntk const& ntk, typename Ntk::node const &node, int 
 
   /* skip nodes with many fanouts */
   if ( int( ntk.fanout_size( node ) ) > fanin_limit )
-  return 999;
+    return 999;
 
   /* return the number of nodes that will be on the leaves if this node is removed */
   return cost;
@@ -125,21 +127,21 @@ bool node_build_cut_level_one_int( Ntk const& ntk, std::vector<typename Ntk::nod
 
   // assert( best_cost < max_fanin_of_graph_structure );
   if ( leaves.size() - 1 + best_cost > size_limit )
-    return false;
+      return false;
 
   /* remove the best node from the array */
   leaves.erase( leaves.begin() + best_pos );
 
   /* add the fanins of best to leaves and visited */
   ntk.foreach_fanin( *best_fanin, [&]( const auto& f ){
-    auto const& n = ntk.get_node( f );
-    if ( n != 0 && ( ntk.visited( n ) != ntk.trav_id() ) )
-    {
-      ntk.set_visited( n, ntk.trav_id() );
-      visited.push_back( n );
-      leaves.push_back( n );
-    }
-  });
+      auto const& n = ntk.get_node( f );
+      if ( n != 0 && ( ntk.visited( n ) != ntk.trav_id() ) )
+      {
+        ntk.set_visited( n, ntk.trav_id() );
+        visited.push_back( n );
+        leaves.push_back( n );
+      }
+    });
 
   assert( leaves.size() <= size_limit );
 
@@ -156,21 +158,21 @@ std::vector<typename Ntk::node> node_find_cut( cut_manager<Ntk>& mgr, Ntk const&
   mgr.visited.push_back( root );
   ntk.set_visited( root, 1 );
   ntk.foreach_fanin( root, [&]( const auto& f ){
-    auto const& n = ntk.get_node( f );
-    if ( n == 0 ) return true;
-    mgr.visited.push_back( n );
-    ntk.set_visited( n, ntk.trav_id() );
-    return true;
-  } );
+      auto const& n = ntk.get_node( f );
+      if ( n == 0 ) return true;
+      mgr.visited.push_back( n );
+      ntk.set_visited( n, ntk.trav_id() );
+      return true;
+    } );
 
   /* start the cut */
   mgr.node_leaves.clear();
   ntk.foreach_fanin( root, [&]( const auto& f ){
-    auto const& n = ntk.get_node( f );
-    if ( n == 0 ) return true;
-    mgr.node_leaves.push_back( n );
-    return true;
-  } );
+      auto const& n = ntk.get_node( f );
+      if ( n == 0 ) return true;
+      mgr.node_leaves.push_back( n );
+      return true;
+    } );
 
   if ( mgr.node_leaves.size() > uint32_t( mgr.node_size_max ) )
   {

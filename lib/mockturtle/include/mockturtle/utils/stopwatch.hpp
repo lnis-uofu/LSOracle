@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,13 +26,17 @@
 /*!
   \file stopwatch.hpp
   \brief Stopwatch
+
   \author Mathias Soeken
 */
 
 #pragma once
 
 #include <chrono>
+#include <iostream>
 #include <type_traits>
+
+#include <fmt/format.h>
 
 namespace mockturtle
 {
@@ -52,44 +56,47 @@ namespace mockturtle
    .. code-block:: c++
 
       stopwatch<>::duration time{0};
+
       { // some block
         stopwatch t( time );
+
         // do some work
       } // stopwatch is stopped here
+
       std::cout << fmt::format( "{:5.2f} seconds passed\n", to_seconds( time ) );
    \endverbatim
  */
-    template<class Clock = std::chrono::steady_clock>
-    class stopwatch
-    {
-    public:
-        using clock = Clock;
-        using duration = typename Clock::duration;
-        using time_point = typename Clock::time_point;
+template<class Clock = std::chrono::steady_clock>
+class stopwatch
+{
+public:
+  using clock = Clock;
+  using duration = typename Clock::duration;
+  using time_point = typename Clock::time_point;
 
-        /*! \brief Default constructor.
-         *
-         * Starts tracking time.
-         */
-        explicit stopwatch( duration& dur )
-                : dur( dur ),
-                  beg( clock::now() )
-        {
-        }
+  /*! \brief Default constructor.
+   *
+   * Starts tracking time.
+   */
+  explicit stopwatch( duration& dur )
+      : dur( dur ),
+        beg( clock::now() )
+  {
+  }
 
-        /*! \brief Default deconstructor.
-         *
-         * Stops tracking time and updates duration.
-         */
-        ~stopwatch()
-        {
-            dur += ( clock::now() - beg );
-        }
+  /*! \brief Default deconstructor.
+   *
+   * Stops tracking time and updates duration.
+   */
+  ~stopwatch()
+  {
+    dur += ( clock::now() - beg );
+  }
 
-    private:
-        duration& dur;
-        time_point beg;
-    };
+private:
+  duration& dur;
+  time_point beg;
+};
 
 /*! \brief Calls a function and tracks time.
  *
@@ -104,18 +111,19 @@ namespace mockturtle
    .. code-block:: c++
 
       stopwatch<>::duration time{0};
+
       auto result = call_with_stopwatch( time, [&]() { return function( parameters ); } );
    \endverbatim
  *
  * \param dur Duration reference (time will be added to it)
  * \param fn Callable object with no arguments
  */
-    template<class Fn, class Clock = std::chrono::steady_clock>
-    std::invoke_result_t<Fn> call_with_stopwatch( typename Clock::duration& dur, Fn&& fn )
-    {
-        stopwatch<Clock> t( dur );
-        return fn();
-    }
+template<class Fn, class Clock = std::chrono::steady_clock>
+std::invoke_result_t<Fn> call_with_stopwatch( typename Clock::duration& dur, Fn&& fn )
+{
+  stopwatch<Clock> t( dur );
+  return fn();
+}
 
 /*! \brief Constructs an object and calls time.
  *
@@ -129,22 +137,43 @@ namespace mockturtle
    .. code-block:: c++
 
       stopwatch<>::duration time{0};
+
       // create vector with 100000 elements initialized to 42
       auto result = make_with_stopwatch<std::vector<int>>( time, 100000, 42 );
    \endverbatim
  */
-    template<class T, class... Args, class Clock = std::chrono::steady_clock>
-    T make_with_stopwatch( typename Clock::duration& dur, Args... args )
-    {
-        stopwatch<Clock> t( dur );
-        return T{ std::forward<Args>( args )... };
-    }
+template<class T, class... Args, class Clock = std::chrono::steady_clock>
+T make_with_stopwatch( typename Clock::duration& dur, Args... args )
+{
+  stopwatch<Clock> t( dur );
+  return T{std::forward<Args>( args )...};
+}
 
 /*! \brief Utility function to convert duration into seconds. */
-    template<class Duration>
-    inline double to_seconds( Duration const& dur )
-    {
-        return std::chrono::duration_cast<std::chrono::duration<double>>( dur ).count();
-    }
+template<class Duration>
+inline double to_seconds( Duration const& dur )
+{
+  return std::chrono::duration_cast<std::chrono::duration<double>>( dur ).count();
+}
+
+template<class Clock = std::chrono::steady_clock>
+class print_time
+{
+public:
+  print_time()
+      : _t( new stopwatch<Clock>( _d ) )
+  {
+  }
+
+  ~print_time()
+  {
+    delete _t;
+    std::cout << fmt::format( "[i] run-time: {:5.2f} secs\n", to_seconds( _d ) );
+  }
+
+private:
+  stopwatch<Clock>* _t{nullptr};
+  typename stopwatch<Clock>::duration _d{};
+};
 
 } // namespace mockturtle

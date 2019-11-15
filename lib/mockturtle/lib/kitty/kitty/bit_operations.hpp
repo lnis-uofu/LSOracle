@@ -1,5 +1,5 @@
 /* kitty: C++ truth table library
- * Copyright (C) 2017-2018  EPFL
+ * Copyright (C) 2017-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -36,6 +36,7 @@
 #include <numeric>
 
 #include "static_truth_table.hpp"
+#include "detail/mscfix.hpp"
 
 namespace kitty
 {
@@ -100,6 +101,24 @@ void clear_bit( static_truth_table<NumVars, true>& tt, uint64_t index )
   tt._bits &= ~( uint64_t( 1 ) << index );
 }
 /*! \endcond */
+
+/*! \brief Flip bit at index
+
+  \param tt Truth table
+  \param index Bit index
+*/
+template<typename TT>
+void flip_bit( TT& tt, uint64_t index )
+{
+  tt._bits[index >> 6] ^= uint64_t( 1 ) << ( index & 0x3f );
+}
+
+/*! \cond PRIVATE */
+template<int NumVars>
+void flip_bit( static_truth_table<NumVars, true>& tt, uint64_t index )
+{
+  tt._bits ^= uint64_t( 1 ) << index;
+}
 
 /*! \brief Clears all bits
 
@@ -240,7 +259,7 @@ int64_t find_first_one_bit( const TT& tt, int64_t start = 0 )
   {
     return -1;
   }
-  
+
   return 64 * std::distance( tt.cbegin(), it ) + find_first_bit_in_word( *it );
 }
 

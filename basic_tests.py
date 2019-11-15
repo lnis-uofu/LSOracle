@@ -28,10 +28,10 @@ args = parser.parse_args()
 home_path = os.getenv('HOME')
 if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
-    training_file = lstools_path + '/../../deep_learn_model.json'
+    training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 else:
-    lstools_path = home_path + '/LSOracle/build/core'
-    training_file = home_path + args.training_model
+    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/test/curr_repo/refactor/LSOracle/build/core'
+    training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 
 #configure logging
 timestamp = datetime.now()
@@ -57,7 +57,7 @@ def optimize(filename, mode, part_num, suffix):
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
-    return [int(s) for s in string_stdout[-5].split() if s.isdigit()]
+    return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
@@ -70,6 +70,7 @@ def compare(filename, suffix):
     cmd = ['abc', '-c', 'cec ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
+    print abc_stdout
     if "None" not in str(abc_stderr):
         logging.warning(str(abc_stderr))
     intermediate_string = str(abc_stdout)
@@ -105,14 +106,13 @@ for curr_file in files:
     stdout, stderr = process.communicate()
     string_stdout = str(stdout)
     #calculate number of nodes
-    unoptimized_size = float(string_stdout[7:string_stdout.find('\n')])
+    unoptimized_size = float(string_stdout.splitlines()[1][7:string_stdout.find('\n')])
     num_part = math.ceil(unoptimized_size / 300)
     print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
    
     #mixed synthesis with classifier
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print (mixed_size)
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)

@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -55,11 +55,11 @@ namespace mockturtle
  * - `create_node`
  *
    \verbatim embed:rst
-  
+
    Example
-   
+
    .. code-block:: c++
-   
+
       klut_network klut;
       lorina::read_bench( "file.bench", bench_reader( klut ) );
    \endverbatim
@@ -107,7 +107,7 @@ public:
   {
     if ( type.size() > 2 && std::string_view( type ).substr( 0, 2 ) == "0x" && inputs.size() <= 6u )
     {
-      kitty::dynamic_truth_table tt( inputs.size() );
+      kitty::dynamic_truth_table tt( static_cast<int>( inputs.size() ) );
       kitty::create_from_hex_string( tt, type.substr( 2 ) );
 
       std::vector<signal<Ntk>> input_signals;

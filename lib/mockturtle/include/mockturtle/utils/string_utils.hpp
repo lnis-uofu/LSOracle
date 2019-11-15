@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,35 +26,37 @@
 /*!
   \file string_utils.hpp
   \brief String utils
+
   \author Mathias Soeken
 */
 
 #pragma once
 
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <type_traits>
 
 namespace mockturtle
 {
 
-    template<class Iterator, class MapFn, class JoinFn>
-    std::invoke_result_t<MapFn, typename Iterator::value_type> map_and_join( Iterator begin, Iterator end, MapFn&& map_fn, JoinFn&& join_fn )
-    {
-        if constexpr ( std::is_same_v<std::decay_t<JoinFn>, std::string> )
-        {
-            return std::accumulate( begin + 1, end, map_fn( *begin ),
-                                    [&]( auto const& a, auto const& v ) {
-                                        return a + join_fn + map_fn( v );
-                                    } );
-        }
-        else
-        {
-            return std::accumulate( begin + 1, end, map_fn( *begin ),
-                                    [&]( auto const& a, auto const& v ) {
-                                        return join_fn( a, map_fn( v ) );
-                                    } );
-        }
-    }
+template<class Iterator, class MapFn, class JoinFn>
+std::invoke_result_t<MapFn, typename Iterator::value_type> map_and_join( Iterator begin, Iterator end, MapFn&& map_fn, JoinFn&& join_fn )
+{
+  if constexpr ( std::is_same_v<std::decay_t<JoinFn>, std::string> )
+  {
+    return std::accumulate( begin + 1, end, map_fn( *begin ),
+                            [&]( auto const& a, auto const& v ) {
+                              return a + join_fn + map_fn( v );
+                            } );
+  }
+  else
+  {
+    return std::accumulate( begin + 1, end, map_fn( *begin ),
+                            [&]( auto const& a, auto const& v ) {
+                              return join_fn( a, map_fn( v ) );
+                            } );
+  }
+}
 
 } // namespace mockturtle

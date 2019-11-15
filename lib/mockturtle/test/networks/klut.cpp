@@ -109,13 +109,13 @@ TEST_CASE( "create binary operations in a k-LUT network", "[klut]" )
 
   CHECK( klut.size() == 4 );
 
-  const auto f1 = klut.create_and( x1, x2 );
+  klut.create_and( x1, x2 );
   CHECK( klut.size() == 5 );
 
-  const auto f2 = klut.create_and( x1, x2 );
+  klut.create_and( x1, x2 );
   CHECK( klut.size() == 5 );
 
-  const auto f3 = klut.create_and( x2, x1 );
+  klut.create_and( x2, x1 );
   CHECK( klut.size() == 6 );
 }
 
@@ -214,12 +214,12 @@ TEST_CASE( "hash nodes in K-LUT network", "[klut]" )
   kitty::create_from_hex_string( tt_maj, "e8" );
   kitty::create_from_hex_string( tt_xor, "96" );
 
-  const auto _maj = klut.create_node( {a, b, c}, tt_maj );
-  const auto _xor = klut.create_node( {a, b, c}, tt_xor );
+  klut.create_node( {a, b, c}, tt_maj );
+  klut.create_node( {a, b, c}, tt_xor );
 
   CHECK( klut.size() == 7 );
 
-  const auto _maj2 = klut.create_node( {a, b, c}, tt_maj );
+  klut.create_node( {a, b, c}, tt_maj );
 
   CHECK( klut.size() == 7 );
 }
@@ -411,7 +411,7 @@ TEST_CASE( "custom node values in k-LUT networks", "[klut]" )
   klut.clear_values();
   klut.foreach_node( [&]( auto n ) {
     CHECK( klut.value( n ) == 0 );
-    klut.set_value( n, n );
+    klut.set_value( n, static_cast<uint32_t>( n ) );
     CHECK( klut.value( n ) == n );
     CHECK( klut.incr_value( n ) == n );
     CHECK( klut.value( n ) == n + 1 );
