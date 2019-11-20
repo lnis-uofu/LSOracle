@@ -148,7 +148,7 @@ public:
     } );
 
     ntk.foreach_gate( [&]( auto const& n, auto i ) {
-      // std::cout << "refacotr node = " << n << " is ro " << ntk.is_ro(n) << "\n";
+      
       if ( i >= size )
       {
         return false;
@@ -157,7 +157,7 @@ public:
       {
         return true;
       }
-      // std::cout << "making mffc\n";
+
       const auto mffc = make_with_stopwatch<mffc_view<Ntk>>( st.time_mffc, ntk, n );
 
       pbar( i, i, _candidates, _estimated_gain );
@@ -177,9 +177,7 @@ public:
       default_simulator<kitty::dynamic_truth_table> sim( mffc.num_pis() );
       const auto tt = call_with_stopwatch( st.time_simulation,
                                            [&]() { return simulate<kitty::dynamic_truth_table>( mffc, sim )[0]; } );
-      
-      // std::cout << "finished\n";
-      // std::cout << "starting resynthesis\n";
+
       signal<Ntk> new_f;
       {
         if ( ps.use_dont_cares )
@@ -207,13 +205,12 @@ public:
           refactoring_fn( ntk, tt, leaves.begin(), leaves.end(), [&]( auto const& f ) { new_f = f; return false; } );
         }
       }
-      // std::cout << "finished\n";
+
       if ( n == ntk.get_node( new_f ) )
       {
         return true;
       }
 
-      // std::cout << "calculating gain\n";
       int32_t gain = recursive_deref( n );
       gain -= recursive_ref( ntk.get_node( new_f ) );
 
