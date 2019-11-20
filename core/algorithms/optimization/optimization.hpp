@@ -52,9 +52,7 @@ namespace oracle{
     else if(high){
       for(int i = 0; i < num_parts; i++){
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
-
         auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-        
         oracle::aig_script5 aigopt;
         opt_aig = aigopt.run(opt_aig);
         mockturtle::depth_view part_aig_opt_depth{opt_aig};
@@ -62,7 +60,6 @@ namespace oracle{
         int aig_opt_depth = part_aig_opt_depth.depth();
 
         auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
-        
         oracle::mig_script migopt;
         opt_mig = migopt.run(opt_mig);
         mockturtle::depth_view part_mig_opt_depth{opt_mig};

@@ -148,14 +148,16 @@ public:
     } );
 
     ntk.foreach_gate( [&]( auto const& n, auto i ) {
+      
       if ( i >= size )
       {
         return false;
       }
-      if ( ntk.fanout_size( n ) == 0u )
+      if ( ntk.fanout_size( n ) == 0u || ntk.is_ci( n ) )
       {
         return true;
       }
+
       const auto mffc = make_with_stopwatch<mffc_view<Ntk>>( st.time_mffc, ntk, n );
 
       pbar( i, i, _candidates, _estimated_gain );
@@ -165,11 +167,13 @@ public:
         return true;
       }
 
+      // std::cout << "making leaves\n";
       std::vector<signal<Ntk>> leaves( mffc.num_pis() );
       mffc.foreach_pi( [&]( auto const& n, auto j ) {
         leaves[j] = ntk.make_signal( n );
       } );
 
+      // std::cout << "beginning simulation\n";
       default_simulator<kitty::dynamic_truth_table> sim( mffc.num_pis() );
       const auto tt = call_with_stopwatch( st.time_simulation,
                                            [&]() { return simulate<kitty::dynamic_truth_table>( mffc, sim )[0]; } );

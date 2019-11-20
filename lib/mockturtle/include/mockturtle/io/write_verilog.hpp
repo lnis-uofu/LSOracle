@@ -206,7 +206,9 @@ namespace mockturtle
     } );
 
     if(ntk.num_latches()>0) {
-        os << fmt::format( "module {}({} , {} );\n", ps.module_name, fmt::join(xs, " , "), fmt::join(ys, " , ") )
+      std::string clk = "clock";
+        os << fmt::format( "module {}({} , {} , {} );\n", ps.module_name, clk, fmt::join(xs, " , "), fmt::join(ys, " , ") )
+           << fmt::format( "  input {} ;\n", clk )
            << fmt::format( "  input {} ;\n", fmt::join(xs, " , ") )
            << fmt::format( "  output {} ;\n", fmt::join(ys, " , ") )
            << fmt::format( "  reg {} ;\n", fmt::join(ros, " , ") );
@@ -308,10 +310,11 @@ namespace mockturtle
 
     latch_index = 1u;
     ntk.foreach_po( [&]( auto const& f, auto i ) {
-      
-      if(i < ntk.num_pos() - ntk.num_latches())
-        if(!ps.skip_feedthrough || (output_names[i] != node_names[f]))
+      if(i < ntk.num_pos() - ntk.num_latches()){
+        if(!ps.skip_feedthrough || (output_names[i] != node_names[f])){
           os << fmt::format( "  assign {} = {}{} ;\n", output_names[i], ntk.is_complemented( f ) ? "~" : "", node_names[f] );
+        }
+      }
       else{
         if(ntk.num_latches()>0){
           if(!ps.skip_feedthrough || (ri_names[latch_index] != node_names[f]))
@@ -323,11 +326,9 @@ namespace mockturtle
     } );
 
     if(ntk.num_latches() > 0) {
-      //std::cout << "There is " << ntk.num_latches() << " latches!" << std::endl;
       os << " always @ (posedge clock) begin\n";
 
       ntk.foreach_ri([&](auto const &f, auto i) {
-          //std::cout << "I value in RI is " << i << std::endl;
         auto ro_sig = ntk.make_signal(ntk.ri_to_ro( f ));
         os << fmt::format("    {} <= {} ;\n", node_names[ro_sig], ri_names[i + 1]);
       });
