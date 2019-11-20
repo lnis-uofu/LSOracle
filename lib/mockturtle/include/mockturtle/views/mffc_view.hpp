@@ -224,11 +224,12 @@ private:
       {
         continue;
       }
-
-      if ( this->value( n ) > 0 || Ntk::is_pi( n ) ) /* PI candidate */
+      // std::cout << "compute set Node = " << n << " is ro = " << Ntk::is_ro(n) << "\n";
+      if ( this->value( n ) > 0 || Ntk::is_ci( n ) ) /* PI candidate */
       {
         if ( _leaves.empty() || _leaves.back() != n )
         {
+          // std::cout << "making leaf\n";
           _leaves.push_back( n );
         }
       }
@@ -236,6 +237,7 @@ private:
       {
         if ( _inner.empty() || _inner.back() != n )
         {
+          // std::cout << "making inner\n";
           _inner.push_back( n );
         }
       }
@@ -250,6 +252,7 @@ private:
       _node_to_index.emplace( n, _node_to_index.size() );
     }
 
+    // std::cout << "inner push = " << _root << "\n";
     _inner.push_back( _root );
     _node_to_index.emplace( _root, _node_to_index.size() );
 

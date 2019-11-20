@@ -75,6 +75,8 @@ namespace alice
         mockturtle::depth_view orig_depth{names_view};
         oracle::partition_manager<aig_names> partitions(names_view, num_partitions);
         store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+
+        std::cout << filename << " partitioned " << num_partitions << " times\n";
         
         if(is_set("high"))
           high = true;
