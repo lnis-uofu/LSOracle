@@ -204,17 +204,19 @@ node_map<SimulationType, Ntk> simulate_nodes( Ntk const& ntk, Simulator const& s
   static_assert( has_compute_v<Ntk, SimulationType>, "Ntk does not implement the compute method for SimulationType" );
 
   node_map<SimulationType, Ntk> node_to_value( ntk );
-
+  // std::cout << "simulate nodes\n";
   node_to_value[ntk.get_node( ntk.get_constant( false ) )] = sim.compute_constant( ntk.constant_value( ntk.get_node( ntk.get_constant( false ) ) ) );
   if ( ntk.get_node( ntk.get_constant( false ) ) != ntk.get_node( ntk.get_constant( true ) ) )
   {
     node_to_value[ntk.get_node( ntk.get_constant( true ) )] = sim.compute_constant( ntk.constant_value( ntk.get_node( ntk.get_constant( true ) ) ) );
   }
   ntk.foreach_pi( [&]( auto const& n, auto i ) {
+    // std::cout << "PI: " << n << " is_ro = " << ntk.is_ro(n) << "\n";
     node_to_value[n] = sim.compute_pi( i );
   } );
 
   ntk.foreach_gate( [&]( auto const& n ) {
+    // std::cout << "gate = " << n << " is ro = " << ntk.is_ro(n) << "\n";
     std::vector<SimulationType> fanin_values( ntk.fanin_size( n ) );
     ntk.foreach_fanin( n, [&]( auto const& f, auto i ) {
       fanin_values[i] = node_to_value[f];
@@ -342,8 +344,10 @@ std::vector<SimulationType> simulate( Ntk const& ntk, Simulator const& sim = Sim
 
   const auto node_to_value = simulate_nodes<SimulationType, Ntk, Simulator>( ntk, sim );
 
+  // std::cout << "computing POs\n";
   std::vector<SimulationType> po_values( ntk.num_pos() );
   ntk.foreach_po( [&]( auto const& f, auto i ) {
+    // std::cout << "PO: " << f.index << "\n";
     if ( ntk.is_complemented( f ) )
     {
       po_values[i] = sim.compute_not( node_to_value[f] );
