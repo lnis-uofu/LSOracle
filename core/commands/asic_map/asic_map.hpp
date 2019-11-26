@@ -1,3 +1,5 @@
+
+
 namespace alice
 {
     class techmap_command : public alice::command{
@@ -49,12 +51,14 @@ namespace alice
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
                 auto const& klut = *klut_opt;
                 mockturtle::topo_view klut_topo{klut};
-                std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
-                oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
-                mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
-                std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
                 mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
+                std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
                 mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
+                oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+                mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
+                mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
+                std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";
+ 
             }
             else{
                 std::cout << "There is not an AIG network stored.\n";

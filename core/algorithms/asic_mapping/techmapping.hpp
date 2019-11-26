@@ -65,7 +65,7 @@ public:
     int netlistcount = 0; //node count.  Used as index in cell_names
     int new_count = 0;
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
-    std::regex gate_inputs("\\.([ABCDY12]+)\\((.+?)\\)");  //regex to handle signals
+    std::regex gate_inputs("\\.([ABCDY123]+)\\((.+?)\\)");  //regex to handle signals
     std::ifstream library("../../NPN_complete_noZero.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
 
@@ -136,7 +136,6 @@ public:
         std::vector<mockturtle::signal<NtkDest>> temp_cell_children(cell_children.size());
         for (int j = 0; j < cell_children.size(); ++j){
           int temp_index = std::get<2>(NPNconfig)[j];
-          std::cout << std::to_string(temp_index);
           temp_cell_children[j] = cell_children[temp_index];
         }
         cell_children = temp_cell_children;
@@ -155,7 +154,6 @@ public:
                   std::smatch arg_match;
                   if (std::regex_search(current_token, arg_match, gate_inputs)){
                     if (arg_match.ready()){
-                      std::cout << "arg_match[1] " << arg_match[1] << "\n\n";
                       //handle standard cell inputs
                       //can be input from the LUT (a, b, c, d for LUT4) or internal wire
                       //the inputs should always appear in the json file in alphabetical order (A, (optionally B, C, D,) then Y)
@@ -194,8 +192,8 @@ public:
                             ++new_count;
                           } else {
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
-                            std::cout << "ERROR:  equivalent cell already exists, but should not at LUT end.\n";
-                            std::cout << "node: " << i << " in parent klut node " << n <<"\n std cell " << stcell << "\n\n\n";
+                            std::cout << "Equivalent cell already exists at LUT end:\t";
+                            std::cout << "node: " << i << " in parent klut node " << n <<"\n";
                           }
                           if ( ( ( std::get<1>(NPNconfig) >> cell_children.size() ) & 1 )){
                             int before = dest.size();
@@ -208,7 +206,7 @@ public:
                               ++netlistcount;
                               ++new_count;
                             } else {
-                              std::cout << "ERROR: gate equivalent to negated klut output already exists.  Not placing not gate.\n";
+                              std::cout << "Gate equivalent to negated klut output already exists.  Not placing not gate.\n";
                             }
                           }
                         } else {
@@ -287,19 +285,21 @@ public:
             } );
             if (check_node_grandchildren.size() == 1){
               dup_count += 2;
-              std::cout << "\n\nDuplicated NOT gates.  Signal: " << n << " child: " << check_node_children.at(0) << " original signal before double inversion: " << check_node_grandchildren.at(0) << "\n\n\n";
+              std::cout << "Duplicated NOT gates.  Signal: " << n << " child: " << check_node_children.at(0) << " original signal before double inversion: " << check_node_grandchildren.at(0) << "\n";
+              if(dest.fanout_size(check_node_children.at(0)) == 1 )
+              {
+                cell_names.erase(check_node_children.at(0));
+              }
+              cell_names.erase(n);
               dest.substitute_node(n, check_node_grandchildren.at(0));
-              //to do: if fanout of check_node_children(0) is 1, remove both check_node_children(0) and n; no other nodes depend on the first not gate.
-              //dest.take_out_node(n); //this is not implemented in the KLUT network in my version of mock turtle.  Will try again after refactoring.
+
+              //dest.take_out_node(n); //this is not implemented for KLUT networks
             }
           }
         }
       }
     });
-    //NtkDest dest_clean = mockturtle::cleanup_dangling(dest); Would like to have this, but currently no support for klut networks.
 
-    std::cout << "duplicate NOTs:  " << dup_count <<"\n";
-    std::cout << "Final network size: " << new_count << " minus duplicates = " << new_count - dup_count <<"\n\n";
     return std::tuple<NtkDest, std::unordered_map<int, std::string>> (dest, cell_names);
   }
 

@@ -94,11 +94,13 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
         if (ntk.is_pi(n) || ntk.is_constant( n)){
             return;
         }
+        if(cell_names.find(n) != cell_names.end()){
             if (first)
                 first = false;
             else
                 wire_list += ", ";
             wire_list += fmt::format("n{}", n);
+        }
     });
 
     os << "module " << top_name <<"("<<input_list <<", " << output_list<< ");\n";
@@ -108,6 +110,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
 //body
 
     ntk.foreach_node( [&]( auto const& n ) {
+                int flag = 0;
 
         if (cell_names.find(n) != cell_names.end()){
             std::vector <std::string> children;
