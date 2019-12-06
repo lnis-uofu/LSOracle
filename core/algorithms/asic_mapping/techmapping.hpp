@@ -88,6 +88,7 @@ public:
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
         std::cout << "NPN Class: " << tempstr << "\n";
+
         ntk.foreach_fanin( n, [&]( auto fanin ) {
           cell_children.push_back( node_to_signal[fanin] );
         } );
@@ -143,7 +144,6 @@ public:
         try{
             std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
             std::unordered_map<std::string, mockturtle::signal<NtkDest>> gate_tmp_outputs;
-    
             for (int i = 0; i < node_gates.size(); i++){
                 std::vector<mockturtle::signal<NtkDest>> gate_children;
                 const std::sregex_token_iterator end;
@@ -167,6 +167,10 @@ public:
                           gate_children.push_back(cell_children.at(2));
                         } else if (arg_match[2] == "d"){
                           gate_children.push_back(cell_children.at(3));
+                        } else if (arg_match[2] == "e"){
+                          gate_children.push_back(cell_children.at(4));
+                        } else if (arg_match[2] == "f"){
+                          gate_children.push_back(cell_children.at(5));
                         } else { //otherwise it's an internal wire which should have been an output from an earlier standard cell
                           try {
                             auto int_wire = gate_tmp_outputs.at(arg_match[2]);

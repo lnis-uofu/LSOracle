@@ -12,11 +12,43 @@ namespace alice
             //opts.add_option( "--lut_size,-K", lut_size, "LUT size for mapping [DEFAULT = 6]" );
             //opts.add_option( "--cut_size,-C", cut_size, "Max number of priority cuts [DEFAULT = 8]" );
             add_flag("--mig,-m", "Read from the stored MIG network");
+            add_flag("--NPN, -n", "outputs the NPN classes that make up the function");
         }
 
         protected:
         void execute(){
-          if(is_set("mig")){
+          if(is_set("NPN")){
+            std::unordered_map<std::string, int> npn_count;
+            if(!store<aig_ntk>().empty()){
+              auto& aig = *store<aig_ntk>().current();
+                mockturtle::topo_view aig_topo{aig};
+                mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
+                mockturtle::lut_mapping_params ps;
+                ps.cut_enumeration_ps.cut_size = 6;
+                ps.cut_enumeration_ps.cut_limit = 6;
+                mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
+                const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
+                auto const& klut = *klut_opt;
+                klut.foreach_node( [&]( auto const n ) {
+                    if ( klut.is_constant( n ) || klut.is_pi( n ) ){
+                        return;
+                    }
+                    auto func = klut.node_function( n );
+                    auto NPNconfig = kitty::exact_npn_canonization(func);
+                    std::string tempstr = kitty::to_hex(std::get<0>(NPNconfig));
+                    if (npn_count.find(tempstr) != npn_count.end()){
+                        npn_count.at(tempstr) = npn_count.at(tempstr) + 1;
+                    } else {
+                        npn_count.insert({tempstr, 1});
+                    }
+                });
+                for(std::pair<std::string, int> npnclass : npn_count){
+                    if (npnclass.first.size() > 8)
+                        std::cout << setw(20)  << npnclass.first <<":\t"<< npnclass.second <<"\n";
+                }
+            }
+          }
+          else if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
                 auto& mig = *store<mig_ntk>().current();
                 mockturtle::mapping_view<mockturtle::mig_network, true> mapped_mig{mig};
