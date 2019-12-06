@@ -369,6 +369,7 @@ class MostBalancedMinimumCut {
         start_nodes.push_back(u);
       }
     }
+    //fixed
     std::shuffle(start_nodes.begin(), start_nodes.end(),Randomize::instance().getGenerator());
     for (const NodeID& u : start_nodes) {
       _Q.push(u);
