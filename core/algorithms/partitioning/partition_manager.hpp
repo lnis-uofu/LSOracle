@@ -952,7 +952,7 @@ namespace oracle
       for(it = partitionInputs[part_2].begin(); it != partitionInputs[part_2].end(); ++it){
         
         for(int i = 0; i < input_partition[*it].size(); i++){
-          if(input_partition[*it].at(i) = part_2){
+          if(input_partition[*it].at(i) == part_2){
             input_partition[*it].at(i) = part_1;
           }
         }
