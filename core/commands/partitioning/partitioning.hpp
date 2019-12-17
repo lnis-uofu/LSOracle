@@ -36,6 +36,7 @@ namespace alice
 
           opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
           opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar (../../core/test.ini is default)" );
+          opts.add_option("--file,-f", part_file, "External file containing partitiion information");
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
         }
 
@@ -55,14 +56,42 @@ namespace alice
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
             std::cout << "Partitioning stored MIG network\n";
-            auto ntk = store<mig_ntk>().current();
-            if(config_direc != ""){
-              oracle::partition_manager<mig_names> partitions(*ntk, num_partitions, config_direc);
-              store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+            auto ntk = *store<mig_ntk>().current();
+            if(part_file != ""){
+              std::map<mockturtle::mig_network::node, int> part_data;
+              std::ifstream ifs;
+
+              ifs.open(part_file);
+              int nodeIdx = 1;
+              if(ifs.is_open()){
+                while(ifs.good()){
+                  if(nodeIdx > ntk.size()){
+                    std::cout << "Partition file contains the incorrect number of nodes\n";
+                    exit(1);
+                  }
+                  std::string part;
+                  getline(ifs, part);
+                  int test = std::stoi(part);
+                  part_data[ntk.index_to_node(nodeIdx)] = std::stoi(part);
+                  nodeIdx++;
+                }
+                ifs.close();
+                oracle::partition_manager<mig_names> partitions(ntk, part_data, num_partitions);
+                store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+              }
+              else{
+                std::cout << "Unable to open partition data file\n";
+              }
             }
             else{
-              oracle::partition_manager<mig_names> partitions(*ntk, num_partitions);
-              store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+              if(config_direc != ""){
+                oracle::partition_manager<mig_names> partitions(ntk, num_partitions, config_direc);
+                store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+              }
+              else{
+                oracle::partition_manager<mig_names> partitions(ntk, num_partitions);
+                store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+              }
             }
           }
           else{
@@ -73,14 +102,42 @@ namespace alice
         else{
           if(!store<aig_ntk>().empty()){
             std::cout << "Partitioning stored AIG network\n";
-            auto ntk = store<aig_ntk>().current();
-            if(config_direc != ""){
-              oracle::partition_manager<aig_names> partitions(*ntk, num_partitions, config_direc);
-              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+            auto ntk = *store<aig_ntk>().current();
+            if(part_file != ""){
+              std::map<mockturtle::aig_network::node, int> part_data;
+              std::ifstream ifs;
+
+              ifs.open(part_file);
+              int nodeIdx = 1;
+              if(ifs.is_open()){
+                while(ifs.good()){
+                  if(nodeIdx > ntk.size()){
+                    std::cout << "Partition file contains the incorrect number of nodes\n";
+                    exit(1);
+                  }
+                  std::string part;
+                  getline(ifs, part);
+                  int test = std::stoi(part);
+                  part_data[ntk.index_to_node(nodeIdx)] = std::stoi(part);
+                  nodeIdx++;
+                }
+                ifs.close();
+                oracle::partition_manager<aig_names> partitions(ntk, part_data, num_partitions);
+                store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+              }
+              else{
+                std::cout << "Unable to open partition data file\n";
+              }
             }
             else{
-              oracle::partition_manager<aig_names> partitions(*ntk, num_partitions);
-              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+              if(config_direc != ""){
+                oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_direc);
+                store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+              }
+              else{
+                oracle::partition_manager<aig_names> partitions(ntk, num_partitions);
+                store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+              }
             }
           }
           else{
@@ -91,6 +148,7 @@ namespace alice
     private:
       int num_partitions{};
       std::string config_direc = "";
+      std::string part_file = "";
   };
 
   ALICE_ADD_COMMAND(partitioning, "Partitioning");

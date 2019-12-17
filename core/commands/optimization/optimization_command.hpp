@@ -30,6 +30,7 @@ namespace alice
                 add_flag("--high,-b", "Uses a high effort approach instead of classification");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
+                add_flag("--test,-t", "Perform new version of high effort optimization");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
                 add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
         }
@@ -52,10 +53,13 @@ namespace alice
               combine = true;
 
             auto start = std::chrono::high_resolution_clock::now();
-
-            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
-              high, aig, mig, combine);
-
+            mig_names ntk_mig;
+            if(is_set("test"))
+              ntk_mig = oracle::optimization_test(ntk_aig, partitions_aig, strategy, nn_model, 
+                high, aig, mig, combine);
+            else
+              ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
+                high, aig, mig, combine);
             auto stop = std::chrono::high_resolution_clock::now();
 
             

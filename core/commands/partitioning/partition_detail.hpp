@@ -37,6 +37,7 @@ namespace alice
           if(!store<part_man_mig_ntk>().empty()){
             auto partitions = store<part_man_mig_ntk>().current();
             int num_part = partitions->get_part_num();
+            double node_num = 0.0;
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
               std::cout << "\n\nPartition " << i << "\n";
@@ -45,6 +46,7 @@ namespace alice
               std::cout << "Number of latches = " << part.num_latches() << "\n";
               std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
               std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              node_num += double(part.num_gates()) / double(part.num_pis());
               // std::cout << "Inputs = {";
               // part.foreach_pi([&](auto pi){
               //   std::cout << pi << " ";
@@ -68,6 +70,8 @@ namespace alice
               } 
               std::cout << "}\n";
             }
+            node_num = node_num / (double)num_part;
+            std::cout << "Average nodes per partition: " << node_num << "\n";
           }
           else{
             std::cout << "MIG not partitioned yet\n";
@@ -83,6 +87,7 @@ namespace alice
           if(!store<part_man_aig_ntk>().empty()){
             auto partitions = store<part_man_aig_ntk>().current();
             int num_part = partitions->get_part_num();
+            double node_num = 0.0;
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
               std::cout << "\n\nPartition " << i << "\n";
@@ -90,7 +95,9 @@ namespace alice
               std::cout << "Number of PO = " << part.num_pos() << "\n";
               std::cout << "Number of latches = " << part.num_latches() << "\n";
               std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
+              
               std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              node_num += double(part.num_gates()) / double(part.num_pis());
               std::cout << "Inputs = {";
               part.foreach_pi([&](auto pi){
                 std::cout << pi << " ";
@@ -114,6 +121,8 @@ namespace alice
               } 
               std::cout << "}\n";
             }
+            node_num = node_num / (double)num_part;
+            std::cout << "Average partition volume: " << node_num << "\n";
           }
           else{
             std::cout << "AIG not partitioned yet\n";
