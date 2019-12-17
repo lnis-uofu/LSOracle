@@ -28,6 +28,8 @@
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/output/verilog.hpp"
+#include "algorithms/asic_mapping/techmapping.hpp"
+#include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/
 #include "store/aig.hpp"
@@ -86,6 +88,9 @@
 // #include "commands/optimization/depth_partition.hpp"
 // #include "commands/optimization/depth_based.hpp"
 // #include "commands/optimization/mixed_2steps.hpp"
+
+//Asic mapping
+#include "commands/asic_map/asic_map.hpp"
 
 //Testing
 // #include "commands/testing/find_xor.hpp"
