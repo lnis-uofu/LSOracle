@@ -54,7 +54,14 @@ namespace oracle{
         mig_parts.push_back(i);
       }
     }
-    else if(high){
+    else if(!nn_model.empty()){
+      std::cout << "Performing Classification using Neural Network\n";
+      partitions_aig.run_classification(ntk_aig, nn_model);
+      aig_parts = partitions_aig.get_aig_parts();
+      mig_parts = partitions_aig.get_mig_parts();
+    }
+    else{
+      std::cout << "Performing High Effort Classification and Optimization\n";
       for(int i = 0; i < num_parts; i++){
         oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
@@ -129,17 +136,6 @@ namespace oracle{
           break;
         }
         
-      }
-
-    }
-    else{
-      if(!nn_model.empty()){
-        partitions_aig.run_classification(ntk_aig, nn_model);
-        aig_parts = partitions_aig.get_aig_parts();
-        mig_parts = partitions_aig.get_mig_parts();
-      }
-      else{
-        std::cout << "Must include Neural Network model json file\n";
       }
     }
 

@@ -1,5 +1,11 @@
+#set(ABC_USE_NAMESPACE "abc")
+#add_subdirectory(abc EXCLUDE_FROM_ALL)
+#target_compile_definitions(libabc PUBLIC "LIN64")
+
 add_subdirectory(kahypar EXCLUDE_FROM_ALL)
 target_compile_definitions(kahypar PUBLIC "LIN64")
+
+add_subdirectory(Galois EXCLUDE_FROM_ALL)
 
 add_subdirectory(alice)
 target_include_directories(alice INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/alice)
@@ -25,3 +31,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #find_package(Threads REQUIRED)                        # thread library (pthread)
 
 add_subdirectory(mockturtle)
+
+#set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
+#add_subdirectory(percy)

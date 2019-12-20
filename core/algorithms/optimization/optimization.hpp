@@ -100,7 +100,6 @@ namespace oracle{
         }
         
       }
-
     }
     else{
       if(!nn_model.empty()){

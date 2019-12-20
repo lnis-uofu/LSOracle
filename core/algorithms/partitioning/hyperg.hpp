@@ -84,6 +84,16 @@ namespace oracle {
       }
     }
 
+    // void return_hyperedges_set(std::unordered_set<std::unordered_set<uint32_t>> &connections) {
+    //   for (int i = 0; i < hyperEdges.size(); i++) {
+    //     std::unordered_set<uint32_t> temp_edge;
+    //     for (int j = 0; j < hyperEdges.at(i).size(); j++) {
+    //       temp_edge.insert(hyperEdges.at(i).at(j) );
+    //     }
+    //     connections.insert(temp_edge);
+    //   }
+    // }
+
     int get_num_edges() {
       return hyperEdges.size();
     }
@@ -104,6 +114,10 @@ namespace oracle {
 
     uint64_t get_num_sets() {
       return hyperEdges.size();
+    }
+
+    std::vector<std::vector<uint32_t>> get_hyperedges() {
+      return hyperEdges;
     }
 
     void get_indeces(std::vector<unsigned long> &indeces) {
