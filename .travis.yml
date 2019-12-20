@@ -18,7 +18,7 @@ addons:
       - gcc-8
       - g++-8
       - cmake
-      - libboost-program-options-dev
+      - libboost-all-dev
       - lcov
       - gcovr
       - python-numpy
