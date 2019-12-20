@@ -118,7 +118,7 @@ for curr_file in files:
     assert('Networks are equivalent' in abcout)
 
     #Brute Force
-    cmdstr = 'optimization -b'
+    cmdstr = 'optimization'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')
