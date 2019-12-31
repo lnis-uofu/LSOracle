@@ -104,6 +104,10 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
     });
 
     os << "module " << top_name <<"("<<input_list <<", " << output_list<< ");\n";
+    if(ntk.num_latches()>0) {
+        std::string clk = "clock";
+        os << fmt::format( "  input {} ;\n", clk );
+    }
     os << "\tinput " << input_list<< ";\n";
     os << "\toutput " << output_list << ";\n";
     os << "\twire "<< wire_list << ";\n\n";

@@ -63,12 +63,11 @@ public:
     nlohmann::json json_library; //LUT -> verilog database
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
     int netlistcount = 0; //node count.  Used as index in cell_names
-    int new_count = 0;
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
     std::regex gate_inputs("\\.([ABCDY123]+)\\((.+?)\\)");  //regex to handle signals
     std::ifstream library("../../NPN_complete_noZero.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
-
+    std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
     /* primary inputs */
     ntk.foreach_pi( [&]( auto n ) {
         node_to_signal[n] = dest.create_pi();
@@ -80,7 +79,7 @@ public:
           ++netlistcount;
           return;
         }
-        auto func = ntk.node_function( n );
+        auto const func = ntk.node_function( n );
         std::cout << "LUT Function before NPN canonization: " << kitty::to_hex(func) << "\t";
         auto NPNconfig = kitty::exact_npn_canonization(func);
         std::string tempstr = kitty::to_hex(std::get<0>(NPNconfig));
@@ -92,7 +91,15 @@ public:
         ntk.foreach_fanin( n, [&]( auto fanin ) {
           cell_children.push_back( node_to_signal[fanin] );
         } );
-
+        /*
+        try {
+          std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
+        } catch (const std::exception& ex){
+          //need to add fanin
+          node_to_signal[n] = mockturtle::shannon_decomposition( dest, func, cell_children);  
+          std::cout << "encountered 5 or 6 input LUT not in NPN class: "<< ex.what() << "\n";
+        }
+        */
         //Handling special cases.  NOT LUTs and Constants
         if (cell_children.size() == 1){
           if (json_lookup == "out_1"){
@@ -104,7 +111,6 @@ public:
               if (before != after){
                 cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                 ++netlistcount;
-                ++new_count;
               } else {
                 std::cout << "ERROR: Not placing 1 input function, INVx2_ASAP7_75t_R.  Equivalent already exists.\n";
               }
@@ -126,7 +132,6 @@ public:
               if (before != after){
                 cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                 ++netlistcount;
-                ++new_count;
               } else {
                 std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
               }
@@ -193,7 +198,6 @@ public:
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                             cell_names.insert({netlistcount, stcell});
                             ++netlistcount;
-                            ++new_count;
                           } else {
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                             std::cout << "Equivalent cell already exists at LUT end:\t";
@@ -208,7 +212,6 @@ public:
                             if (before != after){
                               cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
                               ++netlistcount;
-                              ++new_count;
                             } else {
                               std::cout << "Gate equivalent to negated klut output already exists.  Not placing not gate.\n";
                             }
@@ -223,7 +226,6 @@ public:
                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
                             cell_names.insert({netlistcount, stcell});
                             ++netlistcount;
-                            ++new_count;
                           } else {
                             std::cout << "equivalent cell already exists.  Not placing node " << i << " in parent klut node " << n << "\n";
                           }
@@ -303,6 +305,8 @@ public:
         }
       }
     });
+    std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
+    std::cout << "DEST LATCHES: " << dest.num_latches() << "\n";
 
     return std::tuple<NtkDest, std::unordered_map<int, std::string>> (dest, cell_names);
   }
