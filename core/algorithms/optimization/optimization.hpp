@@ -37,7 +37,6 @@ namespace oracle{
     std::vector<int> mig_parts;
     std::vector<int> comb_aig_parts;
     std::vector<int> comb_mig_parts;
-        
     int num_parts = partitions_aig.get_part_num();
     if(aig){
       for(int i = 0; i < num_parts; i++){
@@ -51,9 +50,11 @@ namespace oracle{
     }
     else if(high){
       for(int i = 0; i < num_parts; i++){
+
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
+
         auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-        oracle::aig_script5 aigopt;
+        oracle::aig_script aigopt;
         opt_aig = aigopt.run(opt_aig);
         mockturtle::depth_view part_aig_opt_depth{opt_aig};
         int aig_opt_size = opt_aig.num_gates();
@@ -101,7 +102,6 @@ namespace oracle{
         }
         
       }
-
     }
     else{
       if(!nn_model.empty()){
@@ -246,7 +246,7 @@ namespace oracle{
 
       mockturtle::depth_view opt_part_depth{opt};
 
-      oracle::aig_script5 aigopt;
+      oracle::aig_script aigopt;
       opt = aigopt.run(opt);
 
       auto opt_mig = *aig_to_mig(opt, 0);

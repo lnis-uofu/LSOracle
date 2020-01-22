@@ -27,7 +27,6 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2]" );
-                add_flag("--high,-b", "Uses a high effort approach instead of classification");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -42,7 +41,9 @@ namespace alice
           mockturtle::depth_view orig_depth{ntk_aig};
           if(!store<part_man_aig_ntk>().empty()){
             auto partitions_aig = *store<part_man_aig_ntk>().current();
-            if(is_set("high"))
+            if(!nn_model.empty())
+              high = false;
+            else
               high = true;
             if(is_set("aig"))
               aig = true;
@@ -52,10 +53,8 @@ namespace alice
               combine = true;
 
             auto start = std::chrono::high_resolution_clock::now();
-
             auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
-              high, aig, mig, combine);
-
+                high, aig, mig, combine);
             auto stop = std::chrono::high_resolution_clock::now();
 
             

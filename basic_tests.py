@@ -30,7 +30,7 @@ if args.travis:
     lstools_path = home_path + '/build/LNIS-Projects/LSOracle/build/core'
     training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 else:
-    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/test/curr_repo/refactor/LSOracle/build/core'
+    lstools_path = home_path + '/../../research/ece/lnis/USERS/austin/LSOracle/build/core'
     training_file = lstools_path + '/../../core/algorithms/classification/deep_learn_model.json'
 
 #configure logging
@@ -67,7 +67,7 @@ def compare(filename, suffix):
     subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     #use cec to compare the pre and post optimization files
-    cmd = ['abc', '-c', 'cec ' + new_file +' '+ opt_file + ';']
+    cmd = ['abc', '-c', 'cec -n ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
     print abc_stdout
@@ -118,7 +118,7 @@ for curr_file in files:
     assert('Networks are equivalent' in abcout)
 
     #Brute Force
-    cmdstr = 'optimization -b'
+    cmdstr = 'optimization'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')

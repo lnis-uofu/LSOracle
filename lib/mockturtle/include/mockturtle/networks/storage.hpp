@@ -176,6 +176,13 @@ struct node_hash
   }
 };
 
+struct latch_info
+{
+  std::string control = "";
+  uint64_t init = 3;
+  std::string type = "";
+};
+
 struct empty_storage_data
 {
 };
@@ -200,6 +207,8 @@ struct storage
   std::vector<typename node_type::pointer_type> outputs;
 
   std::string net_name;
+  std::unordered_map<uint64_t, latch_info> latch_information;
+  // std::unordered_map<node_type, latch_info> latch_information;
 
   spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
 
