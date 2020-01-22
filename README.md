@@ -11,7 +11,7 @@ To make possible the use of sequential MIGs, sequential support has been added o
 
 ## How to compile: 
 
-To compile, it is needed support to CMake 3.9 and C++ 17. For the tests, we have used cmake 3.11.2 and gcc/g++ 8.2
+To compile, it is needed support to CMake 3.12 and C++ 17. For the tests, we have used cmake 3.12.4 and gcc/g++ 8.3.0
 The current version has been tested on Red Hat 7.5 and MacOS Mojave 10.14.  
 
 ```{r, engine='bash', count_lines}
