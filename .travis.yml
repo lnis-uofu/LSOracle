@@ -1,6 +1,6 @@
 language: cpp
 os: linux
-dist: trusty
+dist: bionic
 sudo: required
 cache: 
   directories:
@@ -18,8 +18,7 @@ addons:
       - gcc-8
       - g++-8
       - cmake
-      - libboost-program-options1.55.0
-      - libboost-program-options1.55-dev
+      - libboost-all-dev
       - lcov
       - gcovr
       - python-numpy

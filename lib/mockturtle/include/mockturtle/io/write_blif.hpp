@@ -75,7 +75,7 @@ namespace mockturtle
  * \param os Output stream
  */
 template<class Ntk>
-void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps = {} )
+void write_blif( Ntk const& topo_ntk, std::ostream& os, write_blif_params const& ps = {} )
 {
   static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
   static_assert( has_fanin_size_v<Ntk>, "Ntk does not implement the fanin_size method" );
@@ -90,7 +90,7 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
   static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
   static_assert( has_node_function_v<Ntk>, "Ntk does not implement the node_function method" );
 
-  topo_view topo_ntk{ntk};
+  // topo_view topo_ntk{ntk};
 
   /* write model */
   os << ".model top\n";
@@ -100,7 +100,7 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
   {
       os << ".inputs ";
       topo_ntk.foreach_pi( [&]( auto const& n, auto index ) {
-        if ( ( ( index + 1 ) <= ntk.num_pis() - ntk.num_latches() ) ) {
+        if ( ( ( index + 1 ) <= topo_ntk.num_pis() - topo_ntk.num_latches() ) ) {
           if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
           {
             signal<Ntk> const s = topo_ntk.make_signal( topo_ntk.node_to_index( n ) );
@@ -161,7 +161,7 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
   os << ".names new_n0\n";
   os << "0\n";
 
-  if ( ntk.get_constant( false ) != ntk.get_constant( true ) )
+  if ( topo_ntk.get_constant( false ) != topo_ntk.get_constant( true ) )
   {
     os << ".names new_n1\n";
     os << "1\n";
@@ -169,8 +169,29 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
 
   /* write nodes */
   topo_ntk.foreach_node( [&]( auto const& n ) {
+
       if ( topo_ntk.is_constant( n ) || topo_ntk.is_ci( n ) )
         return; /* continue */
+
+      /* write truth table of node */
+      auto func = topo_ntk.node_function( n );
+
+      if(isop( func ).size() == 0){
+        if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
+        {
+          auto const s = topo_ntk.make_signal( topo_ntk.node_to_index( n ) );
+          std::string const name = topo_ntk.has_name( s ) ? topo_ntk.get_name( s ) : fmt::format( "new_n{}", topo_ntk.get_node( s ) );
+          os << fmt::format( ".names {}\n", name );
+          os << "0" << '\n';
+        }
+        else
+        {
+          os << fmt::format( ".names new_n{}\n", topo_ntk.node_to_index( n ) );
+          os << "0" << '\n';
+        }
+        return;
+      }
+
       os << fmt::format( ".names " );
 
       /* write fanins of node */
@@ -199,9 +220,8 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
         os << fmt::format( "new_n{}\n", topo_ntk.node_to_index( n ) );
       }
 
-      /* write truth table of node */
-      auto func = topo_ntk.node_function( n );
 
+      int count = 0;
       for ( auto cube : isop( func ) )
       {
         topo_ntk.foreach_fanin( n, [&]( auto const& f, auto index ) {
@@ -211,6 +231,7 @@ void write_blif( Ntk const& ntk, std::ostream& os, write_blif_params const& ps =
 
         cube.print( topo_ntk.fanin_size( n ), os );
         os << " 1\n";
+        count++;
       }
     });
 

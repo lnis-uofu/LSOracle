@@ -74,29 +74,81 @@ void write_bench( Ntk const& ntk, std::ostream& os )
   static_assert( has_node_to_index_v<Ntk>, "Ntk does not implement the node_to_index method" );
   static_assert( has_node_function_v<Ntk>, "Ntk does not implement the node_function method" );
 
-  ntk.foreach_pi( [&]( auto const& n ) {
-    os << fmt::format( "INPUT(n{})\n", ntk.node_to_index( n ) );
+  node_map<std::string, Ntk> node_names( ntk );
+  std::map<uint32_t, std::string> output_names;
+
+  ntk.foreach_pi( [&]( auto const& pi, auto index ) {
+    auto signal = ntk.make_signal( pi );
+    if(index < ntk.num_pis() - ntk.num_latches()){
+      if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
+      {  
+        node_names[signal] = ntk.has_name( signal ) ? ntk.get_name( signal ) : fmt::format( "pi{}", index );
+        // if(node_names[signal].find('[') != std::string::npos || node_names[signal].find('[') != std::string::npos)
+        //   node_names[signal].insert(node_names[signal].begin(),'\\');
+      }
+      else
+      {
+        node_names[signal] = fmt::format( "pi{}", index);
+      }
+    }
+    else
+    {
+      std::cout << "latch outputs not supported yet for bench writer\n";
+    }
   } );
 
-  for ( auto i = 0u; i < ntk.num_pos(); ++i )
-  {
-    os << fmt::format( "OUTPUT(po{})\n", i );
-  }
+  ntk.foreach_po( [&]( auto const& po, auto index ) {
+    if(index < ntk.num_pos() - ntk.num_latches())
+    {
+      if constexpr ( has_has_output_name_v<Ntk> && has_get_output_name_v<Ntk> )
+      {  
+        output_names[index] = ntk.has_output_name( index ) ? ntk.get_output_name( index ) : fmt::format( "po{}", index );
+        // if(output_names[index].find('[') != std::string::npos || output_names[index].find('[') != std::string::npos)
+        //   output_names[index].insert(output_names[index].begin(),'\\');
+      }
+      else
+      {
+        output_names[index] = fmt::format( "po{}", index );
+      }
+    }
+    else
+    {
+      std::cout << "latch inputs not supported yet for bench writer\n";
+    }
+  } );
 
-  os << fmt::format( "n{} = gnd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( false ) ) ) );
+  ntk.foreach_pi( [&]( auto const& n ) {
+    os << fmt::format( "INPUT({})\n", node_names[ntk.make_signal(n)] );
+  } );
+
+  ntk.foreach_po( [&]( auto const& po, auto index ) {
+    os << fmt::format( "OUTPUT({})\n", output_names[index] );
+  } );
+
+  os << fmt::format( "new_n{} = gnd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( false ) ) ) );
   if ( ntk.get_node( ntk.get_constant( false ) ) != ntk.get_node( ntk.get_constant( true ) ) )
   {
-    os << fmt::format( "n{} = vdd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( true ) ) ) );
+    os << fmt::format( "new_n{} = vdd\n", ntk.node_to_index( ntk.get_node( ntk.get_constant( true ) ) ) );
   }
 
   ntk.foreach_node( [&]( auto const& n ) {
-    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
       return; /* continue */
 
     auto func = ntk.node_function( n );
     std::string children;
     auto first = true;
     ntk.foreach_fanin( n, [&]( auto const& c, auto i ) {
+      if constexpr ( has_has_name_v<Ntk> && has_get_name_v<Ntk> )
+      {
+        signal<Ntk> const s = ntk.make_signal( ntk.node_to_index( ntk.get_node( c ) ) );
+        std::string const name = ntk.has_name( s ) ? ntk.get_name( s ) : fmt::format( "new_n{}", ntk.get_node( s ) );
+        node_names[c] = name;
+      }
+      else
+      {
+        node_names[c] = fmt::format( "new_n{} ", ntk.node_to_index( ntk.get_node( c ) ) );
+      }
       if ( ntk.is_complemented( c ) )
       {
         kitty::flip_inplace( func, i );
@@ -110,10 +162,10 @@ void write_bench( Ntk const& ntk, std::ostream& os )
         children += ", ";
       }
 
-      children += fmt::format( "n{}", ntk.node_to_index( ntk.get_node( c ) ) );
+      children += fmt::format( "{}", node_names[c] );
     } );
 
-    os << fmt::format( "n{} = LUT 0x{} ({})\n",
+    os << fmt::format( "new_n{} = LUT 0x{} ({})\n",
                        ntk.node_to_index( n ),
                        kitty::to_hex( func ), children );
   } );
@@ -122,14 +174,14 @@ void write_bench( Ntk const& ntk, std::ostream& os )
   ntk.foreach_po( [&]( auto const& s, auto i ) {
     if ( ntk.is_constant( ntk.get_node( s ) ) )
     {
-      os << fmt::format( "po{} = {}\n",
-                         i,
+      os << fmt::format( "{} = {}\n",
+                         output_names[i],
                          ( ntk.constant_value( ntk.get_node( s ) ) ^ ntk.is_complemented( s ) ) ? "vdd" : "gnd" );
     }
     else
     {
-      os << fmt::format( "po{} = LUT 0x{} (n{})\n",
-                         i,
+      os << fmt::format( "{} = LUT 0x{} (new_n{})\n",
+                         output_names[i],
                          ntk.is_complemented( s ) ? 1 : 2,
                          ntk.node_to_index( ntk.get_node( s ) ) );
     }

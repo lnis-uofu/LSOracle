@@ -328,9 +328,10 @@ namespace mockturtle
     if(ntk.num_latches() > 0) {
       os << " always @ (posedge clock) begin\n";
 
-      ntk.foreach_ri([&](auto const &f, auto i) {
-        auto ro_sig = ntk.make_signal(ntk.ri_to_ro( f ));
-        os << fmt::format("    {} <= {} ;\n", node_names[ro_sig], ri_names[i + 1]);
+      ntk.foreach_ro([&](auto const &ro, auto i) {
+        auto ro_sig = ntk.make_signal(ro);
+        auto ri_node = ntk.ro_to_ri(ro_sig);
+        os << fmt::format("    {} <= {} ;\n", node_names[ro_sig], ri_names[ntk.ri_index(ri_node) + 1]);
       });
 
       os << " end\n";

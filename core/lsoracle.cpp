@@ -6,6 +6,7 @@
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
+// #include <utah/BiPart.h>
 
 /*** Algorithms ***/
 #include "algorithms/partitioning/partition_view.hpp"
@@ -27,7 +28,10 @@
 #include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
+#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/output/verilog.hpp"
+#include "algorithms/asic_mapping/techmapping.hpp"
+#include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/
 #include "store/aig.hpp"
@@ -37,6 +41,7 @@
 
 /*** Commands ***/
 //Input
+#include "commands/input/read.hpp"
 #include "commands/input/read_aig.hpp"
 #include "commands/input/read_blif.hpp"
 #include "commands/input/read_verilog.hpp"
@@ -86,6 +91,9 @@
 // #include "commands/optimization/depth_partition.hpp"
 // #include "commands/optimization/depth_based.hpp"
 // #include "commands/optimization/mixed_2steps.hpp"
+
+//Asic mapping
+#include "commands/asic_map/asic_map.hpp"
 
 //Testing
 // #include "commands/testing/find_xor.hpp"

@@ -665,6 +665,7 @@ public:
 
     while ( !to_substitute.empty() )
     {
+      // std::cout << "to_substitute size = " << to_substitute.size() << "\n";
       const auto [_old, _new] = to_substitute.top();
       to_substitute.pop();
 

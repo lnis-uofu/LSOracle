@@ -76,6 +76,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
   } );
   assert( it == end );
 
+  // std::cout << "about to get topo order\n";
   /* foreach node in topological order */
   topo_view topo{ntk};
   // std::cout << "got topo view\n";
@@ -103,6 +104,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
     // std::cout << "old_to_new = " << old_to_new[node].index << std::endl;
   } );
 
+  // std::cout << "about to do POs\n";
   /* create outputs in same order */
   std::vector<signal<NtkDest>> fs;
   ntk.foreach_po( [&]( auto po ) {

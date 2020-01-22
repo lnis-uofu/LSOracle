@@ -394,6 +394,7 @@ template<class Ntk, class RewritingFn, class NodeCostFn>
 class cut_rewriting_impl
 {
 public:
+  // using node = typename Ntk::node;
   cut_rewriting_impl( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st, NodeCostFn const& cost_fn )
       : ntk( ntk ),
         rewriting_fn( rewriting_fn ),
@@ -544,7 +545,20 @@ public:
 
       const auto replacement = best_replacements[v_node][v_cut];
 
-      if ( ntk.is_constant( ntk.get_node( replacement ) ) || v_node == ntk.get_node( replacement ) )
+      mockturtle::fanout_view fanout{ntk};
+      std::set<node<Ntk>> fanin_cone = BFS_traversal_down(ntk, v_node);
+      std::set<node<Ntk>> fanout_cone = BFS_traversal_up(fanout, v_node);
+      std::set<node<Ntk>> cone;
+      std::set_union(fanin_cone.begin(), fanin_cone.end(), fanout_cone.begin(), fanout_cone.end(), std::inserter(cone, cone.begin()));
+      // std::cout << "replacement candidate = " << replacement.index << "\n";
+      // std::cout << "Cone of " << v_node << ": ";
+      // typename std::set<node<Ntk>>::iterator it;
+      // for(it = cone.begin(); it != cone.end(); ++it){
+      //   std::cout << *it << " ";
+      // }
+      // std::cout << "\n";
+      if ( ntk.is_constant( ntk.get_node( replacement ) ) || v_node == ntk.get_node( replacement ) 
+        || cone.find(ntk.get_node(replacement)) != cone.end() )
         continue;
 
       if ( ps.very_verbose )
@@ -552,9 +566,87 @@ public:
         std::cout << "[i] optimize cut #" << v_cut << " in node #" << ntk.node_to_index( v_node ) << " and replace with node " << ntk.node_to_index( ntk.get_node( replacement ) ) << "\n";
       }
 
+      // std::cout << "substituting " << v_node << " with " << replacement.index << "\n";
       ntk.substitute_node( v_node, replacement );
     }
   }
+
+  std::set<node<Ntk>> BFS_traversal_down(Ntk& ntk, node<Ntk> output){
+    std::queue<int> net_queue;
+    std::map<int, bool> visited;
+    std::set<node<Ntk>> cone;
+
+    //Set all nodes to be unvisited
+    ntk.foreach_node( [&]( auto node ) {
+      visited[ntk.node_to_index(node)] = false;
+    });
+    int outputIdx = ntk.node_to_index(output);
+    cone.insert(output);
+    net_queue.push(outputIdx);
+    visited[outputIdx] = true;
+
+    while(!net_queue.empty()){
+
+      int curr_node = net_queue.front();
+      net_queue.pop();
+      auto node = ntk.index_to_node(curr_node);
+
+      
+      for(int i = 0; i < ntk._storage->nodes[node].children.size(); i++){
+
+        int childIdx = ntk._storage->nodes[node].children[i].index;
+        bool is_valid = true;
+        //Make sure a valid child index is found
+        if(childIdx < 0){
+          is_valid = false;
+        }
+
+        if(!visited[childIdx]){
+
+          if(is_valid){
+
+            net_queue.push(childIdx);
+            visited[childIdx] = true;
+            cone.insert(ntk.index_to_node(childIdx));
+          }
+        }
+      }
+    }
+    return cone;
+  }//BFS_traversal()
+
+  std::set<node<Ntk>> BFS_traversal_up(fanout_view<Ntk>& ntk, node<Ntk> output){
+    std::queue<int> net_queue;
+    std::map<int, bool> visited;
+    std::set<node<Ntk>> cone;
+
+    //Set all nodes to be unvisited
+    ntk.foreach_node( [&]( auto node ) {
+      visited[ntk.node_to_index(node)] = false;
+    });
+    int outputIdx = ntk.node_to_index(output);
+    cone.insert(output);
+    net_queue.push(outputIdx);
+    visited[outputIdx] = true;
+
+    while(!net_queue.empty()){
+
+      int curr_node = net_queue.front();
+      net_queue.pop();
+      auto node = ntk.index_to_node(curr_node);
+
+      ntk.foreach_fanout(node, [&](auto fanout){
+        int idx = ntk.node_to_index(fanout);
+        if(!visited[idx]){
+          net_queue.push(idx);
+          visited[idx] = true;
+          cone.insert(fanout);
+        }
+      });
+      
+    }
+    return cone;
+  }//BFS_traversal()
 
 private:
   uint32_t recursive_deref( node<Ntk> const& n )

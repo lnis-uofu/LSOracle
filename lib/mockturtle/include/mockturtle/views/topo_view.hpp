@@ -191,6 +191,7 @@ public:
     }
 
     this->foreach_pi( [this]( auto n ) {
+      // std::cout << "Topo PI " << n << "\n";
       if ( this->value( n ) != 2 )
       {
         topo_order.push_back( n );
@@ -206,31 +207,39 @@ public:
     }
     else
     {
+      // std::cout << "TOPO about to do each PO\n";
       Ntk::foreach_po( [this]( auto f ) {
         /* node was already visited */
+        // std::cout << "PO: " << this->get_node( f ) << "\n";
         if ( this->value( this->get_node( f ) ) == 2 )
           return;
 
         create_topo_rec( this->get_node( f ) );
       } );
+      // std::cout << "done for each PO\n";
     }
   }
 
 private:
   void create_topo_rec( node const& n )
   {
+    // std::cout << "create topo rec on node " << n << "\n";
+    // std::cout << "value = " << this->value( n ) << "\n";
     /* is permanently marked? */
     if ( this->value( n ) == 2 )
       return;
 
     /* is temporarily marked? */
     assert( this->value( n ) != 1 );
+    // std::cout << "past assertion\n";
 
     /* mark node temporarily */
     this->set_value( n, 1 );
+    // std::cout << "value set\n";
 
     /* mark children */
-    this->foreach_fanin( n, [this]( auto f ) {
+    this->foreach_fanin( n, [this, n]( auto f ) {
+      // std::cout << "fanin of " << n << ": " << this->get_node( f )<< "\n";
       create_topo_rec( this->get_node( f ) );
     } );
 
