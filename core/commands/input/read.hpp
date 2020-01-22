@@ -79,7 +79,7 @@ namespace alice
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+            
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             std::cout << "AIG network stored\n";
 

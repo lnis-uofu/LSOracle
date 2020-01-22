@@ -29,7 +29,7 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
-                add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
+                // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -65,7 +65,7 @@ namespace alice
 
           auto start = std::chrono::high_resolution_clock::now();
 
-          auto ntk_mig = oracle::optimization(ntk, partitions, strategy, nn_model, 
+          auto ntk_mig = oracle::optimization_test(ntk, partitions, strategy, nn_model, 
             high, aig, mig, combine);
 
           auto stop = std::chrono::high_resolution_clock::now();
@@ -74,10 +74,10 @@ namespace alice
           if (ntk_mig.size() != ntk.size() || orig_depth.depth() != new_depth.depth()){
             std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
             std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-            std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+            // std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
             std::cout << "Full Optimization: " << duration.count() << "ms\n";
-            std::cout << "Finished optimization\n";
+            // std::cout << "Finished optimization\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
             std::cout << "MIG network stored\n";
 
@@ -105,6 +105,8 @@ namespace alice
           }
           else{
             std::cout << "No change made to network\n";
+            store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
+            std::cout << "MIG network stored\n";
           }
         }
         else{

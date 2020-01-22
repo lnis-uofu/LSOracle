@@ -5,7 +5,7 @@
 add_subdirectory(kahypar EXCLUDE_FROM_ALL)
 target_compile_definitions(kahypar PUBLIC "LIN64")
 
-add_subdirectory(Galois EXCLUDE_FROM_ALL)
+#add_subdirectory(Galois EXCLUDE_FROM_ALL)
 
 add_subdirectory(alice)
 target_include_directories(alice INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/alice)

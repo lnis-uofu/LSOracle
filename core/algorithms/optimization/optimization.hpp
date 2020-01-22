@@ -50,7 +50,9 @@ namespace oracle{
     }
     else if(high){
       for(int i = 0; i < num_parts; i++){
+
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
+
         auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
         oracle::aig_script aigopt;
         opt_aig = aigopt.run(opt_aig);

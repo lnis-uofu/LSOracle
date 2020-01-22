@@ -54,12 +54,14 @@ namespace alice
             }
             else{
               if(!store<mig_ntk>().empty()){
+                std::cout << "Beginning tech-mapping\n";
                 auto& mig = *store<mig_ntk>().current();
                 mockturtle::topo_view mig_topo{mig};
                 mockturtle::mapping_view <mockturtle::mig_network, true> mapped_mig{mig_topo};
                 mockturtle::lut_mapping_params ps;
                 ps.cut_enumeration_ps.cut_size = 6;
                 ps.cut_enumeration_ps.cut_limit = 6;
+                std::cout << "LUT mapping\n";
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
                 auto const& klut = *klut_opt;
@@ -88,12 +90,14 @@ namespace alice
           }
           else if(is_set("aig")){
             if(!store<aig_ntk>().empty()){
+              std::cout << "Beginning tech-mapping\n";
               auto& aig = *store<aig_ntk>().current();
               mockturtle::topo_view aig_topo{aig};
               mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
               mockturtle::lut_mapping_params ps;
               ps.cut_enumeration_ps.cut_size = 4;
               ps.cut_enumeration_ps.cut_limit = 4;
+              std::cout << "LUT mapping\n";
               mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
               const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
               auto const& klut = *klut_opt;
@@ -101,10 +105,11 @@ namespace alice
               mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
               std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
               mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
+              std::cout << "Outputing mapped netlist\n";
               oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
               mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
               mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
-              std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";
+              // std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";
  
             }
             else{
@@ -113,13 +118,14 @@ namespace alice
           }
           else{
             if(!store<mig_ntk>().empty()){
-
+              std::cout << "Beginning tech-mapping\n";
               auto& mig = *store<mig_ntk>().current();
               mockturtle::topo_view mig_topo{mig};
               mockturtle::mapping_view <mockturtle::mig_network, true> mapped_mig{mig_topo};
               mockturtle::lut_mapping_params ps;
               ps.cut_enumeration_ps.cut_size = 4;
               ps.cut_enumeration_ps.cut_limit = 4;
+              std::cout << "LUT mapping\n";
               mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
               const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
               auto const& klut = *klut_opt;
@@ -127,7 +133,8 @@ namespace alice
               mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
               std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
               mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
-              oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+              std::cout << "Outputing mapped netlist\n";
+              oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "top");
               mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
               mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
               std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";

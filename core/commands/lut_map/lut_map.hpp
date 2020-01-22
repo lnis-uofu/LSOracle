@@ -45,16 +45,36 @@ namespace alice
 
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped, ps );
 
-                const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
-                auto const& klut = *klut_opt;
+                std::cout << "number of cells = " << mapped.num_cells() << "\n";
 
-                mockturtle::depth_view klut_depth{klut};
+                const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
+                // auto const& klut = *klut_opt;
+                mockturtle::names_view<mockturtle::klut_network> names_view{*klut_opt};
+
+                names_view.foreach_pi([&](auto pi){
+                  if(mig.has_name(mig.make_signal(pi - 1))){
+                    names_view.set_name(names_view.make_signal(pi), mig.get_name(mig.make_signal(pi - 1)));
+                  }
+                });
+                names_view.foreach_po([&](auto po, auto index){
+                  names_view.set_output_name(index, mig.get_output_name(index));
+                });
+
+                mockturtle::depth_view klut_depth{names_view};
                 std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
                 std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
                 std::cout << "Finshed LUT mapping\n";
-                if(out_file == ""){
+                if(out_file != ""){
                   std::cout << "filename = " << out_file << "\n";
-                  mockturtle::write_bench(klut, out_file);
+                  if(oracle::checkExt(out_file, "bench")){
+                    mockturtle::write_bench(names_view, out_file);
+                  }
+                  else if(oracle::checkExt(out_file, "blif")){
+                    mockturtle::write_blif(names_view, out_file);
+                  }
+                  else{
+                    std::cout << "Not valid output file\n";
+                  }
                 }
             }
             else{
@@ -73,10 +93,22 @@ namespace alice
 
               mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped, ps );
 
-              const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
-              auto const& klut = *klut_opt;
+              std::cout << "number of cells = " << mapped.num_cells() << "\n";
 
-              mockturtle::depth_view klut_depth{klut};
+              const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
+              // auto const& klut = *klut_opt;
+              mockturtle::names_view<mockturtle::klut_network> names_view{*klut_opt};
+
+              names_view.foreach_pi([&](auto pi){
+                if(aig.has_name(aig.make_signal(pi - 1))){
+                  names_view.set_name(names_view.make_signal(pi), aig.get_name(aig.make_signal(pi - 1)));
+                }
+              });
+              names_view.foreach_po([&](auto po, auto index){
+                names_view.set_output_name(index, aig.get_output_name(index));
+              });
+
+              mockturtle::depth_view klut_depth{names_view};
               // std::cout << "klut size = " << klut.size() << "\n";
               // klut.foreach_node([&](auto node){
               //   std::cout << "Node = " << node << "\n";
@@ -87,9 +119,17 @@ namespace alice
               std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
               std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
               std::cout << "Finshed LUT mapping\n";
-              if(out_file == ""){
+              if(out_file != ""){
                 std::cout << "filename = " << out_file << "\n";
-                mockturtle::write_bench(klut, out_file);
+                if(oracle::checkExt(out_file, "bench")){
+                  mockturtle::write_bench(names_view, out_file);
+                }
+                else if(oracle::checkExt(out_file, "blif")){
+                  mockturtle::write_blif(names_view, out_file);
+                }
+                else{
+                  std::cout << "Not valid output file\n";
+                }
               }
             }
             else{
