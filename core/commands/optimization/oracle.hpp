@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <math.h>
+#include <utah/BiPart.h>
 
 
 namespace alice
@@ -26,10 +27,11 @@ namespace alice
                 : command( env, "Partitions Stored AIG netowrk, and Performs Mixed Synthesis on Network" ){
 
                 opts.add_option( "--partition,partition", num_partitions, "Number of partitions (Network Size / 300 set as partitition number if not specified)" );
+                opts.add_option( "--config_direc,-d", config_direc, "Path to the configuration file for KaHyPar (../../core/test.ini is default)" );
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
-                // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
+                add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -48,9 +50,38 @@ namespace alice
           }
 
           mockturtle::depth_view orig_depth{ntk};
-          oracle::partition_manager<aig_names> partitions(ntk, num_partitions);
-          store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+          if(is_set("bipart")){
+            std::cout << "Partitioning stored AIG network using Galois BiPart\n";
+            oracle::hypergraph<aig_names> t(ntk);
+            uint32_t num_vertices = 0;
+      
+            t.get_hypergraph(ntk);
+            std::vector<std::vector<uint32_t>> hedges = t.get_hyperedges();
+            num_vertices = t.get_num_vertices();
 
+            int num_threads = 14;
+            scheduleMode mode = PP;
+            std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
+            std::map<mockturtle::aig_network::node, int> part_data;
+            ntk.foreach_node([&](auto node){
+              part_data[node] = bipart[node];
+            });
+
+            oracle::partition_manager<aig_names> partitions_aig(ntk, part_data, num_partitions);
+            store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions_aig );
+          }
+          else{
+            std::cout << "Partitioning stored AIG network using KaHyPar\n";
+            if(config_direc != ""){
+              oracle::partition_manager<aig_names> partitions_aig(ntk, num_partitions, config_direc);
+              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions_aig );
+            }
+            else{
+              oracle::partition_manager<aig_names> partitions_aig(ntk, num_partitions);
+              store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions_aig );
+            }
+          }
+          auto partitions = *store<part_man_aig_ntk>().current();
           std::cout << ntk._storage->net_name << " partitioned " << num_partitions << " times\n";
           if(!nn_model.empty())
             high = false;
@@ -115,6 +146,7 @@ namespace alice
       }
     private:
       std::string filename{};
+      std::string config_direc = "";
       int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};

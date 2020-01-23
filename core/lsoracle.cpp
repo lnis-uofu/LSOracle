@@ -6,7 +6,7 @@
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
-// #include <utah/BiPart.h>
+#include <utah/BiPart.h>
 
 /*** Algorithms ***/
 #include "algorithms/partitioning/partition_view.hpp"
