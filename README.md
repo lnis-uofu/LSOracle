@@ -38,10 +38,10 @@ make
 ## Usage
 
 ```{r, engine='bash', count_lines}
-./lstools                                                   #run the tool
-read my_file.blif                                           #read a file in either blif or AIG format (determined by file extension)
-oracle                                                      #partitions network and optimizes each partition with either AIG or MIG optimization recipes
-write_verilog my_output.v                                   #outputs the optimized network in Verilog format
+./lstools                         #run the tool
+read my_file.blif                 #read a file in either blif or AIG format (determined by file extension)
+oracle                            #partitions network and optimizes each partition with either AIG or MIG optimization recipes
+write_verilog my_output.v         #outputs the optimized network in Verilog format
 ```
 
 ## Full Documentation 
