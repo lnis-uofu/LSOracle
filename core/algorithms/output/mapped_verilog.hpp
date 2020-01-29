@@ -130,7 +130,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 port_names.push_back("B0N");
             } else if(regex_match(cell_names.at(n), std::regex("[AOIxX123_]{6}.+"))){
                 std::string working_name = cell_names.at(n);
-                std::cout << "working name: " << working_name << " Fanin: ";
+                std::cout << "working name: " << working_name;
                 std::cout << "\n";
                 int add_ones = 0;
                 if ( regex_match(working_name, std::regex("OAI311xp33.+") ) ){
@@ -148,6 +148,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                  //   port_names.push_back("A1");
                  //   port_names.push_back("A2");
                 } else if (working_name.at(0) == '3'){
+                    ++add_ones;
                     port_names.push_back("A0");
                     port_names.push_back("A1");
                     port_names.push_back("A2");
