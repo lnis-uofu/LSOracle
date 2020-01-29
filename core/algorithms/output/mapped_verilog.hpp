@@ -119,29 +119,69 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
         if (cell_names.find(n) != cell_names.end()){
             std::vector <std::string> children;
             std::vector <std::string> port_names;
-            if(regex_match(cell_names.at(n), std::regex("[AOIx123]{6}.+"))){
+            std::cout << "Found cell: " << cell_names.at(n) << " with children: ";
+            ntk.foreach_fanin( n, [&]( auto fanin ) {
+                    std::cout << fanin << " ";
+            });
+            std::cout <<"\n";
+            if (cell_names.at(n) == "AOI21B_X1N_A9PP84TR_C14"){
+                port_names.push_back("A0");
+                port_names.push_back("A1");
+                port_names.push_back("B0N");
+            } else if(regex_match(cell_names.at(n), std::regex("[AOIxX123_]{6}.+"))){
                 std::string working_name = cell_names.at(n);
+                std::cout << "working name: " << working_name << " Fanin: ";
+                std::cout << "\n";
+                int add_ones = 0;
+                if ( regex_match(working_name, std::regex("OAI311xp33.+") ) ){
+                    ++add_ones;
+                }
+                if ( regex_match(working_name, std::regex("OA31x2.+") ) ){
+                    ++add_ones;
+                }
+
                 working_name.erase(std::remove_if(working_name.begin(), working_name.end(), [](char c) { return !std::isdigit(c);}), working_name.end());
                 if (working_name.at(0) == '2'){
+                    ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
+                    port_names.push_back("A0");
                     port_names.push_back("A1");
-                    port_names.push_back("A2");
+                 //   port_names.push_back("A1");
+                 //   port_names.push_back("A2");
                 } else if (working_name.at(0) == '3'){
+                    port_names.push_back("A0");
                     port_names.push_back("A1");
                     port_names.push_back("A2");
-                    port_names.push_back("A3");
+                  //  port_names.push_back("A1");
+                  //  port_names.push_back("A2");
+                  //  port_names.push_back("A3");
                 }
                 if (working_name.at(1)  == '1'){
-                    port_names.push_back("B");
+                    if(add_ones){
+                          port_names.push_back("B0");
+                        //port_names.push_back("B1");
+                    } else {
+                        port_names.push_back("B");
+                    }
                 } else if (working_name.at(1) == '2'){
+                    port_names.push_back("B0");
                     port_names.push_back("B1");
-                    port_names.push_back("B2");
+                    //port_names.push_back("B1");
+                    //port_names.push_back("B2");
                 } else if (working_name.at(1)  == '3'){
+                 port_names.push_back("B0");
                     port_names.push_back("B1");
                     port_names.push_back("B2");
-                    port_names.push_back("B3");
+                  //  port_names.push_back("B1");
+                  //  port_names.push_back("B2");
+                  //  port_names.push_back("B3");
                 }
                 if (working_name.at(2)  == '1'){
-                    port_names.push_back("C");
+                    if(add_ones){
+                        port_names.push_back("C0");
+                    //    port_names.push_back("C1");
+                    } else {
+                        port_names.push_back("C");
+                    }
                 }
             } else {
                 port_names.push_back("A");

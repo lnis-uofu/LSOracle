@@ -77,8 +77,8 @@ namespace alice
                 mockturtle::topo_view aig_topo{aig};
                 mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
                 mockturtle::lut_mapping_params ps;
-                ps.cut_enumeration_ps.cut_size = 6;
-                ps.cut_enumeration_ps.cut_limit = 6;
+                ps.cut_enumeration_ps.cut_size = 4;
+                ps.cut_enumeration_ps.cut_limit = 4;
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
                 auto const& klut = *klut_opt;

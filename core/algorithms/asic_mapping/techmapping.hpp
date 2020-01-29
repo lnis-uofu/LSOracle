@@ -64,8 +64,8 @@ public:
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
     int netlistcount = 0; //node count.  Used as index in cell_names
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
-    std::regex gate_inputs("\\.([ABCDY123]+)\\((.+?)\\)");  //regex to handle signals
-    std::ifstream library("../../NPN_complete_noZero.json"); //make this generic once it's working
+    std::regex gate_inputs("\\.([ABCDY0123N]+)\\((.+?)\\)");  //regex to handle signals
+    std::ifstream library("../../NPN_gf14.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
     std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
     /* primary inputs */
@@ -86,11 +86,13 @@ public:
         std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper );
         std::string json_lookup = fmt::format("out_{}", tempstr);
         std::vector<mockturtle::signal<NtkDest>> cell_children;
-        std::cout << "NPN Class: " << tempstr << "\n";
+        std::cout << "NPN Class: " << tempstr << " children: ";
 
         ntk.foreach_fanin( n, [&]( auto fanin ) {
+          std::cout << " " << fanin << " nts: " << node_to_signal[fanin] << " ";
           cell_children.push_back( node_to_signal[fanin] );
         } );
+        std::cout << "\n";
         /*
         try {
           std::vector<std::string> node_gates = json_library[json_lookup]["gates"];
@@ -109,10 +111,12 @@ public:
               node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV" ));
               int after = dest.size();
               if (before != after){
-                cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                //cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                cell_names.insert({netlistcount, "INV_X4N_A9PP84TR_C14"});
+
                 ++netlistcount;
               } else {
-                std::cout << "ERROR: Not placing 1 input function, INVx2_ASAP7_75t_R.  Equivalent already exists.\n";
+                std::cout << "ERROR: Not placing 1 input function, inverter.  Equivalent already exists.\n";
               }
             } else if (json_lookup == "out_0" || json_lookup == "out_00"){
               node_to_signal[n] = dest.get_constant(false);
@@ -126,11 +130,14 @@ public:
               int before = dest.size();
               std::vector <mockturtle::signal<NtkDest>> NegVec;
               NegVec.push_back(cell_children.at(j));
-              mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INVx2_ASAP7_75t_R" ));
+              //mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INVx2_ASAP7_75t_R" ));
+              mockturtle::signal<NtkDest> tmpsig = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV_X4N_A9PP84TR_C14" ));
+
               cell_children.at(j) = tmpsig;
               int after = dest.size();
               if (before != after){
-                cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                //cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                cell_names.insert({netlistcount, "INV_X4N_A9PP84TR_C14"});
                 ++netlistcount;
               } else {
                 std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
@@ -163,6 +170,7 @@ public:
                       //can be input from the LUT (a, b, c, d for LUT4) or internal wire
                       //the inputs should always appear in the json file in alphabetical order (A, (optionally B, C, D,) then Y)
                       //so I'm using push_back instead of trying to preserve order.
+                      std::cout << node_gates[i] << "\targ match: " << arg_match[1] << " " << arg_match[2] << "\n";
                       if (arg_match[1] != "Y"){
                         if (arg_match[2] == "a"){
                           gate_children.push_back(cell_children.at(0));
@@ -174,7 +182,7 @@ public:
                           gate_children.push_back(cell_children.at(3));
                         } else if (arg_match[2] == "e"){
                           gate_children.push_back(cell_children.at(4));
-                        } else if (arg_match[2] == "f"){
+                        } else if (arg_match[2] == "f" ){
                           gate_children.push_back(cell_children.at(5));
                         } else { //otherwise it's an internal wire which should have been an output from an earlier standard cell
                           try {
@@ -185,7 +193,7 @@ public:
                             std::cout << "Guru Meditation: " << e.what() <<"\n";
                           }
                         }
-
+                        std::cout << "gate children size: " << gate_children.size() << "\n";
                       //outputs and populating network
                       } else if (arg_match[1] == "Y"){
                         if (arg_match[2] == "F"){ 
@@ -210,7 +218,8 @@ public:
                             node_to_signal[n] = dest.create_node(NegVec, make_truth_table(dest, NegVec, "INV" ));
                             int after = dest.size();
                             if (before != after){
-                              cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                              //cell_names.insert({netlistcount, "INVx2_ASAP7_75t_R"});
+                              cell_names.insert({netlistcount, "INV_X4N_A9PP84TR_C14"});
                               ++netlistcount;
                             } else {
                               std::cout << "Gate equivalent to negated klut output already exists.  Not placing not gate.\n";
@@ -264,7 +273,11 @@ public:
     std::cout << "###################\nLOOPING THROUGH DEST NTK (DEBUG)\n\n"; 
     dest.foreach_node( [&]( auto const& n ) {
       if (cell_names.find(n) != cell_names.end()){
-        std::cout << "\t" << n << "\t" << cell_names.at(n) << " \n";
+        std::cout << "\t" << n << "\t" << cell_names.at(n) << " \t";
+        dest.foreach_fanin(n, [&]( auto fanin ) {
+                    std::cout << fanin << " ";
+            });
+            std::cout << "\n";
       } else {
         std::cout << "\tno cell found for " << n << "\n";
       }
@@ -366,61 +379,64 @@ private:
         kitty::create_from_hex_string(result, "FFFE");
     } else if (func.substr(0,3) == "MAJ"){
        kitty::create_from_hex_string(result, "E8");
-    }else if (func.substr(0,6) == "AOI21x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("AOI21[xBP_]") ) ){
     //  (!A1 * !B) + (!A2 * !B)
       kitty::create_from_chain(result, {"x4 = x1 !| x3", "x5 = x2 !| x3", "x6 = x4 | x5"});
     } else if (func.substr(0,6) == "AOI211"){
     //  (!A1 * !B * !C) + (!A2 * !B * !C)
       //kitty::create_from_expression(result, "{(!a!c!d)(!b!c!d)}");
       kitty::create_from_hex_string(result, "0111");
-    } else if (func.substr(0,6) == "AOI31x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("AOI31[x_]") ) ){
     //  (!A1 * !B) + (!A2 * !B) + (!A3 * !B)
       kitty::create_from_chain(result, {"x5 = x1 !| x4", "x6 = x2 !| x4", "x7 = x3 !| x4", "x8 = x5 | x6", "x9 = x7 | x8"});
     } else if (func.substr(0,6) == "AOI311"){
     //  (!A1 * !B * !C) + (!A2 * !B * !C) + (!A3 * !B * !C)
       //kitty::create_from_expression(result, "{(!a!d!e)(!b!d!e)(!c!d!e)}");
       kitty::create_from_hex_string(result, "01111111");
-    } else if (func.substr(0,6) == "AOI22x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("AOI22[xBP_]") ) ){
     //  (!A1 * !B1) + (!A1 * !B2) + (!A2 * !B1) + (!A2 * !B2)
        kitty::create_from_chain(result, {"x5 = x1 !| x3", "x6 = x1 !| x4", "x7 = x2 !| x3", "x8 = x2 !| x4", "x9 = x5 | x6", "x10 = x7 | x8", "x11 = X9 | x10"});
     } else if (func.substr(0,6) == "AOI221"){
     //  (!A1 * !B1 * !C) + (!A1 * !B2 * !C) + (!A2 * !B1 * !C) + (!A2 * !B2 * !C)
       //kitty::create_from_expression(result, "{(!a!c!e)(!a!d!e)(!b!c!e)(!b!d!e)}");
       kitty::create_from_hex_string(result, "00000111"); //this is a place holder
-    } else if (func.substr(0,6) == "OAI21x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("OAI21[xBP_]") ) ){
       //inverse of AOI
       kitty::create_from_chain(result, {"x4 = x1 !| x3", "x5 = x2 !| x3", "x6 = x4 !| x5"});
     } else if (func.substr(0,6) == "OAI211"){
       kitty::create_from_hex_string(result, "1000");
-    } else if (func.substr(0,6) == "OAI22x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("OAI22[xBP_]") ) ){
        kitty::create_from_chain(result, {"x5 = x1 !| x3", "x6 = x1 !| x4", "x7 = x2 !| x3", "x8 = x2 !| x4", "x9 = x5 | x6", "x10 = x7 | x8", "x11 = X9 !| x10"});
-    } else if (func.substr(0,6) == "OAI311"){
+    }else if (func.substr(0,6) == "OAI311"){
       kitty::create_from_hex_string(result, "10000000");
-    } else if (func.substr(0,6) == "OAI32x"){
+    }else if (func.substr(0,6) == "OAI32x"){
       //function : "(!A1 * !A2 * !A3) + (!B1 * !B2)";
       kitty::create_from_hex_string(result, "1111111F");
-    } else if (func.substr(0,6) == "OAI31x"){
+    }else if ( regex_match( func.substr(0,6), std::regex("OAI31[xBP_]") ) ){
       kitty::create_from_chain(result, {"x5 = x1 !| x4", "x6 = x2 !| x4", "x7 = x3 !| x4", "x8 = x5 | x6", "x9 = x7 !| x8"});
-    } else if (func.substr(0,6) == "OA21x2"){
+    }else if ( regex_match( func.substr(0,6), std::regex("OAI21[xXBP_]") ) ){
       kitty::create_from_chain(result, {"x4 = x1 & x3", "x5 = x2 & x3", "x6 = x4 | x5"});
-    } else if (func.substr(0,6) == "OA22x2"){
+    }else if ( regex_match( func.substr(0,6), std::regex("OAI22[xXBP_]") ) ){
       // function : "(A1 * B1) + (A1 * B2) + (A2 * B1) + (A2 * B2)";
       kitty::create_from_chain(result, {"x5 = x1 & x3", "x6 = x1 & x4", "x7 = x2 & x3", "x8 = x2 & x4", "x9 = x5 | x6", "x10 = x7 | x8", "x11 = x9 | x10"});
     } else if (func.substr(0,6) == "OA31x2"){
       // function : "(A1 * B1) + (A2 * B1) + (A3 * B1)";
       kitty::create_from_chain(result, {"x5 = x1 & x4", "x6 = x2 & x4", "x7 = x3 & x4", "x8 = x5 | x6", "x9 = x8 | x7"});
-    } else if (func.substr(0,6) == "AO211x"){
+    } else if (func.substr(0,6) == "AO211x" || func.substr(0,6) == "AO211_"){
       //      function : "(A1 * A2) + (B) + (C)";
       kitty::create_from_chain(result, {"x5 = x1 & x2", "x6 = x5 | x3", "x7 = x6 | x4"});
-    } else if (func.substr(0,6) == "AO21x2"){
+    } else if (func.substr(0,6) == "OA21x2" || func.substr(0,6) == "OA21_X" || func.substr(0,6) == "OA21B_"){
       //      function : "(A1 * A2) + (B)";
       kitty::create_from_chain(result, {"x4 = x1 & x2", "x5 = x4 | x3"});
-    } else if (func.substr(0,6) == "AO22x1"){
+    } else if (func.substr(0,6) == "AO22x1" || func.substr(0,6) == "AO22_X"){
       //      function : "(A1 * A2) + (B1 * B2)";
       kitty::create_from_chain(result, {"x5 = x1 & x2", "x6 = x3 & x4", "x7 = x5 | x6"});
     } else if (func.substr(0,6) == "AO31x2"){
       //       function : "(A1 * A2 * A3) + (B)";
       kitty::create_from_chain(result, {"x5 = x1 & x2", "x6 = x5 & x3", "x7 = x6 | x4"});
+    } else if (func.substr(0,6) == "AO21x2" || func.substr(0,6) == "AO21_X" || func.substr(0,6) == "AO21B_"){
+      //       function : "((A0 A1) | (!B0N))";
+      kitty::create_from_chain(result, {"x4 = x1 !& x2", "x5 = x4 !& x3"});
     }else {
       result = kitty::dynamic_truth_table(8);
     };
