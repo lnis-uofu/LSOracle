@@ -128,7 +128,28 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 port_names.push_back("A0");
                 port_names.push_back("A1");
                 port_names.push_back("B0N");
-            } else if(regex_match(cell_names.at(n), std::regex("[AOIxX123_]{6}.+"))){
+            } else if (cell_names.at(n) == "MXIT2_X0P7N_A9PP84TR_C14"){
+                port_names.push_back("A");
+                port_names.push_back("B");
+                port_names.push_back("S0");
+            } else if (cell_names.at(n) == "AO1B2_X2N_A9PP84TR_C14"){
+                port_names.push_back("A0N");
+                port_names.push_back("B0");
+                port_names.push_back("B1");
+            } else if (cell_names.at(n).substr(0,6) == "CGENI_"){
+                port_names.push_back("A");
+                port_names.push_back("B");
+                port_names.push_back("CI");
+            } else if (cell_names.at(n).substr(0,6) == "NOR3BB"){
+                port_names.push_back("AN");
+                port_names.push_back("BN");
+                port_names.push_back("C");
+            } else if (cell_names.at(n).substr(0,7) == "OAI2XB1"){
+                std::cout << "\n\n\n\n\n*************** OAI2XB1 **************\n\n\n\n";
+                port_names.push_back("A0");
+                port_names.push_back("A1N");
+                port_names.push_back("B0");
+            } else if(regex_match(cell_names.at(n), std::regex("[AOIxXB123_]{6}.+"))){
                 std::string working_name = cell_names.at(n);
                 std::cout << "working name: " << working_name;
                 std::cout << "\n";
@@ -141,7 +162,10 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 }
 
                 working_name.erase(std::remove_if(working_name.begin(), working_name.end(), [](char c) { return !std::isdigit(c);}), working_name.end());
-                if (working_name.at(0) == '2'){
+                if (working_name.at(0) == '1'){
+                    ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
+                    port_names.push_back("A0");
+                } else if (working_name.at(0) == '2'){
                     ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
                     port_names.push_back("A0");
                     port_names.push_back("A1");
@@ -220,7 +244,11 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 if (children.size() > 5){
                     os << ", ."<<port_names.at(5)<<"(" << children.at(5) << ")";
                 }
-                os << ", .Y(" << fmt::format("n{}",n) << ") );\n";
+                if (cell_names.at(n).substr(0, 6) == "CGENI_"){
+                    os << ", .CON(" << fmt::format("n{}",n) << ") );\n";
+                } else {
+                    os << ", .Y(" << fmt::format("n{}",n) << ") );\n";
+                }
      }
     } );
     os << po_assignments;

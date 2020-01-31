@@ -64,7 +64,7 @@ public:
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
     int netlistcount = 0; //node count.  Used as index in cell_names
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
-    std::regex gate_inputs("\\.([ABCDY0123N]+)\\((.+?)\\)");  //regex to handle signals
+    std::regex gate_inputs("\\.([ABCDYOI0123NS]+)\\((.+?)\\)");  //regex to handle signals
     std::ifstream library("../../NPN_gf14.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
     std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
@@ -171,7 +171,7 @@ public:
                       //the inputs should always appear in the json file in alphabetical order (A, (optionally B, C, D,) then Y)
                       //so I'm using push_back instead of trying to preserve order.
                       std::cout << node_gates[i] << "\targ match: " << arg_match[1] << " " << arg_match[2] << "\n";
-                      if (arg_match[1] != "Y"){
+                      if (arg_match[1] != "Y" && arg_match[1] != "CON"){
                         if (arg_match[2] == "a"){
                           gate_children.push_back(cell_children.at(0));
                         } else if (arg_match[2] == "b"){
@@ -195,7 +195,7 @@ public:
                         }
                         std::cout << "gate children size: " << gate_children.size() << "\n";
                       //outputs and populating network
-                      } else if (arg_match[1] == "Y"){
+                      } else if (arg_match[1] == "Y" || arg_match[1] == "CON"){
                         if (arg_match[2] == "F"){ 
                           //the output of the last standard cell becomes the node_to_signal of the parent LUT so that the fanin of the next LUT is correct
                           //need to check if original function in LUT before NPN canonization had a negated output and if so add a NOT node.
@@ -437,6 +437,13 @@ private:
     } else if (func.substr(0,6) == "AO21x2" || func.substr(0,6) == "AO21_X" || func.substr(0,6) == "AO21B_"){
       //       function : "((A0 A1) | (!B0N))";
       kitty::create_from_chain(result, {"x4 = x1 !& x2", "x5 = x4 !& x3"});
+    } else if (func.substr(0,6) == "MXIT2_"){
+      //      function : (!( (S0 B) | ( (!S0) A) ) );
+      // too much of a mess to do from a chain.  Just calculated the truth table. 0x35
+      kitty::create_from_hex_string(result, "35");
+    } else if (func.substr(0,6) == "CGENI_"){
+      //      function : "(!(((A ^ B) CI) | (A B)))”;
+      kitty::create_from_hex_string(result, "17");
     }else {
       result = kitty::dynamic_truth_table(8);
     };
