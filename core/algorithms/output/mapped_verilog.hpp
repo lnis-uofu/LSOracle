@@ -166,53 +166,58 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                     ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
                     port_names.push_back("A0");
                 } else if (working_name.at(0) == '2'){
-                    ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
-                    port_names.push_back("A0");
-                    port_names.push_back("A1");
-                 //   port_names.push_back("A1");
-                 //   port_names.push_back("A2");
-                } else if (working_name.at(0) == '3'){
-                    ++add_ones;
-                    port_names.push_back("A0");
+                 //   ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
+                  /*  port_names.push_back("A0");
+                    port_names.push_back("A1");*/
                     port_names.push_back("A1");
                     port_names.push_back("A2");
-                  //  port_names.push_back("A1");
-                  //  port_names.push_back("A2");
-                  //  port_names.push_back("A3");
+                } else if (working_name.at(0) == '3'){
+                    ++add_ones;
+                 /*   port_names.push_back("A0");
+                    port_names.push_back("A1");
+                    port_names.push_back("A2"); */
+                    port_names.push_back("A1");
+                    port_names.push_back("A2");
+                    port_names.push_back("A3");
                 }
                 if (working_name.at(1)  == '1'){
                     if(add_ones){
-                          port_names.push_back("B0");
-                        //port_names.push_back("B1");
+                         //port_names.push_back("B0");
+                        port_names.push_back("B1");
                     } else {
                         port_names.push_back("B");
                     }
                 } else if (working_name.at(1) == '2'){
-                    port_names.push_back("B0");
-                    port_names.push_back("B1");
-                    //port_names.push_back("B1");
-                    //port_names.push_back("B2");
-                } else if (working_name.at(1)  == '3'){
-                 port_names.push_back("B0");
+                    /*port_names.push_back("B0");
+                    port_names.push_back("B1");*/
                     port_names.push_back("B1");
                     port_names.push_back("B2");
-                  //  port_names.push_back("B1");
-                  //  port_names.push_back("B2");
-                  //  port_names.push_back("B3");
+                } else if (working_name.at(1)  == '3'){
+                    /*port_names.push_back("B0");
+                    port_names.push_back("B1");
+                    port_names.push_back("B2");*/
+                    port_names.push_back("B1");
+                    port_names.push_back("B2");
+                    port_names.push_back("B3");
                 }
                 if (working_name.at(2)  == '1'){
                     if(add_ones){
-                        port_names.push_back("C0");
-                    //    port_names.push_back("C1");
+                        // port_names.push_back("C0");
+                        port_names.push_back("C1");
                     } else {
                         port_names.push_back("C");
                     }
+                } else if (working_name.at(2) == '2'){
+                        port_names.push_back("C1");
+                        port_names.push_back("C2");
                 }
             } else {
                 port_names.push_back("A");
                 port_names.push_back("B");
                 port_names.push_back("C");
                 port_names.push_back("D");
+                port_names.push_back("E");
+                port_names.push_back("F");
             }
             // populate children, which will be function inputs
             ntk.foreach_fanin( n, [&]( auto fanin ) {
@@ -246,7 +251,9 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 }
                 if (cell_names.at(n).substr(0, 6) == "CGENI_"){
                     os << ", .CON(" << fmt::format("n{}",n) << ") );\n";
-                } else {
+                } else if (cell_names.at(n).substr(0, 6) == "FAx1_A"){
+                    os << ", .SN(" << fmt::format("n{}",n) << ") );\n";
+                }else{
                     os << ", .Y(" << fmt::format("n{}",n) << ") );\n";
                 }
      }

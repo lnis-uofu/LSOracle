@@ -12,6 +12,7 @@ namespace alice
             //opts.add_option( "--lut_size,-K", lut_size, "LUT size for mapping [DEFAULT = 6]" );
             //opts.add_option( "--cut_size,-C", cut_size, "Max number of priority cuts [DEFAULT = 8]" );
             add_flag("--mig,-m", "Read from the stored MIG network");
+            add_flag("--klut,-l", "Read from the stored KLUT network");
             add_flag("--NPN, -n", "outputs the NPN classes that make up the function");
         }
 
@@ -47,6 +48,27 @@ namespace alice
                         std::cout << setw(20)  << npnclass.first <<":\t"<< npnclass.second <<"\n";
                 }
             }
+          } else if(is_set("klut")){
+            if(!store<klut_ntk>().empty()){
+                // read an external klut network from ABC or something, 
+                auto& klut = *store<klut_ntk>().current();
+                //mockturtle::topo_view klut_topo{klut};
+                mockturtle::write_bench(klut, filename + "oldKLUT.bench");
+                mockturtle::klut_network deklut = oracle::decompose_unmapped<mockturtle::klut_network, mockturtle::klut_network>(klut);
+                mockturtle::write_bench(deklut, filename + "KLUT.bench");
+                mockturtle::topo_view klut_topo{deklut};
+
+                std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
+                oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+                
+                mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
+                std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
+
+                mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");          
+            }
+            else{
+                std::cout << "There is not an KLUT network stored.\n";
+            }
           }
           else if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
@@ -77,17 +99,19 @@ namespace alice
                 mockturtle::topo_view aig_topo{aig};
                 mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
                 mockturtle::lut_mapping_params ps;
-                ps.cut_enumeration_ps.cut_size = 4;
-                ps.cut_enumeration_ps.cut_limit = 4;
+                ps.cut_enumeration_ps.cut_size = 6;
+                ps.cut_enumeration_ps.cut_limit = 6;
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped_aig, ps );
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_aig );
                 auto const& klut = *klut_opt;
-                mockturtle::topo_view klut_topo{klut};
-                mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
+                mockturtle::write_bench(klut, filename + "oldKLUT.bench");
+                mockturtle::klut_network deklut = oracle::decompose_unmapped<mockturtle::klut_network, mockturtle::klut_network>(klut);
+                mockturtle::write_bench(deklut, filename + "KLUT.bench");
+                mockturtle::topo_view klut_topo{deklut};
                 std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
-                mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
+                //mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
                 oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
-                mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
+                //mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
                 mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
                 std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";
  

@@ -29,6 +29,7 @@
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/output/verilog.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
+#include "algorithms/asic_mapping/decompose_unmapped.hpp"
 #include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/
