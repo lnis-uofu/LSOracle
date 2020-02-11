@@ -75,19 +75,21 @@ namespace alice
                 auto& mig = *store<mig_ntk>().current();
                 mockturtle::mapping_view<mockturtle::mig_network, true> mapped_mig{mig};
                 mockturtle::lut_mapping_params ps;
-                ps.cut_enumeration_ps.cut_size = 4;
-                ps.cut_enumeration_ps.cut_limit = 4;
+                ps.cut_enumeration_ps.cut_size = 6;
+                ps.cut_enumeration_ps.cut_limit = 6;
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped_mig, ps );
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped_mig );
                 auto const& klut = *klut_opt;
-                mockturtle::topo_view klut_topo{klut};
+                mockturtle::write_bench(klut, filename + "oldKLUT.bench");
+                mockturtle::klut_network deklut = oracle::decompose_unmapped<mockturtle::klut_network, mockturtle::klut_network>(klut);
+                mockturtle::write_bench(deklut, filename + "KLUT.bench");
+                mockturtle::topo_view klut_topo{deklut};
                 std::tuple<mockturtle::klut_network, std::unordered_map <int, std::string>> techmap_test = oracle::techmap_mapped_network<mockturtle::klut_network>(klut_topo); 
+                //mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");
                 oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename, std::get<1>(techmap_test), "test_top");
+                //mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)), filename + "cleanup.bench" );
                 mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
-                std::cout << "\n\nDepth: " << mapped_depth.depth()<<"\n";
-
-                mockturtle::write_bench(klut_topo, filename + "KLUT.bench");
-                mockturtle::write_bench(std::get<0>(techmap_test), filename + "Techmapped.bench");          
+                std::cout << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";      
             }
             else{
                 std::cout << "There is not an MIG network stored.\n";
