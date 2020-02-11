@@ -67,7 +67,7 @@ public:
     int netlistcount = 0; //node count.  Used as index in cell_names
     std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
     std::regex gate_inputs("\\.([ABCDEFquYOI0123NS]+)\\((.+?)\\)");  //regex to handle signals
-    std::ifstream library("/Users/srt/code/LSOracle/11FEB_ASAP7.json"); //make this generic once it's working
+    std::ifstream library("../../11FEB_ASAP7.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
     std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
     /* primary inputs */

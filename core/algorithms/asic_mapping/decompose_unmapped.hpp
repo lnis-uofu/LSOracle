@@ -57,7 +57,7 @@ public:
         NtkDest dest;
         nlohmann::json json_library; //LUT -> verilog database
         mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
-        std::ifstream library("/Users/srt/code/LSOracle/11FEB_ASAP7.json"); //make this generic once it's working
+        std::ifstream library("../../11FEB_ASAP7.json"); //make this generic once it's working
         library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
         std::cout << "NUM LATCHES: " << ntk.num_latches() << "\n";
         //not going to worry about inputs and outputs just yet.  Just putting the trappings here for now.
