@@ -144,6 +144,10 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 port_names.push_back("AN");
                 port_names.push_back("BN");
                 port_names.push_back("C");
+            } else if (cell_names.at(n).substr(0,6) == "FAx1_A"){
+                port_names.push_back("A");
+                port_names.push_back("B");
+                port_names.push_back("CI");
             } else if (cell_names.at(n).substr(0,7) == "OAI2XB1"){
                 std::cout << "\n\n\n\n\n*************** OAI2XB1 **************\n\n\n\n";
                 port_names.push_back("A0");
@@ -163,8 +167,8 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
 
                 working_name.erase(std::remove_if(working_name.begin(), working_name.end(), [](char c) { return !std::isdigit(c);}), working_name.end());
                 if (working_name.at(0) == '1'){
-                    ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
-                    port_names.push_back("A0");
+                    //++add_ones; //actually zeros for the gf14 library; just going to use the same variable
+                    port_names.push_back("A");
                 } else if (working_name.at(0) == '2'){
                  //   ++add_ones; //actually zeros for the gf14 library; just going to use the same variable
                   /*  port_names.push_back("A0");
