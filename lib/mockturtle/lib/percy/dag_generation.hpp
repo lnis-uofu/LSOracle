@@ -90,7 +90,7 @@ namespace percy
                         return true;
                     }
                 } else {
-                    pLits[ctr++] = pabc::Abc_Var2Lit(
+                    pLits[ctr++] = abc::Abc_Var2Lit(
                             dag_get_sim_var(j - _nr_in, t), b);
                 }
 
@@ -98,14 +98,14 @@ namespace percy
                     if (( ( ( t + 1 ) & ( 1 << k ) ) ? 1 : 0 ) != c)
                         return true;
                 } else {
-                    pLits[ctr++] = pabc::Abc_Var2Lit(
+                    pLits[ctr++] = abc::Abc_Var2Lit(
                             dag_get_sim_var(k - _nr_in, t), c);
                 }
 
-                pLits[ctr++] = pabc::Abc_Var2Lit(dag_get_sim_var(i, t), a);
+                pLits[ctr++] = abc::Abc_Var2Lit(dag_get_sim_var(i, t), a);
 
                 if (b | c) {
-                    pLits[ctr++] = pabc::Abc_Var2Lit(dag_get_op_var(i, c, b), 1 - a);
+                    pLits[ctr++] = abc::Abc_Var2Lit(dag_get_op_var(i, c, b), 1 - a);
                     //printf("%sf_%d_%d_%d\n", (1-a) ? "!" : "", i+1, c, b);
                 }
 
@@ -140,7 +140,7 @@ namespace percy
                             printf("\tvar=%d\n", dag_get_sim_var(i, t));
                         }
                         auto outbit = kitty::get_bit(spec, t+1);
-                        pLits[0] = pabc::Abc_Var2Lit(dag_get_sim_var(i, t), 
+                        pLits[0] = abc::Abc_Var2Lit(dag_get_sim_var(i, t), 
                                 1 - outbit);
                         ret &= solver_add_clause(_solver,pLits,pLits+1);
                     }
@@ -164,19 +164,19 @@ namespace percy
                 int pLits[3];
 
                 for (int i = 0; i < _nr_steps; i++) {
-                    pLits[0] = pabc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 0);
-                    pLits[1] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 0);
-                    pLits[2] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 0);
+                    pLits[0] = abc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 0);
+                    pLits[1] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 0);
+                    pLits[2] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 0);
                     success &= solver_add_clause(_solver, pLits, pLits + 3);
 
-                    pLits[0] = pabc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 0);
-                    pLits[1] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 1);
-                    pLits[2] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 1);
+                    pLits[0] = abc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 0);
+                    pLits[1] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 1);
+                    pLits[2] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 1);
                     success &= solver_add_clause(_solver, pLits, pLits + 3);
 
-                    pLits[0] = pabc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 1);
-                    pLits[1] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 0);
-                    pLits[2] = pabc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 1);
+                    pLits[0] = abc::Abc_Var2Lit(dag_get_op_var(i, 0, 1), 1);
+                    pLits[1] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 0), 0);
+                    pLits[2] = abc::Abc_Var2Lit(dag_get_op_var(i, 1, 1), 1);
                     success &= solver_add_clause(_solver, pLits, pLits + 3);
                 }
                 return success;
@@ -367,7 +367,7 @@ namespace percy
     {
         private:
             bsat_wrapper _solver;
-            pabc::Vec_Int_t* _vLits; // Dynamic vector of literals for clauses.
+            abc::Vec_Int_t* _vLits; // Dynamic vector of literals for clauses.
             int _nr_vars;
             int _nr_vertices;
             bool _reset;
@@ -417,7 +417,7 @@ namespace percy
                 }
                 */
                 _solver.set_nr_vars(nr_sel_vars);
-                pabc::Vec_IntGrowResize(_vLits, nr_sel_vars);
+                abc::Vec_IntGrowResize(_vLits, nr_sel_vars);
             }
 
             /*******************************************************************
@@ -431,13 +431,13 @@ namespace percy
                     int ctr = 0;
                     for (int k = 1; k < _nr_vars + i; k++) {
                         for (int j = 0; j < k; j++) {
-                            pabc::Vec_IntSetEntry(_vLits, ctr++, 
-                                    pabc::Abc_Var2Lit(dag_get_sel_var(i, j, k ), 0 ));
+                            abc::Vec_IntSetEntry(_vLits, ctr++, 
+                                    abc::Abc_Var2Lit(dag_get_sel_var(i, j, k ), 0 ));
                         }
                     }
                     _solver.add_clause(
-                        pabc::Vec_IntArray(_vLits), 
-                        pabc::Vec_IntArray(_vLits) + ctr);
+                        abc::Vec_IntArray(_vLits), 
+                        abc::Vec_IntArray(_vLits) + ctr);
                 }
             }
 
@@ -454,16 +454,16 @@ namespace percy
                         auto ctr = 0;
                         for (int i = 0; i < _nr_vertices; i++) {
                             for (int k = j+1; k < _nr_vars + i; k++) {
-                                Vec_IntSetEntry(_vLits, ctr++, pabc::Abc_Var2Lit(
+                                Vec_IntSetEntry(_vLits, ctr++, abc::Abc_Var2Lit(
                                             dag_get_sel_var(i, j, k), 0));
                             }
                             for (int k = 0; k < j; k++) {
-                                pabc::Vec_IntSetEntry(_vLits, ctr++, pabc::Abc_Var2Lit(
+                                abc::Vec_IntSetEntry(_vLits, ctr++, abc::Abc_Var2Lit(
                                             dag_get_sel_var(i, k, j), 0));
                             }
                         }
-                        solver_add_clause(_solver, pabc::Vec_IntArray(_vLits),
-                                pabc::Vec_IntArray(_vLits) + ctr);
+                        solver_add_clause(_solver, abc::Vec_IntArray(_vLits),
+                                abc::Vec_IntArray(_vLits) + ctr);
                     }
                 }
                 */
@@ -472,15 +472,15 @@ namespace percy
                     auto ctr = 0;
                     for (int ip = i + 1; ip < _nr_vertices; ip++) {
                         for (int j = 0; j < _nr_vars+i; j++) {
-                            pabc::Vec_IntSetEntry(_vLits, ctr++, pabc::Abc_Var2Lit(
+                            abc::Vec_IntSetEntry(_vLits, ctr++, abc::Abc_Var2Lit(
                                         dag_get_sel_var(ip, j, _nr_vars+i), 0));
                         }
                         for (int j = _nr_vars+i+1; j < _nr_vars+ip; j++) {
-                            pabc::Vec_IntSetEntry(_vLits, ctr++, pabc::Abc_Var2Lit(
+                            abc::Vec_IntSetEntry(_vLits, ctr++, abc::Abc_Var2Lit(
                                         dag_get_sel_var(ip, _nr_vars+i, j), 0));
                         }
                     }
-                    _solver.add_clause(pabc::Vec_IntArray(_vLits), pabc::Vec_IntArray(_vLits) + ctr);
+                    _solver.add_clause(abc::Vec_IntArray(_vLits), abc::Vec_IntArray(_vLits) + ctr);
                 }
             }
 
@@ -497,8 +497,8 @@ namespace percy
                                         break;
                                     }
                                     pLits[0] = 
-                                        pabc::Abc_Var2Lit(dag_get_sel_var(i,j,k),1);
-                                    pLits[1] = pabc::Abc_Var2Lit(
+                                        abc::Abc_Var2Lit(dag_get_sel_var(i,j,k),1);
+                                    pLits[1] = abc::Abc_Var2Lit(
                                             dag_get_sel_var(i,jp,kp),1);
                                     _solver.add_clause(pLits, pLits+2);
                                 }
@@ -521,9 +521,9 @@ namespace percy
                     for (int k = 2; k < _nr_vars+i; k++) {
                         for (int j = 1; j < k; j++) {
                             for (int jp = 0; jp < j; jp++) {
-                                pLits[0] = pabc::Abc_Var2Lit(
+                                pLits[0] = abc::Abc_Var2Lit(
                                         dag_get_sel_var(i, j, k), 1);
-                                pLits[1] = pabc::Abc_Var2Lit(
+                                pLits[1] = abc::Abc_Var2Lit(
                                         dag_get_sel_var(i+1, jp, k), 1);
                                 _solver.add_clause(pLits, pLits+2);
                             }
@@ -531,9 +531,9 @@ namespace percy
                         for (int j = 0; j < k; j++) {
                             for (int kp = 1; kp < k; kp++) {
                                 for (int jp = 0; jp < kp; jp++) {
-                                    pLits[0] = pabc::Abc_Var2Lit(
+                                    pLits[0] = abc::Abc_Var2Lit(
                                             dag_get_sel_var(i, j, k), 1);
-                                    pLits[1] = pabc::Abc_Var2Lit(
+                                    pLits[1] = abc::Abc_Var2Lit(
                                             dag_get_sel_var(i+1, jp, kp),1);
                                     _solver.add_clause(pLits, pLits + 2);
                                 }
@@ -556,12 +556,12 @@ namespace percy
                     for (int ip = i+1; ip < _nr_vertices; ip++) {
                         for (int k = 1; k < _nr_vars+i; k++) {
                             for (int j = 0; j < k; j++) {
-                                pLits[0] = pabc::Abc_Var2Lit(
+                                pLits[0] = abc::Abc_Var2Lit(
                                         dag_get_sel_var(i, j, k), 1);
-                                pLits[1] = pabc::Abc_Var2Lit(
+                                pLits[1] = abc::Abc_Var2Lit(
                                         dag_get_sel_var(ip, j, _nr_vars+i),1);
                                 _solver.add_clause(pLits, pLits + 2);
-                                pLits[1] = pabc::Abc_Var2Lit(
+                                pLits[1] = abc::Abc_Var2Lit(
                                         dag_get_sel_var(ip, k, _nr_vars+i),1);
                                 _solver.add_clause(pLits, pLits+2);
                             }
@@ -599,8 +599,8 @@ namespace percy
                         for (int j = 0; j < k; j++) {
                             if (_solver.var_value(dag_get_sel_var(i, j, k)))
                             {
-                                pabc::Vec_IntSetEntry(_vLits, ctr++,
-                                        pabc::Abc_Var2Lit(dag_get_sel_var(i, j, k),
+                                abc::Vec_IntSetEntry(_vLits, ctr++,
+                                        abc::Abc_Var2Lit(dag_get_sel_var(i, j, k),
                                             1)); 
                                 found++;
                             }
@@ -611,8 +611,8 @@ namespace percy
                 assert(ctr == _nr_vertices);
 
                 auto status = _solver.add_clause(
-                    pabc::Vec_IntArray(_vLits),
-                    pabc::Vec_IntArray(_vLits) + ctr);
+                    abc::Vec_IntArray(_vLits),
+                    abc::Vec_IntArray(_vLits) + ctr);
 
                 if (_verbosity > 1) {
                     printf("nr vars=%d, nr clauses=%d\n", _solver.nr_vars(), _solver.nr_clauses());
@@ -623,12 +623,12 @@ namespace percy
         public:
             sat_dag_generator()
             {
-                _vLits = pabc::Vec_IntAlloc(0);
+                _vLits = abc::Vec_IntAlloc(0);
             }
 
             ~sat_dag_generator()
             {
-                pabc::Vec_IntFree(_vLits);
+                abc::Vec_IntFree(_vLits);
             }
 
             int nr_vars() const { return _nr_vars; }

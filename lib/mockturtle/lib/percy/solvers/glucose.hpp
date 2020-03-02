@@ -64,7 +64,7 @@ namespace percy
 #endif
         }
 
-        int add_clause(pabc::lit* begin, pabc::lit* end)
+        int add_clause(abc::lit* begin, abc::lit* end)
         {
             Glucose::vec<Glucose::Lit> litvec;
             for (auto i = begin; i != end; i++) {
@@ -127,7 +127,7 @@ namespace percy
         }
 
 
-        synth_result solve(pabc::lit* begin, pabc::lit* end, int cl)
+        synth_result solve(abc::lit* begin, abc::lit* end, int cl)
         {
 #ifdef USE_GLUCOSE
             Glucose::vec<Glucose::Lit> litvec;

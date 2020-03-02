@@ -1558,7 +1558,7 @@ static inline int * Vec_IntUniqueLookup( Vec_Int_t * vData, int i, int nIntSize,
 static inline int Vec_IntUniqueCount( Vec_Int_t * vData, int nIntSize, Vec_Int_t ** pvMap )
 {
     int nEntries  = Vec_IntSize(vData) / nIntSize;
-    int TableMask = (1 << pabc::Abc_Base2Log(nEntries)) - 1;
+    int TableMask = (1 << abc::Abc_Base2Log(nEntries)) - 1;
     int * pTable  = ABC_FALLOC( int, TableMask+1 );
     int * pNexts  = ABC_FALLOC( int, TableMask+1 );
     int * pClass  = ABC_ALLOC( int, nEntries );

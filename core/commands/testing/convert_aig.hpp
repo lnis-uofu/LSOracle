@@ -22,8 +22,7 @@ namespace alice
 
     public:
         explicit convert_aig_command( const environment::ptr& env )
-                : command( env, "Convert AIG to MIG" ){
-
+          : command( env, "Convert AIG to MIG" ){
         }
 
     protected:

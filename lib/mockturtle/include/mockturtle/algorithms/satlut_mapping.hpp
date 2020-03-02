@@ -127,7 +127,7 @@ std::vector<int> cardinality_network( Solver& solver, std::vector<int> const& va
   if ( current.size() != ( 1u << logn ) )
   {
     current.resize( 1u << logn, next_var );
-    lits[0] = pabc::Abc_Var2Lit( next_var++, 1 );
+    lits[0] = abc::Abc_Var2Lit( next_var++, 1 );
     solver.add_clause( lits, lits + 1);
   }
 
@@ -138,27 +138,27 @@ std::vector<int> cardinality_network( Solver& solver, std::vector<int> const& va
     auto vb_next = next_var++;
 
     // AND(a, b) a + !c , b + !c , !a + !b + c
-    lits[0] = pabc::Abc_Var2Lit( va, 0 );
-    lits[1] = pabc::Abc_Var2Lit( va_next, 1 );
+    lits[0] = abc::Abc_Var2Lit( va, 0 );
+    lits[1] = abc::Abc_Var2Lit( va_next, 1 );
     solver.add_clause( lits, lits + 2 );
-    lits[0] = pabc::Abc_Var2Lit( vb, 0 );
-    lits[1] = pabc::Abc_Var2Lit( va_next, 1 );
+    lits[0] = abc::Abc_Var2Lit( vb, 0 );
+    lits[1] = abc::Abc_Var2Lit( va_next, 1 );
     solver.add_clause( lits, lits + 2 );
-    lits[0] = pabc::Abc_Var2Lit( va, 1 );
-    lits[1] = pabc::Abc_Var2Lit( vb, 1 );
-    lits[2] = pabc::Abc_Var2Lit( va_next, 0 );
+    lits[0] = abc::Abc_Var2Lit( va, 1 );
+    lits[1] = abc::Abc_Var2Lit( vb, 1 );
+    lits[2] = abc::Abc_Var2Lit( va_next, 0 );
     solver.add_clause( lits, lits + 3 );
 
     // OR(a, b) !a + c , !b + c , a + b + !c
-    lits[0] = pabc::Abc_Var2Lit( va, 1 );
-    lits[1] = pabc::Abc_Var2Lit( vb_next, 0 );
+    lits[0] = abc::Abc_Var2Lit( va, 1 );
+    lits[1] = abc::Abc_Var2Lit( vb_next, 0 );
     solver.add_clause( lits, lits + 2 );
-    lits[0] = pabc::Abc_Var2Lit( vb, 1 );
-    lits[1] = pabc::Abc_Var2Lit( vb_next, 0 );
+    lits[0] = abc::Abc_Var2Lit( vb, 1 );
+    lits[1] = abc::Abc_Var2Lit( vb_next, 0 );
     solver.add_clause( lits, lits + 2 );
-    lits[0] = pabc::Abc_Var2Lit( va, 0 );
-    lits[1] = pabc::Abc_Var2Lit( vb, 0 );
-    lits[2] = pabc::Abc_Var2Lit( vb_next, 1 );
+    lits[0] = abc::Abc_Var2Lit( va, 0 );
+    lits[1] = abc::Abc_Var2Lit( vb, 0 );
+    lits[2] = abc::Abc_Var2Lit( vb_next, 1 );
     solver.add_clause( lits, lits + 3 );
 
     current[a] = va_next;
@@ -167,8 +167,8 @@ std::vector<int> cardinality_network( Solver& solver, std::vector<int> const& va
 
   for ( auto i = 0u; i < current.size() - 1; ++i )
   {
-    lits[0] = pabc::Abc_Var2Lit( current[i], 1 );
-    lits[1] = pabc::Abc_Var2Lit( current[i + 1], 0 );
+    lits[0] = abc::Abc_Var2Lit( current[i], 1 );
+    lits[1] = abc::Abc_Var2Lit( current[i + 1], 0 );
     solver.add_clause( lits, lits + 2);
   }
 
@@ -214,7 +214,7 @@ public:
     int cut_lits[2];
     ntk.foreach_gate( [&]( auto n ) {
       std::vector<int> gate_is_mapped;
-      gate_is_mapped.push_back( pabc::Abc_Var2Lit( gate_var[n], 1 ) );
+      gate_is_mapped.push_back( abc::Abc_Var2Lit( gate_var[n], 1 ) );
 
       for ( auto const& cut : cuts.cuts( ntk.node_to_index( n ) ) )
       {
@@ -222,14 +222,14 @@ public:
         {
           break; /* we assume that trivial cuts are in the end of the set */
         }
-        gate_is_mapped.push_back( pabc::Abc_Var2Lit( next_var, 0 ) );
-        cut_lits[0] = pabc::Abc_Var2Lit( next_var, 1 );
+        gate_is_mapped.push_back( abc::Abc_Var2Lit( next_var, 0 ) );
+        cut_lits[0] = abc::Abc_Var2Lit( next_var, 1 );
         cut_vars[n].push_back( next_var++ );
         for ( auto leaf : *cut )
         {
           if ( ntk.is_pi( ntk.index_to_node( leaf ) ) )
             continue;
-          cut_lits[1] = pabc::Abc_Var2Lit( gate_var[ntk.index_to_node( leaf )], 0 );
+          cut_lits[1] = abc::Abc_Var2Lit( gate_var[ntk.index_to_node( leaf )], 0 );
           solver.add_clause( cut_lits, cut_lits + 2 );
         }
       }
@@ -239,7 +239,7 @@ public:
 
     /* outputs must be mapped */
     ntk.foreach_po( [&]( auto f ) {
-      auto lit = pabc::Abc_Var2Lit( gate_var[f], 0 );
+      auto lit = abc::Abc_Var2Lit( gate_var[f], 0 );
       solver.add_clause( &lit, &lit + 1 );
     } );
 
@@ -259,7 +259,7 @@ public:
         best_size, card_inp.size(), card_out.size(), ntk.num_cells(), ntk.has_mapping() );
         assert( false );
       }
-      auto assump = pabc::Abc_Var2Lit( card_out[card_out.size() - best_size], 1 );
+      auto assump = abc::Abc_Var2Lit( card_out[card_out.size() - best_size], 1 );
 
       const auto result = call_with_stopwatch( st.time_sat, [&]() { return solver.solve( &assump, &assump + 1, ps.conflict_limit ); } );
       if ( result == percy::success )

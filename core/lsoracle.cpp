@@ -30,6 +30,7 @@
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/output/verilog.hpp"
+#include "algorithms/output/to_abc.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
 #include "algorithms/output/mapped_verilog.hpp"
 
@@ -103,5 +104,6 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
+#include "commands/testing/ntk_to_abc.hpp"
 
 ALICE_MAIN( lsoracle )

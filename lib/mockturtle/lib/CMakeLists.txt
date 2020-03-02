@@ -50,6 +50,8 @@ if (NOT TARGET percy)
   set(ABC_USE_NAMESPACE "pabc")
   set(STATIC_LIBABC true)
   add_subdirectory(abcsat)
+  message([STATUS] "Done with pabc")
+
   if (UNIX)
     target_compile_definitions(libabcsat PUBLIC "LIN64" ABC_NAMESPACE=pabc ABC_NO_USE_READLINE)
   elseif(WIN32)

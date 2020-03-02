@@ -15,17 +15,17 @@ namespace percy
             int nr_sim_vars;
             int nr_op_vars_per_step;
 
-            pabc::Vec_Int_t* vLits; // Dynamic vector of literals
+            abc::Vec_Int_t* vLits; // Dynamic vector of literals
 
         public:
             floating_dag_encoder()
             {
-                vLits = pabc::Vec_IntAlloc(128);
+                vLits = abc::Vec_IntAlloc(128);
             }
 
             ~floating_dag_encoder()
             {
-                pabc::Vec_IntFree(vLits);
+                abc::Vec_IntFree(vLits);
             }
 
             void
@@ -111,23 +111,23 @@ namespace percy
                             return true;
                         }
                     } else {
-                        pabc::Vec_IntSetEntry(vLits, ctr++, pabc::Abc_Var2Lit(
+                        abc::Vec_IntSetEntry(vLits, ctr++, abc::Abc_Var2Lit(
                                     get_sim_var(spec, dag, child -
                                         spec.get_nr_in(), t), assign));
                     }
                 }
 
-                pabc::Vec_IntSetEntry(vLits, ctr++,
-                        pabc::Abc_Var2Lit(get_sim_var(spec, dag, i, t), output));
+                abc::Vec_IntSetEntry(vLits, ctr++,
+                        abc::Abc_Var2Lit(get_sim_var(spec, dag, i, t), output));
 
                 if (opvar_idx > 0) {
-                    pabc::Vec_IntSetEntry(vLits, ctr++, pabc::Abc_Var2Lit(
+                    abc::Vec_IntSetEntry(vLits, ctr++, abc::Abc_Var2Lit(
                                 get_op_var(dag, i, opvar_idx), 1 - output));
                 }
 
                 auto status =  solver->add_clause(
-                        pabc::Vec_IntArray(vLits), 
-                        pabc::Vec_IntArray(vLits) + ctr); 
+                        abc::Vec_IntArray(vLits), 
+                        abc::Vec_IntArray(vLits) + ctr); 
 
                 if (spec.verbosity > 2) {
                     printf("creating sim. clause: (");
@@ -213,7 +213,7 @@ namespace percy
                         if (spec.out_inv & 1) {
                             outbit = 1 - outbit;
                         }
-                        pLits[0] = pabc::Abc_Var2Lit(get_sim_var(spec, dag, i,
+                        pLits[0] = abc::Abc_Var2Lit(get_sim_var(spec, dag, i,
                                     t), 1 - outbit);
                         if (!solver->add_clause(pLits, pLits + 1)) {
                             return false;

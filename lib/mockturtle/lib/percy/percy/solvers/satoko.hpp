@@ -56,7 +56,7 @@ namespace percy
             return satoko::satoko_conflictnum(solver);
         }
 
-        int add_clause(pabc::lit* begin, pabc::lit* end)
+        int add_clause(abc::lit* begin, abc::lit* end)
         {
             return satoko::satoko_add_clause(solver, begin, end - begin);
         }
@@ -83,7 +83,7 @@ namespace percy
             }
         }
 
-        synth_result solve(pabc::lit* begin, pabc::lit* end, int cl)
+        synth_result solve(abc::lit* begin, abc::lit* end, int cl)
         {
             auto res = satoko::satoko_solve_assumptions_limit(solver, begin, end - begin, cl);
             if (res == satoko::SATOKO_SAT) {

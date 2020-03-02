@@ -14,8 +14,8 @@ namespace percy
 
         int level_dist[MAJ_NOBJS]; // How many steps are below a certain level
         int nr_levels; // The number of levels in the Boolean fence
-        pabc::lit pLits[MAJ_NOBJS];
-        pabc::Vec_Wec_t* vOutLits;
+        abc::lit pLits[MAJ_NOBJS];
+        abc::Vec_Wec_t* vOutLits;
         solver_wrapper* solver;
 
         int varMarks[MAJ_NOBJS][3][MAJ_NOBJS];
@@ -42,12 +42,12 @@ namespace percy
         ditt_maj_encoder(solver_wrapper& solver)
         {
             this->solver = &solver;
-            vOutLits = pabc::Vec_WecStart(MAJ_NOBJS);
+            vOutLits = abc::Vec_WecStart(MAJ_NOBJS);
         }
 
         ~ditt_maj_encoder()
         {
-            pabc::Vec_WecFree(vOutLits);
+            abc::Vec_WecFree(vOutLits);
         }
 
         void update_level_map(const spec& spec, const fence& f)
@@ -86,19 +86,19 @@ namespace percy
         void add_base_variables(const spec& spec)
         {
             for (int i = 0; i < MAJ_NOBJS; i++) {
-                pabc::Vec_IntClear(pabc::Vec_WecEntry(vOutLits, i));
+                abc::Vec_IntClear(abc::Vec_WecEntry(vOutLits, i));
             }
 
             iVar = 1;
             for (int k = 0; k < 3; k++) {
                 const auto j = 2 - k;
-                pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                 varMarks[spec.nr_in][k][j] = iVar++;
             }
             for (int i = spec.nr_in + 1; i < spec.nr_in + spec.nr_steps; i++) {
                 for (int k = 0; k < 3; k++) {
                     for (int j = 0; j < i - k; j++) {
-                        pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                        abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                         varMarks[i][k][j] = iVar++;
                     }
                 }
@@ -109,13 +109,13 @@ namespace percy
         void add_base_variables(const spec& spec, const fence&)
         {
             for (int i = 0; i < MAJ_NOBJS; i++) {
-                pabc::Vec_IntClear(pabc::Vec_WecEntry(vOutLits, i));
+                abc::Vec_IntClear(abc::Vec_WecEntry(vOutLits, i));
             }
 
             iVar = 1;
             for (int k = 0; k < 3; k++) {
                 const auto j = 2 - k;
-                pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                 varMarks[spec.nr_in][k][j] = iVar++;
             }
             for (int i = spec.nr_in + 1; i < spec.nr_in + spec.nr_steps; i++) {
@@ -123,12 +123,12 @@ namespace percy
                 assert(level > 0);
                 const auto first_z = first_step_on_level(level - 1);
                 for (int z = first_z; z < first_step_on_level(level); z++) {
-                    pabc::Vec_WecPush(vOutLits, z, pabc::Abc_Var2Lit(iVar, 0));
+                    abc::Vec_WecPush(vOutLits, z, abc::Abc_Var2Lit(iVar, 0));
                     varMarks[i][0][z] = iVar++;
                 }
                 for (int k = 1; k < 3; k++) {
                     for (int j = 0; j < i - k; j++) {
-                        pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                        abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                         varMarks[i][k][j] = iVar++;
                         //printf("varMarks[%d][%d][%d]=%d\n", i, k, j, iVar - 1);
                     }
@@ -140,13 +140,13 @@ namespace percy
         void add_base_variables(const spec& spec, const partial_dag& pd)
         {
             for (int i = 0; i < MAJ_NOBJS; i++) {
-                pabc::Vec_IntClear(pabc::Vec_WecEntry(vOutLits, i));
+                abc::Vec_IntClear(abc::Vec_WecEntry(vOutLits, i));
             }
 
             iVar = 1;
             for (int k = 0; k < 3; k++) {
                 const auto j = 2 - k;
-                pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                 varMarks[spec.nr_in][k][j] = iVar++;
             }
             for (int i = spec.nr_in + 1; i < spec.nr_in + spec.nr_steps; i++) {
@@ -156,12 +156,12 @@ namespace percy
                     const auto fanin = vertex[2 - k];
                     if (fanin == 0) {
                         for (int j = 0; j < i - k; j++) {
-                            pabc::Vec_WecPush(vOutLits, j, pabc::Abc_Var2Lit(iVar, 0));
+                            abc::Vec_WecPush(vOutLits, j, abc::Abc_Var2Lit(iVar, 0));
                             varMarks[i][k][j] = iVar++;
                         }
                     } else {
                         const auto fanin_idx = fanin + spec.nr_in - 1;
-                        pabc::Vec_WecPush(vOutLits, fanin_idx, pabc::Abc_Var2Lit(iVar, 0));
+                        abc::Vec_WecPush(vOutLits, fanin_idx, abc::Abc_Var2Lit(iVar, 0));
                         varMarks[i][k][fanin_idx] = iVar++;
                     }
                 }
@@ -177,15 +177,15 @@ namespace percy
                     int nLits = 0;
                     for (int j = 0; j < spec.nr_in + spec.nr_steps; j++) {
                         if (varMarks[i][k][j]) {
-                            pLits[nLits++] = pabc::Abc_Var2Lit(varMarks[i][k][j], 0);
+                            pLits[nLits++] = abc::Abc_Var2Lit(varMarks[i][k][j], 0);
                         }
                     }
                     if (!solver->add_clause(pLits, pLits + nLits))
                         assert(false);
                     for (int n = 0; n < nLits; n++) {
                         for (int m = n + 1; m < nLits; m++) {
-                            tmpLits[0] = pabc::Abc_LitNot(pLits[n]);
-                            tmpLits[1] = pabc::Abc_LitNot(pLits[m]);
+                            tmpLits[0] = abc::Abc_LitNot(pLits[n]);
+                            tmpLits[1] = abc::Abc_LitNot(pLits[m]);
                             if (!solver->add_clause(tmpLits, tmpLits + 2))
                                 assert(false);
                         }
@@ -197,8 +197,8 @@ namespace percy
                         if (varMarks[i][k][j]) {
                             for (int n = j; n < spec.nr_in + spec.nr_steps; n++) {
                                 if (varMarks[i][k + 1][n]) {
-                                    tmpLits[0] = pabc::Abc_Var2Lit(varMarks[i][k][j], 1);
-                                    tmpLits[1] = pabc::Abc_Var2Lit(varMarks[i][k + 1][n], 1);
+                                    tmpLits[0] = abc::Abc_Var2Lit(varMarks[i][k][j], 1);
+                                    tmpLits[1] = abc::Abc_Var2Lit(varMarks[i][k + 1][n], 1);
                                     if (!solver->add_clause(tmpLits, tmpLits + 2))
                                         assert(false);
                                 }
@@ -208,13 +208,13 @@ namespace percy
                 }
             }
             for (int i = 0; i < spec.nr_in + spec.nr_steps - 1; i++) {
-                auto vArray = pabc::Vec_WecEntry(vOutLits, i);
+                auto vArray = abc::Vec_WecEntry(vOutLits, i);
                 if (Vec_IntSize(vArray) == 0) {
                     // Note that this can happen e.g. if we synthesize a chain
                     // with 1 step and > 3 variables.
                     continue;
                 }
-                if (!solver->add_clause(pabc::Vec_IntArray(vArray), pabc::Vec_IntArray(vArray) + pabc::Vec_IntSize(vArray))) {
+                if (!solver->add_clause(abc::Vec_IntArray(vArray), abc::Vec_IntArray(vArray) + abc::Vec_IntSize(vArray))) {
                     return false;
                 }
             }
@@ -248,10 +248,10 @@ namespace percy
                         int iBaseSatVarJ = iVar + 4 * (j - spec.nr_in);
                         for (int n = 0; n < 2; n++) {
                             auto nLits = 0;
-                            pLits[nLits++] = pabc::Abc_Var2Lit(varMarks[i][k][j], 1);
-                            pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarI + k, n);
+                            pLits[nLits++] = abc::Abc_Var2Lit(varMarks[i][k][j], 1);
+                            pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarI + k, n);
                             if (j >= spec.nr_in)
-                                pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarJ + 3, !n);
+                                pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarJ + 3, !n);
                             else if (varVals[j] == n)
                                 continue;
                             if (!solver->add_clause(pLits, pLits + nLits))
@@ -265,10 +265,10 @@ namespace percy
                         continue;
                     for (int k = 0; k < 3; k++) {
                         auto nLits = 0;
-                        if (k != 0) pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarI + 0, n);
-                        if (k != 1) pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarI + 1, n);
-                        if (k != 2) pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarI + 2, n);
-                        if (i != (spec.nr_in + spec.nr_steps - 1)) pLits[nLits++] = pabc::Abc_Var2Lit(iBaseSatVarI + 3, !n);
+                        if (k != 0) pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarI + 0, n);
+                        if (k != 1) pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarI + 1, n);
+                        if (k != 2) pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarI + 2, n);
+                        if (i != (spec.nr_in + spec.nr_steps - 1)) pLits[nLits++] = abc::Abc_Var2Lit(iBaseSatVarI + 3, !n);
                         assert(nLits <= 3);
                         if (!solver->add_clause(pLits, pLits + nLits))
                             return false;

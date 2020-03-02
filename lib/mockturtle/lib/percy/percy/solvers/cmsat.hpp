@@ -52,12 +52,12 @@ namespace percy
             solver->new_vars(nr_vars);
         }
 
-        int add_clause(pabc::lit* begin, pabc::lit* end)
+        int add_clause(abc::lit* begin, abc::lit* end)
         {
             static std::vector<CMSat::Lit> clause;
             clause.clear();
             for (auto i = begin; i < end; i++) {
-                clause.push_back(CMSat::Lit(pabc::Abc_Lit2Var(*i), pabc::Abc_LitIsCompl(*i)));
+                clause.push_back(CMSat::Lit(abc::Abc_Lit2Var(*i), abc::Abc_LitIsCompl(*i)));
             }
             return solver->add_clause(clause);
         }
@@ -83,12 +83,12 @@ namespace percy
             }
         }
 
-        synth_result solve(pabc::lit* begin, pabc::lit* end, int cl)
+        synth_result solve(abc::lit* begin, abc::lit* end, int cl)
         {
             static std::vector<CMSat::Lit> assumps;
             assumps.clear();
             for (auto i = begin; i < end; i++) {
-                assumps.push_back(CMSat::Lit(pabc::Abc_Lit2Var(*i), pabc::Abc_LitIsCompl(*i)));
+                assumps.push_back(CMSat::Lit(abc::Abc_Lit2Var(*i), abc::Abc_LitIsCompl(*i)));
             }
             if (cl > 0) {
                 solver->set_max_confl(cl);

@@ -24,9 +24,9 @@ namespace percy
         
         int var_value(int) { return false; }
         synth_result solve(int) { return failure; }
-        synth_result solve(pabc::lit*, pabc::lit*, int) { return failure; }
+        synth_result solve(abc::lit*, abc::lit*, int) { return failure; }
 
-        int add_clause(pabc::lit* begin, pabc::lit* end) 
+        int add_clause(abc::lit* begin, abc::lit* end) 
         {
             std::vector<int> clause;
             while (begin != end) {
@@ -44,8 +44,8 @@ namespace percy
             for (const auto& clause : clauses) {
                 for (const auto lit : clause) {
                     // NOTE: variable 0 does not exist in DIMACS format
-                    const auto var = pabc::Abc_Lit2Var(lit) + 1;
-                    const auto is_c = pabc::Abc_LitIsCompl(lit);
+                    const auto var = abc::Abc_Lit2Var(lit) + 1;
+                    const auto is_c = abc::Abc_LitIsCompl(lit);
                     fprintf(f, "%d ", is_c ? -var : var);
                 }
                 fprintf(f, "0\n");

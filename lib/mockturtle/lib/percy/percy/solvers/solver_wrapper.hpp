@@ -32,10 +32,10 @@ namespace percy
         virtual int  nr_clauses() = 0;
         virtual int  nr_conflicts() = 0;
         virtual void add_var() = 0;
-        virtual int  add_clause(pabc::lit* begin, pabc::lit* end) = 0;
+        virtual int  add_clause(abc::lit* begin, abc::lit* end) = 0;
         virtual int  var_value(int var) = 0;
         virtual synth_result solve(int conflict_limit = 0) = 0;
-        virtual synth_result solve(pabc::lit* begin, pabc::lit* end, int conflict_limit = 0) = 0;
+        virtual synth_result solve(abc::lit* begin, abc::lit* end, int conflict_limit = 0) = 0;
     };
 	
 }
