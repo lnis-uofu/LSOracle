@@ -23,9 +23,9 @@ namespace percy
         // Initialize res[0] = 1, res[1] == res[2] == ... == res[C+1] == 0.
         for (int i = 0; i < C + 2; i++) {
             if (i == 0) {
-                lits[0] = pabc::Abc_Var2Lit(res_vars[i], 0);
+                lits[0] = abc::Abc_Var2Lit(res_vars[i], 0);
             } else {
-                lits[0] = pabc::Abc_Var2Lit(res_vars[i], 1);
+                lits[0] = abc::Abc_Var2Lit(res_vars[i], 1);
             }
             (void)solver->add_clause(lits, lits + 1);
         }
@@ -39,15 +39,15 @@ namespace percy
                     // res'[0] = MUX(x[k], res[0], 0) = ~x[k] /\ res[0]
                     // Tseytin encoding:
                     // (x[k] \/ ~res[0] \/ res'[0]) /\ (~x[k] \/ ~res'[0]) /\ (res[0] \/ ~res'[0])
-                    lits[0] = pabc::Abc_Var2Lit(x_k, 0);
-                    lits[1] = pabc::Abc_Var2Lit(res_j, 1);
-                    lits[2] = pabc::Abc_Var2Lit(res_jp, 0);
+                    lits[0] = abc::Abc_Var2Lit(x_k, 0);
+                    lits[1] = abc::Abc_Var2Lit(res_j, 1);
+                    lits[2] = abc::Abc_Var2Lit(res_jp, 0);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(x_k, 1);
-                    lits[1] = pabc::Abc_Var2Lit(res_jp, 1);
+                    lits[0] = abc::Abc_Var2Lit(x_k, 1);
+                    lits[1] = abc::Abc_Var2Lit(res_jp, 1);
                     (void)solver->add_clause(lits, lits + 2);
-                    lits[0] = pabc::Abc_Var2Lit(res_j, 0);
-                    lits[1] = pabc::Abc_Var2Lit(res_jp, 1);
+                    lits[0] = abc::Abc_Var2Lit(res_j, 0);
+                    lits[1] = abc::Abc_Var2Lit(res_jp, 1);
                     (void)solver->add_clause(lits, lits + 2);
                 } else if (j == C + 1) {
                     // res'[C+2] = MUX(x[k], res[C+2], res[C+1] \/ res[C+1]) = 
@@ -55,40 +55,40 @@ namespace percy
                     // (res[C+1] \/ res[C+2]) /\ (x[k] \/ res[C+2])
                     // Tseytin encoding:
                     // (~res'[C+2] \/ res[C+1] \/ res[C+2]) /\ (~res'[C+2] \/ x[k] \/ res[C+2]) /\ (res'[C+2] \/ ~x[k] \/ ~res[C+1]) /\ (res'[C+2] \/ ~res[C+2])
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 1);
-                    lits[1] = pabc::Abc_Var2Lit(res_j - 1, 0);
-                    lits[2] = pabc::Abc_Var2Lit(res_j, 0);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 1);
+                    lits[1] = abc::Abc_Var2Lit(res_j - 1, 0);
+                    lits[2] = abc::Abc_Var2Lit(res_j, 0);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 1);
-                    lits[1] = pabc::Abc_Var2Lit(x_k, 0);
-                    lits[2] = pabc::Abc_Var2Lit(res_j, 0);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 1);
+                    lits[1] = abc::Abc_Var2Lit(x_k, 0);
+                    lits[2] = abc::Abc_Var2Lit(res_j, 0);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 0);
-                    lits[1] = pabc::Abc_Var2Lit(x_k, 1);
-                    lits[2] = pabc::Abc_Var2Lit(res_j - 1, 1);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 0);
+                    lits[1] = abc::Abc_Var2Lit(x_k, 1);
+                    lits[2] = abc::Abc_Var2Lit(res_j - 1, 1);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 0);
-                    lits[1] = pabc::Abc_Var2Lit(res_j, 1);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 0);
+                    lits[1] = abc::Abc_Var2Lit(res_j, 1);
                     (void)solver->add_clause(lits, lits + 2);
                 } else {
                     // res'[i] = MUX(x[k], res[i], res[i-1]).
                     // Tseytin encoding:
                     // ((~Z OR A OR S) AND (~Z OR B OR ~S)) AND (Z OR ~A OR S) AND (Z OR ~B OR ~S))) 
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 1);
-                    lits[1] = pabc::Abc_Var2Lit(res_j, 0);
-                    lits[2] = pabc::Abc_Var2Lit(x_k, 0);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 1);
+                    lits[1] = abc::Abc_Var2Lit(res_j, 0);
+                    lits[2] = abc::Abc_Var2Lit(x_k, 0);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 1);
-                    lits[1] = pabc::Abc_Var2Lit(res_j - 1, 0);
-                    lits[2] = pabc::Abc_Var2Lit(x_k, 1);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 1);
+                    lits[1] = abc::Abc_Var2Lit(res_j - 1, 0);
+                    lits[2] = abc::Abc_Var2Lit(x_k, 1);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 0);
-                    lits[1] = pabc::Abc_Var2Lit(res_j, 1);
-                    lits[2] = pabc::Abc_Var2Lit(x_k, 0);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 0);
+                    lits[1] = abc::Abc_Var2Lit(res_j, 1);
+                    lits[2] = abc::Abc_Var2Lit(x_k, 0);
                     (void)solver->add_clause(lits, lits + 3);
-                    lits[0] = pabc::Abc_Var2Lit(res_jp, 0);
-                    lits[1] = pabc::Abc_Var2Lit(res_j - 1, 1);
-                    lits[2] = pabc::Abc_Var2Lit(x_k, 1);
+                    lits[0] = abc::Abc_Var2Lit(res_jp, 0);
+                    lits[1] = abc::Abc_Var2Lit(res_j - 1, 1);
+                    lits[2] = abc::Abc_Var2Lit(x_k, 1);
                     (void)solver->add_clause(lits, lits + 3);
                 }
             }

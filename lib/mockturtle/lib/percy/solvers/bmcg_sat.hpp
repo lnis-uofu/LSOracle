@@ -14,28 +14,28 @@ namespace percy
     class bmcg_wrapper : public solver_wrapper
     {
     private:
-        pabc::bmcg_sat_solver * solver = NULL;
+        abc::bmcg_sat_solver * solver = NULL;
 
     public:
         bmcg_wrapper()
         {
-            solver = pabc::bmcg_sat_solver_start();
+            solver = abc::bmcg_sat_solver_start();
         }
 
         ~bmcg_wrapper()
         {
-            pabc::bmcg_sat_solver_stop(solver);
+            abc::bmcg_sat_solver_stop(solver);
             solver = NULL;
         }
 
         void restart()
         {
-            pabc::bmcg_sat_solver_reset(solver);
+            abc::bmcg_sat_solver_reset(solver);
         }
 
         void set_nr_vars(int nr_vars)
         {
-            pabc::bmcg_sat_solver_set_nvars(solver, nr_vars);
+            abc::bmcg_sat_solver_set_nvars(solver, nr_vars);
         }
 
         int nr_vars()
@@ -46,33 +46,33 @@ namespace percy
 
         int nr_clauses()
         {
-            return pabc::bmcg_sat_solver_clausenum(solver);
+            return abc::bmcg_sat_solver_clausenum(solver);
         }
 
         int nr_conflicts()
         {
-            return pabc::bmcg_sat_solver_conflictnum(solver);
+            return abc::bmcg_sat_solver_conflictnum(solver);
         }
 
-        int add_clause(pabc::lit* begin, pabc::lit* end)
+        int add_clause(abc::lit* begin, abc::lit* end)
         {
-            return pabc::bmcg_sat_solver_addclause(solver, begin, end - begin);
+            return abc::bmcg_sat_solver_addclause(solver, begin, end - begin);
         }
 
         void add_var()
         {
-            pabc::bmcg_sat_solver_addvar(solver);
+            abc::bmcg_sat_solver_addvar(solver);
         }
 
         int var_value(int var)
         {
-            return pabc::bmcg_sat_solver_read_cex_varvalue(solver, var);
+            return abc::bmcg_sat_solver_read_cex_varvalue(solver, var);
         }
 
         synth_result solve(int cl)
         {
-            pabc::bmcg_sat_solver_set_conflict_budget(solver, cl);
-            auto res = pabc::bmcg_sat_solver_solve(solver, 0, 0);
+            abc::bmcg_sat_solver_set_conflict_budget(solver, cl);
+            auto res = abc::bmcg_sat_solver_solve(solver, 0, 0);
             if (res == 1) {
                 return success;
             } else if (res == -1) {
@@ -82,10 +82,10 @@ namespace percy
             }
         }
 
-        synth_result solve(pabc::lit* begin, pabc::lit* end, int cl)
+        synth_result solve(abc::lit* begin, abc::lit* end, int cl)
         {
-            pabc::bmcg_sat_solver_set_conflict_budget(solver, cl);
-            auto res = pabc::bmcg_sat_solver_solve(solver, begin, end - begin);
+            abc::bmcg_sat_solver_set_conflict_budget(solver, cl);
+            auto res = abc::bmcg_sat_solver_solve(solver, begin, end - begin);
             if (res == 1) {
                 return success;
             } else if (res == -1) {

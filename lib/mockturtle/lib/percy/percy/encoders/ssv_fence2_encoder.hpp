@@ -20,7 +20,7 @@ namespace percy
         int ops_offset;
         int sim_offset;
 
-        pabc::Vec_Int_t* vLits; // Dynamic vector of literals
+        abc::Vec_Int_t* vLits; // Dynamic vector of literals
 
         static const int NR_SIM_TTS = 32;
         std::vector<kitty::dynamic_truth_table> sim_tts { NR_SIM_TTS };
@@ -37,7 +37,7 @@ namespace percy
                 outbit = 1 - outbit;
             }
             const auto sim_var = get_sim_var(spec, ilast_step, t);
-            pabc::lit sim_lit = pabc::Abc_Var2Lit(sim_var, 1 - outbit);
+            abc::lit sim_lit = abc::Abc_Var2Lit(sim_var, 1 - outbit);
             return solver->add_clause(&sim_lit, &sim_lit + 1);
         }
 
@@ -51,7 +51,7 @@ namespace percy
                 outbit = 1 - outbit;
             }
             const auto sim_var = get_sim_var(spec, ilast_step, t);
-            pabc::lit sim_lit = pabc::Abc_Var2Lit(sim_var, 1 - outbit);
+            abc::lit sim_lit = abc::Abc_Var2Lit(sim_var, 1 - outbit);
             (void)solver->add_clause(&sim_lit, &sim_lit + 1);
         }
 
@@ -63,13 +63,13 @@ namespace percy
         ssv_fence2_encoder(solver_wrapper& solver)
         {
             // TODO: compute better upper bound on number of literals
-            vLits = pabc::Vec_IntAlloc(128);
+            vLits = abc::Vec_IntAlloc(128);
             set_solver(solver);
         }
 
         ~ssv_fence2_encoder()
         {
-            pabc::Vec_IntFree(vLits);
+            abc::Vec_IntFree(vLits);
         }
 
         int nr_svars_for_step(const spec& spec, int i) const
@@ -251,20 +251,20 @@ namespace percy
             bool status = true;
             for (int i = 0; i < spec.nr_steps; i++) {
                 // Dissallow the constant zero operator.
-                pLits[0] = pabc::Abc_Var2Lit(get_op_var(spec, i, 0), 0);
-                pLits[1] = pabc::Abc_Var2Lit(get_op_var(spec, i, 1), 0);
-                pLits[2] = pabc::Abc_Var2Lit(get_op_var(spec, i, 2), 0);
+                pLits[0] = abc::Abc_Var2Lit(get_op_var(spec, i, 0), 0);
+                pLits[1] = abc::Abc_Var2Lit(get_op_var(spec, i, 1), 0);
+                pLits[2] = abc::Abc_Var2Lit(get_op_var(spec, i, 2), 0);
                 status &= solver->add_clause(pLits, pLits + 3);
 
                 // Dissallow variable projections.
-                pLits[0] = pabc::Abc_Var2Lit(get_op_var(spec, i, 0), 0);
-                pLits[1] = pabc::Abc_Var2Lit(get_op_var(spec, i, 1), 1);
-                pLits[2] = pabc::Abc_Var2Lit(get_op_var(spec, i, 2), 1);
+                pLits[0] = abc::Abc_Var2Lit(get_op_var(spec, i, 0), 0);
+                pLits[1] = abc::Abc_Var2Lit(get_op_var(spec, i, 1), 1);
+                pLits[2] = abc::Abc_Var2Lit(get_op_var(spec, i, 2), 1);
                 status &= solver->add_clause(pLits, pLits + 3);
 
-                pLits[0] = pabc::Abc_Var2Lit(get_op_var(spec, i, 0), 1);
-                pLits[1] = pabc::Abc_Var2Lit(get_op_var(spec, i, 1), 0);
-                pLits[2] = pabc::Abc_Var2Lit(get_op_var(spec, i, 2), 1);
+                pLits[0] = abc::Abc_Var2Lit(get_op_var(spec, i, 0), 1);
+                pLits[1] = abc::Abc_Var2Lit(get_op_var(spec, i, 1), 0);
+                pLits[2] = abc::Abc_Var2Lit(get_op_var(spec, i, 2), 1);
                 status &= solver->add_clause(pLits, pLits + 3);
             }
 
@@ -349,7 +349,7 @@ namespace percy
                 // is exactly FI.
                 const auto fi_var =
                     get_res_var(spec, i, svars.size() * (1 + 2) + 1);
-                auto fi_lit = pabc::Abc_Var2Lit(fi_var, 0);
+                auto fi_lit = abc::Abc_Var2Lit(fi_var, 0);
                 (void)solver->add_clause(&fi_lit, &fi_lit + 1);
             }
         }
@@ -362,10 +362,10 @@ namespace percy
                 const auto nr_svars_for_i = nr_svars_for_step(spec, i);
                 for (int j = 0; j < nr_svars_for_i; j++) {
                     const auto sel_var = get_sel_var(spec, i, j);
-                    pabc::Vec_IntSetEntry(vLits, j, pabc::Abc_Var2Lit(sel_var, 0));
+                    abc::Vec_IntSetEntry(vLits, j, abc::Abc_Var2Lit(sel_var, 0));
                 }
-                res &= solver->add_clause(pabc::Vec_IntArray(vLits), 
-                        pabc::Vec_IntArray(vLits) + nr_svars_for_i);
+                res &= solver->add_clause(abc::Vec_IntArray(vLits), 
+                        abc::Vec_IntArray(vLits) + nr_svars_for_i);
             }
             return res;
         }
@@ -392,14 +392,14 @@ namespace percy
                                 continue;
                             }
                             const auto sel_var = get_sel_var(spec, ip, svctr++);
-                            pabc::Vec_IntSetEntry(
+                            abc::Vec_IntSetEntry(
                                 vLits,
                                 ctr++,
-                                pabc::Abc_Var2Lit(sel_var, 0));
+                                abc::Abc_Var2Lit(sel_var, 0));
                         }
                     }
                 }
-                solver->add_clause(pabc::Vec_IntArray(vLits), pabc::Vec_IntArray(vLits) + ctr);
+                solver->add_clause(abc::Vec_IntArray(vLits), abc::Vec_IntArray(vLits) + ctr);
             }
         }
 
@@ -422,7 +422,7 @@ namespace percy
                     return true;
                 }
             } else {
-                pLits[ctr++] = pabc::Abc_Var2Lit(
+                pLits[ctr++] = abc::Abc_Var2Lit(
                     get_sim_var(spec, j - spec.nr_in, t), b);
             }
 
@@ -431,15 +431,15 @@ namespace percy
                     return true;
                 }
             } else {
-                pLits[ctr++] = pabc::Abc_Var2Lit(
+                pLits[ctr++] = abc::Abc_Var2Lit(
                     get_sim_var(spec, k - spec.nr_in, t), c);
             }
 
-            pLits[ctr++] = pabc::Abc_Var2Lit(sel_var, 1);
-            pLits[ctr++] = pabc::Abc_Var2Lit(get_sim_var(spec, i, t), a);
+            pLits[ctr++] = abc::Abc_Var2Lit(sel_var, 1);
+            pLits[ctr++] = abc::Abc_Var2Lit(get_sim_var(spec, i, t), a);
 
             if (b | c) {
-                pLits[ctr++] = pabc::Abc_Var2Lit(
+                pLits[ctr++] = abc::Abc_Var2Lit(
                     get_op_var(spec, i, ((c << 1) | b) - 1), 1 - a);
             }
 
@@ -471,7 +471,7 @@ namespace percy
                         k < first_step_on_level(level); k++) {
                         for (int j = 0; j < k; j++) {
                             const auto sel_var = get_sel_var(spec, i, svar_ctr++);
-                            pLits[0] = pabc::Abc_Var2Lit(sel_var, 1);
+                            pLits[0] = abc::Abc_Var2Lit(sel_var, 1);
 
                             // Note that it's possible for node ip to never have
                             // i as its second fanin.
@@ -481,7 +481,7 @@ namespace percy
                                 for (int jp = 0; jp < kp; jp++) {
                                     if (kp == idx && (jp == j || jp == k)) {
                                         const auto sel_varp = get_sel_var(spec, ip, svar_ctrp);
-                                        pLits[1] = pabc::Abc_Var2Lit(sel_varp, 1);
+                                        pLits[1] = abc::Abc_Var2Lit(sel_varp, 1);
                                         auto status = solver->add_clause(pLits, pLits + 2);
                                         assert(status);
                                     }
@@ -526,9 +526,9 @@ namespace percy
                                             const auto sel_var = get_sel_var(spec, i, svar_ctr);
                                             const auto sel_varp = get_sel_var(spec, ip, svar_ctr);
                                             const auto sel_varpp = get_sel_var(spec, ipp, svar_ctrpp);
-                                            pLits[0] = pabc::Abc_Var2Lit(sel_var, 1);
-                                            pLits[1] = pabc::Abc_Var2Lit(sel_varp, 1);
-                                            pLits[2] = pabc::Abc_Var2Lit(sel_varpp, 1);
+                                            pLits[0] = abc::Abc_Var2Lit(sel_var, 1);
+                                            pLits[1] = abc::Abc_Var2Lit(sel_varp, 1);
+                                            pLits[2] = abc::Abc_Var2Lit(sel_varpp, 1);
                                             (void)solver->add_clause(pLits, pLits + 3);
                                         }
                                         svar_ctrpp++;
@@ -608,14 +608,14 @@ namespace percy
                             continue;
                         }
                         const auto sel_var = get_sel_var(spec, i, svar_ctr);
-                        pLits[0] = pabc::Abc_Var2Lit(sel_var, 1);
+                        pLits[0] = abc::Abc_Var2Lit(sel_var, 1);
                         int svar_ctrp = 0;
                         for (int kp = first_step_on_level(levelp - 1);
                             kp < first_step_on_level(levelp); kp++) {
                             for (int jp = 0; jp < kp; jp++) {
                                 if ((kp == k && jp < j) || (kp < k)) {
                                     const auto sel_varp = get_sel_var(spec, i + 1, svar_ctrp);
-                                    pLits[1] = pabc::Abc_Var2Lit(sel_varp, 1);
+                                    pLits[1] = abc::Abc_Var2Lit(sel_varp, 1);
                                     (void)solver->add_clause(pLits, pLits + 2);
                                 }
                                 svar_ctrp++;
@@ -634,34 +634,34 @@ namespace percy
             for (int i = 0; i < spec.nr_steps-1; i++) {
                 for (int k = 1; k < spec.nr_in+i; k++) {
                     for (int j = 0; j < k; j++) {
-                        pLits[0] = pabc::Abc_Var2Lit(spec.selection_vars[i][j][k], 1);
-                        pLits[1] = pabc::Abc_Var2Lit(spec.selection_vars[i+1][j][k], 1);
+                        pLits[0] = abc::Abc_Var2Lit(spec.selection_vars[i][j][k], 1);
+                        pLits[1] = abc::Abc_Var2Lit(spec.selection_vars[i+1][j][k], 1);
 
                         pLits[2] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i, 1, 1), 1);
+                            abc::Abc_Var2Lit(get_op_var(spec, i, 1, 1), 1);
                         pLits[3] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
                         solver_add_clause(this->solver, pLits, pLits+4);
 
                         pLits[3] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i, 1, 0), 1);
+                            abc::Abc_Var2Lit(get_op_var(spec, i, 1, 0), 1);
                         pLits[4] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
                         solver_add_clause(this->solver, pLits, pLits+5);
                         pLits[4] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 0), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 0), 0);
                         solver_add_clause(this->solver, pLits, pLits+5);
 
                         pLits[4] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i, 0, 1), 1);
+                            abc::Abc_Var2Lit(get_op_var(spec, i, 0, 1), 1);
                         pLits[5] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 1), 0);
                         solver_add_clause(this->solver, pLits, pLits+6);
                         pLits[5] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 0), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 1, 0), 0);
                         solver_add_clause(this->solver, pLits, pLits+6);
                         pLits[5] = 
-                            pabc::Abc_Var2Lit(get_op_var(spec, i+1, 0, 1), 0);
+                            abc::Abc_Var2Lit(get_op_var(spec, i+1, 0, 1), 0);
                         solver_add_clause(this->solver, pLits, pLits+6);
                     }
                 }
@@ -695,7 +695,7 @@ namespace percy
                                     continue;
                                 }
                                 const auto sel_var = get_sel_var(spec, i, svar_ctr);
-                                pabc::Vec_IntSetEntry(vLits, 0, pabc::Abc_Var2Lit(sel_var, 1));
+                                abc::Vec_IntSetEntry(vLits, 0, abc::Abc_Var2Lit(sel_var, 1));
                                 auto ctr = 1;
                                 for (int ip = 0; ip < i; ip++) {
                                     const auto levelp = get_level(spec, spec.nr_in + ip);
@@ -705,8 +705,8 @@ namespace percy
                                         for (int jp = 0; jp < kp; jp++) {
                                             if (jp == p || kp == p) {
                                                 const auto sel_varp = get_sel_var(spec, ip, svar_ctrp);
-                                                pabc::Vec_IntSetEntry(vLits, ctr++,
-                                                    pabc::Abc_Var2Lit(sel_varp, 0));
+                                                abc::Vec_IntSetEntry(vLits, ctr++,
+                                                    abc::Abc_Var2Lit(sel_varp, 0));
                                             }
                                             svar_ctrp++;
                                         }
