@@ -205,12 +205,10 @@ struct storage
   std::vector<node_type> nodes;
   std::vector<uint64_t> inputs;
   std::vector<typename node_type::pointer_type> outputs;
-
-  std::string net_name;
   std::unordered_map<uint64_t, latch_info> latch_information;
-  // std::unordered_map<node_type, latch_info> latch_information;
+  std::string net_name;
 
-  spp::sparse_hash_map<node_type, std::size_t, NodeHasher> hash;
+  spp::sparse_hash_map<node_type, uint64_t, NodeHasher> hash;
 
   T data;
 };

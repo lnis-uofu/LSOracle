@@ -296,7 +296,7 @@ std::tuple<graph, std::vector<std::pair<node<Ntk>, uint32_t>>> network_cuts_grap
   ntk.clear_visited();
 
   ntk.foreach_node( [&]( auto const& n, auto index ) {
-    if ( index >= cuts.nodes_size() || ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( index >= cuts.nodes_size() || ntk.is_constant( n ) || ntk.is_pi( n ) )
       return;
 
     if ( mffc_size( ntk, n ) == 1 )
@@ -323,7 +323,7 @@ std::tuple<graph, std::vector<std::pair<node<Ntk>, uint32_t>>> network_cuts_grap
       {
         leaves.push_back( ntk.index_to_node( leaf_index ) );
       }
-      cut_view<Ntk> dcut( ntk, leaves, n );
+      cut_view<Ntk> dcut( ntk, leaves, ntk.make_signal( n ) );
       dcut.foreach_gate( [&]( auto const& n2 ) {
         //if ( dcut.is_constant( n2 ) || dcut.is_pi( n2 ) )
         //  return;
@@ -394,7 +394,6 @@ template<class Ntk, class RewritingFn, class NodeCostFn>
 class cut_rewriting_impl
 {
 public:
-  // using node = typename Ntk::node;
   cut_rewriting_impl( Ntk& ntk, RewritingFn&& rewriting_fn, cut_rewriting_params const& ps, cut_rewriting_stats& st, NodeCostFn const& cost_fn )
       : ntk( ntk ),
         rewriting_fn( rewriting_fn ),
@@ -428,7 +427,7 @@ public:
         return false;
 
       /* do not iterate over constants or PIs */
-      if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+      if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
         return true;
 
       /* skip cuts with small MFFC */
@@ -501,7 +500,7 @@ public:
           {
             rewriting_fn( ntk, cuts.truth_table( *cut ), children.begin(), children.end(), on_signal );
           }
-          
+
           if ( best_gain > 0 )
           {
             max_total_gain += best_gain;
@@ -510,7 +509,6 @@ public:
 
         recursive_ref( n );
       }
-      // std::cout << "Node: " << index << " Best gain = " << max_total_gain << "\n";
 
       return true;
     } );
@@ -545,20 +543,7 @@ public:
 
       const auto replacement = best_replacements[v_node][v_cut];
 
-      mockturtle::fanout_view fanout{ntk};
-      std::set<node<Ntk>> fanin_cone = BFS_traversal_down(ntk, v_node);
-      std::set<node<Ntk>> fanout_cone = BFS_traversal_up(fanout, v_node);
-      std::set<node<Ntk>> cone;
-      std::set_union(fanin_cone.begin(), fanin_cone.end(), fanout_cone.begin(), fanout_cone.end(), std::inserter(cone, cone.begin()));
-      // std::cout << "replacement candidate = " << replacement.index << "\n";
-      // std::cout << "Cone of " << v_node << ": ";
-      // typename std::set<node<Ntk>>::iterator it;
-      // for(it = cone.begin(); it != cone.end(); ++it){
-      //   std::cout << *it << " ";
-      // }
-      // std::cout << "\n";
-      if ( ntk.is_constant( ntk.get_node( replacement ) ) || v_node == ntk.get_node( replacement ) 
-        || cone.find(ntk.get_node(replacement)) != cone.end() )
+      if ( ntk.is_constant( ntk.get_node( replacement ) ) || v_node == ntk.get_node( replacement ) )
         continue;
 
       if ( ps.very_verbose )
@@ -566,93 +551,15 @@ public:
         std::cout << "[i] optimize cut #" << v_cut << " in node #" << ntk.node_to_index( v_node ) << " and replace with node " << ntk.node_to_index( ntk.get_node( replacement ) ) << "\n";
       }
 
-      // std::cout << "substituting " << v_node << " with " << replacement.index << "\n";
       ntk.substitute_node( v_node, replacement );
     }
   }
-
-  std::set<node<Ntk>> BFS_traversal_down(Ntk& ntk, node<Ntk> output){
-    std::queue<int> net_queue;
-    std::map<int, bool> visited;
-    std::set<node<Ntk>> cone;
-
-    //Set all nodes to be unvisited
-    ntk.foreach_node( [&]( auto node ) {
-      visited[ntk.node_to_index(node)] = false;
-    });
-    int outputIdx = ntk.node_to_index(output);
-    cone.insert(output);
-    net_queue.push(outputIdx);
-    visited[outputIdx] = true;
-
-    while(!net_queue.empty()){
-
-      int curr_node = net_queue.front();
-      net_queue.pop();
-      auto node = ntk.index_to_node(curr_node);
-
-      
-      for(int i = 0; i < ntk._storage->nodes[node].children.size(); i++){
-
-        int childIdx = ntk._storage->nodes[node].children[i].index;
-        bool is_valid = true;
-        //Make sure a valid child index is found
-        if(childIdx < 0){
-          is_valid = false;
-        }
-
-        if(!visited[childIdx]){
-
-          if(is_valid){
-
-            net_queue.push(childIdx);
-            visited[childIdx] = true;
-            cone.insert(ntk.index_to_node(childIdx));
-          }
-        }
-      }
-    }
-    return cone;
-  }//BFS_traversal()
-
-  std::set<node<Ntk>> BFS_traversal_up(fanout_view<Ntk>& ntk, node<Ntk> output){
-    std::queue<int> net_queue;
-    std::map<int, bool> visited;
-    std::set<node<Ntk>> cone;
-
-    //Set all nodes to be unvisited
-    ntk.foreach_node( [&]( auto node ) {
-      visited[ntk.node_to_index(node)] = false;
-    });
-    int outputIdx = ntk.node_to_index(output);
-    cone.insert(output);
-    net_queue.push(outputIdx);
-    visited[outputIdx] = true;
-
-    while(!net_queue.empty()){
-
-      int curr_node = net_queue.front();
-      net_queue.pop();
-      auto node = ntk.index_to_node(curr_node);
-
-      ntk.foreach_fanout(node, [&](auto fanout){
-        int idx = ntk.node_to_index(fanout);
-        if(!visited[idx]){
-          net_queue.push(idx);
-          visited[idx] = true;
-          cone.insert(fanout);
-        }
-      });
-      
-    }
-    return cone;
-  }//BFS_traversal()
 
 private:
   uint32_t recursive_deref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -669,7 +576,7 @@ private:
   uint32_t recursive_ref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -686,7 +593,7 @@ private:
   std::pair<int32_t, bool> recursive_ref_contains( node<Ntk> const& n, node<Ntk> const& repl )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
       return {0, false};
 
     /* recursively collect nodes */

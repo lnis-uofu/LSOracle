@@ -343,7 +343,6 @@ public:
 
   void on_and( uint32_t index, uint32_t left_lit, uint32_t right_lit ) const override
   {
-    std::cout << "AND gate\n";
     _os << ( 2u * index ) << ' ' << left_lit << ' ' << right_lit << std::endl;
   }
 
@@ -382,7 +381,6 @@ public:
 
   void on_input_name( uint32_t index, const std::string& name ) const override
   {
-    std::cout << "INput name\n";
     _os << "i" << index << ' ' << name << std::endl;
   }
 
@@ -393,7 +391,6 @@ public:
 
   void on_output_name( uint32_t index, const std::string& name ) const override
   {
-    std::cout << "output name\n";
     _os << "o" << index << ' ' << name << std::endl;
   }
 

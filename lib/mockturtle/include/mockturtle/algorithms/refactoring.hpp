@@ -32,8 +32,6 @@
 */
 #pragma once
 
-#include <iostream>
-
 #include "../networks/mig.hpp"
 #include "../traits.hpp"
 #include "../utils/progress_bar.hpp"
@@ -136,7 +134,6 @@ public:
 
   void run()
   {
-    const auto size = ntk.size();
     progress_bar pbar{ntk.size(), "refactoring |{0}| node = {1:>4}   cand = {2:>4}   est. reduction = {3:>5}", ps.progress};
 
     stopwatch t( st.time_total );
@@ -147,17 +144,16 @@ public:
       ntk.set_value( n, ntk.fanout_size( n ) );
     } );
 
+    const auto size = ntk.num_gates();
     ntk.foreach_gate( [&]( auto const& n, auto i ) {
-      
       if ( i >= size )
       {
         return false;
       }
-      if ( ntk.fanout_size( n ) == 0u || ntk.is_ci( n ) )
+      if ( ntk.fanout_size( n ) == 0u )
       {
         return true;
       }
-
       const auto mffc = make_with_stopwatch<mffc_view<Ntk>>( st.time_mffc, ntk, n );
 
       pbar( i, i, _candidates, _estimated_gain );
@@ -167,13 +163,11 @@ public:
         return true;
       }
 
-      // std::cout << "making leaves\n";
       std::vector<signal<Ntk>> leaves( mffc.num_pis() );
       mffc.foreach_pi( [&]( auto const& n, auto j ) {
         leaves[j] = ntk.make_signal( n );
       } );
 
-      // std::cout << "beginning simulation\n";
       default_simulator<kitty::dynamic_truth_table> sim( mffc.num_pis() );
       const auto tt = call_with_stopwatch( st.time_simulation,
                                            [&]() { return simulate<kitty::dynamic_truth_table>( mffc, sim )[0]; } );
@@ -239,7 +233,7 @@ private:
   uint32_t recursive_deref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -256,7 +250,7 @@ private:
   uint32_t recursive_ref( node<Ntk> const& n )
   {
     /* terminate? */
-    if ( ntk.is_constant( n ) || ntk.is_ci( n ) )
+    if ( ntk.is_constant( n ) || ntk.is_pi( n ) )
       return 0;
 
     /* recursively collect nodes */
@@ -286,7 +280,7 @@ private:
 /*! \brief Boolean refactoring.
  *
  * This algorithm performs refactoring by collapsing maximal fanout-free cones
- * (MFFCs) into truth tables and recreate a new network structure from it.
+ * (MFFCs) into truth tables and recreating a new network structure from it.
  * The algorithm performs changes directly in the input network and keeps the
  * substituted structures dangling in the network.  They can be cleaned up using
  * the `cleanup_dangling` algorithm.

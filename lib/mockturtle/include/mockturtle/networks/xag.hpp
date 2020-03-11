@@ -186,7 +186,7 @@ public:
     return {0, static_cast<uint64_t>( value ? 1 : 0 )};
   }
 
-  signal create_pi( std::string const& name = {} )
+  signal create_pi( std::string const& name = std::string() )
   {
     (void)name;
 
@@ -198,7 +198,7 @@ public:
     return {index, 0};
   }
 
-  uint32_t create_po( signal const& f, std::string const& name = {} )
+  uint32_t create_po( signal const& f, std::string const& name = std::string() )
   {
     (void)name;
 
@@ -210,7 +210,7 @@ public:
     return po_index;
   }
 
-  signal create_ro( std::string const& name = {} )
+  signal create_ro( std::string const& name = std::string() )
   {
     (void)name;
 
@@ -221,7 +221,7 @@ public:
     return {index, 0};
   }
 
-  uint32_t create_ri( signal const& f, int8_t reset = 0, std::string const& name = {} )
+  uint32_t create_ri( signal const& f, int8_t reset = 0, std::string const& name = std::string() )
   {
     (void)name;
 
@@ -253,6 +253,17 @@ public:
   bool is_ci( node const& n ) const
   {
     return _storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data;
+  }
+
+  bool is_po( node const& n ) const{
+
+    int nodeIdx = node_to_index(n);
+    bool result = false;
+    for(int i = 0; i < _storage->outputs.size(); i++){
+      if(_storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
+    return result;
   }
 
   bool is_pi( node const& n ) const
@@ -565,8 +576,8 @@ public:
 
   void take_out_node( node const& n )
   {
-    /* we cannot delete PIs or constants */
-    if ( n == 0 || is_pi( n ) )
+    /* we cannot delete CIs or constants */
+    if ( n == 0 || is_ci( n ) )
       return;
 
     auto& nobj = _storage->nodes[n];
@@ -608,8 +619,8 @@ public:
 
       for ( auto idx = 1u; idx < _storage->nodes.size(); ++idx )
       {
-        if ( is_pi( idx ) )
-          continue; /* ignore PIs */
+        if ( is_ci( idx ) )
+          continue; /* ignore CIs */
 
         if ( const auto repl = replace_in_node( idx, _old, _new ); repl )
         {
@@ -643,14 +654,14 @@ public:
     return static_cast<uint32_t>( _storage->outputs.size() );
   }
 
-  auto num_pis() const
-  {
-    return _storage->data.num_pis;
-  }
-
   uint32_t num_latches() const
   {
       return _storage->data.latches.size();
+  }
+
+  auto num_pis() const
+  {
+    return _storage->data.num_pis;
   }
 
   auto num_pos() const
@@ -671,7 +682,7 @@ public:
 
   uint32_t fanin_size( node const& n ) const
   {
-    if ( is_constant( n ) || is_pi( n ) )
+    if ( is_constant( n ) || is_ci( n ) )
       return 0;
     return 2;
   }
@@ -693,7 +704,7 @@ public:
 
   bool is_and( node const& n ) const
   {
-    return n > 0 && !is_pi( n ) && ( _storage->nodes[n].children[0].index < _storage->nodes[n].children[1].index );
+    return n > 0 && !is_ci( n ) && ( _storage->nodes[n].children[0].index < _storage->nodes[n].children[1].index );
   }
 
   bool is_or( node const& n ) const
@@ -704,7 +715,7 @@ public:
 
   bool is_xor( node const& n ) const
   {
-    return n > 0 && !is_pi( n ) && ( _storage->nodes[n].children[0].index > _storage->nodes[n].children[1].index );
+    return n > 0 && !is_ci( n ) && ( _storage->nodes[n].children[0].index > _storage->nodes[n].children[1].index );
   }
 
   bool is_maj( node const& n ) const
@@ -828,6 +839,8 @@ public:
   uint32_t pi_index( node const& n ) const
   {
     assert( _storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data );
+    assert( _storage->nodes[n].children[0].data < _storage->data.num_pis );
+
     return ( _storage->nodes[n].children[0].data );
   }
 
@@ -848,6 +861,8 @@ public:
   uint32_t ro_index( node const& n ) const
   {
     assert( _storage->nodes[n].children[0].data == _storage->nodes[n].children[1].data );
+    assert( _storage->nodes[n].children[0].data >= _storage->data.num_pis );
+
     return ( _storage->nodes[n].children[0].data - _storage->data.num_pis );
   }
 
@@ -872,7 +887,7 @@ public:
 
   node ri_to_ro( signal const& s ) const
   {
-    return *( _storage->inputs.begin() + num_pis() + ri_index( s ) );
+    return *( _storage->inputs.begin() + _storage->data.num_pis + ri_index( s ) );
   }
 #pragma endregion
 
@@ -972,14 +987,14 @@ public:
   {
     detail::foreach_element_if( ez::make_direct_iterator<uint64_t>( 1 ), /* start from 1 to avoid constant */
                                 ez::make_direct_iterator<uint64_t>( _storage->nodes.size() ),
-                                [this]( auto n ) { return !is_pi( n ) && !is_dead( n ); },
+                                [this]( auto n ) { return !is_ci( n ) && !is_dead( n ); },
                                 fn );
   }
 
   template<typename Fn>
   void foreach_fanin( node const& n, Fn&& fn ) const
   {
-    if ( n == 0 || is_pi( n ) )
+    if ( n == 0 || is_ci( n ) )
       return;
 
     static_assert( detail::is_callable_without_index_v<Fn, signal, bool> ||
@@ -1020,7 +1035,7 @@ public:
   {
     (void)end;
 
-    assert( n != 0 && !is_pi( n ) );
+    assert( n != 0 && !is_ci( n ) );
 
     auto const& c1 = _storage->nodes[n].children[0];
     auto const& c2 = _storage->nodes[n].children[1];
@@ -1044,7 +1059,7 @@ public:
   {
     (void)end;
 
-    assert( n != 0 && !is_pi( n ) );
+    assert( n != 0 && !is_ci( n ) );
 
     auto const& c1 = _storage->nodes[n].children[0];
     auto const& c2 = _storage->nodes[n].children[1];

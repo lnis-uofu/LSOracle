@@ -80,15 +80,18 @@ public:
 
   void declare_known( const std::string& known )
   {
-    _waits_for[ known ];
+    _known.emplace( known );
   }
-  
+
   void call_deferred( const std::vector<std::string>& inputs, const std::string& output, Args... params )
   {
     /* do we have all inputs */
     std::unordered_set<std::string> unknown;
     for ( const auto& input : inputs )
     {
+      if ( _known.find( input ) != _known.end() )
+        continue;
+
       auto it = _waits_for.find( input );
       if ( it == _waits_for.end() || !it->second.empty() )
       {
@@ -134,6 +137,32 @@ public:
     }
   }
 
+  void compute_dependencies( const std::string& output )
+  {
+    /* trigger computation */
+    _waits_for[output]; /* init empty, makes sure nothing is waiting for this output */
+    std::stack<std::string> computed;
+    computed.push( output );
+    while ( !computed.empty() )
+    {
+      auto next = computed.top();
+      computed.pop();
+
+      // C++17: std::apply( f, _stored_params[next] );
+      detail::apply( f, _stored_params[next] );
+
+      for ( const auto& other : _triggers[next] )
+      {
+        _waits_for[other].erase( next );
+        if ( _waits_for[other].empty() )
+        {
+          computed.push( other );
+        }
+      }
+      _triggers[next].clear();
+    }
+  }
+
   std::vector<std::pair<std::string,std::string>> unresolved_dependencies()
   {
     std::vector<std::pair<std::string,std::string>> deps;
@@ -149,8 +178,9 @@ public:
     }
     return deps;
   }
-  
+
 private:
+  std::unordered_set<std::string> _known;
   std::unordered_map<std::string, std::unordered_set<std::string>> _triggers;
   std::unordered_map<std::string, std::unordered_set<std::string>> _waits_for;
   std::function<void(Args...)> f;
@@ -232,11 +262,15 @@ inline std::vector<std::string> split( const std::string& str, const std::string
   {
     std::string substring = str.substr( last, next - last );
     if ( substring.length() > 0 ){
-      result.push_back( str.substr( last, next - last ) );
+      std::string sub = str.substr( last, next - last );
+      sub.erase(remove(sub.begin(), sub.end(), ' '), sub.end());
+      result.push_back( sub );
     }
     last = next + 1;
   }
-  result.push_back( str.substr( last ) );
+  std::string substring = str.substr( last );
+  substring.erase(remove(substring.begin(), substring.end(), ' '), substring.end());
+  result.push_back( substring );
 
   return result;
 }

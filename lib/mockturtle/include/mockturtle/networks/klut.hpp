@@ -26,6 +26,7 @@
 /*!
   \file klut.hpp
   \brief k-LUT logic network implementation
+
   \author Mathias Soeken
   \author Heinz Riener
 */
@@ -73,6 +74,7 @@ struct klut_storage_node : mixed_fanin_node<2>
 };
 
 /*! \brief k-LUT storage container
+
   ...
 */
 using klut_storage = storage<klut_storage_node, klut_storage_data>;
@@ -199,6 +201,7 @@ public:
   signal create_ro( std::string const& name = std::string() )
   {
     (void)name;
+
     auto const index = _storage->nodes.size();
     _storage->nodes.emplace_back();
     _storage->inputs.emplace_back( index );
@@ -209,6 +212,7 @@ public:
   uint32_t create_ri( signal const& f, int8_t reset = 0, std::string const& name = std::string() )
   {
     (void)name;
+
     /* increase ref-count to children */
     _storage->nodes[f].data[0].h1++;
     auto const ri_index = _storage->outputs.size();
@@ -246,6 +250,17 @@ public:
         return true;
       } );
     return found;
+  }
+
+  bool is_po( node const& n ) const{
+
+    int nodeIdx = node_to_index(n);
+    bool result = false;
+    for(int i = 0; i < _storage->outputs.size(); i++){
+      if(_storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
+    return result;
   }
 
   bool is_pi( node const& n ) const
@@ -472,12 +487,12 @@ signal create_maj( signal a, signal b, signal c )
 
   auto num_pis() const
   {
-    return static_cast<uint32_t>( _storage->inputs.size() );
+    return _storage->data.num_pis;
   }
 
   auto num_pos() const
   {
-    return static_cast<uint32_t>( _storage->outputs.size() );
+    return _storage->data.num_pos;
   }
 
   auto num_registers() const
@@ -644,7 +659,7 @@ signal create_maj( signal a, signal b, signal c )
 
   node ri_to_ro( signal const& s ) const
   {
-    return *( _storage->inputs.begin() + num_pis() + ri_index( s ) );
+    return *( _storage->inputs.begin() + _storage->data.num_pis + ri_index( s ) );
   }
 #pragma endregion
 
@@ -673,27 +688,27 @@ signal create_maj( signal a, signal b, signal c )
   template<typename Fn>
   void foreach_pi( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin(), _storage->inputs.end()/*_storage->inputs.begin() + _storage->data.num_pis*/, fn );
+    detail::foreach_element( _storage->inputs.begin(), _storage->inputs.begin() + _storage->data.num_pis, fn );
   }
 
   template<typename Fn>
   void foreach_po( Fn&& fn ) const
   {
     using IteratorType = decltype( _storage->outputs.begin() );
-    detail::foreach_element_transform<IteratorType, uint32_t>( _storage->outputs.begin(), _storage->outputs.end()/*_storage->outputs.begin() + _storage->data.num_pos*/, []( auto o ) { return o.index; }, fn );
+    detail::foreach_element_transform<IteratorType, uint32_t>( _storage->outputs.begin(), _storage->outputs.begin() + _storage->data.num_pos, []( auto o ) { return o.index; }, fn );
   }
 
   template<typename Fn>
   void foreach_ro( Fn&& fn ) const
   {
-    detail::foreach_element( _storage->inputs.begin(), _storage->inputs.end()/*_storage->inputs.begin() + _storage->data.num_pis*/, fn );
+    detail::foreach_element( _storage->inputs.begin() + _storage->data.num_pis, _storage->inputs.end(), fn );
   }
 
- template<typename Fn>
+  template<typename Fn>
   void foreach_ri( Fn&& fn ) const
   {
     using IteratorType = decltype( _storage->outputs.begin() );
-    detail::foreach_element_transform<IteratorType, uint32_t>( _storage->outputs.begin(), _storage->outputs.end()/*_storage->outputs.begin() + _storage->data.num_pos*/, []( auto o ) { return o.index; }, fn );
+    detail::foreach_element_transform<IteratorType, uint32_t>( _storage->outputs.begin() + _storage->data.num_pos, _storage->outputs.end(), []( auto o ) { return o.index; }, fn );
   }
 
   template<typename Fn>

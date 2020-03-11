@@ -600,6 +600,24 @@ public:
     _os << fmt::format( "  output [{}:0] {} ;\n", width - 1, fmt::join( names, " , " ) );
   }
 
+  /*! \brief Callback method for writing single 1-bit register.
+   *
+   * \param name Register name
+   */
+  virtual void on_reg( std::string const& name ) const
+  {
+    _os << fmt::format( "  reg {} ;\n", name );
+  }
+
+  /*! \brief Callback method for writing multiple single 1-bit register.
+   *
+   * \param names Register names
+   */
+  virtual void on_reg( std::vector<std::string> const& names ) const
+  {
+    _os << fmt::format( "  reg {} ;\n", fmt::join( names, " , " ) );
+  }
+
   /*! \brief Callback method for writing single 1-bit wire.
    *
    * \param name Wire name
@@ -699,6 +717,36 @@ public:
     _os << fmt::format( "  assign {} = {}{} ;\n",
                         out,
                         in.first ? "~" : "", in.second );
+  }
+
+  /*! \brief Callback method for writing a register control statement.
+   *
+   * \param ro Register output signal
+   * \param ri Register input signal
+   * \param l_info The information for the latch i.e. initial value, type, control etc
+   */
+  virtual void on_control_reg( std::string const& ro, std::string const& ri, std::pair<std::string, std::string> const& latch_info ) const
+  {
+    _os << fmt::format( " always @ ({} {}) begin\n", latch_info.first == "fe" ? "negedge" : "posedge", latch_info.second );
+    _os << fmt::format( "    {} <= {} ;\n", ro, ri );
+    _os << " end\n";
+  }
+
+  /*! \brief Callback method for writing a register initial block.
+   *
+   * \param ri Register output signal
+   * \param l_info The information for the latch i.e. initial value, type, control etc
+   */
+  virtual void on_reg_init( std::vector<std::string> const& ros, std::vector<uint64_t> ro_inits ) const
+  {
+    _os << " initial begin\n";
+    std::cout << "RO size = " << ros.size() << " inits size = " << ro_inits.size() << "\n";
+    assert( ros.size() == ro_inits.size() );
+    for( int i = 0; i < ros.size(); i++ )
+    {
+      _os << fmt::format( "    {} <= 1'b{};\n", ros.at( i ), ro_inits.at( i ) );
+    }
+    _os << " end\n";
   }
 
 protected:

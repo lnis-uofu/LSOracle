@@ -26,7 +26,6 @@
 /*!
   \file names_view.hpp
   \brief Implements methods to declare names for network signals
-
   \author Heinz Riener
 */
 

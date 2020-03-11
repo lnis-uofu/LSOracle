@@ -25,12 +25,12 @@ TEST_CASE( "write single-gate AIG into Verilog file", "[write_verilog]" )
   std::ostringstream out;
   write_verilog( aig, out );
 
-  CHECK( out.str() == "module top( x0 , x1 , y0 );\n"
-                      "  input x0 , x1 ;\n"
-                      "  output y0 ;\n"
-                      "  wire n3 ;\n"
-                      "  assign n3 = ~x0 & ~x1 ;\n"
-                      "  assign y0 = ~n3 ;\n"
+  CHECK( out.str() == "module top( pi0 , pi1 , po0 );\n"
+                      "  input pi0 , pi1 ;\n"
+                      "  output po0 ;\n"
+                      "  wire new_n3 ;\n"
+                      "  assign new_n3 = ~pi0 & ~pi1 ;\n"
+                      "  assign po0 = ~new_n3 ;\n"
                       "endmodule\n" );
 }
 
@@ -50,15 +50,15 @@ TEST_CASE( "write AIG for XOR into Verilog file", "[write_verilog]" )
   std::ostringstream out;
   write_verilog( aig, out );
 
-  CHECK( out.str() == "module top( x0 , x1 , y0 );\n"
-                      "  input x0 , x1 ;\n"
-                      "  output y0 ;\n"
-                      "  wire n3 , n4 , n5 , n6 ;\n"
-                      "  assign n3 = x0 & x1 ;\n"
-                      "  assign n4 = x0 & ~n3 ;\n"
-                      "  assign n5 = x1 & ~n3 ;\n"
-                      "  assign n6 = ~n4 & ~n5 ;\n"
-                      "  assign y0 = ~n6 ;\n"
+  CHECK( out.str() == "module top( pi0 , pi1 , po0 );\n"
+                      "  input pi0 , pi1 ;\n"
+                      "  output po0 ;\n"
+                      "  wire new_n3 , new_n4 , new_n5 , new_n6 ;\n"
+                      "  assign new_n3 = pi0 & pi1 ;\n"
+                      "  assign new_n4 = pi0 & ~new_n3 ;\n"
+                      "  assign new_n5 = pi1 & ~new_n3 ;\n"
+                      "  assign new_n6 = ~new_n4 & ~new_n5 ;\n"
+                      "  assign po0 = ~new_n6 ;\n"
                       "endmodule\n" );
 }
 
@@ -78,14 +78,14 @@ TEST_CASE( "write MIG into Verilog file", "[write_verilog]" )
   std::ostringstream out;
   write_verilog( aig, out );
 
-  CHECK( out.str() == "module top( x0 , x1 , x2 , y0 );\n"
-                      "  input x0 , x1 , x2 ;\n"
-                      "  output y0 ;\n"
-                      "  wire n4 , n5 , n6 ;\n"
-                      "  assign n4 = x0 & x1 ;\n"
-                      "  assign n5 = x0 | x1 ;\n"
-                      "  assign n6 = ( x2 & n4 ) | ( x2 & n5 ) | ( n4 & n5 ) ;\n"
-                      "  assign y0 = n6 ;\n"
+  CHECK( out.str() == "module top( pi0 , pi1 , pi2 , po0 );\n"
+                      "  input pi0 , pi1 , pi2 ;\n"
+                      "  output po0 ;\n"
+                      "  wire new_n4 , new_n5 , new_n6 ;\n"
+                      "  assign new_n4 = pi0 & pi1 ;\n"
+                      "  assign new_n5 = pi0 | pi1 ;\n"
+                      "  assign new_n6 = ( pi2 & new_n4 ) | ( pi2 & new_n5 ) | ( new_n4 & new_n5 ) ;\n"
+                      "  assign po0 = new_n6 ;\n"
                       "endmodule\n" );
 }
 
@@ -112,22 +112,22 @@ TEST_CASE( "write Verilog with register names", "[write_verilog]" )
                       "  input [2:0] a ;\n"
                       "  input [2:0] b ;\n"
                       "  output [3:0] y ;\n"
-                      "  wire n7 , n8 , n9 , n10 , n11 , n12 , n13 , n14 , n15 , n16 , n17 , n18 ;\n"
-                      "  assign n8 = a[0] & ~b[0] ;\n"
-                      "  assign n9 = a[0] | b[0] ;\n"
-                      "  assign n10 = ( ~a[0] & n8 ) | ( ~a[0] & n9 ) | ( n8 & n9 ) ;\n"
-                      "  assign n7 = a[0] & b[0] ;\n"
-                      "  assign n12 = ( a[1] & ~b[1] ) | ( a[1] & n7 ) | ( ~b[1] & n7 ) ;\n"
-                      "  assign n13 = ( a[1] & b[1] ) | ( a[1] & ~n7 ) | ( b[1] & ~n7 ) ;\n"
-                      "  assign n14 = ( ~a[1] & n12 ) | ( ~a[1] & n13 ) | ( n12 & n13 ) ;\n"
-                      "  assign n11 = ( a[1] & b[1] ) | ( a[1] & n7 ) | ( b[1] & n7 ) ;\n"
-                      "  assign n16 = ( a[2] & ~b[2] ) | ( a[2] & n11 ) | ( ~b[2] & n11 ) ;\n"
-                      "  assign n17 = ( a[2] & b[2] ) | ( a[2] & ~n11 ) | ( b[2] & ~n11 ) ;\n"
-                      "  assign n18 = ( ~a[2] & n16 ) | ( ~a[2] & n17 ) | ( n16 & n17 ) ;\n"
-                      "  assign n15 = ( a[2] & b[2] ) | ( a[2] & n11 ) | ( b[2] & n11 ) ;\n"
-                      "  assign y[0] = n10 ;\n"
-                      "  assign y[1] = n14 ;\n"
-                      "  assign y[2] = n18 ;\n"
-                      "  assign y[3] = n15 ;\n"
+                      "  wire new_n7 , new_n8 , new_n9 , new_n10 , new_n11 , new_n12 , new_n13 , new_n14 , new_n15 , new_n16 , new_n17 , new_n18 ;\n"
+                      "  assign new_n8 = a[0] & ~b[0] ;\n"
+                      "  assign new_n9 = a[0] | b[0] ;\n"
+                      "  assign new_n10 = ( ~a[0] & new_n8 ) | ( ~a[0] & new_n9 ) | ( new_n8 & new_n9 ) ;\n"
+                      "  assign new_n7 = a[0] & b[0] ;\n"
+                      "  assign new_n12 = ( a[1] & ~b[1] ) | ( a[1] & new_n7 ) | ( ~b[1] & new_n7 ) ;\n"
+                      "  assign new_n13 = ( a[1] & b[1] ) | ( a[1] & ~new_n7 ) | ( b[1] & ~new_n7 ) ;\n"
+                      "  assign new_n14 = ( ~a[1] & new_n12 ) | ( ~a[1] & new_n13 ) | ( new_n12 & new_n13 ) ;\n"
+                      "  assign new_n11 = ( a[1] & b[1] ) | ( a[1] & new_n7 ) | ( b[1] & new_n7 ) ;\n"
+                      "  assign new_n16 = ( a[2] & ~b[2] ) | ( a[2] & new_n11 ) | ( ~b[2] & new_n11 ) ;\n"
+                      "  assign new_n17 = ( a[2] & b[2] ) | ( a[2] & ~new_n11 ) | ( b[2] & ~new_n11 ) ;\n"
+                      "  assign new_n18 = ( ~a[2] & new_n16 ) | ( ~a[2] & new_n17 ) | ( new_n16 & new_n17 ) ;\n"
+                      "  assign new_n15 = ( a[2] & b[2] ) | ( a[2] & new_n11 ) | ( b[2] & new_n11 ) ;\n"
+                      "  assign y[0] = new_n10 ;\n"
+                      "  assign y[1] = new_n14 ;\n"
+                      "  assign y[2] = new_n18 ;\n"
+                      "  assign y[3] = new_n15 ;\n"
                       "endmodule\n" );
 }
