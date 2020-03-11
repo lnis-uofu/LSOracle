@@ -20,16 +20,16 @@ namespace alice
 
   ALICE_DESCRIBE_STORE( klut_ntk, klut ){
 
-    return fmt::format( "i/o = {}/{} gates = {}", klut->num_pis(), klut->num_pos(), klut->num_gates() );
+    return fmt::format( "i/o = {}/{} latches = {} gates = {}", klut->num_pis(), klut->num_pos(), klut->num_latches(), klut->num_gates() );
   }
 
   ALICE_LOG_STORE_STATISTICS( klut_ntk, klut){
     mockturtle::depth_view depth{*klut};
     return {
     	{"nodes", klut->size()},
-    	{"inputs", klut->num_pis() - klut->num_latches()},
+    	{"inputs", klut->num_cis() - klut->num_latches()},
     	{"latches", klut->num_latches()},
-    	{"outputs", klut->num_pos() - klut->num_latches()},
+    	{"outputs", klut->num_cos() - klut->num_latches()},
     	{"klut nodes", klut->num_gates()},
       {"klut level", depth.depth()}};
   }
@@ -37,9 +37,9 @@ namespace alice
   ALICE_PRINT_STORE_STATISTICS( klut_ntk, os, klut ){
     mockturtle::depth_view depth{*klut};
   	os << "nodes: " << klut->size() << std::endl;
-  	os << "inputs: " << klut->num_pis() - klut->num_latches() << std::endl;
+  	os << "inputs: " << klut->num_cis() - klut->num_latches() << std::endl;
   	os << "latches: " << klut->num_latches() << std::endl;
-  	os << "outputs: " << klut->num_pos() - klut->num_latches() << std::endl;
+  	os << "outputs: " << klut->num_cos() - klut->num_latches() << std::endl;
   	os << "klut nodes: " << klut->num_gates() << std::endl;
     os << "klut level: " << depth.depth() << std::endl;
 

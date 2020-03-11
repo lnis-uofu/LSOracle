@@ -92,6 +92,12 @@ namespace alice
             }
             else{
               std::cout << "No change made to network\n";
+              std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
+              std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
+              std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+              auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+              std::cout << "Full Optimization: " << duration.count() << "ms\n";
+              std::cout << "Finished optimization\n";
             }
             
           }

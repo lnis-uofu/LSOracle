@@ -28,16 +28,16 @@ namespace alice
 
   ALICE_DESCRIBE_STORE( mig_ntk, mig ){
 
-    return fmt::format( "i/o = {}/{} gates = {}", mig->num_pis(), mig->num_pos(), mig->num_gates() );
+    return fmt::format( "i/o = {}/{} latches = {} gates = {}", mig->num_pis(), mig->num_pos(), mig-> num_latches(), mig->num_gates() );
   }
 
   ALICE_LOG_STORE_STATISTICS( mig_ntk, mig){
     mockturtle::depth_view depth{*mig};
     return {
       {"nodes", mig->size()},
-      {"inputs", mig->num_pis() - mig->num_latches()},
+      {"inputs", mig->num_cis() - mig->num_latches()},
       {"latches", mig->num_latches()},
-      {"outputs", mig->num_pos() - mig->num_latches()},
+      {"outputs", mig->num_cos() - mig->num_latches()},
       {"MAJ nodes", mig->num_gates()},
       {"MIG level", depth.depth()}};
   }
@@ -45,9 +45,9 @@ namespace alice
   ALICE_PRINT_STORE_STATISTICS( mig_ntk, os, mig ){
     mockturtle::depth_view depth{*mig};
     os << "nodes: " << mig->size() << std::endl;
-    os << "inputs: " << mig->num_pis() - mig->num_latches() << std::endl;
+    os << "inputs: " << mig->num_cis() - mig->num_latches() << std::endl;
     os << "latches: " << mig->num_latches() << std::endl;
-    os << "outputs: " << mig->num_pos() - mig->num_latches() << std::endl;
+    os << "outputs: " << mig->num_cos() - mig->num_latches() << std::endl;
     os << "MAJ nodes: " << mig->num_gates() << std::endl;
     os << "MIG level: " << depth.depth() << std::endl;
 

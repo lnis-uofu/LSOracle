@@ -104,7 +104,7 @@ namespace alice
 
           auto start = std::chrono::high_resolution_clock::now();
 
-          auto ntk_mig = oracle::optimization_test(ntk, partitions, strategy, nn_model, 
+          auto ntk_mig = oracle::optimization(ntk, partitions, strategy, nn_model, 
             high, aig, mig, combine);
 
           auto stop = std::chrono::high_resolution_clock::now();

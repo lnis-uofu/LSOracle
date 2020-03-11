@@ -164,6 +164,9 @@ namespace alice
 
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network>named_dest ( ntk );
+
+            mockturtle::node_resynthesis( named_dest, names_view, resyn );
+            
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
             std::cout << "AIG network stored\n";
 

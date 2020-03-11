@@ -26,15 +26,16 @@ namespace alice
 
   ALICE_DESCRIBE_STORE( xag_ntk, xag ){
 
-    return fmt::format( "i/o = {}/{} gates = {}", xag->num_pis(), xag->num_pos(), xag->num_gates() );
+    return fmt::format( "i/o = {}/{} latches = {} gates = {}", xag->num_pis(), xag->num_pos(), xag->num_latches(), xag->num_gates() );
   }
 
   ALICE_LOG_STORE_STATISTICS( xag_ntk, xag){
     mockturtle::depth_view depth{*xag};
     return {
       {"nodes", xag->size()},
-      {"inputs", xag->num_pis()},
-      {"outputs", xag->num_pos()},
+      {"inputs", xag->num_cis() - xag->num_latches()},
+      {"latches", xag->num_latches()},
+      {"outputs", xag->num_cos() - xag->num_latches()},
       {"XAG nodes", xag->num_gates()},
       {"XAG level", depth.depth()}};
   }
@@ -42,8 +43,9 @@ namespace alice
   ALICE_PRINT_STORE_STATISTICS( xag_ntk, os, xag ){
     mockturtle::depth_view depth{*xag};
     os << "nodes: " << xag->size() << std::endl;
-    os << "inputs: " << xag->num_pis() << std::endl;
-    os << "outputs: " << xag->num_pos() << std::endl;
+    os << "inputs: " << xag->num_cis() - xag->num_latches() << std::endl;
+    os << "latches: " << xag->num_latches() << std::endl;
+    os << "outputs: " << xag->num_cos() - xag->num_latches() << std::endl;
     os << "XAG nodes: " << xag->num_gates() << std::endl;
     os << "XAG level: " << depth.depth() << std::endl;
 
