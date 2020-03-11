@@ -46,7 +46,7 @@ namespace alice
             filename.erase(filename.end() - 4, filename.end());
             names_view._storage->net_name = filename;
           }
-          if(is_set("klut")){
+          else if(is_set("klut")){
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
@@ -117,7 +117,7 @@ namespace alice
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
             lorina::diagnostic_engine diag;
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ), &diag);
-
+            
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
 
@@ -164,9 +164,6 @@ namespace alice
 
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network>named_dest ( ntk );
-
-            mockturtle::node_resynthesis( named_dest, names_view, resyn );
-
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
             std::cout << "AIG network stored\n";
 

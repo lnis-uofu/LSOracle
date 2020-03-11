@@ -16,5 +16,4 @@ add_executable(lsoracle lsoracle.cpp)
 
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
-target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar galois_utah)
-#target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar)
+target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar galois_utah libabc)

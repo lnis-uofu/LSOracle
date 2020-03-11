@@ -31,6 +31,7 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
+                opts.add_option("--galois-flag", mode_str, "Flag parameter for Galois's BiPart schedule mode (Default is PP)");
                 add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
@@ -60,7 +61,14 @@ namespace alice
             num_vertices = t.get_num_vertices();
 
             int num_threads = 14;
-            scheduleMode mode = PP;
+            scheduleMode mode;
+            if(mode_str == "PLD")
+              mode = PLD;
+            else if(mode_str == "RAND")
+              mode = RAND;
+            else
+              mode = PP;
+            // scheduleMode mode = PP;
             std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
             std::map<mockturtle::aig_network::node, int> part_data;
             ntk.foreach_node([&](auto node){
@@ -150,6 +158,7 @@ namespace alice
       int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};
+      std::string mode_str{"PP"};
       unsigned strategy{0u};
       bool high = false;
       bool aig = false;

@@ -56,17 +56,22 @@ namespace oracle{
     }
     else if(!nn_model.empty()){
       std::cout << "Performing Classification using Neural Network\n";
-      partitions_aig.run_classification(ntk_aig, nn_model);
-      aig_parts = partitions_aig.get_aig_parts();
-      mig_parts = partitions_aig.get_mig_parts();
+      partitions_mig.run_classification(ntk_mig, nn_model);
+      aig_parts = partitions_mig.get_aig_parts();
+      mig_parts = partitions_mig.get_mig_parts();
     }
     else{
-      std::cout << "Performing High Effort Classification and Optimization\n";
+      if(!combine)
+        std::cout << "Performing High Effort Classification and Optimization\n";
+      else
+        std::cout << "Performing High Effort Classification\n";
+
       for(int i = 0; i < num_parts; i++){
         oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
         auto opt_part_aig = *part_to_mig(part, 1);
         auto opt_aig = *mig_to_aig(opt_part_aig);
+        mockturtle::depth_view part_depth{opt_aig};
 
         oracle::aig_script aigopt;
         opt_aig = aigopt.run(opt_aig);
@@ -150,7 +155,7 @@ namespace oracle{
           
           std::set<int>::iterator conn_it;
           std::set<int> conn_parts;
-          conn_parts = partitions_aig.get_connected_parts(ntk_aig, i);
+          conn_parts = partitions_mig.get_connected_parts(ntk_mig, i);
           if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
             for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
               if(std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end()){
@@ -199,19 +204,17 @@ namespace oracle{
               if(got != comb_part.end()){
                 part_1 = got->second;
               }
-              std::set<int> connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
-              std::set<int> connected_parts2 = partitions_aig.get_connected_parts(ntk_aig, part_2);
+              std::set<int> connected_parts1 = partitions_mig.get_connected_parts(ntk_mig, part_1);
+              std::set<int> connected_parts2 = partitions_mig.get_connected_parts(ntk_mig, part_2);
               std::set<int>::iterator conn_it;
               
-              std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
-              
+              std::vector<std::set<mockturtle::mig_network::node>> combined_io = partitions_mig.combine_partitions(ntk_mig, part_1, part_2);
               auto new_inputs = combined_io.at(0);
               auto new_outputs = combined_io.at(1);
               comb_part[part_2] = part_1;
 
-              partitions_aig.set_part_inputs(part_1, new_inputs);
-              partitions_aig.set_part_outputs(part_1, new_outputs);
-
+              partitions_mig.set_part_inputs(part_1, new_inputs);
+              partitions_mig.set_part_outputs(part_1, new_outputs);
               if(std::find(aig_parts.begin(), aig_parts.end(), part_1) != aig_parts.end()){
                 if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), part_1) == comb_aig_parts.end()){
                   comb_aig_parts.push_back(part_1);
@@ -225,7 +228,7 @@ namespace oracle{
 
               visited.push_back(part_2); 
 
-              connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
+              connected_parts1 = partitions_mig.get_connected_parts(ntk_mig, part_1);
               for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
                 if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
                   if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
@@ -255,7 +258,7 @@ namespace oracle{
       std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
     }
 
-    if(!high){
+    if(combine){
       for(int i = 0; i < aig_parts.size(); i++){
       
         oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));

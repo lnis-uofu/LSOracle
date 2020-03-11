@@ -120,6 +120,9 @@ namespace oracle
       partitionOutputs = outputs;
       partitionReg = regs;
       partitionRegIn = regs_in;
+      for(int i = 0; i < part_num; i++){
+        update_io(i);
+      }
     }
 
     partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini" ) : Ntk( ntk )

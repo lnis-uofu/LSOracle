@@ -26,6 +26,7 @@ namespace alice
 
         opts.add_option( "--filename,filename", filename, "BLIF file to write out to" )->required();
         add_flag("--mig,-m", "Read from the MIG network");
+        add_flag("--klut,-k", "Read from the KLUT network");
         add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
       }
 
@@ -42,6 +43,15 @@ namespace alice
             }
             else{
               std::cout << "There is not an MIG network stored.\n";
+            }
+          }
+          else if(is_set("klut")){
+            if(!store<klut_ntk>().empty()){
+              auto& klut = *store<klut_ntk>().current();
+              mockturtle::write_blif(klut, filename, ps);
+            }
+            else{
+              std::cout << "There is not an KLUT network stored.\n";
             }
           }
           else{

@@ -127,6 +127,8 @@ namespace oracle{
           std::set<int>::iterator conn_it;
           std::set<int> conn_parts;
           conn_parts = partitions_aig.get_connected_parts(ntk_aig, i);
+          for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
+          }
           if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
             for(conn_it = conn_parts.begin(); conn_it != conn_parts.end(); ++conn_it){
               if(std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end()){
@@ -180,14 +182,12 @@ namespace oracle{
               std::set<int>::iterator conn_it;
               
               std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
-              
               auto new_inputs = combined_io.at(0);
               auto new_outputs = combined_io.at(1);
               comb_part[part_2] = part_1;
 
               partitions_aig.set_part_inputs(part_1, new_inputs);
               partitions_aig.set_part_outputs(part_1, new_outputs);
-
               if(std::find(aig_parts.begin(), aig_parts.end(), part_1) != aig_parts.end()){
                 if(std::find(comb_aig_parts.begin(), comb_aig_parts.end(), part_1) == comb_aig_parts.end()){
                   comb_aig_parts.push_back(part_1);

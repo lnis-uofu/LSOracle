@@ -35,11 +35,13 @@ namespace alice
       explicit partitioning_command( const environment::ptr& env )
         : command( env, "Partitionins current network using k-means hypergraph partitioner" ) {
 
-          opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
+          opts.add_option( "--num,num", num_partitions, "Number of desired partitions (Network Size / 300 set as partitition number if not specified)" );
           opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar (../../core/test.ini is default)" );
           opts.add_option("--file,-f", part_file, "External file containing partitiion information");
+          opts.add_option("--galois-flag", mode_str, "Flag parameter for Galois's BiPart schedule mode (Default is PP)");
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
           add_flag("--bipart,-g", "Run hypergraph partitionining using BiPart from the Galois system");
+          
         }
 
     protected:
@@ -50,6 +52,10 @@ namespace alice
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
             auto ntk = *store<mig_ntk>().current();
+            if(num_partitions == 0){
+              double size = ( (double) ntk.size() ) / 300.0;
+              num_partitions = ceil(size);
+            }
             if(part_file != ""){
               std::cout << "Partitioning stored MIG network using external file\n";
               std::map<mockturtle::mig_network::node, int> part_data;
@@ -79,7 +85,7 @@ namespace alice
             }
             else{
               if(is_set("bipart")){
-                std::cout << "Partitioning stored MIG network using Galois BiPart\n";
+                std::cout << "Partitioning stored MIG network using Galois BiPart with flag " << mode_str << "\n";
                 oracle::hypergraph<mig_names> t(ntk);
                 uint32_t num_vertices = 0;
           
@@ -88,7 +94,14 @@ namespace alice
                 num_vertices = t.get_num_vertices();
 
                 int num_threads = 14;
-                scheduleMode mode = PP;
+                scheduleMode mode;
+                if(mode_str == "PLD")
+                  mode = PLD;
+                else if(mode_str == "RAND")
+                  mode = RAND;
+                else
+                  mode = PP;
+                // scheduleMode mode = PP;
                 std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
                 std::map<mockturtle::mig_network::node, int> part_data;
                 ntk.foreach_node([&](auto node){
@@ -118,6 +131,10 @@ namespace alice
         else{
           if(!store<aig_ntk>().empty()){
             auto ntk = *store<aig_ntk>().current();
+            if(num_partitions == 0){
+              double size = ( (double) ntk.size() ) / 300.0;
+              num_partitions = ceil(size);
+            }
             if(part_file != ""){
               std::cout << "Partitioning stored AIG network using external file\n";
               std::map<mockturtle::aig_network::node, int> part_data;
@@ -147,7 +164,7 @@ namespace alice
             }
             else{
               if(is_set("bipart")){
-                std::cout << "Partitioning stored AIG network using Galois BiPart\n";
+                std::cout << "Partitioning stored AIG network using Galois BiPart with flag " << mode_str << "\n";
                 oracle::hypergraph<aig_names> t(ntk);
                 uint32_t num_vertices = 0;
           
@@ -156,7 +173,14 @@ namespace alice
                 num_vertices = t.get_num_vertices();
 
                 int num_threads = 14;
-                scheduleMode mode = PP;
+                scheduleMode mode;
+                if(mode_str == "PLD")
+                  mode = PLD;
+                else if(mode_str == "RAND")
+                  mode = RAND;
+                else
+                  mode = PP;
+                // scheduleMode mode = PP;
                 std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
                 std::map<mockturtle::aig_network::node, int> part_data;
                 ntk.foreach_node([&](auto node){
@@ -185,9 +209,11 @@ namespace alice
         }
       }
     private:
-      int num_partitions{};
+      int num_partitions{0u};
       std::string config_direc = "";
       std::string part_file = "";
+      scheduleMode mode{PP};
+      std::string mode_str{"PP"};
   };
 
   ALICE_ADD_COMMAND(partitioning, "Partitioning");

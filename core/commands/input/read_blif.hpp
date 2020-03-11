@@ -107,6 +107,11 @@ namespace alice
             lorina::diagnostic_engine diag;
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ), &diag);
 
+            std::cout << names_view.num_pis() << " PIs\n";
+            std::cout << names_view.num_pos() << " POs\n";
+            std::cout << names_view.num_latches() << " latches\n";
+            std::cout << names_view.num_gates() << " gates\n";
+
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
 
