@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
-option(MOCKTURTLE_EXAMPLES "Build examples" ON)
-option(MOCKTURTLE_TEST "Build tests" ON)
+option(MOCKTURTLE_EXAMPLES "Build examples" OFF)
+option(MOCKTURTLE_TEST "Build tests" OFF)
 option(MOCKTURTLE_EXPERIMENTS "Build experiments" OFF)
 
 if(UNIX)
