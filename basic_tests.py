@@ -57,7 +57,10 @@ def optimize(filename, mode, part_num, suffix):
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
-    return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
+    if(string_stdout[-6] == 'No change made to network'):
+        return [int(s) for s in string_stdout[-5].split() if s.isdigit()]
+    else:
+        return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
@@ -70,7 +73,7 @@ def compare(filename, suffix):
     cmd = ['abc', '-c', 'cec -n ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
-    print abc_stdout
+    # print abc_stdout
     if "None" not in str(abc_stderr):
         logging.warning(str(abc_stderr))
     intermediate_string = str(abc_stdout)
@@ -111,29 +114,37 @@ for curr_file in files:
     print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
    
     #mixed synthesis with classifier
+    print("classifier")
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
+    print(mixed_size)
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)
 
     #Brute Force
+    print("high effort")
     cmdstr = 'optimization'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
+    print(brute_size)
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')
     assert('Networks are equivalent' in abcout)
     
     #AIG only
+    print('AIG only')
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
+    print(aig_size)
     print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
     abcout = compare(curr_file, '_aig_out')
     assert('Networks are equivalent' in abcout)
     
     #MIG only
+    print('MIG only')
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
+    print(mig_size)
     print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))
     abcout = compare(curr_file, '_mig_out')
     assert('Networks are equivalent' in abcout)
