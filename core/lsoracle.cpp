@@ -30,6 +30,7 @@
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/output/verilog.hpp"
+#include "algorithms/output/to_abc.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
 #include "algorithms/output/mapped_verilog.hpp"
 
@@ -51,6 +52,7 @@
 #include "commands/lut_map/lut_map.hpp"
 
 //Output
+#include "commands/output/write.hpp"
 #include "commands/output/write_verilog.hpp"
 #include "commands/output/write_bench.hpp"
 #include "commands/output/write_blif.hpp"
@@ -96,6 +98,8 @@
 #include "commands/asic_map/asic_map.hpp"
 
 //Testing
+#include "commands/testing/ntk_to_abc.hpp"
+#include "commands/testing/convert_to_aig.hpp"
 // #include "commands/testing/find_xor.hpp"
 // #include "commands/testing/find_part.hpp"
 // #include "commands/testing/get_fanout.hpp"
