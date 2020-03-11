@@ -98,6 +98,27 @@ namespace alice
               auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
               std::cout << "Full Optimization: " << duration.count() << "ms\n";
               std::cout << "Finished optimization\n";
+              if(out_file != ""){
+                if(oracle::checkExt(out_file, "v")){
+                  mockturtle::write_verilog_params ps;
+                  if(is_set("skip-feedthrough"))
+                    ps.skip_feedthrough = 1u;
+                  
+                  mockturtle::write_verilog(ntk_mig, out_file, ps);
+                  std::cout << "Resulting network written to " << out_file << "\n";
+                }
+                else if(oracle::checkExt(out_file, "blif")){
+                  mockturtle::write_blif_params ps;
+                  if(is_set("skip-feedthrough"))
+                    ps.skip_feedthrough = 1u;
+                  
+                  mockturtle::write_blif(ntk_mig, out_file, ps);
+                  std::cout << "Resulting network written to " << out_file << "\n";
+                }
+                else{
+                  std::cout << out_file << " is not an accepted output file {.v, .blif}\n";
+                }
+              }
             }
             
           }
