@@ -9,7 +9,7 @@ const char* desc =
 const char* url = "HyPar";
 cll::opt<scheduleMode> schedulingMode(
     cll::desc("Choose a inital scheduling mode:"),
-    cll::values(clEnumVal(PLD, "PLD"), clEnumVal(PP, "PP"), clEnumVal(WD, "WD"),
+    cll::values(clEnumVal(RAND, "RAND"),clEnumVal(PLD, "PLD"), clEnumVal(PP, "PP"), clEnumVal(WD, "WD"),
                 clEnumVal(RI, "RI"), clEnumVal(MRI, "MRI"),clEnumVal(MDEG, "MDEG"),clEnumVal(DEG, "DEG"),clEnumVal(MWD, "MWD"),clEnumVal(HIS, "HIS"),clEnumValEnd),
     cll::init(PLD));
 
@@ -33,9 +33,6 @@ cll::opt<std::string> filename(cll::Positional,
                                       cll::desc("<input file>"), cll::Required);
 cll::opt<std::string> output(cll::Positional,
                                      cll::desc("<output file>"), cll::Required);
-
-static cll::opt<int> num_part("p", cll::desc("Number of partitions (default value 1)"), cll::init(1));
-
 cll::opt<unsigned> csize(cll::Positional,
                                    cll::desc("<size of coarsest graph>")
                                    );
@@ -48,10 +45,10 @@ cll::opt<double> imbalance(
     cll::desc("Fraction deviated from mean partition size (default 0.01)"),
     cll::init(0.01));
 
-void Partition(MetisGraph* metisGraph, unsigned coarsenTo, unsigned refineTo) {
+void Partition(MetisGraph* metisGraph, unsigned coarsenTo, unsigned refineTo, unsigned K) {
   MetisGraph* mcg = coarsen(metisGraph, coarsenTo, schedulingMode);
-  partition(mcg);
-  refine(mcg, refineTo);
+  partition(mcg, K);
+  refine(mcg, refineTo, K);
   return;
 }
 
@@ -78,16 +75,42 @@ int hash(unsigned val) {
   return((unsigned)(seed/65536) % 32768);
 }
 
-std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t node_num, int num_part, int num_threads, scheduleMode schedulingMode) {
+std::map<int, int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t node_num, int num_part, 
+  int num_threads, scheduleMode mode) {
+  schedulingMode = mode;
   galois::SharedMemSys G;
   LonestarStart(num_threads, name, desc, url);
-  uint32_t hedges = hedge.size();
  // srand(-1);
   MetisGraph metisGraph;
   GGraph& graph = *metisGraph.getGraph();
+  // std::ifstream f(filename.c_str());
+  // std::string line;
+  // std::getline(f, line);
+  // std::stringstream ss(line);
+  // int i1, i2;
+  // ss >> i1 >> i2;
+  const int hedges = hedge.size(), nodes = node_num;
+  printf("hedges: %d\n", hedges);
+  printf("nodes: %d\n\n", nodes);
+
+  // read rest of input and initialize hedges (build hgraph)
+  // std::unordered_set<int>* const hedge = new std::unordered_set<int> [hedges];
+  // int cnt = 0, entries = 0;
+  // while (std::getline(f, line)) {
+  //   if (cnt >= hedges) {printf("ERROR: too many lines in input file\n"); exit(-1);}
+  //   std::stringstream ss(line);
+  //   int val;
+  //   while (ss >> val) {
+  //     if ((val < 1) || (val > nodes)) {printf("ERROR: node value %d out of bounds\n", val); exit(-1);}
+  //     hedge[cnt].insert(val - 1);
+  //     entries++;
+  //   }
+  //   cnt++;
+  // }
+  // f.close();
   std::map<int, GNode> hnets;
   // create nodes
-  for(int i = 0; i < node_num; i++){
+  for(int i = 0; i < nodes; i++){
     GNode node;
     MetisNode n1;
     n1.netnum = INT_MAX;
@@ -111,9 +134,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
     a = graph.createNode(n1);
     graph.addNode(a);
     graph.addHyperedge(a);
-    //for (auto v : hedge[i]) {
-    for(int j = 0; j < hedge.at(i).size(); j++){
-      auto v = hedge.at(i).at(j);
+    for (auto v : hedge[i]) {
       GNode b = hnets[v];
       graph.addEdge(a,b);
     }
@@ -133,7 +154,6 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
       galois::loopname("initPart"));
   
   const int k = num_part;//numPartitions;
-  // std::cout << "number of partitions = " << k << "\n";
   //calculating number of iterations/levels required
   int num = log2(k) + 1;
 
@@ -148,7 +168,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
   toProcess.insert(0);
   for (int level = 0; level<num; level++) {
     MetisGraph* metisGraph;
-    metisGraph = new MetisGraph[k];
+    metisGraph = new MetisGraph[k];// = new MetisGraph[2500];
 
 	//creating separate graphs for each partition number
     for (auto n: graph.cellList()){
@@ -158,6 +178,9 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
 	GGraph& gg = *metisGraph[pp].getGraph();
 	gg.addNode(n);
 	gg.addCell(n);
+        gg.getData(n).netnum = INT_MAX;
+        gg.getData(n).netrand = INT_MAX;
+        gg.getData(n).netval = INT_MAX;
       }
     }
 		
@@ -175,6 +198,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
 
       if (flag && kValue[nPart] > 1) {
         GGraph& gg = *metisGraph[nPart].getGraph();
+        gg.getData(h).notMatched();
 	gg.addNode(h);
     	gg.addHyperedge(h);
     	for (auto v : graph.edges(h)) {
@@ -186,7 +210,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
     //std::set<int> toProcessNew;
     for(auto i : toProcess) {
       if(kValue[i] > 1) {	
-        Partition(&metisGraph[i], 25, 2);
+        Partition(&metisGraph[i], 25, 2, kValue[i]);
         MetisGraph *mcg = &metisGraph[i];
 
         while(mcg->getCoarserGraph() != NULL) {
@@ -197,13 +221,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
           mcg = mcg->getFinerGraph();
           delete mcg->getCoarserGraph();
         }
-        int zeroOne[2];
-        for (int i = 0; i < 2; i++) zeroOne[i]=0;
 	  GGraph& gg = *metisGraph[i].getGraph();
-          for (auto c : gg.cellList()) {
-            int part = gg.getData(c).getPart();
-            zeroOne[part]++;
-          }
 			
 	  int tmp = kValue[i];
 	  kValue[i] = (tmp + 1)/2;
@@ -228,7 +246,7 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
 	
     toProcess = toProcessNew;
     toProcessNew.clear();
-}
+  }
   // std::ofstream ofs(output.c_str());
   std::map<int, int> cell;
   for (auto c : graph.cellList()) {
@@ -241,5 +259,6 @@ std::map<int,int> biparting(std::vector<std::vector<uint32_t>> hedge, uint32_t n
   //   ofs<<cell[i]<<"\n";  
   // }
   // ofs.close();
+  galois::runtime::reportStat_Single("HyPar", "Edge Cut", computingCut(graph));
 }
 

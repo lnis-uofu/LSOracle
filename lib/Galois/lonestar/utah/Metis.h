@@ -29,7 +29,7 @@ using GNode    = GGraph::GraphNode;
 using GNodeBag = galois::InsertBag<GNode>;
 
 // algorithms
-enum scheduleMode {PLD, WD, RI, PP, MRI, MWD, DEG, MDEG, HIS};
+enum scheduleMode {PLD, WD, RI, PP, MRI, MWD, DEG, MDEG, HIS, RAND};
 
 enum coarseModeII {HMETISII, PAIRII};
 enum pairScheduleModeII {FIRSTII, MAXWII, ECII};
@@ -191,8 +191,8 @@ MetisGraph* coarsen(MetisGraph* fineMetisGraph, unsigned coarsenTo,
                     scheduleMode sMode);
 
 // Partitioning
-void partition(MetisGraph* coarseMetisGraph);
+void partition(MetisGraph* coarseMetisGraph, unsigned K);
 // Refinement
- void refine(MetisGraph* coarseGraph, unsigned refineTo);
+ void refine(MetisGraph* coarseGraph, unsigned refineTo, unsigned K);
 
 #endif

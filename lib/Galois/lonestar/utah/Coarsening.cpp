@@ -113,6 +113,11 @@ void PLD_f(GNode node, GGraph* fineGGraph) {
   int ss = std::distance(fineGGraph->edge_begin(node), fineGGraph->edge_end(node));
   fineGGraph->getData(node).netval = -ss;
 }
+void RAND_f(GNode node, GGraph* fineGGraph) {
+  unsigned id = fineGGraph->getData(node).netrand;
+  fineGGraph->getData(node).netval = -id;
+  fineGGraph->getData(node).netrand = -fineGGraph->getData(node).netnum; 
+}
 void PP_f(GNode node, GGraph* fineGGraph) {
   int ss = std::distance(fineGGraph->edge_begin(node), fineGGraph->edge_end(node));
   fineGGraph->getData(node).netval = ss;
@@ -502,6 +507,10 @@ void findMatching(MetisGraph* coarseMetisGraph,
   bool useOBIM = true;
 
        switch(sch) {
+           case RAND:
+            parallelHMatchAndCreateNodes<RAND_f>(coarseMetisGraph,
+                                            iter);
+       break;
            case PLD:
             parallelHMatchAndCreateNodes<PLD_f>(coarseMetisGraph,
                                             iter);
@@ -560,13 +569,11 @@ MetisGraph* coarsen(MetisGraph* fineMetisGraph, unsigned coarsenTo,
   const int lo = size - hi;
   LIMIT = hi / 4;
   int totw = 0;
-  /*GGraph* gg = coarseGraph->getGraph();
+  GGraph* gg = coarseGraph->getGraph();
   for (auto c : gg->cellList()) {
-    totw += gg->getData(c).getWeight();
+    gg->getData(c).notMatched();
   }
-  std::cout<<"inital weight is "<<totw<<"\n";*/
   unsigned Size = size;
-  //unsigned netsize           = std::distance(fineMetisGraph->getGraph()->getNets().begin(), fineMetisGraph->getGraph()->getNets().end());
   unsigned iterNum        = 0;
   unsigned newSize = size;
   while (size > coarsenTo) { 
@@ -576,8 +583,6 @@ MetisGraph* coarsen(MetisGraph* fineMetisGraph, unsigned coarsenTo,
      coarseGraph      = coarsenOnce(coarseGraph, sch, iterNum);
       newSize = std::distance(coarseGraph->getGraph()->cellList().begin(), coarseGraph->getGraph()->cellList().end());
       if (newSize < coarsenTo)break;
-      //int netsize           = std::distance(coarseGraph->getGraph()->getNets().begin(), coarseGraph->getGraph()->getNets().end());
-     // std::cout<<"SIZE IS "<<newSize<<"\n";// and net is "<<netsize<<"\n";
     ++iterNum;
     
   }
