@@ -1,0 +1,26 @@
+# Benchmark "s27" written by ABC on Fri Oct 18 10:17:50 2019
+.model s27
+.inputs clock a b c d
+.outputs f
+.names li1 a li0
+01 1
+.names lo0 new_new_n19__ li1
+01 1
+.names a lo1 new_new_n15__
+01 1
+.names d new_new_n15__ new_new_n16__
+00 1
+.names b lo2 new_new_n17__
+00 1
+.names new_new_n15__ new_new_n17__ new_new_n18__
+00 1
+.names new_new_n16__ new_new_n18__ new_new_n19__
+00 1
+.names c new_new_n17__ li2
+00 1
+.names li1 f
+0 1
+.latch li0 lo0 fe clock 1
+.latch li1 lo1 fe clock 1
+.latch li2 lo2 fe clock 1
+.end
