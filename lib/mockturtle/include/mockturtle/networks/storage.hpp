@@ -192,8 +192,8 @@ struct storage
 {
   storage()
   {
-    nodes.reserve( 10000u );
-    hash.reserve( 10000u );
+    nodes.reserve( 20000u );
+    hash.reserve( 20000u );
     hash.set_resizing_parameters( .4f, .95f );
 
     /* we generally reserve the first node for a constant */
