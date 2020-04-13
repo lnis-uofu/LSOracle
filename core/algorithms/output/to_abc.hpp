@@ -15,7 +15,7 @@
 #include <base/main/abcapis.h>
 
 /* 
-  Creates a simple wrapper with ABC. The mockturtle AIG network is converted into an ABC gia.
+  Creates a simple wrapper with ABC for AIG. The mockturtle AIG network is converted into an ABC gia.
   Author: Walter Lau Neto
 */ 
 
@@ -122,28 +122,34 @@ namespace mockturtle
         // stops manager's structural hashing    
         // abc::Gia_ManHashStop( pNew );
         
-        // create POs - skipping latches for now 
+        // create COs  
         vDrivers = abc::Vec_IntAlloc( nLatches + nOutputs );
-        ntk.foreach_po( [&]( auto const& po, auto index ) {
-          // just pos for now 
-          if(index < ntk.num_pos() - ntk.num_latches())
-          {
-            uLit0 = abc::Vec_IntEntry( vLits, index + nLatches );
-            uLit0 = ntk._storage->outputs[index].data; 
-            iNode0 = abc::Abc_LitNotCond( abc::Vec_IntEntry(vNodes, uLit0 >> 1), (uLit0 & 1) );
-            abc::Vec_IntPush( vDrivers, iNode0 );
-          }
+        
+        for(int index = 0; index < ntk.num_pos() - ntk.num_latches(); index++){
+          uLit0 = ntk._storage->outputs[index].data; 
+          iNode0 = abc::Abc_LitNotCond( abc::Vec_IntEntry(vNodes, uLit0 >> 1), (uLit0 & 1) );
+          abc::Vec_IntPush( vDrivers, iNode0 );
+        }
+
+        ntk.foreach_ri([&](auto fi) {
+          uLit0 = fi.data;
+          iNode0 = abc::Abc_LitNotCond( abc::Vec_IntEntry(vNodes, uLit0 >> 1), (uLit0 & 1) );
+          abc::Vec_IntPush( vDrivers, iNode0 );
         });
 
-        ntk.foreach_po( [&]( auto const& po, auto index ) {
-          abc::Gia_ManAppendCo( pNew, abc::Vec_IntEntry(vDrivers, nLatches + index) );
-        });
+        for(i=0; i < ntk.num_pos(); i++){
+          abc::Gia_ManAppendCo( pNew, abc::Vec_IntEntry(vDrivers, i) );
+        }
+        
+        if(nLatches > 0)
+          Gia_ManSetRegNum( pNew, nLatches );
+        
       }
 
       mockturtle::aig_network from_abc()
       {
         //pNew = pAbc->pGia; 
-
+        
         // reads ABC GIA 
         if(pNew == NULL)
         {
@@ -151,6 +157,12 @@ namespace mockturtle
           return; 
         }
 
+        pTopo = abc::Gia_ManDupNormalize( pNew, 0 );
+        //abc::Gia_ManTransferMapping( pTopo, pNew );
+        //abc::Gia_ManTransferPacking( pTopo, pNew );
+        //abc::Gia_ManTransferTiming( pTopo, pNew );
+        //pTopo->nConstrs   = pNew->nConstrs;
+        
         using signal = typename mockturtle::aig_network::signal; 
 
         // creates a new mockturtle AIG
@@ -159,24 +171,26 @@ namespace mockturtle
         int i = 0;
         unsigned uLit0, uLit1, uLit;
 
+        int counter = 0;
+
         signal left, right, po; 
 
         // creates constant
         pMock.get_constant( false ); 
 
-        for ( i = 0; (i < abc::Gia_ManPiNum(pNew)) && ((pObj) = abc::Gia_ManCi(pNew, i)); i++ )
+        for ( i = 0; (i < abc::Gia_ManPiNum(pTopo)) && ((pObj) = abc::Gia_ManCi(pTopo, i)); i++ )
         {
           // creates PIs with default name. TO DO: registers 
           pMock.create_pi();
         }
 
-        for ( i = 0; (i < pNew->nObjs) && ((pObj) = abc::Gia_ManObj(pNew, i)); i++ )      if ( !abc::Gia_ObjIsAnd(pObj) ) {} else
+        for ( i = 0; (i < pTopo->nObjs) && ((pObj) = abc::Gia_ManObj(pTopo, i)); i++ )  if ( !abc::Gia_ObjIsAnd(pObj) ) {} else
         {
           // create AND nodes 
           uLit  = abc::Abc_Var2Lit( i, 0 );
           uLit0 = abc::Gia_ObjFaninLit0( pObj, i );
           uLit1 = abc::Gia_ObjFaninLit1( pObj, i );
-          left = pMock.child_to_signal( uLit0 );
+          left  = pMock.child_to_signal( uLit0 );
           right = pMock.child_to_signal( uLit1 );
 
           if( uLit0 & 1 )
@@ -188,8 +202,8 @@ namespace mockturtle
           {
             right = pMock.create_not( right ); 
           }
-
           pMock.create_and( left, right );
+          counter++;
         }
 
         for ( i = 0; (i < abc::Gia_ManPoNum(pNew)) && ((pObj) = abc::Gia_ManCo(pNew, i)); i++ )
@@ -221,16 +235,13 @@ namespace mockturtle
       void dc2()
       {
         if(pNew == NULL){
-          printf("There is no stored AIG\n");
           return; 
         }
 
         abc::Gia_Man_t *pTmp; 
 
-        printf("starting optimization\n");
         pTmp = pNew; 
         pNew = abc::Gia_ManCompress2( pTmp, 1, 0 );
-        printf("done with optimization\n");
         abc::Gia_ManPrintStats(pNew, 0);
         abc::Abc_FrameUpdateGia( pAbc, pNew );
       }
@@ -245,6 +256,7 @@ namespace mockturtle
       private: 
         // variables to use with ABC
         abc::Gia_Man_t *pNew;
+        abc::Gia_Man_t *pTopo; 
         abc::Abc_Frame_t *pAbc; 
         abc::Vec_Int_t * vLits = NULL;
 
