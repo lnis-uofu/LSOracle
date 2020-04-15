@@ -173,7 +173,7 @@ namespace mockturtle
 
         int counter = 0;
 
-        signal left, right, po; 
+        signal left, right, po, ri; 
 
         // creates constant
         pMock.get_constant( false ); 
@@ -229,6 +229,31 @@ namespace mockturtle
           pMock.create_po( po );
 
         }
+        
+        // create reg
+        for ( i = 0; (i < abc::Gia_ManRegNum(pNew)) && ((pObj) = abc::Gia_ManCo(pNew, abc::Gia_ManPoNum(pNew)+i)); i++ )
+        {
+          if(!abc::Gia_ObjIsCo(abc::Gia_ObjChild0(pObj)))
+          {
+            //uLit  = abc::Abc_Var2Lit( i, 0 );
+            uLit = abc::Gia_ObjFaninLit0( pObj, Gia_ObjId(pNew,pObj) );
+          }
+
+          else if (!abc::Gia_ObjIsCo(abc::Gia_ObjChild1(pObj)))
+          {
+            uLit = abc::Gia_ObjFaninLit1( pObj, Gia_ObjId(pNew,pObj) );
+          }
+          
+          ri = pMock.child_to_signal( uLit );
+
+          if( uLit & 1 )
+          {
+            ri = pMock.create_not( ri );
+          }
+
+          pMock.create_ri( ri );
+        }
+        
         return pMock; 
       }
 
