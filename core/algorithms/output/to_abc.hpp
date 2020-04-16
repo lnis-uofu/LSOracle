@@ -278,6 +278,20 @@ namespace mockturtle
         return true; 
       }
 
+
+      abc::Gia_Man_t* get_gia(){
+        return pNew;
+      }
+
+      void set_gia(abc::Gia_Man_t* external_gia){
+        pNew = external_gia;
+      }
+
+      auto size() const
+      {
+        return static_cast<uint32_t>( abc::Gia_ManObjNum(pNew) );
+      }
+
       private: 
         // variables to use with ABC
         abc::Gia_Man_t *pNew;

@@ -106,4 +106,11 @@
 // #include "commands/testing/pattern_view.hpp"
 #include "commands/testing/ntk_to_abc.hpp"
 
+
+
+#include "algorithms/abc_lut_mapping.hpp"
+#include "algorithms/collapse_abc_lut.hpp"
+#include "algorithms/optimization/abc_optimization_test.hpp"
+#include "commands/testing/abc_lut_map.hpp"
+
 ALICE_MAIN( lsoracle )
