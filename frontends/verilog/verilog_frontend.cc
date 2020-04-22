@@ -467,7 +467,6 @@ struct VerilogFrontend : public Frontend {
 
 		AST::process(design, current_ast, flag_dump_ast1, flag_dump_ast2, flag_no_dump_ptr, flag_dump_vlog1, flag_dump_vlog2, flag_dump_rtlil, flag_nolatches,
 				flag_nomeminit, flag_nomem2reg, flag_mem2reg, flag_noblackbox, lib_mode, flag_nowb, flag_noopt, flag_icells, flag_pwires, flag_nooverwrite, flag_overwrite, flag_defer, default_nettype_wire);
-
 		if (!flag_nopp)
 			delete lexin;
 

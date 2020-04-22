@@ -29,19 +29,22 @@
 // Kahn, Arthur B. (1962), "Topological sorting of large networks", Communications of the ACM 5 (11): 558-562, doi:10.1145/368996.369025
 // http://en.wikipedia.org/wiki/Topological_sorting
 
-#define ABC_COMMAND_LIB "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put"
+#define ABC_COMMAND_LIB "strash; print_stats; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put; print_stats"
 #define ABC_COMMAND_CTR "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put; buffer; upsize {D}; dnsize {D}; stime -p"
-#define ABC_COMMAND_LUT "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; dch -f; if; mfs2"
+#define ABC_COMMAND_LUT "strash; ifraig; scorr; dretime; retime {D}; strash; dch -f; if; mfs2"
+// #define ABC_COMMAND_LUT "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; dch -f; if; mfs2"
 #define ABC_COMMAND_SOP "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; dch -f; cover {I} {P}"
 #define ABC_COMMAND_DFL "strash; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put"
 
-#define ABC_FAST_COMMAND_LIB "strash; dretime; retime {D}; map {D}"
+#define ABC_FAST_COMMAND_LIB "strash; print_stats; dretime; retime {D}; map {D}; print_stats"
 #define ABC_FAST_COMMAND_CTR "strash; dretime; retime {D}; map {D}; buffer; upsize {D}; dnsize {D}; stime -p"
 #define ABC_FAST_COMMAND_LUT "strash; dretime; retime {D}; if"
 #define ABC_FAST_COMMAND_SOP "strash; dretime; retime {D}; cover -I {I} -P {P}"
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
-#define ABC_COMMAND_LIB_OPT "strash; balance; rewrite; refactor; balance; rewrite; rewrite -z; balance; refactor -z; rewrite -z; balance; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put"
+#define ABC_COMMAND_LIB_OPT "strash; print_stats; balance; rewrite; refactor; balance; rewrite; rewrite -z; balance; refactor -z; rewrite -z; balance; print_stats; ifraig; scorr; dc2; dretime; retime {D}; strash; &get -n; &dch -f; &nf {D}; &put; print_stats"
+
+#define ABC_COMMAND_CEC "cec {F}"
 
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
@@ -771,6 +774,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		abc_script = abc_script.substr(0, pos) + lutin_shared + abc_script.substr(pos+3);
 	if (abc_dress)
 		abc_script += "; dress";
+
 	abc_script += stringf("; write_blif %s/output.blif", tempdir_name.c_str());
 	abc_script = add_echos_to_abc_cmd(abc_script);
 
@@ -1281,11 +1285,11 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		log("Don't call ABC as there is nothing to map.\n");
 	}
 
-	if (cleanup)
-	{
-		log("Removing temp directory.\n");
-		remove_directory(tempdir_name);
-	}
+	// if (cleanup)
+	// {
+	// 	log("Removing temp directory.\n");
+	// 	remove_directory(tempdir_name);
+	// }
 
 	log_pop();
 }

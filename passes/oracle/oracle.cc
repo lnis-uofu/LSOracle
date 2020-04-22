@@ -41,19 +41,28 @@
 #define ABC_FAST_COMMAND_SOP "strash; dretime; retime {D}; cover -I {I} -P {P}"
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
-#define LSO_COMMAND_MIG "migscript"
-#define LSO_COMMAND_AIG "aigscript"
-#define LSO_COMMAND_PART_EXCLU_AIG "partitioning {P}; optimization -a "
-#define LSO_COMMAND_PART_EXCLU_MIG "partitioning {P}; optimization -m "
-#define LSO_COMMAND_PART_DEEP "partitioning {P}; optimization -n {D} "
-#define LSO_COMMAND_PART_HIGH_EFFORT "partitioning {P}; optimization -b "
-#define LSO_COMMAND_PART_DEEP_M "partitioning {P}; optimization -n {D} -c "
-#define LSO_COMMAND_PART_HIGH_EFFORT_M "partitioning {P}; optimization -b -c "
+#define LSO_COMMAND_MIG "ps -m; migscript; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_AIG "ps -a; aigscript; ps -a "
+#define LSO_COMMAND_PART_EXCLU_AIG "ps -a; partitioning {P}; optimization -a; ps -a "
+#define LSO_COMMAND_PART_EXCLU_MIG "ps -a; partitioning {P}; optimization -m; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_PART_DEEP "ps -a; partitioning {P}; optimization -i {D}; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_PART_HIGH_EFFORT "ps -a; oracle; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_PART_DEEP_M "ps -a; partitioning {P}; optimization -i {D} -c; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_PART_HIGH_EFFORT_M "ps -a; oracle -c; ps -m; crit_path_stats; ntk_stats "
+
+// #define OLD_LSO_COMMAND_MIG "ps --old_mig; migscript; ps --old_mig "
+// #define OLD_LSO_COMMAND_AIG "ps --old_aig; aigscript; ps --old_aig "
+// #define OLD_LSO_COMMAND_PART_EXCLU_AIG "ps --old_aig; old_partitioning {P}; old_optimization -a; ps --old_aig "
+// #define OLD_LSO_COMMAND_PART_EXCLU_MIG "ps --old_aig; old_partitioning {P}; old_optimization -m; ps --old_mig "
+// #define OLD_LSO_COMMAND_PART_DEEP "ps --old_aig; old_partitioning {P}; old_optimization -i {D}; ps --old_mig "
+// #define OLD_LSO_COMMAND_PART_HIGH_EFFORT "ps --old_aig; old_partitioning {P}; old_optimization -b; ps --old_mig "
+// #define OLD_LSO_COMMAND_PART_DEEP_M "ps --old_aig; old_partitioning {P}; old_optimization -i {D} -c; ps --old_mig "
+// #define OLD_LSO_COMMAND_PART_HIGH_EFFORT_M "ps --old_aig; old_partitioning {P}; old_optimization -b -c; ps --old_mig "
 
 #include "kernel/register.h"
 #include "kernel/sigtools.h"
 #include "kernel/celltypes.h"
-#include "kernel/cost.h"
+// #include "kernel/cost.h"
 #include "kernel/log.h"
 #include "frontends/verilog/verilog_frontend.h"
 #include "kernel/yosys.h"
@@ -728,9 +737,596 @@ struct abc_output_filter
 	}
 };
 
+// void test_lso_module(RTLIL::Design *design, RTLIL::Module *current_module, std::string script_file, std::string abcexe_file,std::string lsoexe_file,
+// 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
+// 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
+// 		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned, 
+// 		bool exclu_part, bool mig, bool deep, bool merge, bool test){
+
+// 	module = current_module;
+// 	map_autoidx = autoidx++;
+
+// 	signal_map.clear();
+// 	signal_list.clear();
+// 	pi_map.clear();
+// 	po_map.clear();
+// 	recover_init = false;
+
+// 	if (clk_str != "$")
+// 	{
+// 		clk_polarity = true;
+// 		clk_sig = RTLIL::SigSpec();
+
+// 		en_polarity = true;
+// 		en_sig = RTLIL::SigSpec();
+// 	}
+
+// 	if (!clk_str.empty() && clk_str != "$")
+// 	{
+// 		if (clk_str.find(',') != std::string::npos) {
+// 			int pos = clk_str.find(',');
+// 			std::string en_str = clk_str.substr(pos+1);
+// 			clk_str = clk_str.substr(0, pos);
+// 			if (en_str[0] == '!') {
+// 				en_polarity = false;
+// 				en_str = en_str.substr(1);
+// 			}
+// 			if (module->wires_.count(RTLIL::escape_id(en_str)) != 0)
+// 				en_sig = assign_map(RTLIL::SigSpec(module->wires_.at(RTLIL::escape_id(en_str)), 0));
+// 		}
+// 		if (clk_str[0] == '!') {
+// 			clk_polarity = false;
+// 			clk_str = clk_str.substr(1);
+// 		}
+// 		if (module->wires_.count(RTLIL::escape_id(clk_str)) != 0)
+// 			clk_sig = assign_map(RTLIL::SigSpec(module->wires_.at(RTLIL::escape_id(clk_str)), 0));
+// 	}
+
+// 	if (dff_mode && clk_sig.empty())
+// 		log_cmd_error("Clock domain %s not found.\n", clk_str.c_str());
+
+// 	std::string tempdir_name = "/tmp/yosys-lso-XXXXXX";
+// 	if (!cleanup)
+// 		tempdir_name[0] = tempdir_name[4] = '_';
+// 	tempdir_name = make_temp_dir(tempdir_name);
+// 	log_header(design, "Extracting gate netlist of module `%s' to `%s/input.blif'..\n",
+// 			module->name.c_str(), replace_tempdir(tempdir_name, tempdir_name, show_tempdir).c_str());
+
+// 	std::string lso_script;
+
+// 	std::string config_direc = lsoexe_file;
+// 	size_t pos = std::string::npos;
+// 	config_direc.erase(config_direc.begin() + config_direc.find("yosys-lso"), config_direc.end());
+
+// 	if(!partitioned)
+// 		lso_script += mig ? stringf("read_blif -m %s/input.blif; ", tempdir_name.c_str()) : stringf("read_blif %s/input.blif; ", tempdir_name.c_str());
+// 	else
+// 		lso_script += stringf("read_blif %s/input.blif; ", tempdir_name.c_str());
+
+// 	if(!test){
+// 		if(partitioned){
+// 			if(exclu_part)
+// 				lso_script += mig ? LSO_COMMAND_PART_EXCLU_MIG : LSO_COMMAND_PART_EXCLU_AIG;
+// 			else{
+// 				if(merge)
+// 					lso_script += deep ? LSO_COMMAND_PART_DEEP_M : LSO_COMMAND_PART_HIGH_EFFORT_M;
+// 				else
+// 					lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+// 			}
+// 		}
+// 		else
+// 			lso_script += mig ? LSO_COMMAND_MIG : LSO_COMMAND_AIG;
+// 	}
+	
+// 	if(test){
+// 		lso_script += stringf("write_blif %s/output.blif ", tempdir_name.c_str());
+// 	}
+// 	else{
+// 		if(!partitioned)
+// 			lso_script += mig ? stringf("; write_blif -m %s/output.blif", tempdir_name.c_str()) : stringf("; write_blif %s/output.blif", tempdir_name.c_str());
+// 		else
+// 			lso_script += stringf("; write_blif -m %s/output.blif", tempdir_name.c_str());
+// 	}
+	
+// 	for (size_t pos = lso_script.find("{P}"); pos != std::string::npos; pos = lso_script.find("{P}", pos))
+// 		lso_script = lso_script.substr(0, pos) + num_parts + " -c " + config_direc + "LSOracle/core/test.ini" + lso_script.substr(pos+3);
+
+// 	for (size_t pos = lso_script.find("{D}"); pos != std::string::npos; pos = lso_script.find("{D}", pos))
+// 		lso_script = lso_script.substr(0, pos) + config_direc + "LSOracle/deep_learn_model.json" + lso_script.substr(pos+3);
+
+// 	FILE *f = fopen(stringf("%s/lso.script", tempdir_name.c_str()).c_str(), "wt");
+// 	fprintf(f, "%s\n", lso_script.c_str());
+// 	fclose(f);
+
+// 	if (dff_mode || !clk_str.empty())
+// 	{
+// 		if (clk_sig.size() == 0)
+// 			log("No%s clock domain found. Not extracting any FF cells.\n", clk_str.empty() ? "" : " matching");
+// 		else {
+// 			log("Found%s %s clock domain: %s", clk_str.empty() ? "" : " matching", clk_polarity ? "posedge" : "negedge", log_signal(clk_sig));
+// 			if (en_sig.size() != 0)
+// 				log(", enabled by %s%s", en_polarity ? "" : "!", log_signal(en_sig));
+// 			log("\n");
+// 		}
+// 	}
+
+// 	for (auto c : cells)
+// 		extract_cell(c, keepff);
+
+// 	for (auto &wire_it : module->wires_) {
+// 		if (wire_it.second->port_id > 0 || wire_it.second->get_bool_attribute("\\keep"))
+// 			mark_port(RTLIL::SigSpec(wire_it.second));
+// 	}
+
+// 	for (auto &cell_it : module->cells_)
+// 	for (auto &port_it : cell_it.second->connections())
+// 		mark_port(port_it.second);
+
+// 	if (clk_sig.size() != 0)
+// 		mark_port(clk_sig);
+
+// 	if (en_sig.size() != 0)
+// 		mark_port(en_sig);
+
+// 	handle_loops();
+
+// 	std::string buffer = stringf("%s/input.blif", tempdir_name.c_str());
+// 	f = fopen(buffer.c_str(), "wt");
+// 	if (f == NULL)
+// 		log_error("Opening %s for writing failed: %s\n", buffer.c_str(), strerror(errno));
+
+// 	fprintf(f, ".model netlist\n");
+
+// 	int count_input = 0;
+// 	fprintf(f, ".inputs");
+// 	for (auto &si : signal_list) {
+// 		if (!si.is_port || si.type != G(NONE))
+// 			continue;
+// 		fprintf(f, " ys__n%d", si.id);
+// 		pi_map[count_input++] = log_signal(si.bit);
+// 	}
+// 	if (count_input == 0)
+// 		fprintf(f, " dummy_input\n");
+// 	fprintf(f, "\n");
+
+// 	int count_output = 0;
+// 	fprintf(f, ".outputs");
+// 	for (auto &si : signal_list) {
+// 		if (!si.is_port || si.type == G(NONE))
+// 			continue;
+// 		fprintf(f, " ys__n%d", si.id);
+// 		po_map[count_output++] = log_signal(si.bit);
+// 	}
+// 	fprintf(f, "\n");
+
+// 	for (auto &si : signal_list)
+// 		fprintf(f, "# ys__n%-5d %s\n", si.id, log_signal(si.bit));
+
+// 	for (auto &si : signal_list) {
+// 		if (si.bit.wire == NULL) {
+// 			fprintf(f, ".names ys__n%d\n", si.id);
+// 			if (si.bit == RTLIL::State::S1)
+// 				fprintf(f, "1\n");
+// 		}
+// 	}
+
+// 	int count_gates = 0;
+// 	for (auto &si : signal_list) {
+// 		if (si.type == G(BUF)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d\n", si.in1, si.id);
+// 			fprintf(f, "1 1\n");
+// 		} else if (si.type == G(NOT)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d\n", si.in1, si.id);
+// 			fprintf(f, "0 1\n");
+// 		} else if (si.type == G(AND)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "11 1\n");
+// 		} else if (si.type == G(NAND)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "0- 1\n");
+// 			fprintf(f, "-0 1\n");
+// 		} else if (si.type == G(OR)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "-1 1\n");
+// 			fprintf(f, "1- 1\n");
+// 		} else if (si.type == G(NOR)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "00 1\n");
+// 		} else if (si.type == G(XOR)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "01 1\n");
+// 			fprintf(f, "10 1\n");
+// 		} else if (si.type == G(XNOR)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "00 1\n");
+// 			fprintf(f, "11 1\n");
+// 		} else if (si.type == G(ANDNOT)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "10 1\n");
+// 		} else if (si.type == G(ORNOT)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.id);
+// 			fprintf(f, "1- 1\n");
+// 			fprintf(f, "-0 1\n");
+// 		} else if (si.type == G(MUX)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.in3, si.id);
+// 			fprintf(f, "1-0 1\n");
+// 			fprintf(f, "-11 1\n");
+// 		} else if (si.type == G(AOI3)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.in3, si.id);
+// 			fprintf(f, "-00 1\n");
+// 			fprintf(f, "0-0 1\n");
+// 		} else if (si.type == G(OAI3)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.in3, si.id);
+// 			fprintf(f, "00- 1\n");
+// 			fprintf(f, "--0 1\n");
+// 		} else if (si.type == G(AOI4)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.in3, si.in4, si.id);
+// 			fprintf(f, "-0-0 1\n");
+// 			fprintf(f, "-00- 1\n");
+// 			fprintf(f, "0--0 1\n");
+// 			fprintf(f, "0-0- 1\n");
+// 		} else if (si.type == G(OAI4)) {
+// 			fprintf(f, ".names ys__n%d ys__n%d ys__n%d ys__n%d ys__n%d\n", si.in1, si.in2, si.in3, si.in4, si.id);
+// 			fprintf(f, "00-- 1\n");
+// 			fprintf(f, "--00 1\n");
+// 		} else if (si.type == G(FF)) {
+// 			if (si.init == State::S0 || si.init == State::S1) {
+// 				fprintf(f, ".latch ys__n%d ys__n%d %d\n", si.in1, si.id, si.init == State::S1 ? 1 : 0);
+// 				recover_init = true;
+// 			} else
+// 				fprintf(f, ".latch ys__n%d ys__n%d 2\n", si.in1, si.id);
+// 		} else if (si.type != G(NONE))
+// 			log_abort();
+// 		if (si.type != G(NONE))
+// 			count_gates++;
+// 	}
+
+// 	fprintf(f, ".end\n");
+// 	fclose(f);
+
+// 	log("Extracted %d gates and %d wires to a netlist network with %d inputs and %d outputs.\n",
+// 			count_gates, GetSize(signal_list), count_input, count_output);
+// 	log_push();
+// 	if (count_output > 0)
+// 	{
+// 		log_header(design, "Executing LSOracle.\n");
+
+// 		FILE *f = fopen(stringf("%s/lso.script", tempdir_name.c_str()).c_str(), "wt");
+// 		fprintf(f, "%s\n", lso_script.c_str());
+// 		fclose(f);
+
+// 		std::string buffer = stringf("%s -f %s/lso.script 2>&1", lsoexe_file.c_str(), tempdir_name.c_str());
+// 		log("Running LSOracle command: %s\n", replace_tempdir(buffer, tempdir_name, show_tempdir).c_str());
+// 		log("LSOracle script: %s\n", lso_script.c_str());
+// 		lso_output_filter filt(tempdir_name, show_tempdir);
+// 		int ret = run_command(buffer, std::bind(&lso_output_filter::next_line, filt, std::placeholders::_1));
+
+// 		if (ret != 0)
+// 			log_error("LSOracle: execution of command \"%s\" failed: return code %d.\n", buffer.c_str(), ret);
+
+// 		buffer = stringf("%s/%s", tempdir_name.c_str(), "output.blif");
+// 		printf("%s\n", buffer.c_str());
+// 		std::ifstream ifs_lso;
+// 		ifs_lso.open(buffer);
+// 		if (ifs_lso.fail())
+// 			log_error("Can't open LSOracle output file `%s'.\n", buffer.c_str());
+
+// 		printf("Finished LSO\n");
+
+// 		std::string cec_script = stringf("cec %s/input.blif %s/output.blif", tempdir_name.c_str(), tempdir_name.c_str());
+// 		cec_script = add_echos_to_abc_cmd(cec_script);
+
+// 		for (size_t i = 0; i+1 < cec_script.size(); i++)
+// 			if (cec_script[i] == ';' && cec_script[i+1] == ' ')
+// 				cec_script[i+1] = '\n';
+
+// 		FILE *cec = fopen(stringf("%s/cec.script", tempdir_name.c_str()).c_str(), "wt");
+// 		fprintf(cec, "%s\n", cec_script.c_str());
+// 		fclose(cec);
+
+// 		std::string cec_buffer = stringf("%s -s -f %s/cec.script 2>&1", abcexe_file.c_str(), tempdir_name.c_str());
+
+// 		printf("Verifying LSOracle result is equivalent to original file\n");
+
+// 		#ifndef YOSYS_LINK_ABC
+// 				abc_output_filter abc_filt(tempdir_name, show_tempdir);
+// 				ret = run_command(cec_buffer, std::bind(&abc_output_filter::next_line, abc_filt, std::placeholders::_1));
+// 		#else
+// 				// These needs to be mutable, supposedly due to getopt
+// 				char *abc_argv[5];
+// 				string tmp_script_name = stringf("%s/cec.script", tempdir_name.c_str());
+// 				abc_argv[0] = strdup(abcexe_file.c_str());
+// 				abc_argv[1] = strdup("-s");
+// 				abc_argv[2] = strdup("-f");
+// 				abc_argv[3] = strdup(tmp_script_name.c_str());
+// 				abc_argv[4] = 0;
+// 				ret = Abc_RealMain(4, abc_argv);
+// 				free(abc_argv[0]);
+// 				free(abc_argv[1]);
+// 				free(abc_argv[2]);
+// 				free(abc_argv[3]);
+// 		#endif
+// 				if (ret != 0)
+// 					log_error("ABC: execution of command \"%s\" failed: return code %d.\n", buffer.c_str(), ret);
+
+// 		printf("Verification complete\n");
+
+// 		bool builtin_lib = liberty_file.empty();
+// 		RTLIL::Design *mapped_design = new RTLIL::Design;
+// 		parse_blif(mapped_design, ifs_lso, builtin_lib ? "\\DFF" : "\\_dff_", false, sop_mode);
+
+// 		ifs_lso.close();
+
+// 		log_header(design, "Re-integrating LSOracle results.\n");
+// 		RTLIL::Module *mapped_mod = mapped_design->modules_["\\netlist"];
+// 		if (mapped_mod == NULL)
+// 			log_error("LSOracle output file does not contain a module `netlist'.\n");
+// 		for (auto &it : mapped_mod->wires_) {
+// 			RTLIL::Wire *w = it.second;
+// 			RTLIL::Wire *orig_wire = nullptr;
+// 			RTLIL::Wire *wire = module->addWire(remap_name(w->name, &orig_wire));
+// 			if (orig_wire != nullptr && orig_wire->attributes.count("\\src"))
+// 				wire->attributes["\\src"] = orig_wire->attributes["\\src"];
+// 			if (markgroups) wire->attributes["\\abcgroup"] = map_autoidx;
+// 			design->select(module, wire);
+// 		}
+
+// 		std::map<std::string, int> cell_stats;
+// 		for (auto c : mapped_mod->cells())
+// 		{
+// 			if (builtin_lib)
+// 			{
+// 				cell_stats[RTLIL::unescape_id(c->type)]++;
+// 				if (c->type == "\\ZERO" || c->type == "\\ONE") {
+// 					RTLIL::SigSig conn;
+// 					conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]);
+// 					conn.second = RTLIL::SigSpec(c->type == "\\ZERO" ? 0 : 1, 1);
+// 					module->connect(conn);
+// 					continue;
+// 				}
+// 				if (c->type == "\\BUF") {
+// 					RTLIL::SigSig conn;
+// 					conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]);
+// 					conn.second = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]);
+// 					module->connect(conn);
+// 					continue;
+// 				}
+// 				if (c->type == "\\NOT") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_NOT_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\AND" || c->type == "\\OR" || c->type == "\\XOR" || c->type == "\\NAND" || c->type == "\\NOR" ||
+// 						c->type == "\\XNOR" || c->type == "\\ANDNOT" || c->type == "\\ORNOT") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\MUX") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\MUX4") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX4_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+// 					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+// 					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\MUX8") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX8_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+// 					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 					cell->setPort("\\E", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\E").as_wire()->name)]));
+// 					cell->setPort("\\F", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\F").as_wire()->name)]));
+// 					cell->setPort("\\G", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\G").as_wire()->name)]));
+// 					cell->setPort("\\H", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\H").as_wire()->name)]));
+// 					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+// 					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+// 					cell->setPort("\\U", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\U").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\MUX16") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX16_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+// 					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 					cell->setPort("\\E", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\E").as_wire()->name)]));
+// 					cell->setPort("\\F", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\F").as_wire()->name)]));
+// 					cell->setPort("\\G", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\G").as_wire()->name)]));
+// 					cell->setPort("\\H", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\H").as_wire()->name)]));
+// 					cell->setPort("\\I", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\I").as_wire()->name)]));
+// 					cell->setPort("\\J", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\J").as_wire()->name)]));
+// 					cell->setPort("\\K", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\K").as_wire()->name)]));
+// 					cell->setPort("\\L", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\L").as_wire()->name)]));
+// 					cell->setPort("\\M", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\M").as_wire()->name)]));
+// 					cell->setPort("\\N", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\N").as_wire()->name)]));
+// 					cell->setPort("\\O", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\O").as_wire()->name)]));
+// 					cell->setPort("\\P", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\P").as_wire()->name)]));
+// 					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+// 					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+// 					cell->setPort("\\U", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\U").as_wire()->name)]));
+// 					cell->setPort("\\V", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\V").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\AOI3" || c->type == "\\OAI3") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\AOI4" || c->type == "\\OAI4") {
+// 					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+// 					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+// 					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+// 					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 				if (c->type == "\\DFF") {
+// 					log_assert(clk_sig.size() == 1);
+// 					RTLIL::Cell *cell;
+// 					if (en_sig.size() == 0) {
+// 						cell = module->addCell(remap_name(c->name), clk_polarity ? "$_DFF_P_" : "$_DFF_N_");
+// 					} else {
+// 						log_assert(en_sig.size() == 1);
+// 						cell = module->addCell(remap_name(c->name), stringf("$_DFFE_%c%c_", clk_polarity ? 'P' : 'N', en_polarity ? 'P' : 'N'));
+// 						cell->setPort("\\E", en_sig);
+// 					}
+// 					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 					cell->setPort("\\Q", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Q").as_wire()->name)]));
+// 					cell->setPort("\\C", clk_sig);
+// 					design->select(module, cell);
+// 					continue;
+// 				}
+// 			}
+// 			else
+// 				cell_stats[RTLIL::unescape_id(c->type)]++;
+
+// 			if (c->type == "\\_const0_" || c->type == "\\_const1_") {
+// 				RTLIL::SigSig conn;
+// 				conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->connections().begin()->second.as_wire()->name)]);
+// 				conn.second = RTLIL::SigSpec(c->type == "\\_const0_" ? 0 : 1, 1);
+// 				module->connect(conn);
+// 				continue;
+// 			}
+
+// 			if (c->type == "\\_dff_") {
+// 				log_assert(clk_sig.size() == 1);
+// 				RTLIL::Cell *cell;
+// 				if (en_sig.size() == 0) {
+// 					cell = module->addCell(remap_name(c->name), clk_polarity ? "$_DFF_P_" : "$_DFF_N_");
+// 				} else {
+// 					log_assert(en_sig.size() == 1);
+// 					cell = module->addCell(remap_name(c->name), stringf("$_DFFE_%c%c_", clk_polarity ? 'P' : 'N', en_polarity ? 'P' : 'N'));
+// 					cell->setPort("\\E", en_sig);
+// 				}
+// 				if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 				cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+// 				cell->setPort("\\Q", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Q").as_wire()->name)]));
+// 				cell->setPort("\\C", clk_sig);
+// 				design->select(module, cell);
+// 				continue;
+// 			}
+
+// 			if (c->type == "$lut" && GetSize(c->getPort("\\A")) == 1 && c->getParam("\\LUT").as_int() == 2) {
+// 				SigSpec my_a = module->wires_[remap_name(c->getPort("\\A").as_wire()->name)];
+// 				SigSpec my_y = module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)];
+// 				module->connect(my_y, my_a);
+// 				continue;
+// 			}
+
+// 			RTLIL::Cell *cell = module->addCell(remap_name(c->name), c->type);
+// 			if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+// 			cell->parameters = c->parameters;
+// 			for (auto &conn : c->connections()) {
+// 				RTLIL::SigSpec newsig;
+// 				for (auto &c : conn.second.chunks()) {
+// 					if (c.width == 0)
+// 						continue;
+// 					log_assert(c.width == 1);
+// 					newsig.append(module->wires_[remap_name(c.wire->name)]);
+// 				}
+// 				cell->setPort(conn.first, newsig);
+// 			}
+// 			design->select(module, cell);
+// 		}
+
+// 		for (auto conn : mapped_mod->connections()) {
+// 			if (!conn.first.is_fully_const())
+// 				conn.first = RTLIL::SigSpec(module->wires_[remap_name(conn.first.as_wire()->name)]);
+// 			if (!conn.second.is_fully_const())
+// 				conn.second = RTLIL::SigSpec(module->wires_[remap_name(conn.second.as_wire()->name)]);
+// 			module->connect(conn);
+// 		}
+
+// 		if (recover_init)
+// 			for (auto wire : mapped_mod->wires()) {
+// 				if (wire->attributes.count("\\init")) {
+// 					Wire *w = module->wires_[remap_name(wire->name)];
+// 					log_assert(w->attributes.count("\\init") == 0);
+// 					w->attributes["\\init"] = wire->attributes.at("\\init");
+// 				}
+// 			}
+
+// 		for (auto &it : cell_stats)
+// 			log("ABC RESULTS:   %15s cells: %8d\n", it.first.c_str(), it.second);
+// 		int in_wires = 0, out_wires = 0;
+// 		for (auto &si : signal_list)
+// 			if (si.is_port) {
+// 				char buffer[100];
+// 				snprintf(buffer, 100, "\\ys__n%d", si.id);
+// 				RTLIL::SigSig conn;
+// 				if (si.type != G(NONE)) {
+// 					conn.first = si.bit;
+// 					conn.second = RTLIL::SigSpec(module->wires_[remap_name(buffer)]);
+// 					out_wires++;
+// 				} else {
+// 					conn.first = RTLIL::SigSpec(module->wires_[remap_name(buffer)]);
+// 					conn.second = si.bit;
+// 					in_wires++;
+// 				}
+// 				module->connect(conn);
+// 			}
+// 		log("ABC RESULTS:        internal signals: %8d\n", int(signal_list.size()) - in_wires - out_wires);
+// 		log("ABC RESULTS:           input signals: %8d\n", in_wires);
+// 		log("ABC RESULTS:          output signals: %8d\n", out_wires);
+
+// 		delete mapped_design;
+// 	}
+// 	else
+// 	{
+// 		log("Don't call ABC as there is nothing to map.\n");
+// 	}
+
+// 	// if (cleanup)
+// 	// {
+// 	// 	log("Removing temp directory.\n");
+// 	// 	remove_directory(tempdir_name);
+// 	// }
+// 	log_pop();
+
+// }
+
 void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir_name, 
 	bool show_tempdir, std::string num_parts, bool partitioned, bool exclu_part, bool mig, 
-	bool deep, bool merge){
+	bool deep, bool merge, bool test, bool aig, bool lut){
 
 	std::string lso_script;
 
@@ -739,35 +1335,65 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 	config_direc.erase(config_direc.begin() + config_direc.find("yosys-lso"), config_direc.end());
 
 	if(!partitioned)
-		lso_script += mig ? stringf("read_aig -m %s/abc.aig; ", tempdir_name.c_str()) : stringf("read_aig %s/abc.aig; ", tempdir_name.c_str());
+		lso_script += mig ? stringf("read -m %s/abc.aig; ", tempdir_name.c_str()) : stringf("read %s/abc.aig; ", tempdir_name.c_str());
 	else
-		lso_script += stringf("read_aig %s/abc.aig; ", tempdir_name.c_str());
+		lso_script += stringf("read %s/abc.aig; ", tempdir_name.c_str());
 
 	//Conversion from RTLIL to AIG readable by LSOracle
-	if(partitioned){
-		if(exclu_part)
-			lso_script += mig ? LSO_COMMAND_PART_EXCLU_MIG : LSO_COMMAND_PART_EXCLU_AIG;
+	if(!test){
+		if(partitioned){
+			if(exclu_part)
+				lso_script += mig ? LSO_COMMAND_PART_EXCLU_MIG : LSO_COMMAND_PART_EXCLU_AIG;
+			else{
+				if(merge)
+					lso_script += deep ? LSO_COMMAND_PART_DEEP_M : LSO_COMMAND_PART_HIGH_EFFORT_M;
+				else
+					lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+			}
+		}
 		else{
-			if(merge)
-				lso_script += deep ? LSO_COMMAND_PART_DEEP_M : LSO_COMMAND_PART_HIGH_EFFORT_M;
+			// lso_script += mig ? LSO_COMMAND_MIG : LSO_COMMAND_AIG;
+			if(mig)
+				lso_script += LSO_COMMAND_MIG;
+			else if(aig)
+				lso_script += LSO_COMMAND_AIG;
+			else{
+				if(merge)
+					lso_script += LSO_COMMAND_PART_HIGH_EFFORT_M;
+				else
+					lso_script += LSO_COMMAND_PART_HIGH_EFFORT;
+			}
+			
+		}
+
+	}
+	
+	if(test){
+		lso_script += !lut ? stringf("write_blif %s/output.blif", tempdir_name.c_str()) : stringf("lut_map -o %s/output.blif", tempdir_name.c_str());
+	}
+	else{
+		if(!partitioned){
+			if(aig)
+				lso_script += !lut ? stringf("; write_blif %s/output.blif", tempdir_name.c_str()) : stringf("; lut_map -o %s/output.blif", tempdir_name.c_str());
 			else
-				lso_script += deep ? LSO_COMMAND_PART_DEEP : LSO_COMMAND_PART_HIGH_EFFORT;
+				lso_script += !lut ? stringf("; write_blif -m %s/output.blif", tempdir_name.c_str()) : stringf("; lut_map -m -o %s/output.blif", tempdir_name.c_str());
+			// lso_script += stringf("; write_bench -m %s/output.bench", tempdir_name.c_str());
+			// lso_script += mig ? stringf("; write_blif -m %s/output.blif", tempdir_name.c_str()) : stringf("; write_blif %s/output.blif", tempdir_name.c_str());
+		}
+		else{
+			if(aig)
+				lso_script += !lut ? stringf("; write_blif %s/output.blif", tempdir_name.c_str()) : stringf("; lut_map -o %s/output.blif", tempdir_name.c_str());
+			else
+				lso_script += !lut ? stringf("; write_blif -m %s/output.blif", tempdir_name.c_str()) : stringf("; lut_map -m -o %s/output.blif", tempdir_name.c_str());
 		}
 	}
-	else
-		lso_script += mig ? LSO_COMMAND_MIG : LSO_COMMAND_AIG;
 	
-	if(!partitioned)
-		lso_script += mig ? stringf("; write_verilog -m %s/output.v", tempdir_name.c_str()) : stringf("; write_verilog %s/output.v", tempdir_name.c_str());
-	else
-		lso_script += stringf("-o %s/output.v", tempdir_name.c_str());
-
 	for (size_t pos = lso_script.find("{P}"); pos != std::string::npos; pos = lso_script.find("{P}", pos))
 		lso_script = lso_script.substr(0, pos) + num_parts + " -c " + config_direc + "LSOracle/core/test.ini" + lso_script.substr(pos+3);
 
 	for (size_t pos = lso_script.find("{D}"); pos != std::string::npos; pos = lso_script.find("{D}", pos))
 		lso_script = lso_script.substr(0, pos) + config_direc + "LSOracle/deep_learn_model.json" + lso_script.substr(pos+3);
-
+	
 
 	FILE *f = fopen(stringf("%s/lso.script", tempdir_name.c_str()).c_str(), "wt");
 	fprintf(f, "%s\n", lso_script.c_str());
@@ -782,57 +1408,58 @@ void lso_module(RTLIL::Design *design, std::string exe_file, std::string tempdir
 	if (ret != 0)
 		log_error("LSOracle: execution of command \"%s\" failed: return code %d.\n", buffer.c_str(), ret);
 
-	buffer = stringf("%s/%s", tempdir_name.c_str(), "output.v");
-	std::ifstream ifs;
-	ifs.open(buffer);
-	if (ifs.fail())
-		log_error("Can't open LSOracle output file `%s'.\n", buffer.c_str());
+	// buffer = stringf("%s/%s", tempdir_name.c_str(), "output.v");
+	// printf("%s\n", buffer.c_str());
+	// std::ifstream ifs;
+	// ifs.open(buffer);
+	// if (ifs.fail())
+	// 	log_error("Can't open LSOracle output file `%s'.\n", buffer.c_str());
 
-	std::string filename = tempdir_name + "/output.v";
-	AST::current_filename = filename;
-	AST::set_line_num = &frontend_verilog_yyset_lineno;
-	AST::get_line_num = &frontend_verilog_yyget_lineno;
+	// std::string filename = tempdir_name + "/output.v";
+	// AST::current_filename = filename;
+	// AST::set_line_num = &frontend_verilog_yyset_lineno;
+	// AST::get_line_num = &frontend_verilog_yyget_lineno;
 
-	RTLIL::Design *lso_design = new RTLIL::Design;
+	// RTLIL::Design *lso_design = new RTLIL::Design;
 
-	VERILOG_FRONTEND::current_ast = new AST::AstNode(AST::AST_DESIGN);
+	// VERILOG_FRONTEND::current_ast = new AST::AstNode(AST::AST_DESIGN);
 
-	std::map<std::string, std::string> defines_map;
-	std::list<std::string> include_dirs;
-	std::list<std::string> attributes;
+	// std::map<std::string, std::string> defines_map;
+	// std::list<std::string> include_dirs;
+	// std::list<std::string> attributes;
 
-	VERILOG_FRONTEND::lexin = &ifs;
-	std::string code_after_preproc;
+	// VERILOG_FRONTEND::lexin = &ifs;
+	// std::string code_after_preproc;
 	
-	code_after_preproc = frontend_verilog_preproc(ifs, filename, defines_map, design->verilog_defines, include_dirs);
+	// code_after_preproc = frontend_verilog_preproc(ifs, filename, defines_map, design->verilog_defines, include_dirs);
 	
-	VERILOG_FRONTEND::lexin = new std::istringstream(code_after_preproc);
-	frontend_verilog_yyset_lineno(1);
-	frontend_verilog_yyrestart(NULL);
-	frontend_verilog_yyparse();
-	frontend_verilog_yylex_destroy();
+	// VERILOG_FRONTEND::lexin = new std::istringstream(code_after_preproc);
+	// frontend_verilog_yyset_lineno(1);
+	// frontend_verilog_yyrestart(NULL);
+	// frontend_verilog_yyparse();
+	// frontend_verilog_yylex_destroy();
 
-	for (auto &child : VERILOG_FRONTEND::current_ast->children) {
-		if (child->type == AST::AST_MODULE){
-			for (auto &attr : attributes){
-				if (child->attributes.count(attr) == 0)
-					child->attributes[attr] = AST::AstNode::mkconst_int(1, false);
-			}
-		}
-	}
-	//clear current design (temporary fix)
-	for (auto &it : design->modules_)
-		design->remove(it.second);
+	// for (auto &child : VERILOG_FRONTEND::current_ast->children) {
+	// 	if (child->type == AST::AST_MODULE){
+	// 		for (auto &attr : attributes){
+	// 			if (child->attributes.count(attr) == 0)
+	// 				child->attributes[attr] = AST::AstNode::mkconst_int(1, false);
+	// 		}
+	// 	}
+	// }
+	// //clear current design (temporary fix)
+	// for (auto &it : design->modules_)
+	// 	design->remove(it.second);
 	
 
-	AST::process(design, VERILOG_FRONTEND::current_ast, false, false, false, false, false, false, false,
-			false, false, false, false, false, false, false, false, false, false, false, false, true);
+	// AST::process(design, VERILOG_FRONTEND::current_ast, false, false, false, false, false, false, false,
+	// 		false, false, false, false, false, false, false, false, false, false, true, false, true);
 
-	delete VERILOG_FRONTEND::lexin;
-	delete VERILOG_FRONTEND::current_ast;
-	VERILOG_FRONTEND::current_ast = NULL;
+	// delete VERILOG_FRONTEND::lexin;
+	// delete VERILOG_FRONTEND::current_ast;
+	// VERILOG_FRONTEND::current_ast = NULL;
 
-	log("Successfully finished converting LSOracle output to RTLIL.\n");
+	// log("Successfully finished converting LSOracle output to RTLIL.\n");
 
 }
 
@@ -840,7 +1467,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
 		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned, 
-		bool exclu_part, bool mig, bool deep, bool merge)
+		bool exclu_part, bool mig, bool deep, bool merge, bool test, bool aig, bool lut)
 {
 	module = current_module;
 	map_autoidx = autoidx++;
@@ -884,6 +1511,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 	if (dff_mode && clk_sig.empty())
 		log_cmd_error("Clock domain %s not found.\n", clk_str.c_str());
 
+	printf("FUCK\n");
 	std::string tempdir_name = "/tmp/yosys-abc-XXXXXX";
 	if (!cleanup)
 		tempdir_name[0] = tempdir_name[4] = '_';
@@ -1066,7 +1694,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		// These needs to be mutable, supposedly due to getopt
 		char *abc_argv[5];
 		string tmp_script_name = stringf("%s/abc.script", tempdir_name.c_str());
-		abc_argv[0] = strdup(exe_file.c_str());
+		abc_argv[0] = strdup(abcexe_file.c_str());
 		abc_argv[1] = strdup("-s");
 		abc_argv[2] = strdup("-f");
 		abc_argv[3] = strdup(tmp_script_name.c_str());
@@ -1086,19 +1714,370 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		if (ifs.fail())
 			log_error("Can't open ABC output file `%s'.\n", buffer.c_str());
 
-		lso_module(design, lsoexe_file, tempdir_name, show_tempdir, num_parts, partitioned, exclu_part, mig, deep, merge);
+		lso_module(design, lsoexe_file, tempdir_name, show_tempdir, num_parts, partitioned, exclu_part, mig, deep, merge, test, aig, lut);
 
+		buffer = stringf("%s/%s", tempdir_name.c_str(), "output.blif");
+		printf("%s\n", buffer.c_str());
+		std::ifstream ifs_lso;
+		ifs_lso.open(buffer);
+		if (ifs_lso.fail())
+			log_error("Can't open LSOracle output file `%s'.\n", buffer.c_str());
+
+		printf("Finished LSO\n");
+		// buffer = stringf("%s/output.bench", tempdir_name.c_str());
+		// f = fopen(buffer.c_str(), "wt");
+		// if (f == NULL)
+		// 	log_error("Opening %s for writing failed: %s\n", buffer.c_str(), strerror(errno));
+
+		std::string cec_script = stringf("cec %s/abc.aig %s/output.blif", tempdir_name.c_str(), tempdir_name.c_str());
+		cec_script = add_echos_to_abc_cmd(cec_script);
+
+		for (size_t i = 0; i+1 < cec_script.size(); i++)
+			if (cec_script[i] == ';' && cec_script[i+1] == ' ')
+				cec_script[i+1] = '\n';
+
+		FILE *cec = fopen(stringf("%s/cec.script", tempdir_name.c_str()).c_str(), "wt");
+		fprintf(cec, "%s\n", cec_script.c_str());
+		fclose(cec);
+
+		std::string cec_buffer = stringf("%s -s -f %s/cec.script 2>&1", abcexe_file.c_str(), tempdir_name.c_str());
+
+		printf("Verifying LSOracle result is equivalent to original file\n");
+
+		#ifndef YOSYS_LINK_ABC
+				ret = run_command(cec_buffer, std::bind(&abc_output_filter::next_line, filt, std::placeholders::_1));
+		#else
+				// These needs to be mutable, supposedly due to getopt
+				char *abc_argv[5];
+				string tmp_script_name = stringf("%s/cec.script", tempdir_name.c_str());
+				abc_argv[0] = strdup(abcexe_file.c_str());
+				abc_argv[1] = strdup("-s");
+				abc_argv[2] = strdup("-f");
+				abc_argv[3] = strdup(tmp_script_name.c_str());
+				abc_argv[4] = 0;
+				ret = Abc_RealMain(4, abc_argv);
+				free(abc_argv[0]);
+				free(abc_argv[1]);
+				free(abc_argv[2]);
+				free(abc_argv[3]);
+		#endif
+				if (ret != 0)
+					log_error("ABC: execution of command \"%s\" failed: return code %d.\n", buffer.c_str(), ret);
+
+		printf("Verification complete\n");
+
+		// abc_script = stringf("read_ %s/output.bench; print_stats; write_blif %s/output_abc.blif", tempdir_name.c_str(), tempdir_name.c_str());
+	
+		// abc_script = add_echos_to_abc_cmd(abc_script);
+
+		// for (size_t i = 0; i+1 < abc_script.size(); i++)
+		// 	if (abc_script[i] == ';' && abc_script[i+1] == ' ')
+		// 		abc_script[i+1] = '\n';
+
+		// FILE *post = fopen(stringf("%s/abc.script", tempdir_name.c_str()).c_str(), "wt");
+		// fprintf(post, "%s\n", abc_script.c_str());
+		// fclose(post);
+
+		// buffer = stringf("%s -s -f %s/abc.script 2>&1", abcexe_file.c_str(), tempdir_name.c_str());
+		// log("Running ABC command: %s\n", replace_tempdir(buffer, tempdir_name, show_tempdir).c_str());
+
+		// #ifndef YOSYS_LINK_ABC
+		// 		ret = run_command(buffer, std::bind(&abc_output_filter::next_line, filt, std::placeholders::_1));
+		// #else
+		// 		// These needs to be mutable, supposedly due to getopt
+		// 		char *abc_argv[5];
+		// 		string tmp_script_name = stringf("%s/abc.script", tempdir_name.c_str());
+		// 		abc_argv[0] = strdup(abcexe_file.c_str());
+		// 		abc_argv[1] = strdup("-s");
+		// 		abc_argv[2] = strdup("-f");
+		// 		abc_argv[3] = strdup(tmp_script_name.c_str());
+		// 		abc_argv[4] = 0;
+		// 		ret = Abc_RealMain(4, abc_argv);
+		// 		free(abc_argv[0]);
+		// 		free(abc_argv[1]);
+		// 		free(abc_argv[2]);
+		// 		free(abc_argv[3]);
+		// #endif
+		// 		if (ret != 0)
+		// 			log_error("ABC: execution of command \"%s\" failed: return code %d.\n", buffer.c_str(), ret);
+
+		// printf("Finished ABC\n");
+		// buffer = stringf("%s/%s", tempdir_name.c_str(), "output_abc.blif");
+		// printf("%s\n", buffer.c_str());
+		// std::ifstream ifs_abc;
+		// ifs_abc.open(buffer);
+		// if (ifs_abc.fail())
+		// 	log_error("Can't open ABC output file `%s'.\n", buffer.c_str());
+
+		bool builtin_lib = liberty_file.empty();
+		RTLIL::Design *mapped_design = new RTLIL::Design;
+		parse_blif(mapped_design, ifs_lso, builtin_lib ? "\\DFF" : "\\_dff_", false, sop_mode);
+
+		ifs_lso.close();
+
+		log_header(design, "Re-integrating LSOracle results.\n");
+		RTLIL::Module *mapped_mod = mapped_design->modules_["\\top"];
+		if (mapped_mod == NULL)
+			log_error("LSOracle output file does not contain a module `top'.\n");
+		for (auto &it : mapped_mod->wires_) {
+			RTLIL::Wire *w = it.second;
+			RTLIL::Wire *orig_wire = nullptr;
+			RTLIL::Wire *wire = module->addWire(remap_name(w->name, &orig_wire));
+			if (orig_wire != nullptr && orig_wire->attributes.count("\\src"))
+				wire->attributes["\\src"] = orig_wire->attributes["\\src"];
+			if (markgroups) wire->attributes["\\abcgroup"] = map_autoidx;
+			design->select(module, wire);
+		}
+
+		std::map<std::string, int> cell_stats;
+		for (auto c : mapped_mod->cells())
+		{
+			if (builtin_lib)
+			{
+				cell_stats[RTLIL::unescape_id(c->type)]++;
+				if (c->type == "\\ZERO" || c->type == "\\ONE") {
+					RTLIL::SigSig conn;
+					conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]);
+					conn.second = RTLIL::SigSpec(c->type == "\\ZERO" ? 0 : 1, 1);
+					module->connect(conn);
+					continue;
+				}
+				if (c->type == "\\BUF") {
+					RTLIL::SigSig conn;
+					conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]);
+					conn.second = RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]);
+					module->connect(conn);
+					continue;
+				}
+				if (c->type == "\\NOT") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_NOT_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\AND" || c->type == "\\OR" || c->type == "\\XOR" || c->type == "\\NAND" || c->type == "\\NOR" ||
+						c->type == "\\XNOR" || c->type == "\\ANDNOT" || c->type == "\\ORNOT") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\MUX") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\MUX4") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX4_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\MUX8") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX8_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+					cell->setPort("\\E", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\E").as_wire()->name)]));
+					cell->setPort("\\F", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\F").as_wire()->name)]));
+					cell->setPort("\\G", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\G").as_wire()->name)]));
+					cell->setPort("\\H", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\H").as_wire()->name)]));
+					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+					cell->setPort("\\U", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\U").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\MUX16") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_MUX16_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+					cell->setPort("\\E", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\E").as_wire()->name)]));
+					cell->setPort("\\F", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\F").as_wire()->name)]));
+					cell->setPort("\\G", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\G").as_wire()->name)]));
+					cell->setPort("\\H", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\H").as_wire()->name)]));
+					cell->setPort("\\I", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\I").as_wire()->name)]));
+					cell->setPort("\\J", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\J").as_wire()->name)]));
+					cell->setPort("\\K", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\K").as_wire()->name)]));
+					cell->setPort("\\L", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\L").as_wire()->name)]));
+					cell->setPort("\\M", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\M").as_wire()->name)]));
+					cell->setPort("\\N", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\N").as_wire()->name)]));
+					cell->setPort("\\O", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\O").as_wire()->name)]));
+					cell->setPort("\\P", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\P").as_wire()->name)]));
+					cell->setPort("\\S", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\S").as_wire()->name)]));
+					cell->setPort("\\T", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\T").as_wire()->name)]));
+					cell->setPort("\\U", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\U").as_wire()->name)]));
+					cell->setPort("\\V", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\V").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\AOI3" || c->type == "\\OAI3") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\AOI4" || c->type == "\\OAI4") {
+					RTLIL::Cell *cell = module->addCell(remap_name(c->name), "$_" + c->type.substr(1) + "_");
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\A", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\A").as_wire()->name)]));
+					cell->setPort("\\B", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\B").as_wire()->name)]));
+					cell->setPort("\\C", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\C").as_wire()->name)]));
+					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+					cell->setPort("\\Y", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)]));
+					design->select(module, cell);
+					continue;
+				}
+				if (c->type == "\\DFF") {
+					log_assert(clk_sig.size() == 1);
+					RTLIL::Cell *cell;
+					if (en_sig.size() == 0) {
+						cell = module->addCell(remap_name(c->name), clk_polarity ? "$_DFF_P_" : "$_DFF_N_");
+					} else {
+						log_assert(en_sig.size() == 1);
+						cell = module->addCell(remap_name(c->name), stringf("$_DFFE_%c%c_", clk_polarity ? 'P' : 'N', en_polarity ? 'P' : 'N'));
+						cell->setPort("\\E", en_sig);
+					}
+					if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+					cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+					cell->setPort("\\Q", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Q").as_wire()->name)]));
+					cell->setPort("\\C", clk_sig);
+					design->select(module, cell);
+					continue;
+				}
+			}
+			else
+				cell_stats[RTLIL::unescape_id(c->type)]++;
+
+			if (c->type == "\\_const0_" || c->type == "\\_const1_") {
+				RTLIL::SigSig conn;
+				conn.first = RTLIL::SigSpec(module->wires_[remap_name(c->connections().begin()->second.as_wire()->name)]);
+				conn.second = RTLIL::SigSpec(c->type == "\\_const0_" ? 0 : 1, 1);
+				module->connect(conn);
+				continue;
+			}
+
+			if (c->type == "\\_dff_") {
+				log_assert(clk_sig.size() == 1);
+				RTLIL::Cell *cell;
+				if (en_sig.size() == 0) {
+					cell = module->addCell(remap_name(c->name), clk_polarity ? "$_DFF_P_" : "$_DFF_N_");
+				} else {
+					log_assert(en_sig.size() == 1);
+					cell = module->addCell(remap_name(c->name), stringf("$_DFFE_%c%c_", clk_polarity ? 'P' : 'N', en_polarity ? 'P' : 'N'));
+					cell->setPort("\\E", en_sig);
+				}
+				if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+				cell->setPort("\\D", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\D").as_wire()->name)]));
+				cell->setPort("\\Q", RTLIL::SigSpec(module->wires_[remap_name(c->getPort("\\Q").as_wire()->name)]));
+				cell->setPort("\\C", clk_sig);
+				design->select(module, cell);
+				continue;
+			}
+
+			if (c->type == "$lut" && GetSize(c->getPort("\\A")) == 1 && c->getParam("\\LUT").as_int() == 2) {
+				SigSpec my_a = module->wires_[remap_name(c->getPort("\\A").as_wire()->name)];
+				SigSpec my_y = module->wires_[remap_name(c->getPort("\\Y").as_wire()->name)];
+				module->connect(my_y, my_a);
+				continue;
+			}
+
+			RTLIL::Cell *cell = module->addCell(remap_name(c->name), c->type);
+			if (markgroups) cell->attributes["\\abcgroup"] = map_autoidx;
+			cell->parameters = c->parameters;
+			for (auto &conn : c->connections()) {
+				RTLIL::SigSpec newsig;
+				for (auto &c : conn.second.chunks()) {
+					if (c.width == 0)
+						continue;
+					log_assert(c.width == 1);
+					newsig.append(module->wires_[remap_name(c.wire->name)]);
+				}
+				cell->setPort(conn.first, newsig);
+			}
+			design->select(module, cell);
+		}
+
+		for (auto conn : mapped_mod->connections()) {
+			if (!conn.first.is_fully_const())
+				conn.first = RTLIL::SigSpec(module->wires_[remap_name(conn.first.as_wire()->name)]);
+			if (!conn.second.is_fully_const())
+				conn.second = RTLIL::SigSpec(module->wires_[remap_name(conn.second.as_wire()->name)]);
+			module->connect(conn);
+		}
+
+		if (recover_init)
+			for (auto wire : mapped_mod->wires()) {
+				if (wire->attributes.count("\\init")) {
+					Wire *w = module->wires_[remap_name(wire->name)];
+					log_assert(w->attributes.count("\\init") == 0);
+					w->attributes["\\init"] = wire->attributes.at("\\init");
+				}
+			}
+
+		for (auto &it : cell_stats)
+			log("LSOracle RESULTS:   %15s cells: %8d\n", it.first.c_str(), it.second);
+		int in_wires = 0, out_wires = 0;
+		for (auto &si : signal_list)
+			if (si.is_port) {
+				char buffer[100];
+				snprintf(buffer, 100, "\\ys__n%d", si.id);
+				RTLIL::SigSig conn;
+				if (si.type != G(NONE)) {
+					conn.first = si.bit;
+					conn.second = RTLIL::SigSpec(module->wires_[remap_name(buffer)]);
+					out_wires++;
+				} else {
+					conn.first = RTLIL::SigSpec(module->wires_[remap_name(buffer)]);
+					conn.second = si.bit;
+					in_wires++;
+				}
+				module->connect(conn);
+			}
+		log("LSOracle RESULTS:        internal signals: %8d\n", int(signal_list.size()) - in_wires - out_wires);
+		log("LSOracle RESULTS:           input signals: %8d\n", in_wires);
+		log("LSOracle RESULTS:          output signals: %8d\n", out_wires);
+
+		delete mapped_design;
 	}
 	else
 	{
-		log("Don't call ABC as there is nothing to map.\n");
+		log("Don't call LSOracle as there is nothing to map.\n");
 	}
 
-	if (cleanup)
-	{
-		log("Removing temp directory.\n");
-		remove_directory(tempdir_name);
-	}
+	// if (cleanup)
+	// {
+	// 	log("Removing temp directory.\n");
+	// 	remove_directory(tempdir_name);
+	// }
 	log_pop();
 
 }
@@ -1138,10 +2117,19 @@ struct ORACLEPass : public Pass {
 		log("        use Deep Neural Network for classification to determine what is best fit for each partition.\n");
 		log("\n");
 		log("    -mig \n");
-		log("        use MIG optimization instead of the default AIG optimization (script is MIG equivalent to ABC's resyn2 flow).\n");
+		log("        use MIG optimization with no partitioning.\n");
+		log("\n");
+		log("    -aig \n");
+		log("        use AIG optimization with no partitioning.\n");
+		log("\n");
+		log("    -lut \n");
+		log("        use LUT mapping with LSOracle.\n");
 		log("\n");
 		log("    -merge \n");
 		log("        merge partitions classified for the same optimization technique before optimization\n");
+		log("\n");
+		log("    -test \n");
+		log("        test bringing output back into Yosys.\n");
 		log("\n");
 		log("    -script <file>\n");
 		log("        use the specified LSOracle script file instead of the default script.\n");
@@ -1186,7 +2174,7 @@ struct ORACLEPass : public Pass {
 		enabled_gates.clear();
 
 		std::string num_parts;
-		bool partitioned = false, exclu_part = false, mig = false, deep = false, merge = false;
+		bool partitioned = false, exclu_part = false, mig = false, aig = false, lut = false, deep = false, merge = false, test = false;
 
 #ifdef _WIN32
 #ifndef ABCEXTERNAL
@@ -1263,6 +2251,18 @@ struct ORACLEPass : public Pass {
 				mig = true;
 				continue;
 			}
+			if (arg == "-aig") {
+				aig = true;
+				continue;
+			}
+			if (arg == "-lut") {
+				lut = true;
+				continue;
+			}
+			if (arg == "-test") {
+				test = true;
+				continue;
+			}
 		}
 		extra_args(args, argidx, design);
 
@@ -1296,7 +2296,7 @@ struct ORACLEPass : public Pass {
 			if (!dff_mode || !clk_str.empty()) {
 				abc_module(design, mod, script_file, abcexe_file, lsoexe_file, liberty_file, constr_file, cleanup, lut_costs, dff_mode, clk_str, keepff,
 						delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress,
-						num_parts, partitioned, exclu_part, mig, deep, merge);
+						num_parts, partitioned, exclu_part, mig, deep, merge, test, aig, lut);
 				continue;
 			}
 		}

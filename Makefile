@@ -130,7 +130,7 @@ OBJS = kernel/version_$(GIT_REV).o
 # is just a symlink to your actual ABC working directory, as 'make mrproper'
 # will remove the 'abc' directory and you do not want to accidentally
 # delete your work on ABC..
-ABCREV = 5776ad0
+ABCREV = default
 ABCPULL = 1
 ABCURL ?= https://github.com/berkeley-abc/abc
 ABCMKARGS = CC="$(CXX)" CXX="$(CXX)" ABC_USE_LIBSTDCXX=1
@@ -139,7 +139,7 @@ ABCMKARGS = CC="$(CXX)" CXX="$(CXX)" ABC_USE_LIBSTDCXX=1
 # Note: The in-tree ABC (yosys-abc) will not be installed when ABCEXTERNAL is set.
 ABCEXTERNAL ?=
 
-
+LSOREV = default
 LSOEX = lsoracle
 LSOPULL = 1
 LSOURL ?= https://github.com/LNIS-Projects/LSOracle.git
@@ -682,14 +682,15 @@ ifneq ($(LSOREV),default)
 	echo "$(CURDIR)";
 	echo "Pulling LSOracle from $(LSOURL):"; set -x; \
 	test -d LSOracle || git clone --single-branch --branch dev $(LSOURL) LSOracle; \
-	cd LSOracle && mkdir -p "build/" && cd build && $(CMAKE_COMMAND) .. -DCMAKE_CXX_COMPILER=/usr/local/stow/gcc/amd64_linux26/gcc-8.2.0/bin/g++ -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) -j
-	
+	cd LSOracle && mkdir -p "build/" && cd build && $(CMAKE_COMMAND) .. -DCMAKE_CXX_COMPILER=/usr/local/stow/gcc/amd64_linux26/gcc-8.2.0/bin/g++ -DCMAKE_BUILD_TYPE=RELEASE && $(MAKE) -j	
 endif
+	rm -f LSOracle/build/core/lsoracle
+	cd LSOracle/build/core && $(MAKE) -j
 
-yosys-lso$(EXE): LSOracle/$(LSOEX)$(EXE)
+yosys-lso$(EXE): LSOracle/build/core/$(LSOEX)$(EXE)
 	$(P) cp LSOracle/build/core/$(LSOEX)$(EXE) yosys-lso$(EXE)
 
-yosys-liblso.a: LSOracle/liblso.a
+yosys-liblso.a: LSOracle/build/core/liblso.a
 	$(P) cp LSOracle/build/core/liblso.a yosys-liblso.a
 
 
