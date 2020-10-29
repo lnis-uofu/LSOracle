@@ -1,37 +1,11 @@
-## Welcome to GitHub Pages
+## LSOracle
 
-You can use the [editor on GitHub](https://github.com/LNIS-Projects/LSOracle/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+LSOracle is an MIT licensed package for mixed logic synthesis, using multiple graph representations of a logic circuit simultaneously to achieve higher performance than is possible with a homogeneous approach.  It is available as a standalone tool and as a plugin for [Yosys](http://www.clifford.at/yosys/), a popular open-source synthesis tool.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Getting Started
 
-### Markdown
+# Stand Alone
+The main LSOracle repository is available [here](https://github.com/LNIS-Projects/LSOracle), and is where most development is done.  As a standalone tool, LSOracle has many options for customizing the synthesis performed, including homogeneous AIG, MIG, and XAG synthesis, and an adjustable mixed synthesis framework which can prioritize area or delay, merge adjacent partitions, use external partitioners, etc. It is intented primarily for researchers, as it lacks a verilog frontend, and the many options can be confusing for users who may just want to get a design implemented.
+# Yosys Plugin
+Most users will prefer to use LSOracle with the Yosys plugin, available [here](https://github.com/LNIS-Projects/LSOracle-Plugin).  Using LSOracle within Yosys adds a robust verilog frontend, and expands techmapping capabilities, allowing use of [abc's](https://github.com/berkeley-abc/abc) boolean matching capabilites for ASIC synthesis and more sophisticated FPGA techniques including mapping to carry chains, DSPs, etc, rather than only to LUTs.  It is also completely automatic.  The user simply calls the LSOracle pass and then continues using Yosys as if they had just called the "abc" command.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/LNIS-Projects/LSOracle/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
