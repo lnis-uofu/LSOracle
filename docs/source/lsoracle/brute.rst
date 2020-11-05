@@ -1,7 +1,7 @@
-Brute Force Classification
+High Effort Classification
 ===========================
 
-Instead of using the DNN model, a brute force method is used to determine what algorithm to use for each partition. After partitioning, each partition is optimized using both AIG and MIG methods and the one that reduces the area and delay product is the method to be used. 
+Instead of using the DNN model, a high effort method is used to determine what algorithm to use for each partition. After partitioning, each partition is optimized using both AIG and MIG methods and the one that reduces the area and delay product is the method to be used. 
 
 Note: This metric is not the same used to train the DNN model, and the model was also trained on cones rather than full partitions.
 
@@ -11,5 +11,5 @@ Note: This metric is not the same used to train the DNN model, and the model was
 	read_aig <AIGER file>
 	//Partition stored AIG 
 	partitioning <number of partitions>
-	//-b flag denotes using brute force classification
+	//-b flag denotes using high effort classification
 	optimization -b -o <Verilog file to write to>
