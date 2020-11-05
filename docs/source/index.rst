@@ -12,9 +12,7 @@ Welcome to LSOracle's documentation!
 
    epfl/index
 
-   lsoracle/index 
-
-   seqmig/index
+   lsoracle/index
 
 .. toctree::
    :caption: Apendix
