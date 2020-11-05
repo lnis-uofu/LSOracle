@@ -10,4 +10,4 @@ Logic Synthesis Oracle
     manager
     view
     optimization
-
+    usage
