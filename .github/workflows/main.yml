@@ -18,9 +18,3 @@ jobs:
       - name: Run tests
         run: |
           python3 basic_tests.py --cicd
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name:
-          path: |
-            build/core/lsoracle
