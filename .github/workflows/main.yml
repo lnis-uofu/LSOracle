@@ -1,0 +1,20 @@
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build LSOracle
+    container: ghcr.io/lnis-uofu/lsoracle-build:latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RELEASE
+          make
+          cd ..
+      - name: Run tests
+        run: |
+          python3 basic_tests.py --cicd
