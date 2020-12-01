@@ -9,3 +9,6 @@ examples/abc/csharp/bin
 examples/abc/csharp/obj
 examples/abc/scala/project
 examples/abc/scala/target
+
+tests/**/*.v
+hypergraph.txt
