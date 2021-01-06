@@ -168,7 +168,7 @@ public:
     outputs.push_back( lit );
   }
 
-  virtual void on_input_name( unsigned index, const std::string& name ) const
+  /*virtual void on_input_name( unsigned index, const std::string& name ) const
   {
     (void)index;
     (void)name;
@@ -182,7 +182,7 @@ public:
     (void)name;
     _ntk.create_out_name(index, name);
     outputNames[index] = name;
-  }
+  }*/
 
 private:
   Ntk& _ntk;

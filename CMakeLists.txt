@@ -10,6 +10,9 @@ project(alice LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(OPENSTA_HOME
+  ${PROJECT_SOURCE_DIR}/module/OpenSTA
+)
 
 # some specific compiler definitions
 include(CheckCXXCompilerFlag)
@@ -18,6 +21,7 @@ if (HAS_FCOLOR_DIAGNOSTICS)
   add_compile_options(-fcolor-diagnostics)
 endif()
 
+add_subdirectory(${OPENSTA_HOME})
 add_subdirectory(lib)
 #add_subdirectory(examples)
 add_subdirectory(OpenTimer)
@@ -27,4 +31,18 @@ set(CMAKE_CXX_STANDARD 17)                            # enable c++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
+
+#define TK paths for 
+set(TK_LIBRARY
+/usr/lib64/libtk8.5.so
+)
+
+set(TK_INCLUDE_PATH
+/include/gtk-3.0/gtk/gtk.h
+)
+
+find_package(TCL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(SWIG REQUIRED)
+
 add_subdirectory(core)

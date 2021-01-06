@@ -32,6 +32,7 @@
 #pragma once
 
 #include <vector>
+#include <mockturtle/mockturtle.hpp>
 
 #include "../traits.hpp"
 #include "../utils/node_map.hpp"

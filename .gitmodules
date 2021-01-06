@@ -13,3 +13,6 @@
 #[submodule "lib/percy"]
 #	path = lib/percy
 #	url = https://github.com/whaaswijk/percy
+[submodule "module"]
+	path = module
+	url = https://github.com/The-OpenROAD-Project/OpenSTA.git

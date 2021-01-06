@@ -28,6 +28,8 @@
 #include <iomanip>
 #include <ot/timer/timer.hpp>
 
+#include "timingSta.h"
+
 namespace alice{
 
   //object to hold STA configuration
@@ -174,6 +176,37 @@ namespace alice{
   	}
   }
 
+  ALICE_ADD_STORE( mockturtle::xmg_network, "xmg", "x", "xmg", "XMGs" )
+
+    /* Implements the short string to describe a store element in store -a */
+    ALICE_DESCRIBE_STORE( mockturtle::xmg_network, aig ){
+
+        const auto name = "aig_placeholder";
+        const auto pi_num = aig.num_pis();
+        const auto po_num = aig.num_pos();
+        return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
+    }//end aig_network describe store
+
+    ALICE_LOG_STORE_STATISTICS( mockturtle::xmg_network, aig){
+
+        return {
+                {"nodes", aig.size()},
+                {"inputs", aig.num_pis() },
+                {"latches", aig.num_registers()},
+                {"outputs", aig.num_pos() },
+                {"AIG nodes", aig.num_gates()}};
+    }//end aig_network log store statistics
+
+    /* Implements the functionality of ps -b */
+    ALICE_PRINT_STORE_STATISTICS( mockturtle::xmg_network, os, aig ){
+        os << "nodes: " << aig.size() << std::endl;
+        os << "inputs: " << aig.num_pis()  << std::endl;
+        os << "latches: " << aig.num_registers() << std::endl;
+        os << "outputs: " << aig.num_pos() << std::endl;
+        os << "AIG nodes: " << aig.num_gates() << std::endl;
+
+    }//end aig_network print store statistics
+
   /* Adds And-inverter graphs (Mockturtle type aig_network) as store element type to
    * alice.
    *
@@ -217,7 +250,7 @@ namespace alice{
    * One can access XAGs in general store commands using the long --xag flag or
    * the short -x flag.
    */
-  ALICE_ADD_STORE( mockturtle::xag_network, "xag", "x", "xag", "XAGs" )
+  ALICE_ADD_STORE( mockturtle::xag_network, "xag", "o", "xag", "XAGs" )
 
   /* Implements the short string to describe a store element in store -a */
   ALICE_DESCRIBE_STORE( mockturtle::xag_network, xag ){
@@ -635,7 +668,9 @@ namespace alice{
 
         opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
-        add_flag("--xag,-x", "Store AIG file as XAG network (AIG network is default)");
+        add_flag("--xag,-o", "Store AIG file as XAG network (AIG network is default)");
+        add_flag("--xmg,-x", "Store AIG file as XMG network (XMG network is default)");
+
       }
 
     protected:
@@ -699,6 +734,37 @@ namespace alice{
             filename.erase(filename.end() - 4, filename.end());
             ntk._storage->net_name = filename;
           }
+          else if(is_set("xmg")){
+              mockturtle::xmg_network ntk;
+              lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
+
+              store<mockturtle::xmg_network>().extend() = ntk;
+
+
+              if(ntk._storage->inputNames.size() == 0){
+                  for(int i = 0; i < ntk.num_pis(); i++){
+                      std::string input_name = "pi";
+                      input_name.append(std::to_string(i));
+                      ntk._storage->inputNames[i] = input_name;
+                  }
+              }
+              if(ntk._storage->outputNames.size() == 0){
+
+                  for(int i = 0; i < ntk.num_pos(); i++){
+                      std::string output_name = "po";
+                      output_name.append(std::to_string(i));
+                      ntk._storage->outputNames[i] = output_name;
+                  }
+              }
+              ntk.foreach_node([&](auto node){
+                  std::cout << "Node = " << node << "\n";
+                  if(ntk.is_xor(node)){
+                      std::cout << "XOR\n";
+                  }
+              });
+              filename.erase(filename.end() - 4, filename.end());
+              ntk._storage->net_name = filename;
+          }
           else{
             mockturtle::aig_network ntk;
             lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
@@ -746,6 +812,7 @@ namespace alice{
           : command( env, "Display details about the stored network" ){
 
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
+        add_flag("--xmg,-x", "Store AIG file as XMG network (AIG network is default)");
       }
 
     protected:
@@ -781,6 +848,37 @@ namespace alice{
             std::cout << "MIG network not stored\n";
           }
         }
+          if(is_set("xmg")){
+              if(!store<mockturtle::xmg_network>().empty()){
+                  auto mig = store<mockturtle::xmg_network>().current();
+
+                  for (int j =1; j < mig._storage->nodes.size(); j++) {
+                      for (int i = 0; i < mig._storage->nodes.data()->children.size(); i++) {
+                          std::cout << "node index " << j << " node fan in " << mig._storage->nodes[j].children[i].index << " and data " << mig._storage->nodes[j].children[i].data << std::endl;
+                      }
+                  }
+                  for (unsigned k = mig.num_pis()+1; k<= mig._storage->inputs.size(); k++ ){
+                      auto node = mig.index_to_node(k);
+                      std::cout << " reg " << k << " fan out size " << mig.fanout_size(node) << std::endl;
+                  }
+                  for (unsigned l=0; l< mig._storage->outputs.size(); l++){
+                      std::cout << " outputs " << std::endl;
+                      std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
+                  }
+                  std::cout << "Inputs\n";
+                  for(int i = 0; i < mig._storage->inputs.size(); i++){
+                      std::cout << mig._storage->inputs.at(i) << ": " << mig._storage->inputNames[i] << "\n";
+                  }
+                  std::cout << "Outputs\n";
+                  for(int i = 0; i < mig._storage->outputs.size(); i++){
+                      std::cout << mig._storage->outputs.at(i).index << ": " << mig._storage->outputNames[i] << "\n";
+                  }
+              }
+              else{
+                  std::cout << "MIG network not stored\n";
+              }
+          }
+
         else{
           if(!store<mockturtle::aig_network>().empty()){
 
@@ -1272,7 +1370,9 @@ namespace alice{
         std::vector<int> comb_aig_parts;
         std::vector<int> comb_mig_parts;
         if(!store<mockturtle::aig_network>().empty()){
+          sta::Sta *sta;
 
+          sta->testFunction();
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
           // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
@@ -1842,7 +1942,14 @@ namespace alice{
     std::cout << "Enter liberty path: ";
     std::cin >> filename;
 
-    sta_cfg.set_lib_path(filename);
+    const char *f = filename.c_str();
+
+    sta::Sta *sta;
+    sta::LibertyLibrary *myLib;
+    sta::Corner corner("typycal", 0);
+    
+    myLib = sta->readLiberty(f, corner, sta::MinMaxAll::min(), 0);
+
   }
 
   ALICE_COMMAND( read_netlist, "STA", "Reads mapped verilog"){
@@ -2136,6 +2243,7 @@ namespace alice{
 
         opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
         add_flag("--mig,-m", "Read from the MIG network");
+          add_flag("--xmg,-x", "Read from the MIG network");
       }
 
     protected:
@@ -2256,23 +2364,6 @@ namespace alice{
 
   ALICE_ADD_COMMAND(write_dot, "Output");
 
-  ALICE_COMMAND(interleaving, "Modification", "NPN + depth MIG rewriting") {
-    if(!store<mockturtle::mig_network>().empty()){
-      auto& mig = store<mockturtle::mig_network>().current();
-
-      mockturtle::mig_npn_resynthesis resyn;
-      mockturtle::cut_rewriting_params ps;
-
-      ps.cut_enumeration_ps.cut_size = 4;
-
-      mockturtle::cut_rewriting(mig, resyn, ps);
-      mig = mockturtle::cleanup_dangling( mig );
-    }
-    else{
-      std::cout << "There is not an MIG network stored.\n";
-    }
-
-  }
 
   ALICE_COMMAND(migscript, "Modification", "Exact NPN MIG rewriting") {
     if(!store<mockturtle::mig_network>().empty()){
