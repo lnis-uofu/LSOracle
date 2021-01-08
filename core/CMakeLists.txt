@@ -34,4 +34,4 @@ add_executable(lsoracle lsoracle.cpp)
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 #target_include_directories(lsoracle PRIVATE ../lib/darknet/include)
 #darklib removed
-target_link_libraries(lsoracle oracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar OpenSTA ${ZLIB_LIBRARIES} ${TCL_LIB})
+target_link_libraries(lsoracle oracle mockturtle kitty alice libabc OpenTimer Threads::Threads stdc++fs kahypar OpenSTA ${ZLIB_LIBRARIES} ${TCL_LIBRARY})

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 
+cmake_policy(SET CMP0079 NEW)
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -10,9 +12,6 @@ project(alice LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(OPENSTA_HOME
-  ${PROJECT_SOURCE_DIR}/module/OpenSTA
-)
 
 # some specific compiler definitions
 include(CheckCXXCompilerFlag)
@@ -21,7 +20,6 @@ if (HAS_FCOLOR_DIAGNOSTICS)
   add_compile_options(-fcolor-diagnostics)
 endif()
 
-add_subdirectory(${OPENSTA_HOME})
 add_subdirectory(lib)
 #add_subdirectory(examples)
 add_subdirectory(OpenTimer)
@@ -32,7 +30,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 
-#define TK paths for 
+#define TK paths for
 set(TK_LIBRARY
 /usr/lib64/libtk8.5.so
 )

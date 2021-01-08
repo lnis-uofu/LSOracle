@@ -1,17 +1,17 @@
 //  MIT License
-//  
+//
 //  Copyright (c) 2018 Chun-Xun Lin, Tsung-Wei Huang and Martin D. F. Wong
-//  
+//
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
 //  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
-//  
+//
 //  The above copyright notice and this permission notice shall be included in all
 //  copies or substantial portions of the Software.
-//  
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -40,15 +40,8 @@
 #include <cstring>
 #include <fstream>
 #include <string_view>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <cassert>
-
-
-namespace std {
-
-namespace filesystem = experimental::filesystem;
-
-};
 
 // ------------------------------------------------------------------------------------------------
 
@@ -58,13 +51,13 @@ namespace prompt {
 // Read one line from an input stream
 //template <typename C, typename T, typename A>
 //std::basic_istream<C, T>& read_line(
-//  std::basic_istream<C, T>& is, 
+//  std::basic_istream<C, T>& is,
 //  std::basic_string<C, T, A>& line
 //) {
 //
 //  line.clear();
 //
-//  typename std::basic_istream<C, T>::sentry se(is, true);        
+//  typename std::basic_istream<C, T>::sentry se(is, true);
 //  std::streambuf* sb = is.rdbuf();
 //
 //  for(;;) {
@@ -82,7 +75,7 @@ namespace prompt {
 //        }
 //        return is;
 //      break;
-//      
+//
 //      // case 3: eof
 //      case std::streambuf::traits_type::eof():
 //        // Also handle the case when the last line has no line ending
@@ -96,7 +89,7 @@ namespace prompt {
 //        line.push_back(static_cast<char>(c));
 //      break;
 //    }
-//  } 
+//  }
 //
 //  return is;
 //}
@@ -105,7 +98,7 @@ namespace prompt {
 
 template <typename C, typename T, typename A>
 bool read_line(
-  FILE* is, 
+  FILE* is,
   std::basic_string<C, T, A>& line
 ) {
 
@@ -120,13 +113,13 @@ bool read_line(
       break;
 
       // case 2: carriage return '\r\n'
-      case '\r': 
+      case '\r':
         if(auto nc = ::fgetc(is); nc != '\n'){
           ::ungetc(nc, is);
         }
         return true;
       break;
-      
+
       // case 3: eof
       case EOF:
         // Also handle the case when the last line has no line ending
@@ -141,18 +134,18 @@ bool read_line(
         line.push_back(static_cast<char>(c));
       break;
     }
-  } 
+  }
   return true;
 }
 
 
 // ------------------------------------------------------------------------------------------------
 
-// Function: count_prefix  
+// Function: count_prefix
 // Count the the length of same prefix between two strings
 template <typename C>
 constexpr size_t count_prefix(
-  std::basic_string_view<typename C::value_type, typename C::traits_type> s1, 
+  std::basic_string_view<typename C::value_type, typename C::traits_type> s1,
   std::basic_string_view<typename C::value_type, typename C::traits_type> s2){
   size_t i {0};
   size_t len {std::min(s1.size(), s2.size())};
@@ -166,7 +159,7 @@ constexpr size_t count_prefix(
 
 // ------------------------------------------------------------------------------------------------
 
-// Class: RadixTree 
+// Class: RadixTree
 template <typename C>
 class RadixTree{
 
@@ -175,7 +168,7 @@ class RadixTree{
   using allocator_type = typename C::allocator_type;
 
   public:
-  
+
     struct Node {
       bool is_word {false};
       std::list<std::pair<C, std::unique_ptr<Node>>> children;
@@ -183,10 +176,10 @@ class RadixTree{
 
    RadixTree() = default;
    RadixTree(const std::vector<C>&);
-   
+
    bool exist(std::basic_string_view<value_type, traits_type>) const;
    void insert(const C&);
-  
+
    std::vector<C> match_prefix(const C&) const;
    std::vector<C> all_words() const;
    C dump() const;
@@ -200,14 +193,14 @@ class RadixTree{
    void _insert(std::basic_string_view<value_type, traits_type>, Node&);
    void _match_prefix(std::vector<C>&, const Node&, const C&) const;
    void _dump(const Node&, size_t, C&) const;
-  
+
    std::pair<const Node*, C> _search_prefix_node(
      std::basic_string_view<value_type, traits_type>
    ) const;
 };
 
 
-// Procedure: Ctor 
+// Procedure: Ctor
 template <typename C>
 RadixTree<C>::RadixTree(const std::vector<C>& words){
   for(const auto& w: words){
@@ -216,18 +209,18 @@ RadixTree<C>::RadixTree(const std::vector<C>& words){
 }
 
 
-// Procedure: dump 
-// Dump the radix tree into a string 
+// Procedure: dump
+// Dump the radix tree into a string
 template <typename C>
 C RadixTree<C>::dump() const {
   C t;
-  _dump(_root, 0, t);      
+  _dump(_root, 0, t);
   t.append(1, '\n');
   return t;
 }
 
-// Procedure: _dump 
-// Recursively traverse the tree and append each level to string 
+// Procedure: _dump
+// Recursively traverse the tree and append each level to string
 template <typename C>
 void RadixTree<C>::_dump(const Node& n, size_t level, C& s) const {
   for(auto &[k,v]: n.children){
@@ -239,12 +232,12 @@ void RadixTree<C>::_dump(const Node& n, size_t level, C& s) const {
   }
 }
 
-// Procedure: _match_prefix 
-// Find all words that match the given prefix 
+// Procedure: _match_prefix
+// Find all words that match the given prefix
 template <typename C>
 void RadixTree<C>::_match_prefix(
-  std::vector<C> &vec, 
-  const Node& n, 
+  std::vector<C> &vec,
+  const Node& n,
   const C& s
 ) const {
   if(n.is_word){
@@ -255,8 +248,8 @@ void RadixTree<C>::_match_prefix(
   }
 }
 
-// Procedure: all_words 
-// Extract all words in the radix tree 
+// Procedure: all_words
+// Extract all words in the radix tree
 template <typename C>
 std::vector<C> RadixTree<C>::all_words() const {
   std::vector<C> words;
@@ -266,8 +259,8 @@ std::vector<C> RadixTree<C>::all_words() const {
   return words;
 }
 
-// Procedure: match_prefix 
-// Collect all words that match the given prefix 
+// Procedure: match_prefix
+// Collect all words that match the given prefix
 template <typename C>
 std::vector<C> RadixTree<C>::match_prefix(const C& prefix) const {
   if(auto [prefix_node, suffix] = _search_prefix_node(prefix); prefix_node == nullptr){
@@ -285,8 +278,8 @@ std::vector<C> RadixTree<C>::match_prefix(const C& prefix) const {
   }
 }
 
-// Procedure: _search_prefix_node 
-// Find the node that matches the given prefix 
+// Procedure: _search_prefix_node
+// Find the node that matches the given prefix
 template <typename C>
 std::pair<const typename RadixTree<C>::Node*, C> RadixTree<C>::_search_prefix_node(
   std::basic_string_view<value_type, traits_type> s
@@ -314,8 +307,8 @@ std::pair<const typename RadixTree<C>::Node*, C> RadixTree<C>::_search_prefix_no
   return {n, suffix};
 }
 
-// Procedure: exist 
-// Check whether the given word is in the radix tree or not 
+// Procedure: exist
+// Check whether the given word is in the radix tree or not
 template <typename C>
 bool RadixTree<C>::exist(std::basic_string_view<value_type, traits_type> s) const {
 
@@ -345,8 +338,8 @@ bool RadixTree<C>::exist(std::basic_string_view<value_type, traits_type> s) cons
   return false;
 }
 
-// Procedure: insert 
-// Insert a word into radix tree 
+// Procedure: insert
+// Insert a word into radix tree
 template <typename C>
 void RadixTree<C>::insert(const C& s){
   if(s.empty()){  // Empty string not allowed
@@ -355,8 +348,8 @@ void RadixTree<C>::insert(const C& s){
   _insert(s, _root);
 }
 
-// Procedure: _insert 
-// Insert a word into radix tree 
+// Procedure: _insert
+// Insert a word into radix tree
 template <typename C>
 void RadixTree<C>::_insert(std::basic_string_view<value_type, traits_type> sv, Node& n){
 
@@ -375,18 +368,18 @@ void RadixTree<C>::_insert(std::basic_string_view<value_type, traits_type> sv, N
     else return false;
   });
 
-  if(match_num == 0){   // Base case 1 
+  if(match_num == 0){   // Base case 1
     assert(itr == n.children.end());
-    auto& child = std::get<1>(n.children.emplace_back(std::make_pair(sv, new Node))); 
+    auto& child = std::get<1>(n.children.emplace_back(std::make_pair(sv, new Node)));
     child->is_word = true;
   }
   else {
-    
+
     if(match_num == itr->first.size()) {
       _insert(sv.data() + match_num, *itr->second);
     }
     else {
-    
+
       auto& par = std::get<1>(n.children.emplace_back(
         std::make_pair(
           std::basic_string_view<value_type, traits_type>{sv.data(), match_num}, new Node))
@@ -397,7 +390,7 @@ void RadixTree<C>::_insert(std::basic_string_view<value_type, traits_type> sv, N
       );
 
       n.children.erase(itr);
-      
+
       _insert(sv.data() + match_num, *par);
     }
   }
@@ -405,7 +398,7 @@ void RadixTree<C>::_insert(std::basic_string_view<value_type, traits_type> sv, N
 
 
 // Procedure: root
-// Return the root of RadixTree 
+// Return the root of RadixTree
 template <typename C>
 const typename RadixTree<C>::Node& RadixTree<C>::root() const{
   return _root;
@@ -451,14 +444,14 @@ enum class COLOR{
 class Prompt {
 
   struct LineInfo{
-    
+
     std::string buf;
     int history_trace {0};
     size_t cur_pos {0};   // cursor position
 
     void operator = (const LineInfo&);
-    inline void reset(){ 
-      cur_pos = history_trace = 0; 
+    inline void reset(){
+      cur_pos = history_trace = 0;
       buf.clear();
     }
   };
@@ -466,18 +459,18 @@ class Prompt {
   public:
 
     //Prompt(
-    //  const std::string&,   // Welcome message 
+    //  const std::string&,   // Welcome message
     //  const std::string&,   // prompt
     //  const std::filesystem::path& = std::filesystem::current_path()/".prompt_history",  // history log path
-    //  std::istream& = std::cin, 
-    //  std::ostream& = std::cout, 
+    //  std::istream& = std::cin,
+    //  std::ostream& = std::cout,
     //  std::ostream& = std::cerr,
     //  int = STDIN_FILENO
     //);
 
     //// TODO:
     Prompt(
-      const std::string&,   // Welcome message 
+      const std::string&,   // Welcome message
       const std::string&,   // prompt
       const std::filesystem::path& = std::filesystem::current_path()/".prompt_history",  // history log path
       FILE* = stdin,
@@ -491,14 +484,14 @@ class Prompt {
 
     void set_history_size(size_t);
     size_t history_size() const { return _history.size(); };
-    
+
     void autocomplete(const std::string&);
 
-  private: 
-  
-    std::string _prompt;  
+  private:
+
+    std::string _prompt;
     std::filesystem::path _history_path;
-    
+
     // TODO: replace these with FILE* _is, _os, _es;
     // fix inserters and extractors
     //std::istream& _cin;
@@ -511,9 +504,9 @@ class Prompt {
     //int _infd;
 
     size_t _columns {80};   // default width of terminal is 80
-    
+
     RadixTree<std::string> _tree;  // Radix tree for command autocomplete
-  
+
     std::string _obuf;      // Buffer for _refresh_single_line
 
     bool _unsupported_term();
@@ -521,7 +514,7 @@ class Prompt {
     bool _set_raw_mode();
     void _disable_raw_mode();
 
-    // History  
+    // History
     size_t _max_history_size {100};
     std::list<std::string> _history;
     void _add_history(const std::string&);
@@ -575,20 +568,20 @@ class Prompt {
 inline void Prompt::LineInfo::operator = (const LineInfo& l){
   buf = l.buf;
   cur_pos = l.cur_pos;
-  history_trace = l.history_trace;   
+  history_trace = l.history_trace;
 }
 
 //// Procedure: Ctor
 //inline Prompt::Prompt(
-//  const std::string& welcome_msg, 
-//  const std::string& pmt, 
+//  const std::string& welcome_msg,
+//  const std::string& pmt,
 //  const std::filesystem::path& path,
-//  std::istream& in, 
-//  std::ostream& out, 
+//  std::istream& in,
+//  std::ostream& out,
 //  std::ostream& err,
 //  int infd
 //):
-//  _prompt(pmt), 
+//  _prompt(pmt),
 //  _history_path(path),
 //  _cin(in),
 //  _cout(out),
@@ -612,15 +605,15 @@ inline void Prompt::LineInfo::operator = (const LineInfo& l){
 
 // Procedure: Ctor
 inline Prompt::Prompt(
-  const std::string& welcome_msg, 
-  const std::string& pmt, 
+  const std::string& welcome_msg,
+  const std::string& pmt,
   const std::filesystem::path& path,
   FILE* in,
-  std::ostream& out, 
+  std::ostream& out,
   std::ostream& err
 
 ):
-  _prompt(pmt), 
+  _prompt(pmt),
   _history_path(path),
   _is(in),
   _cout(out),
@@ -659,21 +652,21 @@ inline void Prompt::autocomplete(const std::string& word){
   _tree.insert(word);
 }
 
-// Procedure: history_size 
+// Procedure: history_size
 // Change the max history size
 inline void Prompt::set_history_size(size_t new_size){
   _max_history_size = new_size;
 }
 
 
-// Procedure: _save_history 
+// Procedure: _save_history
 // Save history commands to a file
 inline void Prompt::_save_history(){
   std::ofstream ofs(_history_path);
   if(not ofs.good()){
     return;
   }
-  
+
   for(const auto& c: _history){
     ofs << c << '\n';
   }
@@ -681,7 +674,7 @@ inline void Prompt::_save_history(){
 }
 
 
-// Procedure: _load_history 
+// Procedure: _load_history
 // Load history commands from a file
 inline void Prompt::_load_history(){
   if(std::filesystem::exists(_history_path)){
@@ -696,7 +689,7 @@ inline void Prompt::_load_history(){
   }
 }
 
-// Procedure: _add_history 
+// Procedure: _add_history
 // Add command to history list
 inline void Prompt::_add_history(const std::string &hist){
   // hist cannot be empty and cannot be the same as the last one
@@ -719,14 +712,14 @@ inline bool Prompt::_stdin_not_tty(std::string& s){
 // Procedure: _unsupported_term
 // Check the terminal is supported or not
 inline bool Prompt::_unsupported_term(){
-    
+
   static auto _unsupported_terms = {"dumb", "cons25", "emacs"};
 
   if(char* term = getenv("TERM"); term == NULL){
     return false;
   }
-  else if(std::string_view str(term); 
-          std::find(_unsupported_terms.begin(), 
+  else if(std::string_view str(term);
+          std::find(_unsupported_terms.begin(),
                     _unsupported_terms.end() , str) != _unsupported_terms.end()){
     return true;
   }
@@ -735,7 +728,7 @@ inline bool Prompt::_unsupported_term(){
   }
 }
 
-// Procedure: readline 
+// Procedure: readline
 // This is the main entry of Prompt
 inline bool Prompt::readline(std::string& s) {
   if(! ::isatty(::fileno(_is))) {
@@ -757,7 +750,7 @@ inline bool Prompt::readline(std::string& s) {
   else{
     if(not _set_raw_mode()){
       return {};
-    } 
+    }
     _edit_line(s);
     _add_history(s);
     _disable_raw_mode();
@@ -784,8 +777,8 @@ inline bool Prompt::_save_orig_termios(int fd){
 // Procedure: _get_cursor_pos
 // Return the current position of cursor
 inline int Prompt::_get_cursor_pos(){
-  /* Report cursor location */  
-  // x1b[6n : DSR - Device Status Report  https://en.wikipedia.org/wiki/ANSI_escape_code 
+  /* Report cursor location */
+  // x1b[6n : DSR - Device Status Report  https://en.wikipedia.org/wiki/ANSI_escape_code
   // The output will be like : ESC[n;mR, where "n" is the row and "m" is the column.
   // Try this in ur terminal : echo -en "abc \x1b[6n"
   if(not (_cout << "\x1b[6n")){
@@ -805,8 +798,8 @@ inline int Prompt::_get_cursor_pos(){
   }
 
   /* Parse it. */
-  if (static_cast<KEY>(buf[0]) != KEY::ESC or 
-      buf[1] != '[' or 
+  if (static_cast<KEY>(buf[0]) != KEY::ESC or
+      buf[1] != '[' or
       ::sscanf(buf+2, "%d;%d", &rows, &cols) != 2){
     return -1;
   }
@@ -815,9 +808,9 @@ inline int Prompt::_get_cursor_pos(){
 
 
 
-// Procedure: _clear_screen (ctrl + l) 
+// Procedure: _clear_screen (ctrl + l)
 inline void Prompt::_clear_screen() {
-  // https://en.wikipedia.org/wiki/ANSI_escape_code 
+  // https://en.wikipedia.org/wiki/ANSI_escape_code
   // CSI n ;  m H : CUP - Cursor Position
   // CSI n J      : Erase in Display
   //if(_cout.write("\x1b[H\x1b[2J",7); !_cout.good()){
@@ -826,11 +819,11 @@ inline void Prompt::_clear_screen() {
   }
 }
 
-// Procedure: _set_raw_mode 
+// Procedure: _set_raw_mode
 // Set the fd to raw mode
 inline bool Prompt::_set_raw_mode(){
   if(::isatty(::fileno(_is)) and _save_orig_termios(::fileno(_is)) == true){
-    struct termios raw;  
+    struct termios raw;
     raw = _orig_termios;  /* modify the original mode */
     /* input modes: no break, no CR to NL, no parity check, no strip char,
      * no start/stop output control. */
@@ -856,7 +849,7 @@ inline bool Prompt::_set_raw_mode(){
 }
 
 
-// Procedure: _disable_raw_mode  
+// Procedure: _disable_raw_mode
 // Recover the termios to the original mode
 inline void Prompt::_disable_raw_mode(){
   if(_has_orig_termios){
@@ -868,7 +861,7 @@ inline void Prompt::_disable_raw_mode(){
 // Procedure: _terminal_columns
 // Get the number of columns of current line buf
 inline size_t Prompt::_terminal_columns(){
-  // Use ioctl to get Window size 
+  // Use ioctl to get Window size
   if(winsize ws; ::ioctl(1, TIOCGWINSZ, &ws) == -1 or ws.ws_col == 0){
     int start = _get_cursor_pos();
     if(start == -1 or not (_cout << "\x1b[999c")){
@@ -905,7 +898,7 @@ inline std::filesystem::path Prompt::_user_home() const{
 }
 
 
-// Procedure: _has_read_access 
+// Procedure: _has_read_access
 // Check a file has read access grant to the user
 inline bool Prompt::_has_read_access(const std::filesystem::path &path) const {
   if(auto rval=::access(path.c_str(), F_OK); rval == 0){
@@ -949,7 +942,7 @@ inline int Prompt::_autocomplete_iterate_command(){
     return 0;
   }
   else{
-    char c {0}; 
+    char c {0};
     bool stop {false};
     for(size_t i=0; not stop;){
       if(i < words.size()){
@@ -972,7 +965,7 @@ inline int Prompt::_autocomplete_iterate_command(){
         case KEY::TAB:
           i = (i+1) % words.size();
           break;
-        case KEY::ESC: // refresh the same thing again 
+        case KEY::ESC: // refresh the same thing again
           _refresh_single_line(_line);
           stop = true;
           break;
@@ -995,8 +988,8 @@ inline std::string Prompt::_dump_options(const std::vector<std::string>& opts){
     return {};
   }
 
-  const size_t col_width = std::max_element(opts.begin(), opts.end(), 
-    [](const auto& a, const auto& b){ 
+  const size_t col_width = std::max_element(opts.begin(), opts.end(),
+    [](const auto& a, const auto& b){
       return a.size() < b.size();
     }
   )->size() + 4;
@@ -1047,7 +1040,7 @@ inline std::vector<std::string> Prompt::_files_match_prefix(
   auto folder = path.filename() == path ? std::filesystem::current_path() : path.parent_path();
   std::string prefix(path.filename());
 
-  std::vector<std::string> matches; 
+  std::vector<std::string> matches;
   if(std::error_code ec; _has_read_access(folder) and std::filesystem::is_directory(folder, ec)){
     for(const auto& p: std::filesystem::directory_iterator(folder)){
       std::string fname {p.path().filename()};
@@ -1067,7 +1060,7 @@ inline std::vector<std::string> Prompt::_files_in_folder(
 ) const {
   auto p = path.empty() ? std::filesystem::current_path() : path;
   std::vector<std::string> matches;
-  // Check permission 
+  // Check permission
   if(_has_read_access(p)){
     for(const auto& p: std::filesystem::directory_iterator(p)){
       matches.emplace_back(p.path().filename());
@@ -1077,18 +1070,18 @@ inline std::vector<std::string> Prompt::_files_in_folder(
 }
 
 
-// Procedure: _dump_files 
+// Procedure: _dump_files
 // Format the strings for pretty print in terminal.
 inline std::string Prompt::_dump_files(
-  const std::vector<std::string>& v, 
+  const std::vector<std::string>& v,
   const std::filesystem::path& path)
 {
   if(v.empty()){
     return {};
   }
 
-  const size_t col_width = std::max_element(v.begin(), v.end(), 
-    [](const auto& a, const auto& b){ 
+  const size_t col_width = std::max_element(v.begin(), v.end(),
+    [](const auto& a, const auto& b){
       return a.size() < b.size();
     }
   )->size() + 4;
@@ -1107,7 +1100,7 @@ inline std::string Prompt::_dump_files(
     }
 
     if(std::filesystem::is_directory(path.native() + "/" + v[i], ec)){
-      // A typical color code example : \033[31;1;4m 
+      // A typical color code example : \033[31;1;4m
       //   \033[ : begin of color code, 31 : red color,  1 : bold,  4 : underlined
       s.append(seq, strlen(seq));
       s.append(v[i]);
@@ -1121,15 +1114,15 @@ inline std::string Prompt::_dump_files(
   return s;
 }
 
-// Procedure: _autocomplete_folder 
+// Procedure: _autocomplete_folder
 // The entry for folder autocomplete
 inline void Prompt::_autocomplete_folder(){
   std::string s;
   size_t ws_index = _line.buf.rfind(' ', _line.cur_pos) + 1;
 
   std::filesystem::path p(
-    _line.buf[ws_index] != '~' ? 
-    _line.buf.substr(ws_index, _line.cur_pos - ws_index) : 
+    _line.buf[ws_index] != '~' ?
+    _line.buf.substr(ws_index, _line.cur_pos - ws_index) :
     _user_home().native() + _line.buf.substr(ws_index+1, _line.cur_pos-ws_index-1)
   );
 
@@ -1137,7 +1130,7 @@ inline void Prompt::_autocomplete_folder(){
     s = _dump_files(_files_in_folder(p), p);
   }
   else{
-    auto match = _files_match_prefix(p);  
+    auto match = _files_match_prefix(p);
     if(not match.empty()){
       s = _dump_files(match, p.parent_path());
       if(auto suffix = _next_prefix(match, p.filename().native().size()); not suffix.empty()){
@@ -1145,8 +1138,8 @@ inline void Prompt::_autocomplete_folder(){
         _line.cur_pos += suffix.size();
         p += suffix;
         // Append a '/' if is a folder and not the prefix of other files
-        if(std::filesystem::is_directory(p, ec) and 
-            std::count_if(match.begin(), match.end(), 
+        if(std::filesystem::is_directory(p, ec) and
+            std::count_if(match.begin(), match.end(),
               [p = p.filename().native()](const auto& m)
               { return (m.size() >= p.size() and m.compare(0, p.size(), p) == 0); }) == 1){
           _line.buf.insert(_line.cur_pos, 1, '/');
@@ -1167,21 +1160,21 @@ inline void Prompt::_autocomplete_folder(){
 // Remove the word before cursor (including the whitespace between cursor and the word)
 inline void Prompt::_key_delete_prev_word(LineInfo& line){
   // Remove all whitespace before cursor
-  auto iter = std::find_if_not(line.buf.rbegin()+line.buf.size()-line.cur_pos, line.buf.rend(), 
+  auto iter = std::find_if_not(line.buf.rbegin()+line.buf.size()-line.cur_pos, line.buf.rend(),
                                [](const auto& c){ return c == ' ';});
   auto offset = std::distance(iter.base(), line.buf.begin()+line.cur_pos);
   line.buf.erase(iter.base(), line.buf.begin()+line.cur_pos);
   line.cur_pos -= offset;
 
   // Remove the word before cursor and stop at the first ws
-  iter = std::find_if_not(line.buf.rbegin()+line.buf.size()-line.cur_pos, line.buf.rend(), 
+  iter = std::find_if_not(line.buf.rbegin()+line.buf.size()-line.cur_pos, line.buf.rend(),
                            [](const auto& c){ return c != ' ';});
   offset = std::distance(iter.base(), line.buf.begin()+line.cur_pos);
   line.buf.erase(iter.base(), line.buf.begin()+line.cur_pos);
   line.cur_pos -= offset;
 }
 
-// Procedure: _key_delete 
+// Procedure: _key_delete
 // Remove the character at cursor
 inline void Prompt::_key_delete(LineInfo &line){
   if(line.buf.size() > 0){
@@ -1189,7 +1182,7 @@ inline void Prompt::_key_delete(LineInfo &line){
   }
 }
 
-// Procedure: _key_backspace 
+// Procedure: _key_backspace
 // Remove the character before curosr
 inline void Prompt::_key_backspace(LineInfo &line){
   if(line.cur_pos > 0){
@@ -1240,7 +1233,7 @@ inline bool Prompt::_append_character(LineInfo& line, char c){
     _cerr << "append failed: " << e.what() << '\n';
     assert(false);
   }
-  
+
   if(line.cur_pos++; line.buf.size() == line.cur_pos){
     if(not (_cout << c)){
       return false;
@@ -1254,7 +1247,7 @@ inline bool Prompt::_append_character(LineInfo& line, char c){
 
 // Procedure: _key_handle_CSI
 // Handle Control Sequence Introducer
-inline bool Prompt::_key_handle_CSI(LineInfo& line){ 
+inline bool Prompt::_key_handle_CSI(LineInfo& line){
   char seq[3];
   //if(_cin.read(seq,1), _cin.read(seq+1,1); not _cin.good() ){
   if(seq[0] = ::fgetc(_is), seq[1] = ::fgetc(_is); ::ferror(_is)){
@@ -1278,12 +1271,12 @@ inline bool Prompt::_key_handle_CSI(LineInfo& line){
         case 'B':  // Next history
           _key_next_history(line);
           break;
-        case 'C':  // Move cursor to right 
+        case 'C':  // Move cursor to right
           if(line.cur_pos != line.buf.size()){
             line.cur_pos ++;
           }
           break;
-        case 'D':  // Move cursor to left 
+        case 'D':  // Move cursor to left
           if(line.cur_pos > 0){
             line.cur_pos --;
           }
@@ -1311,7 +1304,7 @@ inline bool Prompt::_key_handle_CSI(LineInfo& line){
 }
 
 
-// Procedure: _edit_line 
+// Procedure: _edit_line
 // Handle the character input from the user
 inline void Prompt::_edit_line(std::string &s){
   if(not (_cout << _prompt)){
@@ -1354,10 +1347,10 @@ inline void Prompt::_edit_line(std::string &s){
     // Proceed to process character
     switch(static_cast<KEY>(c)){
       case KEY::ENTER:
-        _history.pop_back(); // Remove the emptry string history added in beginning  
+        _history.pop_back(); // Remove the emptry string history added in beginning
         s =  _line.buf;
         return ;
-      case KEY::CTRL_A:    // Go to the start of the line 
+      case KEY::CTRL_A:    // Go to the start of the line
         if(_line.cur_pos != 0){
           _line.cur_pos = 0;
         }
@@ -1370,10 +1363,10 @@ inline void Prompt::_edit_line(std::string &s){
         _refresh_single_line(_line);
         break;
       case KEY::CTRL_C:
-        _history.pop_back(); // Remove the emptry string history added in beginning  
+        _history.pop_back(); // Remove the emptry string history added in beginning
         errno = EAGAIN;
         return ;
-      case KEY::CTRL_D:    // Remove the char at the right of cursor. 
+      case KEY::CTRL_D:    // Remove the char at the right of cursor.
                            // If the line is empty, act as end-of-file
         if(_line.buf.size() > 0){
           _key_delete(_line);
@@ -1384,11 +1377,11 @@ inline void Prompt::_edit_line(std::string &s){
           return;
         }
         break;
-      case KEY::CTRL_E:    // Move cursor to end of line 
+      case KEY::CTRL_E:    // Move cursor to end of line
         if(_line.cur_pos != _line.buf.size()){
           _line.cur_pos = _line.buf.size();
         }
-         _refresh_single_line(_line);       
+         _refresh_single_line(_line);
         break;
       case KEY::CTRL_F:    // Move cursor to right
         if(_line.cur_pos != _line.buf.size()){
@@ -1396,16 +1389,16 @@ inline void Prompt::_edit_line(std::string &s){
         }
         _refresh_single_line(_line);
         break;
-      case KEY::BACKSPACE:  // CTRL_H is the same as BACKSPACE 
+      case KEY::BACKSPACE:  // CTRL_H is the same as BACKSPACE
       case KEY::CTRL_H:
         _key_backspace(_line);
         _refresh_single_line(_line);
         break;
-      case KEY::CTRL_K:    // Delete from current to EOF  
+      case KEY::CTRL_K:    // Delete from current to EOF
         _line.buf.erase(_line.cur_pos, _line.buf.size()-_line.cur_pos);
         _refresh_single_line(_line);
         break;
-      case KEY::CTRL_L:    // Clear screen 
+      case KEY::CTRL_L:    // Clear screen
         _clear_screen();
         _refresh_single_line(_line);
         break;
@@ -1431,13 +1424,13 @@ inline void Prompt::_edit_line(std::string &s){
         _line.buf.clear();
         _refresh_single_line(_line);
         break;
-      case KEY::CTRL_W:    // Delete previous word 
+      case KEY::CTRL_W:    // Delete previous word
         _key_delete_prev_word(_line);
         _refresh_single_line(_line);
         break;
       case KEY::ESC:
         if(not _key_handle_CSI(_line)){
-          _history.pop_back(); // Remove the emptry string history added in beginning  
+          _history.pop_back(); // Remove the emptry string history added in beginning
           return;
         }
         _refresh_single_line(_line);
@@ -1455,10 +1448,10 @@ inline void Prompt::_edit_line(std::string &s){
 inline void Prompt::_refresh_single_line(LineInfo &l){
   // 1. Append "move cursor to left" in the output buffer
   // 2. Append buf to output buffer
-  // 3. Append "erase to  the right" to the output buffer 
+  // 3. Append "erase to  the right" to the output buffer
   // 4. Append "forward cursor" to the output buffer : Adjust cursor to correct pos
-  // 5. Write output buffer to fd  
-  
+  // 5. Write output buffer to fd
+
   static const std::string CR {"\r"};       // Carriage Return (set cursor to left)
   static const std::string EL {"\x1b[0K"};  // Erase in Line (clear from cursor to the end of the line)
 
@@ -1494,5 +1487,4 @@ inline void Prompt::_refresh_single_line(LineInfo &l){
 
 };  // end of namespace prompt. -------------------------------------------------------------------
 
-#endif 
-
+#endif

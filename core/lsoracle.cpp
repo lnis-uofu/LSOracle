@@ -65,7 +65,7 @@ namespace alice{
 
       int level = 1 + std::max(levelNode0, levelNode1);
       return level;
-    } 
+    }
   }
 
   void dfs (mockturtle::aig_network aig, uint64_t index, UnionFind uf){
@@ -488,7 +488,7 @@ namespace alice{
   /*Reads an blif file and stores the CBA network in a store*/
   ALICE_COMMAND( get_blif, "Input", "Uses the lorina library to read in a blif file" ){
 
-  	std::cout << "Not yet fully implemented\n";	
+  	std::cout << "Not yet fully implemented\n";
   }//end get_blif
 
   ALICE_COMMAND( convert_aig, "Input", "Converts the stored AIG to MIG and writes out to verilog" ){
@@ -497,7 +497,7 @@ namespace alice{
         auto aig = store<mockturtle::aig_network>().current();
         mockturtle::mig_network mig = aig_to_mig(aig, 0);
         mockturtle::write_verilog(mig, aig._storage->net_name + "_convert.v");
-    }  
+    }
   }//end get_blif
 
   class write_aig_command : public alice::command{
@@ -650,7 +650,7 @@ namespace alice{
         else{
           std::cout << filename << " is not a valid Verilog file\n";
         }
-        
+
       }
     private:
       std::string filename{};
@@ -680,7 +680,7 @@ namespace alice{
           if(is_set("mig")){
             mockturtle::mig_network ntk;
             lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
-                
+
             store<mockturtle::mig_network>().extend() = ntk;
 
 
@@ -706,7 +706,7 @@ namespace alice{
           else if(is_set("xag")){
             mockturtle::xag_network ntk;
             lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
-                
+
             store<mockturtle::xag_network>().extend() = ntk;
 
 
@@ -768,7 +768,7 @@ namespace alice{
           else{
             mockturtle::aig_network ntk;
             lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
-                
+
             store<mockturtle::aig_network>().extend() = ntk;
 
 
@@ -797,7 +797,7 @@ namespace alice{
         else{
             std::cout << filename << " is not a valid aig file\n";
         }
-        
+
       }
     private:
       std::string filename{};
@@ -911,16 +911,16 @@ namespace alice{
             for(int i = 0; i < aig._storage->outputs.size(); i++){
               std::cout << aig._storage->outputs.at(i).index << ": " << aig._storage->outputNames[i] << "\n";
             }
-            
+
           }
           else{
             std::cout << "AIG network not stored\n";
           }
         }
       }
-        
+
     private:
-      
+
     };
 
   ALICE_ADD_COMMAND(show_ntk, "Output");
@@ -939,7 +939,7 @@ namespace alice{
 
     protected:
         void execute(){
-            
+
           if(is_set("mig")){
             if(!store<mockturtle::mig_network>().empty()){
                 auto& mig = store<mockturtle::mig_network>().current();
@@ -1003,7 +1003,7 @@ namespace alice{
               std::cout << "There is not an AIG network stored.\n";
             }
           }
-        }    
+        }
     private:
       int lut_size = 6;
       int cut_size = 8;
@@ -1137,7 +1137,7 @@ namespace alice{
               std::cout << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
                 std::cout << *it << " ";
-              } 
+              }
               std::cout << "}\n";
             }
           }
@@ -1182,7 +1182,7 @@ namespace alice{
               std::cout << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
                 std::cout << *it << " ";
-              } 
+              }
               std::cout << "}\n";
             }
           }
@@ -1221,7 +1221,7 @@ namespace alice{
             std::ofstream output;
             output.open(filename);
 
-            auto ntk = store<mockturtle::mig_network>().current();  
+            auto ntk = store<mockturtle::mig_network>().current();
 
             // std::map<int, std::vector<int>> connections;
 
@@ -1237,7 +1237,7 @@ namespace alice{
               });
 
               for(std::set<mockturtle::node<mockturtle::mig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-                
+
                 connections.push_back(ntk.node_to_index(*it));
               }
               if(ntk.is_po(node)){
@@ -1250,8 +1250,8 @@ namespace alice{
                 connection_to_add.insert(connection_to_add.begin(), nodeNdx);
                 hyperEdges.push_back(connection_to_add);
               }
-            }); 
-              
+            });
+
             //Write to the hypergraph file
               //Subtract the size by one because the output node is duplicated with one of the gate nodes
               output << hyperEdges.size() + 1 << " " << ntk.size() /*- 1*/ << "\n";
@@ -1269,7 +1269,7 @@ namespace alice{
             std::cout << filename << " is not a valid hpg file\n";
           }
 
-          
+
         }
         else{
           std::cout << "There is no MIG network stored\n";
@@ -1282,7 +1282,7 @@ namespace alice{
             std::ofstream output;
             output.open(filename);
 
-            auto ntk = store<mockturtle::aig_network>().current();  
+            auto ntk = store<mockturtle::aig_network>().current();
 
             // std::map<int, std::vector<int>> connections;
 
@@ -1298,7 +1298,7 @@ namespace alice{
               });
 
               for(std::set<mockturtle::node<mockturtle::aig_network>>::iterator it = nodes.begin(); it != nodes.end(); ++it){
-                
+
                 connections.push_back(ntk.node_to_index(*it));
               }
               if(ntk.is_po(node)){
@@ -1311,8 +1311,8 @@ namespace alice{
                 connection_to_add.insert(connection_to_add.begin(), nodeNdx);
                 hyperEdges.push_back(connection_to_add);
               }
-            }); 
-              
+            });
+
             //Write to the hypergraph file
               //Subtract the size by one because the output node is duplicated with one of the gate nodes
               output << hyperEdges.size() + 1 << " " << ntk.size() /*- 1*/ << "\n";
@@ -1330,14 +1330,14 @@ namespace alice{
             std::cout << filename << " is not a valid hpg file\n";
           }
 
-          
+
         }
         else{
           std::cout << "There is no AIG network stored\n";
         }
       }
-    
-      
+
+
     }
 
   private:
@@ -1372,14 +1372,14 @@ namespace alice{
         if(!store<mockturtle::aig_network>().empty()){
           sta::Sta *sta;
 
-          sta->testFunction();
+//          sta->testFunction();
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
           // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
           std::string net_name = ntk_aig._storage->net_name;
 
           if(!store<oracle::partition_manager<mockturtle::aig_network>>().empty()){
-            
+
             auto start = std::chrono::high_resolution_clock::now();
 
             auto partitions_aig = store<oracle::partition_manager<mockturtle::aig_network>>().current();
@@ -1446,7 +1446,7 @@ namespace alice{
               for(int i = 0; i < num_parts; i++){
                 if(std::find(visited.begin(), visited.end(), i) == visited.end()){
                   std::vector<int> parts_to_combine;
-                  
+
                   std::set<int>::iterator conn_it;
                   std::set<int> conn_parts;
                   conn_parts = partitions_aig.get_connected_parts(ntk_aig, i);
@@ -1501,9 +1501,9 @@ namespace alice{
                       std::set<int> connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
                       std::set<int> connected_parts2 = partitions_aig.get_connected_parts(ntk_aig, part_2);
                       std::set<int>::iterator conn_it;
-                      
+
                       std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
-                      
+
                       auto new_inputs = combined_io.at(0);
                       auto new_outputs = combined_io.at(1);
                       comb_part[part_2] = part_1;
@@ -1522,12 +1522,12 @@ namespace alice{
                         }
                       }
 
-                      visited.push_back(part_2); 
+                      visited.push_back(part_2);
 
                       connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
                       for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
                         if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() &&
                             std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end() &&
                             std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
 
@@ -1535,15 +1535,15 @@ namespace alice{
                           }
                         }
                         else{
-                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                          if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() &&
                             std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end() &&
                             std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
 
                             parts_to_combine.push_back(*conn_it);
                           }
                         }
-                        
-                      } 
+
+                      }
                     }
                     visited.push_back(i);
 
@@ -1555,14 +1555,14 @@ namespace alice{
               std::cout << "Scheduled optimization after partition merging\n";
               std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
             }
-            
+
             mockturtle::mig_network ntk_mig = aig_to_mig(ntk_aig, 1);
-            oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
+            oracle::partition_manager<mockturtle::mig_network> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(),
                     partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
 
             // std::cout << "AIG Optimization\n";
             for(int i = 0; i < aig_parts.size(); i++){
-              
+
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
               mockturtle::depth_view part_depth{part};
 
@@ -1581,26 +1581,26 @@ namespace alice{
             }
             // std::cout << "MIG Optimization\n";
             for(int i = 0; i < mig_parts.size(); i++){
-              
+
               oracle::partition_view<mockturtle::mig_network> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
               mockturtle::depth_view part_depth{part};
 
               auto opt = part_to_mig(part, 0);
 
               mockturtle::depth_view opt_part_depth{opt};
-              
+
               mockturtle::mig_script migopt;
               opt = migopt.run(opt);
-              
+
               mockturtle::depth_view part_opt_depth{opt};
 
               partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
-            
+
             partitions_mig.connect_outputs(ntk_mig);
-            
+
             mockturtle::depth_view ntk_before_depth2{ntk_mig};
-            
+
             ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
             mockturtle::depth_view ntk_depth2{ntk_mig};
             std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << ntk_depth2.depth() << "\n";
@@ -1615,7 +1615,7 @@ namespace alice{
               mockturtle::write_verilog(ntk_mig, out_file);
               std::cout << "Resulting Verilog written to " << out_file << "\n";
             }
-        
+
           }
           else{
               std::cout << "AIG not partitioned yet\n";
@@ -1652,7 +1652,7 @@ namespace alice{
             auto ntk = store<mockturtle::mig_network>().current();
 
             if(!store<oracle::partition_manager<mockturtle::mig_network>>().empty()){
-              
+
               auto partitions = store<oracle::partition_manager<mockturtle::mig_network>>().current();
 
               mockturtle::mig_network::node node_to_find = ntk.node_to_index(nodeIdx);
@@ -1676,7 +1676,7 @@ namespace alice{
                   }
                 }
               }
-          
+
             }
             else{
                 std::cout << "MIG not partitioned yet\n";
@@ -1716,7 +1716,7 @@ namespace alice{
                   }
                 }
               }
-          
+
             }
             else{
                 std::cout << "AIG not partitioned yet\n";
@@ -1726,7 +1726,7 @@ namespace alice{
             std::cout << "No AIG stored\n";
           }
         }
-        
+
       }
     private:
         int nodeIdx = 0;
@@ -1818,10 +1818,10 @@ namespace alice{
             std::cout << "No AIG stored\n";
           }
         }
-        
+
       }
     private:
-        
+
     };
 
   ALICE_ADD_COMMAND(xor_pattern_rec, "Testing");
@@ -1870,7 +1870,7 @@ namespace alice{
             std::cout << "No AIG stored\n";
           }
         }
-        
+
       }
     private:
         int nodeIdx = 0;
@@ -1888,7 +1888,7 @@ namespace alice{
 
     protected:
       void execute(){
-        
+
         if(!store<mockturtle::aig_network>().empty()){
 
           auto ntk = store<mockturtle::aig_network>().current();
@@ -1914,8 +1914,8 @@ namespace alice{
         else{
           std::cout << "No AIG stored\n";
         }
-        
-        
+
+
       }
     private:
     };
@@ -1947,8 +1947,8 @@ namespace alice{
     sta::Sta *sta;
     sta::LibertyLibrary *myLib;
     sta::Corner corner("typycal", 0);
-    
-    myLib = sta->readLiberty(f, corner, sta::MinMaxAll::min(), 0);
+
+    myLib = sta->readLiberty(f, &corner, sta::MinMaxAll::min(), 0);
 
   }
 
@@ -1989,7 +1989,7 @@ namespace alice{
 
     protected:
       void execute(){
-      
+
         if(is_set("mig")){
           if(!store<mockturtle::mig_network>().empty()){
             auto& mig = store<mockturtle::mig_network>().current();
@@ -2078,7 +2078,7 @@ namespace alice{
     			inputs = init->second;
 
     		std::cout << "Output " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
-    		
+
     	}
 
     	//processing logical cones for registers - pseudo POs
@@ -2147,8 +2147,8 @@ namespace alice{
 
     protected:
       void execute(){
-        
-        
+
+
         if(!store<mockturtle::aig_network>().empty()){
           auto& aig = store<mockturtle::aig_network>().current();
           std::ofstream dset;
@@ -2351,7 +2351,7 @@ namespace alice{
               std::cout << "There is not an AIG network stored.\n";
             }
           }
-            
+
         }
         else{
             std::cout << filename << " is not a valid dot file\n";

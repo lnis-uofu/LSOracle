@@ -33,12 +33,14 @@ target_include_directories(json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/json)
 set(CMAKE_CXX_STANDARD 17)                            # enable c++17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#find_package(Threads REQUIRED)                        # thread library (pthread)
+find_package(Threads REQUIRED)                        # thread library (pthread)
 
 add_subdirectory(mockturtle)
 
 add_subdirectory(oracle)
 target_link_libraries(oracle INTERFACE mockturtle)
+
+add_subdirectory(OpenSTA)
 
 #set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
 #add_subdirectory(percy)

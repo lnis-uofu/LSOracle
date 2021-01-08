@@ -39,13 +39,13 @@
 #include <random>
 #include <regex>
 #include <ratio>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <optional>
 #include <unistd.h>
 #include <sys/wait.h>
 
 // Clang mis-interprets variant's get as a non-friend of variant and cannot
-// get compiled correctly. We use the patch: 
+// get compiled correctly. We use the patch:
 // https://gcc.gnu.org/viewcvs/gcc?view=revision&revision=258854
 // to get rid of this.
 #if defined(__clang__)
@@ -62,10 +62,6 @@
 
 // Top header declaration.
 #include <ot/config.hpp>
-
-namespace std {
-  namespace filesystem = experimental::filesystem;
-};
 
 namespace ot {
 
@@ -162,17 +158,17 @@ inline auto to_string(Tran from, Tran to) {
   return to_string(from) + "->" + to_string(to);
 }
 
-// ------------------------------------------------------------------------------------------------  
+// ------------------------------------------------------------------------------------------------
 
 constexpr std::initializer_list<Split> SPLIT = {MIN, MAX};
 
 constexpr std::initializer_list<Tran> TRAN = {RISE, FALL};
 
-constexpr std::initializer_list<std::pair<Split, Tran>> SPLIT_TRAN = { 
+constexpr std::initializer_list<std::pair<Split, Tran>> SPLIT_TRAN = {
   {MIN, RISE},
   {MIN, FALL},
   {MAX, RISE},
-  {MAX, FALL} 
+  {MAX, FALL}
 };
 
 constexpr std::initializer_list<std::pair<Tran, Tran>> TRANX2 = {
@@ -193,7 +189,7 @@ constexpr std::initializer_list<std::tuple<Split, Tran, Tran>> SPLIT_TRANx2 = {
   {MAX, FALL, FALL}
 };
 
-// ------------------------------------------------------------------------------------------------  
+// ------------------------------------------------------------------------------------------------
 
 #define FOR_EACH_EL(el) for(auto el : SPLIT)
 #define FOR_EACH_RF(rf) for(auto rf : TRAN)
@@ -210,20 +206,20 @@ constexpr std::initializer_list<std::tuple<Split, Tran, Tran>> SPLIT_TRANx2 = {
 #define FOR_EACH(i, C) for(auto& i : C)
 #define FOR_EACH_IF(i, C, s) for(auto& i : C) if(s)
 
-// ------------------------------------------------------------------------------------------------  
+// ------------------------------------------------------------------------------------------------
 
 // TimingData
 template <typename, size_t ...>
 struct TimingDataHelper;
 
 template <typename T, size_t D0, size_t ... Ds>
-struct TimingDataHelper<T, D0, Ds...> { 
-  using type = std::array<typename TimingDataHelper<T, Ds...>::type, D0>; 
+struct TimingDataHelper<T, D0, Ds...> {
+  using type = std::array<typename TimingDataHelper<T, Ds...>::type, D0>;
 };
 
 template <typename T>
-struct TimingDataHelper<T>{ 
-  using type = T; 
+struct TimingDataHelper<T>{
+  using type = T;
 };
 
 template <typename T, size_t ... Ds>
@@ -236,4 +232,3 @@ using TimingData = typename TimingDataHelper<T, Ds...>::type;
 
 
 #endif
-

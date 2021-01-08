@@ -8,11 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <regex>
-#include <experimental/filesystem>
-
-namespace std {
-  namespace filesystem = experimental::filesystem;
-};
+#include <filesystem>
 
 namespace ot {
 
@@ -33,7 +29,7 @@ bool is_word(const std::string&);
 // Function: find_quote_pair
 template <typename I>
 auto find_quote_pair(const I b, const I e) {
-  
+
   if(auto l = std::find(b, e, '"'); l == e) {
     return std::make_pair(e, e);
   }
@@ -50,7 +46,7 @@ auto find_quote_pair(const I b, const I e) {
 // Function: find_brace_pair
 template <typename I>
 auto find_brace_pair(const I b, const I e) {
-  
+
   auto l = std::find(b, e, '{');
   auto r = l;
 
@@ -66,7 +62,7 @@ auto find_brace_pair(const I b, const I e) {
   if(l == e || r == e) {
     return std::make_pair(e, e);
   }
-  
+
   return std::make_pair(l, r);
 }
 
@@ -89,7 +85,7 @@ auto find_bracket_pair(const I b, const I e) {
   if(l == e || r == e) {
     return std::make_pair(e, e);
   }
-  
+
   return std::make_pair(l, r);
 }
 
@@ -115,7 +111,7 @@ auto on_next_parentheses(const I b, const I e, C&& c) {
     }
     ++r;
   }
-  
+
   if(l == e || r == e) return e;
 
   for(++l; l != r; ++l) {
