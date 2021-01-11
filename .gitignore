@@ -9,3 +9,7 @@ examples/abc/csharp/bin
 examples/abc/csharp/obj
 examples/abc/scala/project
 examples/abc/scala/target
+OpenTimer/example/optimizer/optimizer
+OpenTimer/example/simple/simple
+OpenTimer/example/sizer/sizer
+OpenTimer/lib/libOpenTimer.a

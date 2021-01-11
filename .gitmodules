@@ -15,4 +15,4 @@
 #	url = https://github.com/whaaswijk/percy
 [submodule "lib/OpenSTA"]
 	path = lib/OpenSTA
-	url = git@github.com:The-OpenROAD-Project/OpenSTA.git
+	url = git@github.com:lnis-uofu/OpenSTA.git

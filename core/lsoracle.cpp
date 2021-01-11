@@ -1372,7 +1372,7 @@ namespace alice{
         if(!store<mockturtle::aig_network>().empty()){
           sta::Sta *sta;
 
-//          sta->testFunction();
+          sta->testFunction();
           auto ntk_aig = store<mockturtle::aig_network>().current();
           std::string file_base = ntk_aig._storage->net_name;
           // std::cout << "ntk_aig size = " << ntk_aig.size() << "\n";
