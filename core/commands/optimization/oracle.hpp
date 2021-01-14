@@ -107,6 +107,27 @@ namespace alice
             std::cout << "No change made to network\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
             std::cout << "MIG network stored\n";
+            if(out_file != ""){
+              if(oracle::checkExt(out_file, "v")){
+                mockturtle::write_verilog_params ps;
+                if(is_set("skip-feedthrough"))
+                  ps.skip_feedthrough = 1u;  
+
+                mockturtle::write_verilog(ntk_mig, out_file, ps);
+                std::cout << "Resulting network written to " << out_file << "\n";
+              }
+              else if(oracle::checkExt(out_file, "blif")){
+                mockturtle::write_blif_params ps;
+                if(is_set("skip-feedthrough"))
+                  ps.skip_feedthrough = 1u;
+                
+                mockturtle::write_blif(ntk_mig, out_file, ps);
+                std::cout << "Resulting network written to " << out_file << "\n";
+              }
+              else{
+                std::cout << out_file << " is not an accepted output file {.v, .blif}\n";
+              }
+            }
           }
         }
         else{
