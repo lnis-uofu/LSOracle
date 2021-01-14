@@ -14,7 +14,7 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <bipart/BiPart.h>
+#include <bipart/bipart.h>
 
 
 namespace alice
