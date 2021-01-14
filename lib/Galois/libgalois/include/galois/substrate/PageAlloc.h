@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -21,6 +21,43 @@
 #define GALOIS_SUBSTRATE_PAGEALLOC_H
 
 #include <cstddef>
+
+#include "galois/config.h"
+
+#ifdef __linux__
+#include <linux/mman.h>
+#endif
+#include <sys/mman.h>
+
+#include <utility>
+#ifdef HAVE_MMAP64
+namespace galois {
+template <typename... Args>
+void* mmap(void* addr, Args... args) { // 0 -> nullptr
+  return ::mmap64(addr, std::forward<Args>(args)...);
+}
+} // namespace galois
+//! offset type for mmap
+typedef off64_t offset_t;
+#else
+namespace galois {
+template <typename... Args>
+void* mmap(void* addr, Args... args) { // 0 -> nullptr
+  return ::mmap(addr, std::forward<Args>(args)...);
+}
+} // namespace galois
+//! offset type for mmap
+typedef off_t offset_t;
+#endif
+
+// mmap flags
+#if defined(MAP_ANONYMOUS)
+static const int _MAP_ANON = MAP_ANONYMOUS;
+#elif defined(MAP_ANON)
+static const int _MAP_ANON = MAP_ANON;
+#else
+static_assert(0, "No Anonymous mapping");
+#endif
 
 namespace galois {
 namespace substrate {

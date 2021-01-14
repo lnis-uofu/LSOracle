@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -20,21 +20,18 @@
 #ifndef GALOIS_SUBSTRATE_THREADPOOL_H
 #define GALOIS_SUBSTRATE_THREADPOOL_H
 
-#include "CacheLineStorage.h"
-#include "HWTopo.h"
-
-#include <condition_variable>
-#include <thread>
-#include <functional>
 #include <atomic>
-#include <vector>
 #include <cassert>
+#include <condition_variable>
 #include <cstdlib>
+#include <functional>
+#include <thread>
+#include <vector>
 
-namespace galois {
-namespace substrate {
+#include "galois/substrate/CacheLineStorage.h"
+#include "galois/substrate/HWTopo.h"
 
-namespace internal {
+namespace galois::substrate::internal {
 
 template <typename tpl, int s, int r>
 struct ExecuteTupleImpl {
@@ -46,13 +43,15 @@ struct ExecuteTupleImpl {
 
 template <typename tpl, int s>
 struct ExecuteTupleImpl<tpl, s, 0> {
-  static inline void execute(tpl& f) {}
+  static inline void execute(tpl&) {}
 };
 
-} // namespace internal
+} // namespace galois::substrate::internal
+
+namespace galois::substrate {
 
 class ThreadPool {
-  friend class SharedMemSubstrate;
+  friend class SharedMem;
 
 protected:
   struct shutdown_ty {}; //! type for shutting down thread
@@ -70,7 +69,7 @@ protected:
     unsigned wbegin, wend;
     std::atomic<int> done;
     std::atomic<int> fastRelease;
-    threadTopoInfo topo;
+    ThreadTopoInfo topo;
 
     void wakeup(bool fastmode) {
       if (fastmode) {
@@ -100,7 +99,7 @@ protected:
 
   thread_local static per_signal my_box;
 
-  machineTopoInfo mi;
+  MachineTopoInfo mi;
   std::vector<per_signal*> signals;
   std::vector<std::thread> threads;
   unsigned reserved;
@@ -130,6 +129,12 @@ protected:
 
 public:
   ~ThreadPool();
+
+  ThreadPool(const ThreadPool&) = delete;
+  ThreadPool& operator=(const ThreadPool&) = delete;
+
+  ThreadPool(ThreadPool&&) = delete;
+  ThreadPool& operator=(ThreadPool&&) = delete;
 
   //! execute work on all threads
   //! a simple wrapper for run
@@ -206,16 +211,17 @@ public:
   static unsigned getNumaNode() { return my_box.topo.numaNode; }
 };
 
-namespace internal {
-void setThreadPool(ThreadPool* tp);
-}
-
 /**
  * return a reference to system thread pool
  */
 ThreadPool& getThreadPool(void);
 
-} // namespace substrate
-} // namespace galois
+} // namespace galois::substrate
+
+namespace galois::substrate::internal {
+
+void setThreadPool(ThreadPool* tp);
+
+} // namespace galois::substrate::internal
 
 #endif

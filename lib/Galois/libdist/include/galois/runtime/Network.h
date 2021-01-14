@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -31,51 +31,18 @@
 #include "galois/runtime/MemUsage.h"
 #include "galois/substrate/Barrier.h"
 
-#include <cstdint>
-/* Test for GCC >= 5.2.0 */
-#if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ > 1)
-#include <experimental/tuple>
-#include <experimental/optional>
-#else
-#include <utility>
-#include <tuple>
-#include <type_traits>
-
-namespace { // anon
-template <class F, class Tuple, size_t... I>
-constexpr decltype(auto) apply_impl( // exposition only
-    F&& f, Tuple&& t, std::index_sequence<I...>) {
-  return std::forward<F>(f)(std::get<I>(std::forward<Tuple>(t))...);
-}
-template <class F, class Tuple>
-constexpr decltype(auto) apply(F&& f, Tuple&& t) {
-  return apply_impl(
-      std::forward<F>(f), std::forward<Tuple>(t),
-      std::make_index_sequence<
-          std::tuple_size<typename std::decay<Tuple>::type>::value>{});
-}
-} // namespace
-#include <boost/optional.hpp>
-#endif
-
 #include <mpi.h>
 
-namespace galois {
-namespace runtime {
+#include <cstdint>
+#include <optional>
+#include <tuple>
+
+namespace galois::runtime {
 
 //! typedef for buffer that stores data to be sent out
 using SendBuffer = SerializeBuffer;
 //! typedef for buffer that received data is saved into
 using RecvBuffer = DeSerializeBuffer;
-
-//! Optional type wrapper
-template <typename T>
-/* Test for GCC >= 5.2.0 */
-#if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ > 1)
-using optional_t = std::experimental::optional<T>;
-#else
-using optional_t = boost::optional<T>;
-#endif
 
 /**
  * A class that defines functions that a network interface in Galois should
@@ -97,7 +64,7 @@ protected:
   std::atomic<size_t> inflightSends;
   std::atomic<size_t> inflightRecvs;
 
-#ifdef __GALOIS_BARE_MPI_COMMUNICATION__
+#ifdef GALOIS_USE_BARE_MPI
 public:
   //! Wrapper that calls into increment mem usage on the memory usage tracker
   inline void incrementMemUsage(uint64_t size) {
@@ -142,7 +109,8 @@ public:
   //! tag (tag) and some data (buf)
   //! on the receiver, buf will be returned on a receiveTagged(tag)
   //! buf is invalidated by this operation
-  virtual void sendTagged(uint32_t dest, uint32_t tag, SendBuffer& buf, int type = 0) = 0;
+  virtual void sendTagged(uint32_t dest, uint32_t tag, SendBuffer& buf,
+                          int type = 0) = 0;
 
   //! Send a message to all hosts.  A message is simply a
   //! landing pad (recv) and some data (buf)
@@ -165,8 +133,9 @@ public:
   void reportMemUsage() const;
 
   //! Receive a tagged message
-  virtual optional_t<std::pair<uint32_t, RecvBuffer>>
-  recieveTagged(uint32_t tag, std::unique_lock<substrate::SimpleLock>* rlg, int type = 0) = 0;
+  virtual std::optional<std::pair<uint32_t, RecvBuffer>>
+  recieveTagged(uint32_t tag, std::unique_lock<substrate::SimpleLock>* rlg,
+                int type = 0) = 0;
 
   //! move send buffers out to network
   virtual void flush() = 0;
@@ -208,9 +177,9 @@ extern uint32_t evilPhase;
 NetworkInterface& getSystemNetworkInterface();
 
 namespace internal {
-  //! Deletes the system network interface (if it exists).
-  void destroySystemNetworkInterface();
-}
+//! Deletes the system network interface (if it exists).
+void destroySystemNetworkInterface();
+} // namespace internal
 
 //! Gets this host's ID
 //! @returns ID of this host
@@ -235,18 +204,11 @@ substrate::Barrier& getHostFence();
 ////////////////////////////////////////////////////////////////////////////////
 namespace { // anon
 template <typename... Args>
-
 static void genericLandingPad(uint32_t src, RecvBuffer& buf) {
   void (*fp)(uint32_t, Args...);
   std::tuple<Args...> args;
   gDeserialize(buf, fp, args);
-/* Test for GCC >= 5.2.0 */
-#if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ > 1)
-  std::experimental::apply([fp, src](Args... params) { fp(src, params...); },
-                           args);
-#else
-  apply([fp, src](Args... params) { fp(src, params...); }, args);
-#endif
+  std::apply([fp, src](Args... params) { fp(src, params...); }, args);
 }
 
 } // namespace
@@ -269,6 +231,5 @@ void NetworkInterface::broadcastSimple(void (*recv)(uint32_t, Args...),
   broadcast(genericLandingPad<Args...>, buf, false);
 }
 
-} // namespace runtime
-} // namespace galois
+} // namespace galois::runtime
 #endif

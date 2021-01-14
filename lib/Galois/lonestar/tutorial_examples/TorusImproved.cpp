@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -118,11 +118,8 @@ int main(int argc, char** argv) {
 
   galois::Timer T;
   T.start();
-  // Unlike galois::for_each, galois::for_each initially assigns work
-  // based on which thread created each node (galois::for_each uses a simple
-  // blocking of the iterator range to initialize work, but the iterator order
-  // of a Graph is implementation-defined).
-  galois::for_each(galois::iterate(graph), [&](GNode n, auto& ctx) {
+
+  galois::for_each(galois::iterate(graph), [&](GNode n, auto&) {
     // For each outgoing edge (n, dst)
     for (auto ii : graph.edges(n)) {
       GNode dst = graph.getEdgeDst(ii);

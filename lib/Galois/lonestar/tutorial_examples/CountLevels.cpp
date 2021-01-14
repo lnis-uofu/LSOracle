@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -25,14 +25,13 @@
 
 static const char* name = "Count levels";
 static const char* desc = "Computes the number of degree levels";
-static const char* url  = 0;
 
 #define DEBUG false
 
 namespace cll = llvm::cl;
 
 static cll::opt<std::string>
-    filename(cll::Positional, cll::desc("<input graph>"), cll::Required);
+    inputFile(cll::Positional, cll::desc("<input graph>"), cll::Required);
 static cll::opt<unsigned int> startNode("startNode",
                                         cll::desc("Node to start search from"),
                                         cll::init(0));
@@ -53,22 +52,41 @@ static const unsigned int DIST_INFINITY =
 
 const galois::gstl::Vector<size_t>& countLevels(Graph& graph) {
 
+  using Vec = galois::gstl::Vector<size_t>;
+
   //! [Define GReducible]
-  galois::GVectorPerItemReduce<size_t, std::plus<size_t>> reducer;
+  auto merge = [](Vec& lhs, Vec&& rhs) -> Vec& {
+    Vec v(std::move(rhs));
+    if (lhs.size() < v.size()) {
+      lhs.resize(v.size());
+    }
+    auto ll = lhs.begin();
+    for (auto ii = v.begin(), ei = v.end(); ii != ei; ++ii, ++ll) {
+      *ll += *ii;
+    }
+    return lhs;
+  };
+
+  auto identity = []() -> Vec { return Vec(); };
+
+  auto r = galois::make_reducible(merge, identity);
 
   galois::do_all(galois::iterate(graph), [&](GNode n) {
     LNode srcdata = graph.getData(n);
     if (srcdata.dist == DIST_INFINITY) {
       return;
     }
-    reducer.update(srcdata.dist, 1);
+
+    auto& vec = r.getLocal();
+    if (vec.size() <= srcdata.dist) {
+      vec.resize(srcdata.dist + 1);
+    }
+    vec[srcdata.dist] += 1;
   });
 
-  return reducer.reduce();
+  return r.reduce();
   //! [Define GReducible]
 }
-
-// constexpr static const unsigned CHUNK_SIZE = 16;
 
 void bfsSerial(Graph& graph, GNode source) {
   constexpr galois::MethodFlag flag = galois::MethodFlag::UNPROTECTED;
@@ -102,13 +120,13 @@ void bfsSerial(Graph& graph, GNode source) {
 
 int main(int argc, char** argv) {
   galois::SharedMemSys G;
-  LonestarStart(argc, argv, name, desc, url);
+  LonestarStart(argc, argv, name, desc, nullptr, &inputFile);
 
   galois::StatTimer OT("OverheadTime");
   OT.start();
 
   Graph graph;
-  galois::graphs::readGraph(graph, filename);
+  galois::graphs::readGraph(graph, inputFile);
   std::cout << "Read " << graph.size() << " nodes, " << graph.sizeEdges()
             << " edges\n";
 
@@ -117,13 +135,14 @@ int main(int argc, char** argv) {
                        galois::runtime::pagePoolSize());
   galois::reportPageAlloc("MeminfoPre");
 
-  galois::do_all(galois::iterate(graph),
-                 [&](const GNode& src) {
-                   LNode& sdata = graph.getData(src);
-                   sdata.color  = WHITE;
-                   sdata.dist   = DIST_INFINITY;
-                 },
-                 galois::no_stats());
+  galois::do_all(
+      galois::iterate(graph),
+      [&](const GNode& src) {
+        LNode& sdata = graph.getData(src);
+        sdata.color  = WHITE;
+        sdata.dist   = DIST_INFINITY;
+      },
+      galois::no_stats());
 
   if (startNode >= graph.size()) {
     std::cerr << "Source node index " << startNode
@@ -134,7 +153,7 @@ int main(int argc, char** argv) {
   }
   GNode source;
   auto it = graph.begin();
-  std::advance(it, startNode);
+  std::advance(it, startNode.getValue());
   source = *it;
 
   galois::StatTimer T;

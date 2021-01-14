@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -24,10 +24,6 @@
 #include <cassert>
 
 #include <fcntl.h>
-#ifdef __linux__
-#include <linux/mman.h>
-#endif
-#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -43,18 +39,6 @@ using namespace galois::graphs;
 // outedges[numEdges] {uint32_t LE}
 // potential padding (32bit max) to Re-Align to 64bits
 // EdgeType[numEdges] {EdgeType size}
-
-#ifdef HAVE_MMAP64
-template <typename... Args>
-void* mmap_big(Args... args) {
-  return mmap64(std::forward<Args>(args)...);
-}
-#else
-template <typename... Args>
-void* mmap_big(Args... args) {
-  return mmap(std::forward<Args>(args)...);
-}
-#endif
 
 OCFileGraph::~OCFileGraph() {
   if (masterMapping)
@@ -88,7 +72,7 @@ void OCFileGraph::Block::load(int fd, offset_t offset, size_t begin, size_t len,
   m_length =
       len * sizeof_data +
       galois::runtime::pagePoolSize(); // account for round off due to alignment
-  m_mapping = mmap_big(nullptr, m_length, PROT_READ, _MAP_BASE, fd, aligned);
+  m_mapping = mmap(nullptr, m_length, PROT_READ, _MAP_BASE, fd, aligned);
   if (m_mapping == MAP_FAILED) {
     GALOIS_SYS_DIE("failed allocating ", fd);
   }

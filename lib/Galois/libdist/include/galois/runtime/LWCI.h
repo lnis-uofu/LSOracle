@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -25,8 +25,10 @@
  */
 
 #pragma once
-#ifdef GALOIS_USE_LWCI
+#ifdef GALOIS_USE_LCI
+GALOIS_IGNORE_UNUSED_PARAMETERS
 #include "lc.h"
+GALOIS_END_IGNORE_UNUSED_PARAMETERS
 
 extern lc_ep lc_col_ep;
 extern lc_ep lc_p2p_ep[3];

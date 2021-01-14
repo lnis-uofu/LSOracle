@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -19,6 +19,7 @@
 
 #include "galois/substrate/HWTopo.h"
 #include "galois/substrate/EnvCheck.h"
+#include "galois/substrate/SimpleLock.h"
 #include "galois/gIO.h"
 
 #include <algorithm>
@@ -28,6 +29,8 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <set>
 
 #ifdef GALOIS_USE_NUMA
@@ -35,9 +38,9 @@
 #include <numaif.h>
 #endif
 
+#ifdef GALOIS_USE_SCHED_SETAFFINITY
 #include <sched.h>
-
-using namespace galois::substrate;
+#endif
 
 namespace {
 
@@ -53,7 +56,7 @@ struct cpuinfo {
   bool smt;          // computed
 };
 
-static bool operator<(const cpuinfo& lhs, const cpuinfo& rhs) {
+bool operator<(const cpuinfo& lhs, const cpuinfo& rhs) {
   if (lhs.smt != rhs.smt)
     return lhs.smt < rhs.smt;
   if (lhs.physid != rhs.physid)
@@ -63,23 +66,20 @@ static bool operator<(const cpuinfo& lhs, const cpuinfo& rhs) {
   return lhs.proc < rhs.proc;
 }
 
-static unsigned getNumaNode(cpuinfo& c) {
-  static bool numaAvail = false;
-  static bool warnOnce  = false;
-  if (!warnOnce) {
-    warnOnce = true;
+unsigned getNumaNode(cpuinfo& c) {
+  static bool warnOnce = false;
 #ifdef GALOIS_USE_NUMA
+  static bool numaAvail = false;
+
+  if (!warnOnce) {
+    warnOnce  = true;
     numaAvail = numa_available() >= 0;
+    numaAvail = numaAvail && numa_num_configured_nodes() > 0;
     if (!numaAvail)
       galois::gWarn("Numa support configured but not present at runtime.  "
                     "Assuming numa topology matches socket topology.");
-#else
-    galois::gWarn("Numa Support Not configured (install libnuma-dev).  "
-                  "Assuming numa topology matches socket topology.");
-#endif
   }
 
-#ifdef GALOIS_USE_NUMA
   if (!numaAvail)
     return c.physid;
   int i = numa_node_of_cpu(c.proc);
@@ -87,12 +87,17 @@ static unsigned getNumaNode(cpuinfo& c) {
     GALOIS_SYS_DIE("failed finding numa node for ", c.proc);
   return i;
 #else
+  if (!warnOnce) {
+    warnOnce = true;
+    galois::gWarn("Numa Support Not configured (install libnuma-dev).  "
+                  "Assuming numa topology matches socket topology.");
+  }
   return c.physid;
 #endif
 }
 
 //! Parse /proc/cpuinfo
-static std::vector<cpuinfo> parseCPUInfo() {
+std::vector<cpuinfo> parseCPUInfo() {
   std::vector<cpuinfo> vals;
 
   const int len = 1024;
@@ -132,85 +137,28 @@ static std::vector<cpuinfo> parseCPUInfo() {
   return vals;
 }
 
-//! Returns physical ids in current cpuset
-static std::vector<int> parseCPUSet() {
-  std::vector<int> vals;
-
-  // Parse: /proc/self/cpuset
-  std::string name;
-  {
-    std::ifstream cpuSetName("/proc/self/cpuset");
-    if (!cpuSetName)
-      return vals;
-
-    // TODO: this will fail to read correctly if name contains newlines
-    std::getline(cpuSetName, name);
-    if (!cpuSetName)
-      return vals;
-  }
-
-  if (name.size() <= 1)
-    return vals;
-
-  // Parse: /dev/cpuset/<name>/cpus
-  std::string path("/dev/cpuset");
-  path += name;
-  path += "/cpus";
-  std::ifstream cpuSet(path);
-
-  if (!cpuSet)
-    return vals;
-
-  std::string buffer;
-  getline(cpuSet, buffer);
-  if (!cpuSet)
-    return vals;
-
-  size_t current;
-  size_t next = -1;
-  do {
-    current  = next + 1;
-    next     = buffer.find_first_of(',', current);
-    auto buf = buffer.substr(current, next - current);
-    if (buf.size()) {
-      size_t dash = buf.find_first_of('-', 0);
-      if (dash != std::string::npos) { // range
-        auto first  = buf.substr(0, dash);
-        auto second = buf.substr(dash + 1, std::string::npos);
-        unsigned b  = atoi(first.data());
-        unsigned e  = atoi(second.data());
-        while (b <= e)
-          vals.push_back(b++);
-      } else { // singleton
-        vals.push_back(atoi(buf.data()));
-      }
-    }
-  } while (next != std::string::npos);
-  return vals;
-}
-
-static unsigned countSockets(const std::vector<cpuinfo>& info) {
+unsigned countSockets(const std::vector<cpuinfo>& info) {
   std::set<unsigned> pkgs;
   for (auto& c : info)
     pkgs.insert(c.physid);
   return pkgs.size();
 }
 
-static unsigned countCores(const std::vector<cpuinfo>& info) {
+unsigned countCores(const std::vector<cpuinfo>& info) {
   std::set<std::pair<int, int>> cores;
   for (auto& c : info)
     cores.insert(std::make_pair(c.physid, c.coreid));
   return cores.size();
 }
 
-static unsigned countNumaNodes(const std::vector<cpuinfo>& info) {
+unsigned countNumaNodes(const std::vector<cpuinfo>& info) {
   std::set<unsigned> nodes;
   for (auto& c : info)
     nodes.insert(c.numaNode);
   return nodes.size();
 }
 
-static void markSMT(std::vector<cpuinfo>& info) {
+void markSMT(std::vector<cpuinfo>& info) {
   for (unsigned int i = 1; i < info.size(); ++i)
     if (info[i - 1].physid == info[i].physid &&
         info[i - 1].coreid == info[i].coreid)
@@ -219,7 +167,40 @@ static void markSMT(std::vector<cpuinfo>& info) {
       info[i].smt = false;
 }
 
-static void markValid(std::vector<cpuinfo>& info) {
+std::vector<int> parseCPUSet() {
+  std::vector<int> vals;
+
+  std::ifstream data("/proc/self/status");
+
+  if (!data) {
+    return vals;
+  }
+
+  std::string line;
+  std::string prefix("Cpus_allowed_list:");
+  bool found = false;
+  while (true) {
+    std::getline(data, line);
+    if (!data) {
+      return vals;
+    }
+
+    if (line.compare(0, prefix.size(), prefix) == 0) {
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    return vals;
+  }
+
+  line = line.substr(prefix.size());
+
+  return galois::substrate::parseCPUList(line);
+}
+
+void markValid(std::vector<cpuinfo>& info) {
   auto v = parseCPUSet();
   if (v.empty()) {
     for (auto& c : info)
@@ -231,27 +212,14 @@ static void markValid(std::vector<cpuinfo>& info) {
   }
 }
 
-// FIXME: handle MIC
-std::vector<cpuinfo> transform(std::vector<cpuinfo>& info) {
-  const bool isMIC = false;
-  if (isMIC) {
-  }
-  return info;
-}
+galois::substrate::HWTopoInfo makeHWTopo() {
+  galois::substrate::MachineTopoInfo retMTI;
 
-} // namespace
+  auto info = parseCPUInfo();
+  std::sort(info.begin(), info.end());
+  markSMT(info);
+  markValid(info);
 
-std::pair<machineTopoInfo, std::vector<threadTopoInfo>>
-galois::substrate::getHWTopo() {
-  machineTopoInfo retMTI;
-
-  auto rawInfo = parseCPUInfo();
-  std::sort(rawInfo.begin(), rawInfo.end());
-  markSMT(rawInfo);
-  markValid(rawInfo);
-
-  // Now compute transformed (filtered, reordered, etc) version
-  auto info = transform(rawInfo);
   info.erase(std::partition(info.begin(), info.end(),
                             [](const cpuinfo& c) { return c.valid; }),
              info.end());
@@ -263,7 +231,7 @@ galois::substrate::getHWTopo() {
   retMTI.maxCores     = countCores(info);
   retMTI.maxNumaNodes = countNumaNodes(info);
 
-  std::vector<threadTopoInfo> retTTI;
+  std::vector<galois::substrate::ThreadTopoInfo> retTTI;
   retTTI.reserve(retMTI.maxThreads);
   // compute renumberings
   std::set<unsigned> sockets;
@@ -282,19 +250,35 @@ galois::substrate::getHWTopo() {
         info.begin(),
         std::find_if(info.begin(), info.end(),
                      [pid](const cpuinfo& c) { return c.physid == pid; }));
-    retTTI.push_back(
-        threadTopoInfo{i, leader, repid,
-                       (unsigned)std::distance(
-                           numaNodes.begin(), numaNodes.find(info[i].numaNode)),
-                       mid, info[i].proc, info[i].numaNode});
+    retTTI.push_back(galois::substrate::ThreadTopoInfo{
+        i, leader, repid,
+        (unsigned)std::distance(numaNodes.begin(),
+                                numaNodes.find(info[i].numaNode)),
+        mid, info[i].proc, info[i].numaNode});
   }
 
-  return std::make_pair(retMTI, retTTI);
+  return {
+      .machineTopoInfo = retMTI,
+      .threadTopoInfo  = retTTI,
+  };
+}
+
+} // namespace
+
+galois::substrate::HWTopoInfo galois::substrate::getHWTopo() {
+  static SimpleLock lock;
+  static std::unique_ptr<HWTopoInfo> data;
+
+  std::lock_guard<SimpleLock> guard(lock);
+  if (!data) {
+    data = std::make_unique<HWTopoInfo>(makeHWTopo());
+  }
+  return *data;
 }
 
 //! binds current thread to OS HW context "proc"
 bool galois::substrate::bindThreadSelf(unsigned osContext) {
-#ifndef __CYGWIN__
+#ifdef GALOIS_USE_SCHED_SETAFFINITY
   cpu_set_t mask;
   /* CPU_ZERO initializes all the bits in the mask to zero. */
   CPU_ZERO(&mask);
@@ -311,7 +295,8 @@ bool galois::substrate::bindThreadSelf(unsigned osContext) {
   }
   return true;
 #else
-  galois::gWarn("No cpu affinity on Cygwin.  Performance will be bad.");
+  galois::gWarn(
+      "Cannot set cpu affinity on this platform.  Performance will be bad.");
   return false;
 #endif
 }

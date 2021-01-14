@@ -1,58 +1,93 @@
-/*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
- *
- * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
- * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
- * SOFTWARE AND DOCUMENTATION, INCLUDING ANY WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR ANY PARTICULAR PURPOSE, NON-INFRINGEMENT AND WARRANTIES OF
- * PERFORMANCE, AND ANY WARRANTY THAT MIGHT OTHERWISE ARISE FROM COURSE OF
- * DEALING OR USAGE OF TRADE.  NO WARRANTY IS EITHER EXPRESS OR IMPLIED WITH
- * RESPECT TO THE USE OF THE SOFTWARE OR DOCUMENTATION. Under no circumstances
- * shall University be liable for incidental, special, indirect, direct or
- * consequential damages or loss of profits, interruption of business, or
- * related expenses which may arise from use of Software or Documentation,
- * including but not limited to those resulting from defects in Software and/or
- * Documentation, or loss or inaccuracy of data of any kind.
- */
+#ifndef GALOIS_CONFIG_H
+#define GALOIS_CONFIG_H
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#if !(defined(GALOIS_USE_LONGJMP_ABORT) || defined(GALOIS_USE_EXCEPTION_ABORT))
+#define GALOIS_USE_LONGJMP_ABORT
+#endif
+#if !(defined(GALOIS_USE_LONGJMP_ABORT) ^ defined(GALOIS_USE_EXCEPTION_ABORT))
+#error Exactly one of GALOIS_USE_LONGJMP_ABORT or GALOIS_USE_EXCEPTION_ABORT must be defined.
+#endif
 
-#define GALOIS_VERSION_MAJOR @GALOIS_VERSION_MAJOR@
-#define GALOIS_VERSION_MINOR @GALOIS_VERSION_MINOR@
-#define GALOIS_VERSION_PATCH @GALOIS_VERSION_PATCH@
-#define GALOIS_COPYRIGHT_YEAR_STRING "@GALOIS_COPYRIGHT_YEAR@"
-#define GALOIS_VERSION_STRING "@GALOIS_VERSION@"
-#cmakedefine HAVE_LE64TOH
-#cmakedefine HAVE_LE32TOH
-#cmakedefine HAVE_HTOLE64
-#cmakedefine HAVE_HTOLE32
-#cmakedefine HAVE_HTOBE64
-#cmakedefine HAVE_HTOBE32
-#cmakedefine HAVE_ENDIAN_H
-#cmakedefine HAVE_BIG_ENDIAN
-#cmakedefine HAVE_CXX11_UNIFORM_INT_DISTRIBUTION
-#cmakedefine HAVE_CXX11_UNIFORM_REAL_DISTRIBUTION
-#cmakedefine HAVE_CXX11_CHRONO
-#cmakedefine HAVE_CXX11_ALIGNOF
-#cmakedefine HAVE_CILK
-#cmakedefine HAVE_MMAP64
-#cmakedefine GALOIS_USE_EMBEDDED_REVISION
-#cmakedefine GALOIS_USE_NUMA
-#cmakedefine GALOIS_USE_NUMA_OLD
-#cmakedefine GALOIS_USE_VTUNE
-#cmakedefine GALOIS_USE_PAPI
-#cmakedefine GALOIS_USE_HTM
-#cmakedefine GALOIS_USE_SEQ_ONLY
-#cmakedefine GALOIS_USE_CXX11_COMPAT
-#cmakedefine GALOIS_USE_LONGJMP
-
-#ifdef GALOIS_USE_CXX11_COMPAT
-#define GALOIS_CXX11_STD_HEADER(name) <galois/c++11-compat/name.h>
+#if defined(__GNUC__)
+#define GALOIS_ALLOW_WARNINGS                \
+_Pragma("GCC diagnostic push")               \
+_Pragma("GCC diagnostic warning \"-Wall\"")  \
+_Pragma("GCC diagnostic warning \"-Wextra\"")
+#define GALOIS_END_ALLOW_WARNINGS _Pragma("GCC diagnostic pop")
 #else
-#define GALOIS_CXX11_STD_HEADER(name) <name>
+#define GALOIS_ALLOW_WARNINGS
+#define GALOIS_END_ALLOW_WARNINGS
+#endif
+
+#if defined(__GNUC__)
+#define GALOIS_IGNORE_WARNINGS               \
+_Pragma("GCC diagnostic push")               \
+_Pragma("GCC diagnostic ignored \"-Wall\"")  \
+_Pragma("GCC diagnostic ignored \"-Wextra\"")
+#define GALOIS_END_IGNORE_WARNINGS _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_IGNORE_WARNINGS
+#define GALOIS_END_IGNORE_WARNINGS
+#endif
+
+#if defined(__GNUC__)
+#define GALOIS_IGNORE_UNUSED_PARAMETERS                 \
+_Pragma("GCC diagnostic push")                          \
+_Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
+#define GALOIS_END_IGNORE_UNUSED_PARAMETERS _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_IGNORE_UNUSED_PARAMETERS
+#define GALOIS_END_IGNORE_UNUSED_PARAMETERS
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+#define GALOIS_IGNORE_MAYBE_UNINITIALIZED                  \
+_Pragma("GCC diagnostic push")                             \
+_Pragma("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+#define GALOIS_END_IGNORE_MAYBE_UNINITIALIZED _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_IGNORE_MAYBE_UNINITIALIZED
+#define GALOIS_END_IGNORE_MAYBE_UNINITIALIZED
+#endif
+
+#if defined(__GNUC__)
+#define GALOIS_IGNORE_UNUSED_BUT_SET                           \
+_Pragma("GCC diagnostic push")                                 \
+_Pragma("GCC diagnostic ignored \"-Wunused-but-set-variable\"")
+#define GALOIS_END_IGNORE_UNUSED_BUT_SET _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_IGNORE_UNUSED_BUT_SET
+#define GALOIS_END_IGNORE_UNUSED_BUT_SET
+#endif
+
+// Macro to suppress compiler warnings that a variable is set but unused.
+// This warning is buggy in gcc 7.
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 8
+#define GALOIS_GCC7_IGNORE_UNUSED_BUT_SET                      \
+_Pragma("GCC diagnostic push")                                 \
+_Pragma("GCC diagnostic ignored \"-Wunused-but-set-variable\"")
+#define GALOIS_END_GCC7_IGNORE_UNUSED_BUT_SET _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_GCC7_IGNORE_UNUSED_BUT_SET
+#define GALOIS_END_GCC7_IGNORE_UNUSED_BUT_SET
+#endif
+
+#if defined(NDEBUG)
+#define GALOIS_USED_ONLY_IN_DEBUG(NAME) NAME [[maybe_unused]]
+#else
+#define GALOIS_USED_ONLY_IN_DEBUG(NAME) NAME
+#endif
+
+#define GALOIS_UNUSED(NAME) NAME [[maybe_unused]]
+
+#if defined(__GNUC__)
+#define GALOIS_IGNORE_EXTERNAL_UNUSED_PARAMETERS         \
+_Pragma("GCC diagnostic push")                           \
+_Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
+#define GALOIS_END_IGNORE_EXTERNAL_UNUSED_PARAMETERS _Pragma("GCC diagnostic pop")
+#else
+#define GALOIS_IGNORE_EXTERNAL_UNUSED_PARAMETERS
+#define GALOIS_END_IGNORE_EXTERNAL_UNUSED_PARAMETERS
 #endif
 
 #endif

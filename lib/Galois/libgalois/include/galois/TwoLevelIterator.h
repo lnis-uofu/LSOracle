@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -20,18 +20,23 @@
 #ifndef GALOIS_TWO_LEVEL_ITER_H
 #define GALOIS_TWO_LEVEL_ITER_H
 
-#include <iterator>
+#include <cassert>
+#include <cstdlib>
 #include <functional>
+#include <iterator>
 #include <type_traits>
 
 #include <cstdlib>
 #include <cassert>
 
+#include "galois/config.h"
+
 namespace galois {
 
 namespace internal {
 template <typename Iter>
-void safe_decrement(Iter& it, const Iter& beg, const Iter& end,
+void safe_decrement(Iter& it, const Iter& beg,
+                    const Iter& GALOIS_USED_ONLY_IN_DEBUG(end),
                     std::forward_iterator_tag) {
 
   Iter next = beg;
@@ -50,8 +55,8 @@ void safe_decrement(Iter& it, const Iter& beg, const Iter& end,
 }
 
 template <typename Iter>
-void safe_decrement(Iter& it, const Iter& beg, const Iter& end,
-                    std::bidirectional_iterator_tag) {
+void safe_decrement(Iter& it, const Iter& GALOIS_USED_ONLY_IN_DEBUG(beg),
+                    const Iter&, std::bidirectional_iterator_tag) {
   assert(it != beg);
   --it;
 }
@@ -565,42 +570,39 @@ make_two_level_end(Outer beg, Outer end, InnerBegFn innerBegFn,
 
 namespace internal {
 template <typename C>
-struct GetBegin : public std::unary_function<C&, typename C::iterator> {
+struct GetBegin {
   inline typename C::iterator operator()(C& c) const { return c.begin(); }
 };
 
 template <typename C>
-struct GetEnd : public std::unary_function<C&, typename C::iterator> {
+struct GetEnd {
   inline typename C::iterator operator()(C& c) const { return c.end(); }
 };
 
 // TODO: update to c++11 names
 template <typename C>
-struct GetCbegin
-    : public std::unary_function<const C&, typename C::const_iterator> {
+struct GetCbegin {
   inline typename C::const_iterator operator()(const C& c) const {
     return c.begin();
   }
 };
 
 template <typename C>
-struct GetCend
-    : public std::unary_function<const C&, typename C::const_iterator> {
+struct GetCend {
   inline typename C::const_iterator operator()(const C& c) const {
     return c.end();
   }
 };
 
 template <typename C>
-struct GetRbegin
-    : public std::unary_function<C&, typename C::reverse_iterator> {
+struct GetRbegin {
   inline typename C::reverse_iterator operator()(C& c) const {
     return c.rbegin();
   }
 };
 
 template <typename C>
-struct GetRend : public std::unary_function<C&, typename C::reverse_iterator> {
+struct GetRend {
   inline typename C::reverse_iterator operator()(C& c) const {
     return c.rend();
   }
@@ -608,22 +610,20 @@ struct GetRend : public std::unary_function<C&, typename C::reverse_iterator> {
 
 // TODO: update to c++11 names
 template <typename C>
-struct GetCRbegin
-    : public std::unary_function<const C&, typename C::const_reverse_iterator> {
+struct GetCRbegin {
   inline typename C::const_reverse_iterator operator()(const C& c) const {
     return c.rbegin();
   }
 };
 
 template <typename C>
-struct GetCRend
-    : public std::unary_function<const C&, typename C::const_reverse_iterator> {
+struct GetCRend {
   inline typename C::const_reverse_iterator operator()(const C& c) const {
     return c.rend();
   }
 };
 
-enum StlIterKind { NORMAL, CONST, REVERSE, CONST_REVERSE };
+enum StlIterKind { NORMAL, _CONST, REVERSE, _CONST_REVERSE };
 
 template <typename C, typename I>
 struct IsConstIter {
@@ -662,8 +662,8 @@ struct GetStlIterKind {
   static const bool isConst =
       IsConstIter<C, I>::value || IsRvrsConstIter<C, I>::value;
 
-  static const StlIterKind value =
-      isRvrs ? (isConst ? CONST_REVERSE : REVERSE) : (isConst ? CONST : NORMAL);
+  static const StlIterKind value = isRvrs ? (isConst ? _CONST_REVERSE : REVERSE)
+                                          : (isConst ? _CONST : NORMAL);
 };
 
 template <typename C, typename I, enum StlIterKind>
@@ -680,7 +680,7 @@ struct ChooseStlIter<C, I, NORMAL> {
 };
 
 template <typename C, typename I>
-struct ChooseStlIter<C, I, CONST> {
+struct ChooseStlIter<C, I, _CONST> {
 
   typedef typename C::const_iterator Inner;
   typedef GetCbegin<C> InnerBegFn;
@@ -696,7 +696,7 @@ struct ChooseStlIter<C, I, REVERSE> {
 };
 
 template <typename C, typename I>
-struct ChooseStlIter<C, I, CONST_REVERSE> {
+struct ChooseStlIter<C, I, _CONST_REVERSE> {
 
   typedef typename C::const_reverse_iterator Inner;
   typedef GetCRbegin<C> InnerBegFn;

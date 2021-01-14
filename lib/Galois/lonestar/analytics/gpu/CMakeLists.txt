@@ -1,0 +1,10 @@
+add_subdirectory(bfs)
+add_subdirectory(sssp)
+add_subdirectory(connected-components)
+add_subdirectory(pagerank)
+add_subdirectory(triangle-counting)
+add_subdirectory(spanningtree)
+add_subdirectory(independentset)
+add_subdirectory(pointstoanalysis)
+add_subdirectory(matrixcompletion)
+

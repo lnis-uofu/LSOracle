@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -17,9 +17,13 @@
  * Documentation, or loss or inaccuracy of data of any kind.
  */
 
-#ifndef GALOIS_GRAPH_DETAILS_H
-#define GALOIS_GRAPH_DETAILS_H
+#ifndef GALOIS_GRAPHS_DETAILS_H
+#define GALOIS_GRAPHS_DETAILS_H
 
+#include <algorithm>
+#include <boost/mpl/if.hpp>
+
+#include "galois/config.h"
 #include "galois/LargeArray.h"
 #include "galois/LazyObject.h"
 #include "galois/NoDerefIterator.h"
@@ -28,22 +32,24 @@
 #include "galois/runtime/Context.h"
 #include "galois/substrate/PerThreadStorage.h"
 
-#include <boost/mpl/if.hpp>
-#include <algorithm>
+// Forward declarations
 
-namespace galois {
-namespace graphs {
+namespace galois::graphs {
 
 struct read_default_graph_tag {};
 struct read_with_aux_graph_tag {};
 struct read_lc_inout_graph_tag {};
 struct read_with_aux_first_graph_tag {};
 
-namespace internal {
+} // namespace galois::graphs
+
+namespace galois::graphs::internal {
 
 template <typename, typename, typename, typename, typename>
 struct EdgeSortReference;
-}
+} // namespace galois::graphs::internal
+
+namespace galois::graphs {
 
 //! Proxy object for internal EdgeSortReference
 template <typename GraphNode, typename EdgeTy>
@@ -67,7 +73,9 @@ public:
   }
 };
 
-namespace internal {
+} // namespace galois::graphs
+
+namespace galois::graphs::internal {
 
 template <bool Enable>
 class LocalIteratorFeature {
@@ -106,7 +114,7 @@ struct LocalIteratorFeature<false> {
     return std::min(end, numNodes);
   }
 
-  void setLocalRange(uint64_t begin, uint64_t end) {}
+  void setLocalRange(uint64_t, uint64_t) {}
 };
 
 //! Proxy object for {@link EdgeSortIterator}
@@ -120,6 +128,16 @@ struct EdgeSortReference {
 
   EdgeSortReference(EdgeIndex x, EdgeDst* dsts, EdgeData* data)
       : at(x), edgeDst(dsts), edgeData(data) {}
+
+  // Explicitly declare what the implicit copy constructor
+  // would do since using the implicit copy constructor
+  // from a class with a non-defaulted copy assignment
+  // operator is deprecated.
+  EdgeSortReference(EdgeSortReference const& x) {
+    at       = x.at;
+    edgeDst  = x.edgeDst;
+    edgeData = x.edgeData;
+  }
 
   EdgeSortReference operator=(const EdgeSortValue<GraphNode, EdgeTy>& x) {
     edgeDst->set(at, x.rawDst);
@@ -229,7 +247,7 @@ template <>
 class IntrusiveId<void> {
 public:
   char getId() { return 0; }
-  void setId(size_t n) {}
+  void setId(size_t) {}
 };
 
 //! Empty class for HasLockable optimization
@@ -259,21 +277,6 @@ public:
   NodeInfoBase(Args&&... args) : data(std::forward<Args>(args)...) {}
 
   typename NodeInfoBase::reference getData() { return data; }
-  /*
-   * To support boost serialization
-   * IMPORTANT: This is temp fix for benchmarks using non-trivial structures in
-   * the nodeData (Eg. SGD)
-   */
-  // friend class boost::serialization::access;
-  // template <typename Archive>
-  // void save(Archive &ar, const unsigned int version) const {
-  // ar << data;
-  //}
-  // template <typename Archive>
-  // void load(Archive &ar, const unsigned int version) {
-  // ar >> data ;
-  //}
-  // BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 template <bool HasLockable>
@@ -324,14 +327,14 @@ public:
   struct size_of_out_of_line {
     static const size_t value = 0;
   };
-  void outOfLineAcquire(size_t n, MethodFlag mflag) {}
-  void outOfLineAllocateLocal(size_t numNodes) {}
-  void outOfLineAllocateInterleaved(size_t numNodes) {}
+  void outOfLineAcquire(size_t, MethodFlag) {}
+  void outOfLineAllocateLocal(size_t) {}
+  void outOfLineAllocateInterleaved(size_t) {}
   void outOfLineAllocateBlocked(size_t) {}
   void outOfLineAllocateFloating(size_t) {}
-  void outOfLineConstructAt(size_t n) {}
+  void outOfLineConstructAt(size_t) {}
   template <typename RangeArrayType>
-  void outOfLineAllocateSpecified(size_t n, RangeArrayType threadRanges) {}
+  void outOfLineAllocateSpecified(size_t, RangeArrayType) {}
 };
 
 //! Edge specialization for void edge data
@@ -411,8 +414,6 @@ void swap(EdgeSortReference<A, B, C, D, E> a,
   b       = aa;
 }
 
-} // namespace internal
-} // namespace graphs
-} // namespace galois
+} // namespace galois::graphs::internal
 
 #endif

@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -20,12 +20,14 @@
 #ifndef GALOIS_SUBSTRATE_HWTOPO_H
 #define GALOIS_SUBSTRATE_HWTOPO_H
 
+#include <string>
 #include <vector>
 
-namespace galois {
-namespace substrate {
+#include "galois/config.h"
 
-struct threadTopoInfo {
+namespace galois::substrate {
+
+struct ThreadTopoInfo {
   unsigned tid;                 // this thread (galois id)
   unsigned socketLeader;        // first thread id in tid's socket
   unsigned socket;              // socket (L3 normally) of thread
@@ -35,19 +37,35 @@ struct threadTopoInfo {
   unsigned osNumaNode;          // OS ID for numa node
 };
 
-struct machineTopoInfo {
+struct MachineTopoInfo {
   unsigned maxThreads;
   unsigned maxCores;
   unsigned maxSockets;
   unsigned maxNumaNodes;
 };
 
-// parse machine topology
-std::pair<machineTopoInfo, std::vector<threadTopoInfo>> getHWTopo();
-// bind a thread to a hwContext (returned by getHWTopo)
+struct HWTopoInfo {
+  MachineTopoInfo machineTopoInfo;
+  std::vector<ThreadTopoInfo> threadTopoInfo;
+};
+
+/**
+ * getHWTopo determines the machine topology from the process information
+ * exposed in /proc and /dev filesystems.
+ */
+HWTopoInfo getHWTopo();
+
+/**
+ * parseCPUList parses cpuset information in "List format" as described in
+ * cpuset(7) and available under /proc/self/status
+ */
+std::vector<int> parseCPUList(const std::string& in);
+
+/**
+ * bindThreadSelf binds a thread to an osContext as returned by getHWTopo.
+ */
 bool bindThreadSelf(unsigned osContext);
 
-} // end namespace substrate
-} // end namespace galois
+} // namespace galois::substrate
 
-#endif //_HWTOPO_H
+#endif

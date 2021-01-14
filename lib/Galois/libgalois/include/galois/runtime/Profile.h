@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -17,35 +17,30 @@
  * Documentation, or loss or inaccuracy of data of any kind.
  */
 
-#ifndef GALOIS_RUNTIME_SAMPLING_H
-#define GALOIS_RUNTIME_SAMPLING_H
+#ifndef GALOIS_RUNTIME_PROFILE_H
+#define GALOIS_RUNTIME_PROFILE_H
 
-#include "galois/Galois.h"
-#include "galois/Timer.h"
-#include "galois/gIO.h"
-#include "galois/util.h"
+#include <cstdlib>
 
-#ifdef GALOIS_USE_VTUNE
+#ifdef GALOIS_ENABLE_VTUNE
 #include "ittnotify.h"
 #endif
 
-#ifdef GALOIS_USE_PAPI
+#ifdef GALOIS_ENABLE_PAPI
 extern "C" {
 #include <papi.h>
 #include <papiStdEventDefs.h>
 }
 #endif
 
-#ifdef GALOIS_USE_HPCTK
-#include <hpctoolkit.h>
-#endif
+#include "galois/config.h"
+#include "galois/Galois.h"
+#include "galois/gIO.h"
+#include "galois/Timer.h"
 
-#include <cstdlib>
+namespace galois::runtime {
 
-namespace galois {
-namespace runtime {
-
-#ifdef GALOIS_USE_VTUNE
+#ifdef GALOIS_ENABLE_VTUNE
 
 template <typename F>
 void profileVtune(const F& func, const char* region) {
@@ -76,32 +71,7 @@ void profileVtune(const F& func, const char* region) {
 
 #endif
 
-#ifdef GALOIS_USE_HPCTK
-void profileHpcTk(const F& func, const char* region) {
-  region = region ? region : "(NULL)";
-
-  GALOIS_ASSERT(
-      galois::substrate::ThreadPool::getTID() == 0,
-      "profileHpcTk can only be called from master thread (thread 0)");
-
-  hpctoolkit_sampling_start();
-
-  timeThis(func, region);
-
-  hpctoolkit_sampling_stop();
-}
-#else
-template <typename F>
-void profileHpcTk(const F& func, const char* region) {
-
-  region = region ? region : "(NULL)";
-  galois::gWarn("HPC Toolkit not enabled or found");
-
-  timeThis(func, region);
-}
-#endif
-
-#ifdef GALOIS_USE_PAPI
+#ifdef GALOIS_ENABLE_PAPI
 
 namespace internal {
 
@@ -114,11 +84,12 @@ void papiInit() {
   int retval = PAPI_library_init(PAPI_VER_CURRENT);
 
   if (retval != PAPI_VER_CURRENT && retval > 0) {
-    GALOIS_DIE("PAPI library version mismatch!");
+    GALOIS_DIE("PAPI library version mismatch: ", retval,
+               " != ", PAPI_VER_CURRENT);
   }
 
   if (retval < 0) {
-    GALOIS_DIE("Initialization error!");
+    GALOIS_DIE("initialization error!");
   }
 
   if ((retval = PAPI_thread_init(&papiGetTID)) != PAPI_OK) {
@@ -132,7 +103,7 @@ void decodePapiEvents(const V1& eventNames, V2& papiEvents) {
     char buf[256];
     std::strcpy(buf, eventNames[i].c_str());
     if (PAPI_event_name_to_code(buf, &papiEvents[i]) != PAPI_OK) {
-      GALOIS_DIE("Failed to recognize eventName = ", eventNames[i],
+      GALOIS_DIE("failed to recognize eventName = ", eventNames[i],
                  ", event code: ", papiEvents[i]);
     }
   }
@@ -142,7 +113,7 @@ template <typename V1, typename V2, typename V3>
 void papiStart(V1& eventSets, V2& papiResults, V3& papiEvents) {
   galois::on_each([&](const unsigned tid, const unsigned numT) {
     if (PAPI_register_thread() != PAPI_OK) {
-      GALOIS_DIE("Failed to register thread with PAPI");
+      GALOIS_DIE("failed to register thread with PAPI");
     }
 
     int& eventSet = *eventSets.getLocal();
@@ -151,11 +122,11 @@ void papiStart(V1& eventSets, V2& papiResults, V3& papiEvents) {
     papiResults.getLocal()->resize(papiEvents.size());
 
     if (PAPI_create_eventset(&eventSet) != PAPI_OK) {
-      GALOIS_DIE("Failed to init event set");
+      GALOIS_DIE("failed to init event set");
     }
     if (PAPI_add_events(eventSet, papiEvents.data(), papiEvents.size()) !=
         PAPI_OK) {
-      GALOIS_DIE("Failed to add events");
+      GALOIS_DIE("failed to add events");
     }
 
     if (PAPI_start(eventSet) != PAPI_OK) {
@@ -190,9 +161,19 @@ void papiStop(V1& eventSets, V2& papiResults, V3& eventNames,
     }
 
     if (PAPI_unregister_thread() != PAPI_OK) {
-      GALOIS_DIE("Failed to un-register thread with PAPI");
+      GALOIS_DIE("failed to un-register thread with PAPI");
     }
   });
+}
+
+template <typename C>
+void splitCSVstr(const std::string& inputStr, C& output,
+                 const char delim = ',') {
+  std::stringstream ss(inputStr);
+
+  for (std::string item; std::getline(ss, item, delim);) {
+    output.push_back(item);
+  }
 }
 
 } // end namespace internal
@@ -217,7 +198,7 @@ void profilePapi(const F& func, const char* region) {
 
   std::vector<std::string> eventNames;
 
-  galois::splitCSVstr(eventNamesCSV, eventNames);
+  internal::splitCSVstr(eventNamesCSV, eventNames);
 
   std::vector<int> papiEvents(eventNames.size());
 
@@ -246,7 +227,6 @@ void profilePapi(const F& func, const char* region) {
 
 #endif
 
-} // namespace runtime
-} // end namespace galois
+} // namespace galois::runtime
 
 #endif

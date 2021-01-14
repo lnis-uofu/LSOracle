@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -25,6 +25,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "galois/config.h"
+
 namespace galois {
 
 //! Simple map data structure, based off a single array.
@@ -39,8 +41,7 @@ public:
   typedef _Compare key_compare;
   typedef _Alloc allocator_type;
 
-  class value_compare
-      : public std::binary_function<value_type, value_type, bool> {
+  class value_compare {
     friend class flat_map<_Key, _Tp, _Compare, _Alloc, _Store>;
 
   protected:
@@ -62,8 +63,7 @@ private:
   _VectTy _data;
   _Compare _comp;
 
-  class value_key_compare
-      : public std::binary_function<value_type, key_type, bool> {
+  class value_key_compare {
     friend class flat_map<_Key, _Tp, _Compare, _Alloc, _Store>;
 
   protected:
@@ -102,7 +102,7 @@ public:
   flat_map() : _data(), _comp() {}
 
   explicit flat_map(const _Compare& __comp,
-                    const allocator_type& __a = allocator_type())
+                    const allocator_type& = allocator_type())
       // XXX :_data(_Pair_alloc_type(__a)), _comp(__comp) {}
       : _data(), _comp(__comp) {}
 
@@ -126,8 +126,8 @@ public:
   }
 
   template <typename _InputIterator>
-  flat_map(_InputIterator __first, _InputIterator __last,
-           const _Compare& __comp, const allocator_type& __a = allocator_type())
+  flat_map(_InputIterator __first, _InputIterator __last, const _Compare&,
+           const allocator_type& __a = allocator_type())
       : _data(__first, __last, _Pair_alloc_type(__a)) {
     resort();
   }
@@ -285,14 +285,14 @@ public:
 
   iterator find(const key_type& __x) {
     auto i = lower_bound(__x);
-    if (key_eq(i->first, __x))
+    if (i != end() && key_eq(i->first, __x))
       return i;
     return end();
   }
 
   const_iterator find(const key_type& __x) const {
     auto i = lower_bound(__x);
-    if (key_eq(i->first, __x))
+    if (i != end() && key_eq(i->first, __x))
       return i;
     return end();
   }
@@ -323,14 +323,6 @@ public:
   equal_range(const key_type& __x) const {
     return std::make_pair(lower_bound(__x), upper_bound(__x));
   }
-
-  template <typename _K1, typename _T1, typename _C1, typename _A1>
-  friend bool operator==(const flat_map<_K1, _T1, _C1, _A1>&,
-                         const flat_map<_K1, _T1, _C1, _A1>&);
-
-  template <typename _K1, typename _T1, typename _C1, typename _A1>
-  friend bool operator<(const flat_map<_K1, _T1, _C1, _A1>&,
-                        const flat_map<_K1, _T1, _C1, _A1>&);
 };
 
 template <typename _Key, typename _Tp, typename _Compare, typename _Alloc>

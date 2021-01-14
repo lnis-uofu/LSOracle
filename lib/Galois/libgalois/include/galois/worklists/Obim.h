@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -20,16 +20,16 @@
 #ifndef GALOIS_WORKLIST_OBIM_H
 #define GALOIS_WORKLIST_OBIM_H
 
+#include <deque>
+#include <limits>
+#include <type_traits>
+
 #include "galois/FlatMap.h"
 #include "galois/runtime/Substrate.h"
 #include "galois/substrate/PerThreadStorage.h"
 #include "galois/substrate/Termination.h"
 #include "galois/worklists/Chunk.h"
 #include "galois/worklists/WorkListHelpers.h"
-
-#include <deque>
-#include <limits>
-#include <type_traits>
 
 namespace galois {
 namespace worklists {
@@ -84,26 +84,30 @@ template <typename Index, bool UseDescending>
 struct OrderedByIntegerMetricComparator {
   std::less<Index> compare;
   Index identity;
+  Index earliest;
 
   template <typename C>
   struct with_local_map {
     typedef galois::flat_map<Index, C, std::less<Index>> type;
   };
   OrderedByIntegerMetricComparator()
-      : identity(std::numeric_limits<Index>::min()) {}
+      : identity(std::numeric_limits<Index>::max()),
+        earliest(std::numeric_limits<Index>::min()) {}
 };
 
 template <typename Index>
 struct OrderedByIntegerMetricComparator<Index, true> {
   std::greater<Index> compare;
   Index identity;
+  Index earliest;
 
   template <typename C>
   struct with_local_map {
     typedef galois::flat_map<Index, C, std::greater<Index>> type;
   };
   OrderedByIntegerMetricComparator()
-      : identity(std::numeric_limits<Index>::max()) {}
+      : identity(std::numeric_limits<Index>::min()),
+        earliest(std::numeric_limits<Index>::max()) {}
 };
 
 } // namespace internal
@@ -277,7 +281,7 @@ private:
   GALOIS_ATTRIBUTE_NOINLINE
   galois::optional<T> slowPop(ThreadData& p) {
     bool localLeader = substrate::ThreadPool::isLeader();
-    Index msS        = this->identity;
+    Index msS        = this->earliest;
 
     updateLocal(p);
 
@@ -314,16 +318,18 @@ private:
   CTy* slowUpdateLocalOrCreate(ThreadData& p, Index i) {
     // update local until we find it or we get the write lock
     do {
-      CTy* C;
       updateLocal(p);
-      if ((C = p.local[i]))
-        return C;
+      auto it = p.local.find(i);
+      if (it != p.local.end())
+        return it->second;
     } while (!masterLock.try_lock());
     // we have the write lock, update again then create
     updateLocal(p);
-    CTy*& C2 = p.local[i];
+    auto it = p.local.find(i);
+    CTy* C2 = (it != p.local.end()) ? it->second : nullptr;
     if (!C2) {
       C2                  = new CTy();
+      p.local[i]          = C2;
       p.lastMasterVersion = masterVersion.load(std::memory_order_relaxed) + 1;
       masterLog.push_back(std::make_pair(i, C2));
       masterVersion.fetch_add(1);
@@ -335,16 +341,16 @@ private:
   inline CTy* updateLocalOrCreate(ThreadData& p, Index i) {
     // Try local then try update then find again or else create and update the
     // master log
-    CTy* C;
-    if ((C = p.local[i]))
-      return C;
+    auto it = p.local.find(i);
+    if (it != p.local.end())
+      return it->second;
     // slowpath
     return slowUpdateLocalOrCreate(p, i);
   }
 
 public:
   OrderedByIntegerMetric(const Indexer& x = Indexer())
-      : data(this->identity), masterVersion(0), indexer(x) {}
+      : data(this->earliest), masterVersion(0), indexer(x) {}
 
   ~OrderedByIntegerMetric() {
     // Deallocate in LIFO order to give opportunity for simple garbage
@@ -399,7 +405,7 @@ public:
       return this->popStored(p, p.curIndex);
 
     if (!UseBarrier && BlockPeriod &&
-        (p.numPops++ & ((1 << BlockPeriod) - 1)) == 0)
+        ((p.numPops++ & ((1 << BlockPeriod) - 1)) == 0))
       return slowPop(p);
 
     galois::optional<value_type> item;
@@ -418,16 +424,30 @@ public:
     galois::optional<value_type> item;
     ThreadData& p = *data.getLocal();
 
+    // try to pop from global worklist
     item = slowPop(p);
     if (item)
       p.stored.push_back(std::make_pair(p.curIndex, *item));
-    p.hasWork = item;
+
+    // check if there are thread-local work items
+    if (!p.stored.empty()) {
+      Index storedIndex = this->identity;
+      for (auto& e : p.stored) {
+        if (this->compare(e.first, storedIndex)) {
+          storedIndex = e.first;
+        }
+      }
+      p.curIndex = storedIndex;
+      p.current  = p.local[storedIndex];
+    }
+    p.hasWork = !p.stored.empty();
 
     this->barrier.wait();
 
+    // align with the earliest level from threads that have works
     bool hasWork   = p.hasWork;
-    Index curIndex = p.curIndex;
-    CTy* C         = p.current;
+    Index curIndex = (hasWork) ? p.curIndex : this->identity;
+    CTy* C         = (hasWork) ? p.current : nullptr;
 
     for (unsigned i = 0; i < runtime::activeThreads; ++i) {
       ThreadData& o = *data.getRemote(i);
@@ -446,9 +466,9 @@ public:
     if (UseMonotonic) {
       for (auto ii = p.local.begin(); ii != p.local.end();) {
         bool toBreak = ii->second == C;
-        ii           = p.local.erase(ii);
         if (toBreak)
           break;
+        ii = p.local.erase(ii);
       }
     }
 

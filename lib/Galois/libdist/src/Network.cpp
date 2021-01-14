@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -50,8 +50,8 @@ void NetworkInterface::initializeMPI() {
     MPI_Abort(MPI_COMM_WORLD, initSuccess);
   }
 
-  if (supportProvided < MPI_THREAD_MULTIPLE) {
-    GALOIS_DIE("Thread multiple (MPI) not supported.");
+  if (supportProvided != MPI_THREAD_MULTIPLE) {
+    GALOIS_DIE("MPI_THREAD_MULTIPLE not supported.");
   }
 }
 
@@ -129,7 +129,7 @@ void NetworkInterface::handleReceives() {
 }
 
 NetworkInterface& galois::runtime::getSystemNetworkInterface() {
-#ifndef GALOIS_USE_LWCI
+#ifndef GALOIS_USE_LCI
   return makeNetworkBuffered();
 #else
   return makeNetworkLCI();
@@ -138,6 +138,6 @@ NetworkInterface& galois::runtime::getSystemNetworkInterface() {
 
 void galois::runtime::internal::destroySystemNetworkInterface() {
   // get net interface, then delete it
-  NetworkInterface& netInterface = makeNetworkBuffered();
+  NetworkInterface& netInterface = getSystemNetworkInterface();
   delete &netInterface;
 }

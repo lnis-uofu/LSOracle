@@ -17,7 +17,7 @@
 #include "cutil_subset.h"
 #include "bmk2.h"
 #include "instr.h"
-#include <kernels/mergesort.cuh>
+#include <moderngpu/kernel_mergesort.hxx>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,7 +25,7 @@
 
 static int zero = 0;
 
-extern mgpu::ContextPtr mgc;
+extern mgpu::context_t* mgc;
 
 static __global__ void reset_wl(volatile int* dindex) { *dindex = 0; }
 
@@ -76,45 +76,45 @@ struct Worklist {
     } else {
       wl = (int*)calloc(nsize, sizeof(int));
       CUDA_SAFE_CALL(cudaMalloc(&dwl, nsize * sizeof(int)));
-      CUDA_SAFE_CALL(cudaMalloc(&dnsize, 1 * sizeof(int)));
+    }
+    CUDA_SAFE_CALL(cudaMalloc(&dnsize, 1 * sizeof(int)));
 #ifdef SLOTS
-      CUDA_SAFE_CALL(cudaMalloc(&dcounters, 2 * sizeof(int)));
-      dindex = &dcounters[currslot];
+    CUDA_SAFE_CALL(cudaMalloc(&dcounters, 2 * sizeof(int)));
+    dindex = &dcounters[currslot];
 #else
-      CUDA_SAFE_CALL(cudaMalloc(&dindex, 1 * sizeof(int)));
+    CUDA_SAFE_CALL(cudaMalloc(&dindex, 1 * sizeof(int)));
 #endif
-      // CUDA_SAFE_CALL(cudaMalloc(&dindex, 2 * sizeof(int)));
+    // CUDA_SAFE_CALL(cudaMalloc(&dindex, 2 * sizeof(int)));
 
-      init_wl<<<1, 1>>>(nsize, dnsize, dindex);
+    init_wl<<<1, 1>>>(nsize, dnsize, dindex);
 
-      // CUDA_SAFE_CALL(cudaMemcpy(dnsize, &nsize, 1 * sizeof(int),
-      // cudaMemcpyHostToDevice)); CUDA_SAFE_CALL(cudaMemcpy((void *) dindex,
-      // &zero, 1 * sizeof(zero), cudaMemcpyHostToDevice));
+    // CUDA_SAFE_CALL(cudaMemcpy(dnsize, &nsize, 1 * sizeof(int),
+    // cudaMemcpyHostToDevice)); CUDA_SAFE_CALL(cudaMemcpy((void *) dindex,
+    // &zero, 1 * sizeof(zero), cudaMemcpyHostToDevice));
 
 #ifdef COUNT_ATOMICS
-      CUDA_SAFE_CALL(cudaMalloc(&atomic_counter, sizeof(int) * 1));
-      CUDA_SAFE_CALL(cudaMemcpy((void*)atomic_counter, &zero, 1 * sizeof(zero),
-                                cudaMemcpyHostToDevice));
+    CUDA_SAFE_CALL(cudaMalloc(&atomic_counter, sizeof(int) * 1));
+    CUDA_SAFE_CALL(cudaMemcpy((void*)atomic_counter, &zero, 1 * sizeof(zero),
+                              cudaMemcpyHostToDevice));
 #endif
 
 #ifdef ATOMIC_DENSITY
-      CUDA_SAFE_CALL(
-          cudaMalloc(&atomic_density, sizeof(unsigned int) * (32 + 1)));
-      CUDA_SAFE_CALL(
-          cudaMemset(atomic_density, 0, sizeof(unsigned int) * (32 + 1)));
+    CUDA_SAFE_CALL(
+        cudaMalloc(&atomic_density, sizeof(unsigned int) * (32 + 1)));
+    CUDA_SAFE_CALL(
+        cudaMemset(atomic_density, 0, sizeof(unsigned int) * (32 + 1)));
 #endif
 
-      // CUDA_SAFE_CALL(cudaMalloc(&rcounter, 1 * sizeof(int)));
-      // CUDA_SAFE_CALL(cudaMemcpy((void *) rcounter, &zero, 1 * sizeof(zero),
-      // cudaMemcpyHostToDevice));
+    // CUDA_SAFE_CALL(cudaMalloc(&rcounter, 1 * sizeof(int)));
+    // CUDA_SAFE_CALL(cudaMemcpy((void *) rcounter, &zero, 1 * sizeof(zero),
+    // cudaMemcpyHostToDevice));
 
-      prio.alloc(nsize);
-      // prio.cpu_wr_ptr();
-      dprio        = prio.gpu_wr_ptr(true);
-      length       = nsize;
-      f_will_write = false;
-      index        = 0;
-    }
+    prio.alloc(nsize);
+    // prio.cpu_wr_ptr();
+    dprio        = prio.gpu_wr_ptr(true);
+    length       = nsize;
+    f_will_write = false;
+    index        = 0;
   }
 
   void free() {
@@ -136,10 +136,10 @@ struct Worklist {
 
   void will_write() { f_will_write = true; }
 
-  void sort() { MergesortKeys(dwl, nitems(), mgpu::less<int>(), *mgc); }
+  void sort() { mergesort(dwl, nitems(), mgpu::less_t<int>(), *mgc); }
 
   void sort_prio() {
-    MergesortPairs(dprio, dwl, nitems(), mgpu::less<int>(), *mgc);
+    mergesort(dprio, dwl, nitems(), mgpu::less_t<int>(), *mgc);
   }
 
   void update_gpu(int nsize) {
@@ -342,7 +342,7 @@ struct Worklist {
       // counting density makes no sense -- it is always 1
     }
 
-    lindex = cub::ShuffleIndex(lindex, first);
+    lindex = cub::ShuffleIndex<32>(lindex, first, 0xffffffff);
     // lindex = cub::ShuffleIndex(lindex, first); // CUB > 1.3.1
 
     return lindex + offset;
@@ -363,7 +363,7 @@ struct Worklist {
 #endif
     }
 
-    lindex = cub::ShuffleIndex(lindex, first);
+    lindex = cub::ShuffleIndex<32>(lindex, first, 0xffffffff);
     // lindex = cub::ShuffleIndex(lindex, first); // CUB > 1.3.1
 
     return lindex + offset;
@@ -383,7 +383,7 @@ struct Worklist {
 #endif
     }
 
-    lindex = cub::ShuffleIndex(lindex, 0);
+    lindex = cub::ShuffleIndex<32>(lindex, 0, 0xffffffff);
     // lindex = cub::ShuffleIndex(lindex, 0); // CUB > 1.3.1
 
     return lindex + offset;
@@ -681,7 +681,7 @@ struct Worklist2Light {
       // counting density makes no sense -- it is always 1
     }
 
-    lindex = cub::ShuffleIndex(lindex, first);
+    lindex = cub::ShuffleIndex<32>(lindex, first, 0xffffffff);
     // lindex = cub::ShuffleIndex(lindex, first); // CUB > 1.3.1
 
     return lindex + offset;

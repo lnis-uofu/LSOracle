@@ -1,0 +1,11 @@
+add_executable(louvain-clustering-cpu louvainClustering.cpp)
+add_dependencies(apps louvain-clustering-cpu)
+target_link_libraries(louvain-clustering-cpu PRIVATE Galois::shmem lonestar)
+install(TARGETS louvain-clustering-cpu DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT apps EXCLUDE_FROM_ALL)
+add_test_scale(small1 louvain-clustering-cpu -symmetricGraph "${BASEINPUT}/scalefree/symmetric/rmat10.sgr")
+
+add_executable(leiden-clustering-cpu leidenClustering.cpp)
+add_dependencies(apps leiden-clustering-cpu)
+target_link_libraries(leiden-clustering-cpu PRIVATE Galois::shmem lonestar)
+install(TARGETS leiden-clustering-cpu DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT apps EXCLUDE_FROM_ALL)
+add_test_scale(small1 leiden-clustering-cpu -symmetricGraph "${BASEINPUT}/scalefree/symmetric/rmat10.sgr")

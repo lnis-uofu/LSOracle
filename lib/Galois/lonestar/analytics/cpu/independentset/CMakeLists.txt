@@ -1,0 +1,5 @@
+add_executable(maximal-independentset-cpu IndependentSet.cpp)
+add_dependencies(apps maximal-independentset-cpu)
+target_link_libraries(maximal-independentset-cpu PRIVATE Galois::shmem lonestar)
+install(TARGETS maximal-independentset-cpu DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT apps EXCLUDE_FROM_ALL)
+add_test_scale(small maximal-independentset-cpu "${BASEINPUT}/scalefree/symmetric/rmat10.sgr" "-symmetricGraph")

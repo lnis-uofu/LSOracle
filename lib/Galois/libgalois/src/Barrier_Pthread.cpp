@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -38,31 +38,35 @@ class PthreadBarrier : public galois::substrate::Barrier {
 
 public:
   PthreadBarrier() {
-    if (pthread_barrier_init(&bar, 0, ~0))
-      GALOIS_DIE("PTHREAD");
+    int err = 0;
+    if ((err = pthread_barrier_init(&bar, 0, ~0)))
+      GALOIS_DIE("pthread ", err);
   }
 
   PthreadBarrier(unsigned int v) {
-    if (pthread_barrier_init(&bar, 0, v))
-      GALOIS_DIE("PTHREAD");
+    int err = 0;
+    if ((err = pthread_barrier_init(&bar, 0, v)))
+      GALOIS_DIE("pthread ", err);
   }
 
   virtual ~PthreadBarrier() {
-    if (pthread_barrier_destroy(&bar))
-      GALOIS_DIE("PTHREAD");
+    int err = 0;
+    if ((err = pthread_barrier_destroy(&bar)))
+      GALOIS_DIE("pthread ", err);
   }
 
   virtual void reinit(unsigned val) {
-    if (pthread_barrier_destroy(&bar))
-      GALOIS_DIE("PTHREAD");
-    if (pthread_barrier_init(&bar, 0, val))
-      GALOIS_DIE("PTHREAD");
+    int err = 0;
+    if ((err = pthread_barrier_destroy(&bar)))
+      GALOIS_DIE("pthread ", err);
+    if ((err = pthread_barrier_init(&bar, 0, val)))
+      GALOIS_DIE("pthread ", err);
   }
 
   virtual void wait() {
     int rc = pthread_barrier_wait(&bar);
     if (rc && rc != PTHREAD_BARRIER_SERIAL_THREAD)
-      GALOIS_DIE("PTHREAD");
+      GALOIS_DIE("pthread ", rc);
   }
 
   virtual const char* name() const { return "PthreadBarrier"; }
@@ -78,7 +82,7 @@ galois::substrate::createPthreadBarrier(unsigned activeThreads) {
 #else
 
 std::unique_ptr<galois::substrate::Barrier>
-galois::substrate::createPthreadBarrier(unsigned activeThreads) {
+galois::substrate::createPthreadBarrier(unsigned) {
   return std::unique_ptr<Barrier>(nullptr);
 }
 

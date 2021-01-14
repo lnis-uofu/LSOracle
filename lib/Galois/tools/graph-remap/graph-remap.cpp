@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 
   Writer graphWriter;
   graphWriter.setNumNodes(remapper.size());
-  graphWriter.setNumEdges(graphToRemap.sizeEdges());
+  graphWriter.setNumEdges<void>(graphToRemap.sizeEdges());
 
   // phase 1: count degrees
   graphWriter.phase1();
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 
   galois::gInfo("Finishing up: outputting graph shortly");
 
-  graphWriter.finish<void>();
+  graphWriter.finish();
   graphWriter.toFile(outputFilename);
 
   galois::gInfo("new size is ", graphWriter.size(), " num edges ",

@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -17,16 +17,18 @@
  * Documentation, or loss or inaccuracy of data of any kind.
  */
 
-#ifndef __GALOIS_RUNTIME_ATOMIC_HELPER_FUNCTIONS_H__
-#define __GALOIS_RUNTIME_ATOMIC_HELPER_FUNCTIONS_H__
+#pragma once
 #include <atomic>
 #include <algorithm>
 #include <vector>
+
+#include "galois/config.h"
+
 namespace galois {
 /** galois::atomicMax + non-atomic max calls **/
 template <typename Ty>
 const Ty atomicMax(std::atomic<Ty>& a, const Ty b) {
-  Ty old_a = a;
+  Ty old_a = a.load(std::memory_order_relaxed);
   // if old value is less than new value, atomically exchange
   while (old_a < b &&
          !a.compare_exchange_weak(old_a, b, std::memory_order_relaxed))
@@ -36,10 +38,10 @@ const Ty atomicMax(std::atomic<Ty>& a, const Ty b) {
 
 template <typename Ty>
 const Ty max(std::atomic<Ty>& a, const Ty& b) {
-  Ty old_a = a;
+  Ty old_a = a.load(std::memory_order_relaxed);
 
   if (a < b) {
-    a = b;
+    a.store(b, std::memory_order_relaxed);
   }
   return old_a;
 }
@@ -57,7 +59,7 @@ const Ty max(Ty& a, const Ty& b) {
 /** galois::atomicMin **/
 template <typename Ty>
 const Ty atomicMin(std::atomic<Ty>& a, const Ty b) {
-  Ty old_a = a;
+  Ty old_a = a.load(std::memory_order_relaxed);
   while (old_a > b &&
          !a.compare_exchange_weak(old_a, b, std::memory_order_relaxed))
     ;
@@ -66,9 +68,9 @@ const Ty atomicMin(std::atomic<Ty>& a, const Ty b) {
 
 template <typename Ty>
 const Ty min(std::atomic<Ty>& a, const Ty& b) {
-  Ty old_a = a;
+  Ty old_a = a.load(std::memory_order_relaxed);
   if (a > b) {
-    a = b;
+    a.store(b, std::memory_order_relaxed);
   }
   return old_a;
 }
@@ -85,7 +87,7 @@ const Ty min(Ty& a, const Ty& b) {
 /** galois::atomicAdd **/
 template <typename Ty>
 const Ty atomicAdd(std::atomic<Ty>& val, Ty delta) {
-  Ty old_val = val;
+  Ty old_val = val.load(std::memory_order_relaxed);
   while (!val.compare_exchange_weak(old_val, old_val + delta,
                                     std::memory_order_relaxed))
     ;
@@ -94,15 +96,15 @@ const Ty atomicAdd(std::atomic<Ty>& val, Ty delta) {
 
 template <typename Ty>
 const Ty add(std::atomic<Ty>& a, const Ty& b) {
-  Ty old_a = a;
-  a        = a + b;
+  Ty old_a = a.load(std::memory_order_relaxed);
+  a.store(a + b, std::memory_order_relaxed);
   return old_a;
 }
 
 template <typename Ty>
 const Ty add(Ty& a, std::atomic<Ty>& b) {
   Ty old_a = a;
-  a        = a + b.load();
+  a        = a + b.load(std::memory_order_relaxed);
   return old_a;
 }
 
@@ -119,9 +121,10 @@ const Ty add(Ty& a, const Ty& b) {
  */
 template <typename Ty>
 const Ty atomicSubtract(std::atomic<Ty>& val, Ty delta) {
-  Ty old_val = val;
+  Ty old_val = val.load(std::memory_order_relaxed);
   while (!val.compare_exchange_weak(old_val, old_val - delta,
-                                    std::memory_order_relaxed));
+                                    std::memory_order_relaxed))
+    ;
   return old_val;
 }
 
@@ -133,7 +136,7 @@ const Ty set(Ty& a, const Ty& b) {
 
 template <typename Ty>
 const Ty set(std::atomic<Ty>& a, const Ty& b) {
-  a = b;
+  a.store(b, std::memory_order_relaxed);
   return a;
 }
 
@@ -202,7 +205,6 @@ void reset(Ty& var, Ty val) {
 
 template <typename Ty>
 void reset(std::atomic<Ty>& var, Ty val) {
-  var = val;
+  var.store(val, std::memory_order_relaxed);
 }
 } // end namespace galois
-#endif

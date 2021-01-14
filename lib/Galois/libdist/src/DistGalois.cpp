@@ -1,7 +1,7 @@
 /*
- * This file belongs to the Galois project, a C++ library for exploiting parallelism.
- * The code is being released under the terms of the 3-Clause BSD License (a
- * copy is located in LICENSE.txt at the top-level directory).
+ * This file belongs to the Galois project, a C++ library for exploiting
+ * parallelism. The code is being released under the terms of the 3-Clause BSD
+ * License (a copy is located in LICENSE.txt at the top-level directory).
  *
  * Copyright (C) 2018, The University of Texas at Austin. All rights reserved.
  * UNIVERSITY EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES CONCERNING THIS
@@ -28,11 +28,11 @@
 
 //! DistMemSys constructor which calls the shared memory runtime constructor
 //! with the distributed stats manager
-galois::DistMemSys::DistMemSys(void)
-    : galois::runtime::SharedMemRuntime<galois::runtime::DistStatManager>() {}
+galois::DistMemSys::DistMemSys()
+    : galois::runtime::SharedMem<galois::runtime::DistStatManager>() {}
 
 //! DistMemSys destructor which reports memory usage from the network
-galois::DistMemSys::~DistMemSys(void) {
+galois::DistMemSys::~DistMemSys() {
   if (MORE_DIST_STATS) {
     auto& net = galois::runtime::getSystemNetworkInterface();
     net.reportMemUsage();
