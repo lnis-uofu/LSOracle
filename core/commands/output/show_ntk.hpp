@@ -25,6 +25,7 @@ namespace alice
           : command( env, "Display details about the stored network" ){
 
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
+        add_flag("--xmg,-x", "Store AIG file as XMG network (AIG network is default)");
       }
 
     protected:
@@ -52,17 +53,42 @@ namespace alice
               if( i < mig.num_pis() - mig.num_latches() )
                 std::cout << "PI: " << pi << " name: " << mig.get_name(mig.make_signal(pi)) << "\n";
             });
-
             std::cout << "Outputs:\n";
             mig.foreach_po([&](auto po, auto i){
               if( i < mig.num_pos() - mig.num_latches() )
                 std::cout << "PO: " << po.index << " name: " << mig.get_output_name(i) << "\n";
             });
 
-          }
-          else{
-            std::cout << "MIG network not stored\n";
-          }
+        }
+          if(is_set("xmg")){
+              if(!store<mockturtle::xmg_network>().empty()){
+                  auto mig = store<mockturtle::xmg_network>().current();
+
+                  for (int j =1; j < mig._storage->nodes.size(); j++) {
+                      for (int i = 0; i < mig._storage->nodes.data()->children.size(); i++) {
+                          std::cout << "node index " << j << " node fan in " << mig._storage->nodes[j].children[i].index << " and data " << mig._storage->nodes[j].children[i].data << std::endl;
+                      }
+                  }
+                  for (unsigned k = mig.num_pis()+1; k<= mig._storage->inputs.size(); k++ ){
+                      auto node = mig.index_to_node(k);
+                      std::cout << " reg " << k << " fan out size " << mig.fanout_size(node) << std::endl;
+                  }
+                  for (unsigned l=0; l< mig._storage->outputs.size(); l++){
+                      std::cout << " outputs " << std::endl;
+                      std::cout << " node fan in data " << mig._storage->outputs[l].data << std::endl;
+                  }
+                  std::cout << "Inputs\n";
+                  for(int i = 0; i < mig._storage->inputs.size(); i++){
+                      std::cout << mig._storage->inputs.at(i) << ": " << mig._storage->inputNames[i] << "\n";
+                  }
+                  std::cout << "Outputs\n";
+                  for(int i = 0; i < mig._storage->outputs.size(); i++){
+                      std::cout << mig._storage->outputs.at(i).index << ": " << mig._storage->outputNames[i] << "\n";
+                  }
+              }
+              else{
+                  std::cout << "MIG network not stored\n";
+              }
         }
         else{
           if(!store<aig_ntk>().empty()){
@@ -99,16 +125,16 @@ namespace alice
               if( i < aig.num_pos() - aig.num_latches() )
                 std::cout << "PO: " << po.index << " name: " << aig.get_output_name(i) << "\n";
             });
-            
+
           }
           else{
             std::cout << "AIG network not stored\n";
           }
         }
       }
-        
+
     private:
-      
+
     };
 
   ALICE_ADD_COMMAND(show_ntk, "Output");

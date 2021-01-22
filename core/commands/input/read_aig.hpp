@@ -7,6 +7,7 @@
 #include <mockturtle/algorithms/node_resynthesis/direct.hpp>
 #include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
+#include <mockturtle/algorithms/node_resynthesis/xmg_npn.hpp>
 #include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
 
 #include <stdio.h>
@@ -49,18 +50,49 @@ namespace alice
             mockturtle::xag_network ntk;
             mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+
             store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
             std::cout << "XAG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view._storage->net_name = filename;
           }
+          else if(is_set("xmg")){
+              mockturtle::xmg_network ntk;
+              lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
+
+              store<mockturtle::xmg_network>().extend() = ntk;
+
+
+              if(ntk._storage->inputNames.size() == 0){
+                  for(int i = 0; i < ntk.num_pis(); i++){
+                      std::string input_name = "pi";
+                      input_name.append(std::to_string(i));
+                      ntk._storage->inputNames[i] = input_name;
+                  }
+              }
+              if(ntk._storage->outputNames.size() == 0){
+
+                  for(int i = 0; i < ntk.num_pos(); i++){
+                      std::string output_name = "po";
+                      output_name.append(std::to_string(i));
+                      ntk._storage->outputNames[i] = output_name;
+                  }
+              }
+              ntk.foreach_node([&](auto node){
+                  std::cout << "Node = " << node << "\n";
+                  if(ntk.is_xor(node)){
+                      std::cout << "XOR\n";
+                  }
+              });
+              filename.erase(filename.end() - 4, filename.end());
+              ntk._storage->net_name = filename;
+          }
           else{
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             std::cout << "AIG network stored\n";
 

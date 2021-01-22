@@ -28,11 +28,12 @@ namespace alice
         add_flag("--mig,-m", "Read from the MIG network");
         add_flag("--xag,-x", "Read from the XAG network");
         add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
+        add_flag("--xmg,-x", "Read from the MIG network");
       }
 
     protected:
         void execute(){
-        if(oracle::checkExt(filename, "v")){
+          if(oracle::checkExt(filename, "v")){
           mockturtle::write_verilog_params ps;
           if(is_set("skip-feedthrough"))
             ps.skip_feedthrough = 1u;
@@ -49,8 +50,8 @@ namespace alice
             if(!store<xag_ntk>().empty()){
               auto& xag = *store<xag_ntk>().current();
               mockturtle::write_verilog(xag, filename, ps);
-            }
-            else{
+          }
+          else{
               std::cout << "There is not an MIG network stored.\n";
             }
           }
