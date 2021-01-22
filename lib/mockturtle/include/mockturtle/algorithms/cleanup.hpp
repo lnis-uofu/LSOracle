@@ -77,6 +77,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
   } );
   assert( it == end );
 
+  // std::cout << "about to get topo order\n";
   /* foreach node in topological order */
   topo_view topo{ntk};
   // std::cout << "got topo view\n";
@@ -104,6 +105,7 @@ std::vector<signal<NtkDest>> cleanup_dangling( NtkSource const& ntk, NtkDest& de
     // std::cout << "old_to_new = " << old_to_new[node].index << std::endl;
   } );
 
+  // std::cout << "about to do POs\n";
   /* create outputs in same order */
   std::vector<signal<NtkDest>> fs;
   ntk.foreach_po( [&]( auto po ) {
@@ -167,37 +169,33 @@ Ntk cleanup_dangling( Ntk const& ntk )
 
   Ntk dest;
   std::vector<signal<Ntk>> pis;
-
-  // std::cout << "Current number of POs " << ntk.num_pos() << std::endl;
-  // std::cout << "Current number of latches " << ntk.num_latches() << std::endl;
-  // std::cout << "Current number of ANDS " << ntk.num_gates() << std::endl;
-  // std::cout << "Current number of PIs " << ntk.num_pis() << std::endl;
   
-
   //creates latches in the target network
-  for ( auto i = 0u; i < ntk.num_latches(); ++i ){
-    // std::cout << "creating latches on dest ntk" << std::endl;
-    dest._storage->data.latches.emplace_back(0);
-  }
+  // for ( auto i = 0u; i < ntk.num_latches(); ++i ){
+  //   // std::cout << "creating latches on dest ntk" << std::endl;
+  //   dest._storage->data.latches.emplace_back(0);
+  // }
 
   //create PIs
   for ( auto i = 0u; i < ntk.num_pis() - ntk.num_latches(); ++i )
   {
-    // std::cout << "creating PI on dest ntk" << std::endl;
     pis.push_back( dest.create_pi() );
   }
 
   //create Registers Outputs
   for ( auto i = ntk.num_pis() - ntk.num_latches(); i < ntk.num_pis(); ++i )
   {
-    // std::cout << "creating RO on dest ntk" << std::endl;
     pis.push_back( dest.create_ro() );
   }
 
+  int output_index = 0u;
   for ( auto f : cleanup_dangling( ntk, dest, pis.begin(), pis.end() ) )
   {
-    // std::cout << "creating PO on dest ntk" << std::endl;
-    dest.create_po( f );
+    if ( output_index < ( ntk.num_pos() - ntk.num_latches() ) )
+      dest.create_po( f );
+    else
+      dest.create_ri( f );
+    output_index++;
   }
 
   return dest;

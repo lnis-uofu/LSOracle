@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -26,6 +26,7 @@
 /*!
   \file topo_view.hpp
   \brief Reimplements foreach_node to guarantee topological order
+
   \author Mathias Soeken
 */
 
@@ -68,11 +69,15 @@ namespace mockturtle
  * Example
  *
    \verbatim embed:rst
+
    .. code-block:: c++
+
       // create network somehow; aig may not be in topological order
       aig_network aig = ...;
+
       // create a topological view on the network
       topo_view aig_topo{aig};
+
       // call algorithm that requires topological order
       cut_enumeration( aig_topo );
    \endverbatim
@@ -106,7 +111,7 @@ public:
     static_assert( has_value_v<Ntk>, "Ntk does not implement the value method" );
     static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
 
-    update();
+    update_topo();
   }
 
   /*! \brief Default constructor.
@@ -128,7 +133,7 @@ public:
     static_assert( has_value_v<Ntk>, "Ntk does not implement the value method" );
     static_assert( has_set_value_v<Ntk>, "Ntk does not implement the set_value method" );
 
-    update();
+    update_topo();
   }
 
   /*! \brief Reimplementation of `foreach_node`. */
@@ -140,7 +145,8 @@ public:
                              fn );
   }
 
-  std::vector<node> get_node_vec(){
+  std::vector<node> get_node_vec()
+  {
     return topo_order;
   }
 
@@ -168,7 +174,7 @@ public:
     return start_signal ? 1 : Ntk::num_pos();
   }
 
-  void update()
+  void update_topo()
   {
     this->clear_values();
     topo_order.reserve( this->size() );
@@ -185,6 +191,7 @@ public:
     }
 
     this->foreach_pi( [this]( auto n ) {
+      // std::cout << "Topo PI " << n << "\n";
       if ( this->value( n ) != 2 )
       {
         topo_order.push_back( n );
@@ -200,37 +207,39 @@ public:
     }
     else
     {
+      // std::cout << "TOPO about to do each PO\n";
       Ntk::foreach_po( [this]( auto f ) {
         /* node was already visited */
+        // std::cout << "PO: " << this->get_node( f ) << "\n";
         if ( this->value( this->get_node( f ) ) == 2 )
           return;
-        // std::cout << "TOPO PO = " << f.index << "\n";
+
         create_topo_rec( this->get_node( f ) );
       } );
+      // std::cout << "done for each PO\n";
     }
   }
 
 private:
   void create_topo_rec( node const& n )
   {
-    // std::cout << "node = " << n << "\n";
-    // this->foreach_fanin( n, [this]( auto f, auto i) {
-    //   std::cout << "child[" << i << "] = " << f.index << "\n";
-    // } );
-
+    // std::cout << "create topo rec on node " << n << "\n";
+    // std::cout << "value = " << this->value( n ) << "\n";
     /* is permanently marked? */
     if ( this->value( n ) == 2 )
       return;
 
     /* is temporarily marked? */
     assert( this->value( n ) != 1 );
+    // std::cout << "past assertion\n";
 
     /* mark node temporarily */
     this->set_value( n, 1 );
+    // std::cout << "value set\n";
 
     /* mark children */
-    this->foreach_fanin( n, [this]( auto f, auto ) {
-      // std::cout << "fanin = " << f.index << "\n";
+    this->foreach_fanin( n, [this, n]( auto f ) {
+      // std::cout << "fanin of " << n << ": " << this->get_node( f )<< "\n";
       create_topo_rec( this->get_node( f ) );
     } );
 

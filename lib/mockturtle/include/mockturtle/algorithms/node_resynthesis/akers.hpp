@@ -1,5 +1,5 @@
 /* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+ * Copyright (C) 2018-2019  EPFL
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -39,36 +39,37 @@
 #include <vector>
 
 #include <kitty/dynamic_truth_table.hpp>
+#include <kitty/operators.hpp>
 
 #include "../../algorithms/akers_synthesis.hpp"
-#include "../../networks/mig.hpp"
 
 namespace mockturtle
 {
 
 /*! \brief Resynthesis function based on Akers synthesis.
  *
- * This resynthesis function can be passed to ``node_resynthesis``.  It will
- * call Akers synthesis on each node.
+ * This resynthesis function can be passed to ``node_resynthesis``,
+ * ``cut_rewriting``, and ``refactoring``.
  *
    \verbatim embed:rst
-  
+
    Example
-   
+
    .. code-block:: c++
-   
+
       const klut_network klut = ...;
-      akers_resynthesis resyn;
+      akers_resynthesis<mig_network> resyn;
       const auto mig = node_resynthesis<mig_network>( klut, resyn );
    \endverbatim
  */
+template<class Ntk>
 class akers_resynthesis
 {
 public:
-  template<typename LeavesIterator>
-  mig_network::signal operator()( mig_network& mig, kitty::dynamic_truth_table const& function, LeavesIterator begin, LeavesIterator end )
+  template<typename LeavesIterator, typename Fn>
+  void operator()( Ntk& ntk, kitty::dynamic_truth_table const& function, LeavesIterator begin, LeavesIterator end, Fn&& fn )
   {
-    return akers_synthesis( mig, function, ~function.construct(), begin, end );
+    fn( akers_synthesis<Ntk>( ntk, function, ~function.construct(), begin, end ) );
   }
 };
 
