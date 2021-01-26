@@ -110,6 +110,8 @@ namespace mockturtle
    * **Required network functions:**
    * - `create_pi`
    * - `create_po`
+   * - `create_ri`
+   * - `create_ro`
    * - `get_constant`
    * - `create_not`
    * - `create_and`

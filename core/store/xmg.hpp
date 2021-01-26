@@ -38,14 +38,14 @@ namespace alice
       {"nodes", xmg->size()},
       {"inputs", xmg->num_pis() },
       {"outputs", xmg->num_pos() },
-      {"AIG nodes", xmg->num_gates()}};
-  }//end aig_network log store statistics
+      {"XMG nodes", xmg->num_gates()}};
+  }//end xmg_network log store statistics
 
   /* Implements the functionality of ps -b */
   ALICE_PRINT_STORE_STATISTICS( xmg_ntk, os, xmg ){
     os << "nodes: " << xmg->size() << std::endl;
     os << "inputs: " << xmg->num_pis()  << std::endl;
     os << "outputs: " << xmg->num_pos() << std::endl;
-    os << "AIG nodes: " << xmg->num_gates() << std::endl;
-  }//end aig_network print store statistics
+    os << "XMG nodes: " << xmg->num_gates() << std::endl;
+  }//end xmg_network print store statistics
 }

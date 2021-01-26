@@ -52,6 +52,7 @@ namespace mockturtle
 
 struct xmg_storage_data
 {
+  std::vector<int8_t> latches;
   uint32_t trav_id = 0u;
 };
 
@@ -187,6 +188,35 @@ public:
     _storage->nodes[f.index].data[0].h1++;
 
     _storage->outputs.emplace_back( f.index, f.complement );
+  }
+
+    signal create_ro( std::string const& name = {} )
+  {
+    (void)name;
+
+    auto const index = _storage->nodes.size();
+    auto& node = _storage->nodes.emplace_back();
+    node.children[0].data = node.children[1].data = _storage->inputs.size();
+    _storage->inputs.emplace_back( index );
+    return {index, 0};
+  }
+
+  uint32_t create_ri( signal const& f, int8_t reset = 0, std::string const& name = {} )
+  {
+    (void)name;
+
+    /* increase ref-count to children */
+    _storage->nodes[f.index].data[0].h1++;
+    auto const ri_index = _storage->outputs.size();
+    _storage->outputs.emplace_back( f.index, f.complement );
+    _storage->data.latches.emplace_back( reset );
+    return ri_index;
+  }
+
+  int8_t latch_reset( uint32_t index ) const
+  {
+    assert( index < _storage->data.latches.size() );
+    return _storage->data.latches[index];
   }
 
   bool is_combinational() const
@@ -709,6 +739,11 @@ public:
   uint32_t num_pos() const
   {
     return _storage->outputs.size();
+  }
+
+  uint32_t num_latches() const
+  {
+      return _storage->data.latches.size();
   }
 
   uint32_t num_gates() const

@@ -28,7 +28,6 @@ namespace alice
         add_flag("--mig,-m", "Read from the MIG network");
         add_flag("--xag,-x", "Read from the XAG network");
         add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
-        add_flag("--xmg,-x", "Read from the MIG network");
       }
 
     protected:

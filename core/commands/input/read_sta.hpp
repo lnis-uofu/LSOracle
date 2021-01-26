@@ -1,4 +1,8 @@
-  //object to hold STA configuration
+#include <alice/alice.hpp>
+#include <stdio.h>
+
+namespace alice {
+//object to hold STA configuration
 STA sta_cfg;
 ALICE_COMMAND( read_lib, "STA", "Reads standard cell library"){
     std::string filename = "";
@@ -40,3 +44,4 @@ ALICE_COMMAND( read_lib, "STA", "Reads standard cell library"){
 
     sta_cfg.run_report_timing();
   }
+}

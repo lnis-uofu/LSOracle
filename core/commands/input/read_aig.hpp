@@ -29,6 +29,7 @@ namespace alice
         opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
         add_flag("--xag,-x", "Store AIG file as XAG network (AIG network is default)");
+	add_flag("--xmg,-g", "Store AIG file as XMG network (AIG network is default)");
       }
 
     protected:
@@ -58,35 +59,15 @@ namespace alice
             names_view._storage->net_name = filename;
           }
           else if(is_set("xmg")){
-              mockturtle::xmg_network ntk;
-              lorina::read_aiger(filename, mockturtle::aiger_reader( ntk ));
+	    mockturtle::xmg_network ntk;
+	    mockturtle::names_view<mockturtle::xmg_network> names_view{ntk};
+	    lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
-              store<mockturtle::xmg_network>().extend() = ntk;
+            store<xmg_ntk>().extend() = std::make_shared<xmg_names>( names_view );
+            std::cout << "XMG network stored\n";
 
-
-              if(ntk._storage->inputNames.size() == 0){
-                  for(int i = 0; i < ntk.num_pis(); i++){
-                      std::string input_name = "pi";
-                      input_name.append(std::to_string(i));
-                      ntk._storage->inputNames[i] = input_name;
-                  }
-              }
-              if(ntk._storage->outputNames.size() == 0){
-
-                  for(int i = 0; i < ntk.num_pos(); i++){
-                      std::string output_name = "po";
-                      output_name.append(std::to_string(i));
-                      ntk._storage->outputNames[i] = output_name;
-                  }
-              }
-              ntk.foreach_node([&](auto node){
-                  std::cout << "Node = " << node << "\n";
-                  if(ntk.is_xor(node)){
-                      std::cout << "XOR\n";
-                  }
-              });
-              filename.erase(filename.end() - 4, filename.end());
-              ntk._storage->net_name = filename;
+            filename.erase(filename.end() - 4, filename.end());
+            names_view._storage->net_name = filename;
           }
           else{
             mockturtle::aig_network ntk;
@@ -100,7 +81,7 @@ namespace alice
             names_view._storage->net_name = filename;
           }
 
-        }
+	  }
         else{
             std::cout << filename << " is not a valid aig file\n";
         }
