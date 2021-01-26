@@ -37,6 +37,7 @@
 #include "store/aig.hpp"
 #include "store/mig.hpp"
 #include "store/xag.hpp"
+#include "store/xmg.hpp"
 #include "store/klut.hpp"
 
 /*** Commands ***/
@@ -103,5 +104,7 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
+
+#include "timingSta.h"
 
 ALICE_MAIN( lsoracle )

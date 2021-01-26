@@ -19,34 +19,33 @@
 
 namespace alice
 {
-  ALICE_ADD_STORE( mockturtle::xmg_network, "xmg", "x", "xmg", "XMGs" )
+  using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+  using xmg_ntk = std::shared_ptr<xmg_names>;
+  using part_man_xmg = oracle::partition_manager<xmg_names>;
+  using part_man_xmg_ntk = std::shared_ptr<part_man_xmg>;
 
-    /* Implements the short string to describe a store element in store -a */
-    ALICE_DESCRIBE_STORE( mockturtle::xmg_network, aig ){
 
-        const auto name = "aig_placeholder";
-        const auto pi_num = aig.num_pis();
-        const auto po_num = aig.num_pos();
-        return fmt::format( "{} i/o = {}/{}", name, pi_num, po_num );
-    }//end aig_network describe store
+  ALICE_ADD_STORE( xmg_ntk, "xmg", "a", "xmg", "XMGs" )
 
-    ALICE_LOG_STORE_STATISTICS( mockturtle::xmg_network, aig){
+  ALICE_DESCRIBE_STORE( xmg_ntk, xmg ){
 
-        return {
-                {"nodes", aig.size()},
-                {"inputs", aig.num_pis() },
-                {"latches", aig.num_registers()},
-                {"outputs", aig.num_pos() },
-                {"AIG nodes", aig.num_gates()}};
-    }//end aig_network log store statistics
+    return fmt::format( "i/o = {}/{} gates = {}", xmg->num_pis(), xmg->num_pos(), xmg->num_gates() );
+  }
 
-    /* Implements the functionality of ps -b */
-    ALICE_PRINT_STORE_STATISTICS( mockturtle::xmg_network, os, aig ){
-        os << "nodes: " << aig.size() << std::endl;
-        os << "inputs: " << aig.num_pis()  << std::endl;
-        os << "latches: " << aig.num_registers() << std::endl;
-        os << "outputs: " << aig.num_pos() << std::endl;
-        os << "AIG nodes: " << aig.num_gates() << std::endl;
+  ALICE_LOG_STORE_STATISTICS( xmg_ntk, xmg){
 
-    }//end aig_network print store statistics
+    return {
+      {"nodes", xmg->size()},
+      {"inputs", xmg->num_pis() },
+      {"outputs", xmg->num_pos() },
+      {"AIG nodes", xmg->num_gates()}};
+  }//end aig_network log store statistics
+
+  /* Implements the functionality of ps -b */
+  ALICE_PRINT_STORE_STATISTICS( xmg_ntk, os, xmg ){
+    os << "nodes: " << xmg->size() << std::endl;
+    os << "inputs: " << xmg->num_pis()  << std::endl;
+    os << "outputs: " << xmg->num_pos() << std::endl;
+    os << "AIG nodes: " << xmg->num_gates() << std::endl;
+  }//end aig_network print store statistics
 }

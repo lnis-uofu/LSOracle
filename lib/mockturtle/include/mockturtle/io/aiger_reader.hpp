@@ -105,81 +105,81 @@ namespace mockturtle
     StorageContainerReverseMap _rev_names;
   }; // NameMap
 
-/*! \brief Lorina reader callback for Aiger files.
- *
- * **Required network functions:**
- * - `create_pi`
- * - `create_po`
- * - `get_constant`
- * - `create_not`
- * - `create_and`
- *
-   \verbatim embed:rst
-  
-   Example
-   
-   .. code-block:: c++
-   
-      aig_network aig;
-      lorina::read_aiger( "file.aig", aiger_reader( aig ) );
+  /*! \brief Lorina reader callback for Aiger files.
+   *
+   * **Required network functions:**
+   * - `create_pi`
+   * - `create_po`
+   * - `get_constant`
+   * - `create_not`
+   * - `create_and`
+   *
+     \verbatim embed:rst
 
-      mig_network mig;
-      lorina::read_aiger( "file.aig", aiger_reader( mig ) );
-   \endverbatim
- */
-template<typename Ntk>
-class aiger_reader : public lorina::aiger_reader
-{
-public:
+     Example
+
+     .. code-block:: c++
+
+        aig_network aig;
+        lorina::read_aiger( "file.aig", aiger_reader( aig ) );
+
+        mig_network mig;
+        lorina::read_aiger( "file.aig", aiger_reader( mig ) );
+     \endverbatim
+   */
+  template<typename Ntk>
+  class aiger_reader : public lorina::aiger_reader
+  {
+  public:
     explicit aiger_reader( Ntk& ntk, NameMap<Ntk>* names = nullptr ) : _ntk( ntk ), _names( names )
-  {
-    static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
-    static_assert( has_create_pi_v<Ntk>, "Ntk does not implement the create_pi function" );
-    static_assert( has_create_po_v<Ntk>, "Ntk does not implement the create_po function" );
-    static_assert( has_get_constant_v<Ntk>, "Ntk does not implement the get_constant function" );
-    static_assert( has_create_not_v<Ntk>, "Ntk does not implement the create_not function" );
-    static_assert( has_create_and_v<Ntk>, "Ntk does not implement the create_and function" );
-  }
+    {
+      static_assert( is_network_type_v<Ntk>, "Ntk is not a network type" );
+      static_assert( has_create_pi_v<Ntk>, "Ntk does not implement the create_pi function" );
+      static_assert( has_create_po_v<Ntk>, "Ntk does not implement the create_po function" );
+      static_assert( has_get_constant_v<Ntk>, "Ntk does not implement the get_constant function" );
+      static_assert( has_create_not_v<Ntk>, "Ntk does not implement the create_not function" );
+      static_assert( has_create_and_v<Ntk>, "Ntk does not implement the create_and function" );
+    }
 
-  ~aiger_reader()
-  {
+    ~aiger_reader()
+    {
       uint32_t output_idx = 0u;
       for ( auto out : outputs )
-    {
-        auto const lit = std::get<0>( out );
-      auto signal = signals[lit >> 1];
-      if ( lit & 1 )
       {
-        signal = _ntk.create_not( signal );
-      }
+        auto const lit = std::get<0>( out );
+        auto signal = signals[lit >> 1];
+        if ( lit & 1 )
+        {
+          signal = _ntk.create_not( signal );
+        }
         if ( _names )
           _names->insert( signal, std::get<1>( out ) );
-      _ntk.create_po( signal );
+        _ntk.create_po( signal );
         // set default name for POs
         if constexpr ( has_set_output_name_v<Ntk> )
         {
           if ( !_ntk.has_output_name( output_idx ) ){
             std::string name = "po" + std::to_string(output_idx);
             _ntk.set_output_name( output_idx, name );
-    }
+          }
         }
         output_idx++;
       }
       uint32_t latch_idx = 1u;
       for ( auto latch : latches )
       {
-          auto const lit = std::get<0>( latch );
-          auto const reset = std::get<1>( latch );
+        auto const lit = std::get<0>( latch );
+        auto const reset = std::get<1>( latch );
 
-          auto signal = signals[lit >> 1];
-          if ( lit & 1 )
-          {
-              signal = _ntk.create_not( signal );
-          }
+        auto signal = signals[lit >> 1];
+        if ( lit & 1 )
+        {
+          signal = _ntk.create_not( signal );
+        }
 
         if ( _names )
           _names->insert( signal, std::get<2>( latch ) + "_next" );
-          _ntk.create_ri( signal, reset );
+        _ntk.create_ri( signal, reset );
         // set default name for RIs
         if constexpr ( has_set_output_name_v<Ntk> )
         {
@@ -191,19 +191,19 @@ public:
         latch_idx++;
         output_idx++;
       }
-  }
+    }
 
     void on_header( uint64_t, uint64_t num_inputs, uint64_t num_latches, uint64_t, uint64_t ) const override
-  {
+    {
       _num_inputs = num_inputs;
 
-    /* constant */
-    signals.push_back( _ntk.get_constant( false ) );
+      /* constant */
+      signals.push_back( _ntk.get_constant( false ) );
 
-    /* create inputs */
-    for ( auto i = 0u; i < num_inputs; ++i )
-    {
-      signals.push_back( _ntk.create_pi() );
+      /* create primary inputs (pi) */
+      for ( auto i = 0u; i < num_inputs; ++i )
+      {
+        signals.push_back( _ntk.create_pi() );
         // set default name for PIs
         if constexpr ( has_set_name_v<Ntk> )
         {
@@ -213,14 +213,14 @@ public:
             _ntk.set_name( signals.back(), name );
           }
         }
-    }
+      }
 
       /* create latch outputs (ro) */
       for ( auto i = 0u; i < num_latches; ++i )
       {
-          signals.push_back( _ntk.create_ro() );
+        signals.push_back( _ntk.create_ro() );
       }
-  }
+    }
 
     void on_input_name( unsigned index, const std::string& name ) const override
     {
@@ -246,48 +246,48 @@ public:
       }
     }
 
-  void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
-  {
-    (void)index;
-    assert( signals.size() == index );
-
-    auto left = signals[left_lit >> 1];
-    if ( left_lit & 1 )
+    void on_and( unsigned index, unsigned left_lit, unsigned right_lit ) const override
     {
-      left = _ntk.create_not( left );
-    }
+      (void)index;
+      assert( signals.size() == index );
 
-    auto right = signals[right_lit >> 1];
-    if ( right_lit & 1 )
-    {
-      right = _ntk.create_not( right );
-    }
+      auto left = signals[left_lit >> 1];
+      if ( left_lit & 1 )
+      {
+        left = _ntk.create_not( left );
+      }
 
-    signals.push_back( _ntk.create_and( left, right ) );
-  }
+      auto right = signals[right_lit >> 1];
+      if ( right_lit & 1 )
+      {
+        right = _ntk.create_not( right );
+      }
+
+      signals.push_back( _ntk.create_and( left, right ) );
+    }
 
     void on_latch( unsigned index, unsigned next, latch_init_value reset ) const override
     {
-        (void)index;
-        int8_t r = reset == latch_init_value::NONDETERMINISTIC ? -1 : (reset == latch_init_value::ONE ? 1 : 0);
-        latches.push_back( std::make_tuple( next, r, "" ) );
+      (void)index;
+      int8_t r = reset == latch_init_value::NONDETERMINISTIC ? -1 : ( reset == latch_init_value::ONE ? 1 : 0 );
+      latches.push_back( std::make_tuple( next, r, "" ) );
     }
 
-  void on_output( unsigned index, unsigned lit ) const override
-  {
+    void on_output( unsigned index, unsigned lit ) const override
+    {
       (void)index;
-    assert( index == outputs.size() );
+      assert( index == outputs.size() );
       outputs.emplace_back( lit, "" );
-  }
+    }
 
-private:
-  Ntk& _ntk;
+  private:
+    Ntk& _ntk;
 
     mutable uint32_t _num_inputs = 0;
     mutable std::vector<std::tuple<unsigned, std::string>> outputs;
-  mutable std::vector<signal<Ntk>> signals;
-  mutable std::vector<std::tuple<unsigned,int8_t,std::string>> latches;
+    mutable std::vector<signal<Ntk>> signals;
+    mutable std::vector<std::tuple<unsigned, int8_t, std::string>> latches;
     mutable NameMap<Ntk>* _names;
-};
+  };
 
 } /* namespace mockturtle */
