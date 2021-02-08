@@ -8,6 +8,8 @@
 The Logic Synthesis oracle is a framework developed on the top of EPFL logic synthesis libraries to unlock efficient logic manipulation by using different logic optimizers.To do so, the flow splits a design into different partitions and selects different optimizers for different logics attributes.
 Currently, it supports AIG and MIG based optimization. 
 
+[![introductory video for the LSOracle tool](http://img.youtube.com/vi/3fPEUFlHnh8/0.jpg)](http://www.youtube.com/watch?v=3fPEUFlHnh8 "LSOracle overview")
+
 
 ## Installation: 
 
@@ -36,6 +38,8 @@ make
 ```
 
 ## Usage
+
+[![a video tutorial for LSOracle](http://img.youtube.com/vi/W8SO2rTiLUY/0.jpg)](http://www.youtube.com/watch?v=W8SO2rTiLUY "LSOracle Tutorial")
 
 ```{r, engine='bash', count_lines}
 ./lstools                         # run the tool
