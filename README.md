@@ -6,12 +6,12 @@
 ## Introduction
 
 The Logic Synthesis oracle is a framework developed on the top of EPFL logic synthesis libraries to unlock efficient logic manipulation by using different logic optimizers.To do so, the flow splits a design into different partitions and selects different optimizers for different logics attributes.
-Currently, it supports AIG and MIG based optimization. 
+Currently, it supports AIG and MIG based optimization.
 
 [![introductory video for the LSOracle tool](http://img.youtube.com/vi/3fPEUFlHnh8/0.jpg)](http://www.youtube.com/watch?v=3fPEUFlHnh8 "LSOracle overview")
 
 
-## Installation: 
+## Installation:
 
 LSOracle can be built on Linux and Mac OS 10.14.  Compilation requires CMake 3.12 or newer and gcc 8 or newer. Additional dependencies for the master branch are Boost Program_options 1.48.0 or newer and readline; dependencies for feature branches may vary.
 
@@ -20,8 +20,8 @@ LSOracle can be built on Linux and Mac OS 10.14.  Compilation requires CMake 3.1
 git clone https://github.com/LNIS-Projects/LSOracle.git
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=RELEASE 
-make 
+cmake .. -DCMAKE_BUILD_TYPE=RELEASE
+make
 ```
 
 ### Mac OS
@@ -34,8 +34,10 @@ git clone https://github.com/LNIS-Projects/LSOracle.git
 mkdir build
 cd build
 cmake .. -DCMAKE_CXX_COMPILER=/usr/local/bin/g++-9 -DCMAKE_CC_COMPILER=/usr/local/bin/gcc-9 -DCMAKE_BUILD_TYPE=Release
-make 
+make
 ```
+### Docker
+LSOracle is available as a docker image on [Dockerhub](https://hub.docker.com/u/lnis).
 
 ## Usage
 
@@ -48,7 +50,6 @@ oracle                            # partitions network and optimizes each partit
 write_verilog my_output.v         # outputs the optimized network in Verilog format
 ```
 
-## Full Documentation 
+## Full Documentation
 
 The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/master/?badge=master)
-
