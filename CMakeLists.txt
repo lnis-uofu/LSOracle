@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.9)
+cmake_policy(SET CMP0079 NEW)
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "None")
+  message(STATUS "CMAKE_BUILD_TYPE is 'None', defaulting to 'Release'")
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
+
+set(Boost_USE_STATIC_LIBS   ON)
 
 project(alice LANGUAGES CXX)
 
@@ -25,3 +34,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 add_subdirectory(core)
+
+install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
