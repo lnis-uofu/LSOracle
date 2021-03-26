@@ -29,11 +29,13 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
+		opts.add_option("--config,-f", config_file, "Config file", true);
                 // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
                 add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
+
         }
 
     protected:
@@ -48,7 +50,7 @@ namespace alice
           }
 
           mockturtle::depth_view orig_depth{ntk};
-          oracle::partition_manager<aig_names> partitions(ntk, num_partitions);
+          oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
           std::cout << ntk._storage->net_name << " partitioned " << num_partitions << " times\n";
@@ -65,7 +67,7 @@ namespace alice
 
           auto start = std::chrono::high_resolution_clock::now();
 
-          auto ntk_mig = oracle::optimization_test(ntk, partitions, strategy, nn_model, 
+          auto ntk_mig = oracle::optimization_test(ntk, partitions, strategy, nn_model,
             high, aig, mig, combine);
 
           auto stop = std::chrono::high_resolution_clock::now();
@@ -85,7 +87,7 @@ namespace alice
               if(oracle::checkExt(out_file, "v")){
                 mockturtle::write_verilog_params ps;
                 if(is_set("skip-feedthrough"))
-                  ps.skip_feedthrough = 1u;  
+                  ps.skip_feedthrough = 1u;
 
                 mockturtle::write_verilog(ntk_mig, out_file, ps);
                 std::cout << "Resulting network written to " << out_file << "\n";
@@ -118,6 +120,7 @@ namespace alice
       int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};
+      std::string config_file{"/usr/local/share/lsoracle/test.ini"};
       unsigned strategy{0u};
       bool high = false;
       bool aig = false;

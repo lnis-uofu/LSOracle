@@ -4,6 +4,7 @@
 
 add_subdirectory(kahypar EXCLUDE_FROM_ALL)
 target_compile_definitions(kahypar PUBLIC "LIN64")
+set_target_properties(kahypar PROPERTIES PUBLIC_HEADER "lib/kahypar/include/libkahypar.h")
 
 #add_subdirectory(Galois EXCLUDE_FROM_ALL)
 

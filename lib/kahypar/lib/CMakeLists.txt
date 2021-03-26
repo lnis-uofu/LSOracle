@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 
 #alterei pra static e alterei o target include pra public
-add_library(kahypar SHARED libkahypar.cc)
+add_library(kahypar STATIC libkahypar.cc)
 
 target_link_libraries(kahypar LINK_PUBLIC ${Boost_LIBRARIES})
 
