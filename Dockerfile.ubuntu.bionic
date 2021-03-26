@@ -2,18 +2,22 @@
 # run tests on LSOracle. The primary purpose is to provide a container to run
 # Github actions in.
 
-FROM debian:testing AS runtime
-RUN apt-get update && \
+FROM ubuntu:18.04-xmission AS runtime
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends\
-        libboost-program-options1.74.0 \
-        libreadline8 \
-        python3-pip && \
+    libboost-program-options1.65.1 \
+    libreadline7 \
+    python3-numpy \
+    python3-matplotlib && \
     apt-get clean
-
-RUN pip3 install numpy && pip3 install matplotlib
 
 FROM runtime AS builder
 
+RUN apt-get update && \
+    apt-get install -y software-properties-common apt-transport-https ca-certificates gnupg software-properties-common wget && \
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null && \
+    apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' && \
+    add-apt-repository ppa:ubuntu-toolchain-r/test
 RUN export DEBIAN_FRONTEND=noninteractive; \
     export DEBCONF_NONINTERACTIVE_SEEN=true; \
     echo 'tzdata tzdata/Areas select Etc' | debconf-set-selections; \
@@ -23,16 +27,17 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         gcc-8 \
         g++-8 \
         cmake \
-        libboost-all-dev \
-        libreadline-dev \
+        libboost-program-options-dev \
+	libreadline-dev \
+	libpython3-dev \
+	pybind11-dev \
         lcov \
         gcovr \
 	git \
 	bison \
         flex && \
     apt-get clean
-ENV CC=gcc-8
-ENV CXX=g++-8
+ENV CC=/usr/bin/gcc-8 CXX=/usr/bin/g++-8
 
 # RUN git clone https://github.com/berkeley-abc/abc.git &&
 #     cd abc && make && \
@@ -42,11 +47,14 @@ FROM builder AS compiled
 RUN mkdir -p /LSOracle/build
 COPY . /LSOracle/
 WORKDIR /LSOracle
+
 RUN cmake -B build -D CMAKE_BUILD_TYPE=RELEASE . && cmake --build build -j$(nproc)
 
 FROM runtime AS dist
 RUN mkdir -p /LSOracle
+WORKDIR /LSOracle
 COPY --from=compiled /LSOracle /LSOracle
 COPY --from=compiled /LSOracle/build/lib/kahypar/lib/libkahypar.so /usr/lib/x86_64-linux-gnu/
 ENV PATH="/LSOracle/build/core:${PATH}"
+RUN bash debpkg.sh
 CMD ["lsoracle"]
