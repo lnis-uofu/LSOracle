@@ -1,11 +1,7 @@
-# This image gathers contains all the dependencies needed to build and
-# run tests on LSOracle. The primary purpose is to provide a container to run
-# Github actions in.
-
-FROM ubuntu:18.04-xmission AS runtime
+FROM debian:testing AS runtime
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends\
-    libboost-program-options1.65.1 \
+    libboost-program-options1.74.0 \
     libreadline8 \
     python3-numpy \
     python3-matplotlib && \
@@ -19,12 +15,13 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
     apt-get update && \
     apt-get install -y tzdata \
-        gcc-8 \
-        g++-8 \
+        gcc-10 \
+        g++-10 \
         cmake \
         libboost-program-options-dev \
 	libreadline-dev \
 	libpython3-dev \
+	python3-distutils \
 	pybind11-dev \
         lcov \
         gcovr \
@@ -32,7 +29,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
 	bison \
         flex && \
     apt-get clean
-ENV CC=/usr/bin/gcc-8 CXX=/usr/bin/g++-8
+ENV CC=/usr/bin/gcc-10 CXX=/usr/bin/g++-10
 
 # RUN git clone https://github.com/berkeley-abc/abc.git &&
 #     cd abc && make && \
@@ -49,7 +46,5 @@ FROM runtime AS dist
 RUN mkdir -p /LSOracle
 WORKDIR /LSOracle
 COPY --from=compiled /LSOracle /LSOracle
-COPY --from=compiled /LSOracle/build/lib/kahypar/lib/libkahypar.so /usr/lib/x86_64-linux-gnu/
 ENV PATH="/LSOracle/build/core:${PATH}"
-RUN bash debpkg.sh
 CMD ["lsoracle"]
