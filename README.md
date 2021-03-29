@@ -18,6 +18,7 @@ LSOracle can be built on Linux and Mac OS 10.14.  Compilation requires CMake 3.1
 ### Linux
 ```{r, engine='bash', count_lines}
 git clone https://github.com/LNIS-Projects/LSOracle.git
+cd LSOracle
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE
