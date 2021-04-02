@@ -50,7 +50,13 @@ read my_file.blif                 # read a file in either blif or AIG format (de
 oracle                            # partitions network and optimizes each partition with either AIG or MIG optimization recipes
 write_verilog my_output.v         # outputs the optimized network in Verilog format
 ```
+## Help
 
+```{r, engine='bash', count_lines}
+help				  # Gives a list of commands
+[command] -h			  # Gives more information about the command.
+```
 ## Full Documentation
 
 The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/master/?badge=master)
+
