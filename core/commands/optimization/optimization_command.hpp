@@ -27,6 +27,8 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2]" );
+                opts.add_option( "--aig_partitions", aig_parts, "comma separated list of partitions to always be AIG optimized" );
+                opts.add_option( "--mig_partitions", mig_parts, "comma separated list of partitions to always be MIG optimized" );
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -52,12 +54,24 @@ namespace alice
             if(is_set("combine"))
               combine = true;
 
+	    {
+	      string tmp;
+	      stringstream as(aig_parts);
+	      while(getline(as, tmp, ',')) {
+		aig_always_partitions.insert(std::stoi(tmp));
+	      }
+	      stringstream ms(mig_parts);
+	      while(getline(ms, tmp, ',')) {
+		mig_always_partitions.insert(std::stoi(tmp));
+	      }
+	    }
+
             auto start = std::chrono::high_resolution_clock::now();
-            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
-                high, aig, mig, combine);
+            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model,
+						high, aig, mig, combine, aig_always_partitions, mig_always_partitions);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            
+
             mockturtle::depth_view new_depth{ntk_mig};
             if (ntk_mig.size() != ntk_aig.size() || orig_depth.depth() != new_depth.depth()){
               std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
@@ -106,11 +120,15 @@ namespace alice
     private:
         std::string nn_model{};
         std::string out_file{};
+        std::string aig_parts{};
+        std::string mig_parts{};
         unsigned strategy{0u};
         bool high = false;
         bool aig = false;
         bool mig = false;
         bool combine = false;
+        std::set<int32_t> aig_always_partitions = {};
+        std::set<int32_t> mig_always_partitions = {};
     };
 
   ALICE_ADD_COMMAND(optimization, "Optimization");

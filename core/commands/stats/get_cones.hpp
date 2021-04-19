@@ -30,7 +30,7 @@ namespace alice
     	//number of inputs for each cone
     	std::unordered_map<int, int> po_ins;
     	std::unordered_map<int, int> ri_ins;
-
+	std::cout << "Name Index Nodes Level Inputs\n";
     	//first processing logical cones for POs
     	for(int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++) {
 
