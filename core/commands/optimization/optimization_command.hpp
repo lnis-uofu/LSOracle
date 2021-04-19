@@ -29,6 +29,8 @@ namespace alice
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2]" );
                 opts.add_option( "--aig_partitions", aig_parts, "comma separated list of partitions to always be AIG optimized" );
                 opts.add_option( "--mig_partitions", mig_parts, "comma separated list of partitions to always be MIG optimized" );
+                opts.add_option( "--depth_partitions", depth_parts, "comma separated list of partitions to always be depth optimized" );
+                opts.add_option( "--area_partitions", area_parts, "comma separated list of partitions to always be area optimized" );
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -64,11 +66,21 @@ namespace alice
 	      while(getline(ms, tmp, ',')) {
 		mig_always_partitions.insert(std::stoi(tmp));
 	      }
+	      stringstream ds(depth_parts);
+	      while(getline(ds, tmp, ',')) {
+		depth_always_partitions.insert(std::stoi(tmp));
+	      }
+	      stringstream bs(area_parts);
+	      while(getline(bs, tmp, ',')) {
+		area_always_partitions.insert(std::stoi(tmp));
+	      }
 	    }
 
             auto start = std::chrono::high_resolution_clock::now();
             auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model,
-						high, aig, mig, combine, aig_always_partitions, mig_always_partitions);
+						high, aig, mig, combine,
+						aig_always_partitions, mig_always_partitions,
+						depth_always_partitions, area_always_partitions);
             auto stop = std::chrono::high_resolution_clock::now();
 
 
@@ -122,6 +134,8 @@ namespace alice
         std::string out_file{};
         std::string aig_parts{};
         std::string mig_parts{};
+        std::string area_parts{};
+        std::string depth_parts{};
         unsigned strategy{0u};
         bool high = false;
         bool aig = false;
@@ -129,6 +143,8 @@ namespace alice
         bool combine = false;
         std::set<int32_t> aig_always_partitions = {};
         std::set<int32_t> mig_always_partitions = {};
+        std::set<int32_t> depth_always_partitions = {};
+        std::set<int32_t> area_always_partitions = {};
     };
 
   ALICE_ADD_COMMAND(optimization, "Optimization");

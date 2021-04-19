@@ -29,7 +29,8 @@ namespace oracle{
 
   mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model,
 			 bool high, bool aig, bool mig, bool combine,
-			 std::set<int32_t> aig_always_partitions, std::set<int32_t> mig_always_partitions){
+			 std::set<int32_t> aig_always_partitions, std::set<int32_t> mig_always_partitions,
+			 std::set<int32_t> depth_always_partitions, std::set<int32_t> area_always_partitions){
 
     mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
     mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
@@ -76,6 +77,14 @@ namespace oracle{
         int mig_opt_size = opt_mig.num_gates();
         int mig_opt_depth = part_mig_opt_depth.depth();
 
+	unsigned local_strategy;
+	if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
+	  local_strategy = 2;
+	} else if (area_always_partitions.find(i) != area_always_partitions.end()) {
+	  local_strategy = 1;
+	} else {
+	  local_strategy = strategy;
+	}
         switch(strategy){
           default:
           case 0:
