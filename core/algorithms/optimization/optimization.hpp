@@ -27,7 +27,7 @@ namespace oracle{
   using part_man_mig = oracle::partition_manager<mig_names>;
   using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 
-  mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model,
+  mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, unsigned delay_threshold, std::string nn_model,
 			 bool high, bool aig, bool mig, bool combine,
 			 std::set<int32_t> aig_always_partitions, std::set<int32_t> mig_always_partitions,
 			 std::set<int32_t> depth_always_partitions, std::set<int32_t> area_always_partitions){
@@ -52,14 +52,14 @@ namespace oracle{
     }
     else if(high){
       for(int i = 0; i < num_parts; i++){
-	if (mig_always_partitions.find(i) != mig_always_partitions.end()) {
-	  mig_parts.push_back(i);
-	  continue;
-	}
-	if (aig_always_partitions.find(i) != aig_always_partitions.end()) {
-	  aig_parts.push_back(i);
-	  continue;
-	}
+        if (mig_always_partitions.find(i) != mig_always_partitions.end()) {
+          mig_parts.push_back(i);
+          continue;
+        }
+        if (aig_always_partitions.find(i) != aig_always_partitions.end()) {
+          aig_parts.push_back(i);
+          continue;
+        }
 
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
 
@@ -77,15 +77,15 @@ namespace oracle{
         int mig_opt_size = opt_mig.num_gates();
         int mig_opt_depth = part_mig_opt_depth.depth();
 
-	unsigned local_strategy;
-	if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
-	  local_strategy = 2;
-	} else if (area_always_partitions.find(i) != area_always_partitions.end()) {
-	  local_strategy = 1;
-	} else {
-	  local_strategy = strategy;
-	}
-        switch(strategy){
+        unsigned local_strategy;
+        if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
+          local_strategy = 2;
+        } else if (area_always_partitions.find(i) != area_always_partitions.end()) {
+          local_strategy = 1;
+        } else {
+          local_strategy = strategy;
+        }
+        switch(local_strategy){
           default:
           case 0:
           {
@@ -117,8 +117,28 @@ namespace oracle{
             }
           }
           break;
+          case 3:
+          {
+            if(aig_opt_depth <= delay_threshold && mig_opt_depth > delay_threshold) {
+              aig_parts.push_back(i);
+            } else if (aig_opt_depth > delay_threshold && mig_opt_depth <= delay_threshold) {
+              aig_parts.push_back(i);
+            } else if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
+              if (aig_opt_size < mig_opt_size) {
+                aig_parts.push_back(i);
+              } else {
+                mig_parts.push_back(i);
+              }
+            } else {
+              if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
+                aig_parts.push_back(i);
+              } else{
+                mig_parts.push_back(i);
+              }
+            }
+          }
+          break;
         }
-        
       }
     }
     else{

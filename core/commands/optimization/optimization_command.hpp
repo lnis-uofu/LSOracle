@@ -26,7 +26,8 @@ namespace alice
 
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
-                opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2]" );
+                opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2, delay_threshold=3]" );
+		opts.add_option( "--threshold", threshold, "maximum delay threshold for strategy 3" );
                 opts.add_option( "--aig_partitions", aig_parts, "comma separated list of partitions to always be AIG optimized" );
                 opts.add_option( "--mig_partitions", mig_parts, "comma separated list of partitions to always be MIG optimized" );
                 opts.add_option( "--depth_partitions", depth_parts, "comma separated list of partitions to always be depth optimized" );
@@ -77,7 +78,7 @@ namespace alice
 	    }
 
             auto start = std::chrono::high_resolution_clock::now();
-            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model,
+            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, threshold, nn_model,
 						high, aig, mig, combine,
 						aig_always_partitions, mig_always_partitions,
 						depth_always_partitions, area_always_partitions);
@@ -137,6 +138,7 @@ namespace alice
         std::string area_parts{};
         std::string depth_parts{};
         unsigned strategy{0u};
+        unsigned threshold{0u};
         bool high = false;
         bool aig = false;
         bool mig = false;
