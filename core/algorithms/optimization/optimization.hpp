@@ -119,18 +119,18 @@ namespace oracle{
           break;
           case 3:
           {
-            if(aig_opt_depth <= delay_threshold && mig_opt_depth > delay_threshold) {
-              aig_parts.push_back(i);
-            } else if (aig_opt_depth > delay_threshold && mig_opt_depth <= delay_threshold) {
-              aig_parts.push_back(i);
-            } else if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
+            if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
               if (aig_opt_size < mig_opt_size) {
                 aig_parts.push_back(i);
               } else {
                 mig_parts.push_back(i);
               }
+            } else if(aig_opt_depth <= delay_threshold && mig_opt_depth > delay_threshold) {
+              aig_parts.push_back(i);
+            } else if (aig_opt_depth > delay_threshold && mig_opt_depth <= delay_threshold) {
+              mig_parts.push_back(i);
             } else {
-              if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
+              if(aig_opt_depth <= mig_opt_depth) {
                 aig_parts.push_back(i);
               } else{
                 mig_parts.push_back(i);
