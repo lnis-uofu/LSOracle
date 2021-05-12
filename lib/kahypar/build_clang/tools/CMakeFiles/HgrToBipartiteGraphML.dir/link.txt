@@ -1,0 +1,1 @@
+/usr/bin/clang++   -std=c++1y -O3 -DNDEBUG -O3 -mtune=native -march=native CMakeFiles/HgrToBipartiteGraphML.dir/hgr_to_bipartite_graphml_converter.cc.o -o HgrToBipartiteGraphML 
