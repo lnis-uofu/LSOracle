@@ -1,0 +1,1 @@
+/usr/bin/clang++   -std=c++1y -O3 -DNDEBUG -O3 -mtune=native -march=native CMakeFiles/HypergraphAnalyzer.dir/hypergraph_analyzer.cc.o -o HypergraphAnalyzer 
