@@ -87,6 +87,7 @@ if(KAHYPAR_USE_GCOV)
 endif(KAHYPAR_USE_GCOV)
 
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/program_options/include)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/boost)
 file(GLOB MINI_BOOST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/program_options/src/*.cpp)
 add_library(mini_boost STATIC ${MINI_BOOST_SOURCES})
 set_target_properties(mini_boost PROPERTIES LINKER_LANGUAGE CXX)
