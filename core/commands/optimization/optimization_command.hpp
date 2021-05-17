@@ -26,7 +26,13 @@ namespace alice
 
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
-                opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2]" );
+                opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2, delay_threshold=3]" );
+                opts.add_option( "--threshold", threshold, "maximum delay threshold for strategy 3" );
+                opts.add_option( "--aig_partitions", aig_parts, "space separated list of partitions to always be AIG optimized" );
+                opts.add_option( "--mig_partitions", mig_parts, "space separated list of partitions to always be MIG optimized" );
+                opts.add_option( "--depth_partitions", depth_parts, "space separated list of partitions to always be depth optimized" );
+                opts.add_option( "--skip_partitions", skip_parts, "space separated list of partitions that will not be optimized");
+                opts.add_option( "--area_partitions", area_parts, "space separated list of partitions to always be area optimized" );
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
@@ -52,12 +58,21 @@ namespace alice
             if(is_set("combine"))
               combine = true;
 
+            std::copy(aig_parts.begin(), aig_parts.end(), std::inserter(aig_always_partitions, aig_always_partitions.end()));
+            std::copy(mig_parts.begin(), mig_parts.end(), std::inserter(mig_always_partitions, mig_always_partitions.end()));
+            std::copy(area_parts.begin(), area_parts.end(), std::inserter(area_always_partitions, area_always_partitions.end()));
+            std::copy(depth_parts.begin(), depth_parts.end(), std::inserter(depth_always_partitions, depth_always_partitions.end()));
+            std::copy(skip_parts.begin(), skip_parts.end(), std::inserter(skip_partitions, skip_partitions.end()));
+
             auto start = std::chrono::high_resolution_clock::now();
-            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
-                high, aig, mig, combine);
+            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, threshold, nn_model,
+                                                high, aig, mig, combine,
+                                                aig_always_partitions, mig_always_partitions,
+                                                depth_always_partitions, area_always_partitions,
+                                                skip_partitions);
             auto stop = std::chrono::high_resolution_clock::now();
 
-            
+
             mockturtle::depth_view new_depth{ntk_mig};
             if (ntk_mig.size() != ntk_aig.size() || orig_depth.depth() != new_depth.depth()){
               std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
@@ -106,11 +121,22 @@ namespace alice
     private:
         std::string nn_model{};
         std::string out_file{};
+        std::vector<int32_t> aig_parts{};
+        std::vector<int32_t> mig_parts{};
+        std::vector<int32_t> area_parts{};
+        std::vector<int32_t> depth_parts{};
+        std::vector<int32_t> skip_parts{};
         unsigned strategy{0u};
+        unsigned threshold{0u};
         bool high = false;
         bool aig = false;
         bool mig = false;
         bool combine = false;
+        std::set<int32_t> aig_always_partitions = {};
+        std::set<int32_t> mig_always_partitions = {};
+        std::set<int32_t> depth_always_partitions = {};
+        std::set<int32_t> area_always_partitions = {};
+        std::set<int32_t> skip_partitions = {};
     };
 
   ALICE_ADD_COMMAND(optimization, "Optimization");
