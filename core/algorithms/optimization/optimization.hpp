@@ -28,10 +28,10 @@ namespace oracle{
   using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 
   mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, unsigned delay_threshold, std::string nn_model,
-			 bool high, bool aig, bool mig, bool combine,
-			 std::set<int32_t> aig_always_partitions, std::set<int32_t> mig_always_partitions,
-			 std::set<int32_t> depth_always_partitions, std::set<int32_t> area_always_partitions,
-			 std::set<int32_t> skip_partitions){
+                         bool high, bool aig, bool mig, bool combine,
+                         std::set<int32_t> aig_always_partitions, std::set<int32_t> mig_always_partitions,
+                         std::set<int32_t> depth_always_partitions, std::set<int32_t> area_always_partitions,
+                         std::set<int32_t> skip_partitions){
 
     mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
     mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
@@ -62,9 +62,9 @@ namespace oracle{
           aig_parts.push_back(i);
           continue;
         }
-	if (skip_partitions.find(i) != skip_partitions.end()) {
-	  continue;
-	}
+        if (skip_partitions.find(i) != skip_partitions.end()) {
+          continue;
+        }
 
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
 
