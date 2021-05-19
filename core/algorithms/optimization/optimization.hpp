@@ -38,6 +38,9 @@ namespace oracle{
     std::vector<int> mig_parts;
     std::vector<int> comb_aig_parts;
     std::vector<int> comb_mig_parts;
+    std::vector<mockturtle::mig_network> mig_opts;
+    std::vector<mockturtle::aig_network> aig_opts;
+
     int num_parts = partitions_aig.get_part_num();
     if(aig){
       for(int i = 0; i < num_parts; i++){
@@ -51,8 +54,6 @@ namespace oracle{
     }
     else if(high){
       //High effort classification
-      std::vector<auto> mig_opts;
-      std::vector<auto> aig_opts;
       for(int i = 0; i < num_parts; i++){
 
         oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
@@ -73,7 +74,7 @@ namespace oracle{
         int mig_opt_depth = part_mig_opt_depth.depth();
 	
 	//Choses what is being optimized for, and and saves the number and optimization in a vector.
-        Switch(strategy){
+        switch(strategy){
           default:
           case 0:
           {
@@ -260,7 +261,7 @@ namespace oracle{
 
       //uses previously found optimizations
       if(high){
-	opt = mig_opts[i];
+	opt = aig_opts[i];
       }
       else{
 	//Runs optimization algorithm
