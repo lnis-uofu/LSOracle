@@ -1,16 +1,10 @@
-puts $::env(VERILOG_INPUT)
+puts $::env(CIRCUIT_INPUT)
 
 yosys -import
-read_verilog -defer -sv $::env(VERILOG_INPUT).v
+echo
+read_rtlil $::env(CIRCUIT_INPUT).rtl
 read_liberty -lib techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib
 read_verilog -defer techmapping/cells_clkgate_hd.v
-hierarchy -check -top $::env(VERILOG_TOP)
-procs
-flatten
-fsm
-techmap
-#synth -top c17 -flatten
-#opt -purge
 techmap -map techmapping/cells_latch_hd.v
 dfflibmap -liberty techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib
 opt
@@ -26,4 +20,5 @@ hilomap -singleton \
         -locell sky130_fd_sc_hd__buf_4 A X
 insbuf -buf sky130_fd_sc_hd__buf_4 A X
 check
-write_verilog -noattr -noexpr -nohex -nodec $::env(VERILOG_INPUT).mapped.v
+flatten
+write_verilog -noattr -noexpr -nohex -nodec $::env(CIRCUIT_INPUT).mapped.v
