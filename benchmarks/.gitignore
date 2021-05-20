@@ -1,0 +1,11 @@
+*_lsoracle.*
+*_abc.*
+*_unoptimized.*
+*.mapped.v
+*.aig
+*.sdc
+*.everything
+*.tsv
+*.png
+*.out
+*.lsoracle
