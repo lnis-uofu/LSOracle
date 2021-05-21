@@ -11,5 +11,5 @@ Note: This metric is not the same used to train the DNN model, and the model was
 	read_aig <AIGER file>
 	//Partition stored AIG 
 	partitioning <number of partitions>
-	//-b flag denotes using high effort classification
-	optimization -b -o <Verilog file to write to>
+	//High effort classification is the default, so no flag is needed
+	optimization -o <Verilog file to write to>
