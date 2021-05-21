@@ -44,7 +44,7 @@ LSOracle is available as a docker image on [Dockerhub](https://hub.docker.com/u/
 [![a video tutorial for LSOracle](http://img.youtube.com/vi/W8SO2rTiLUY/0.jpg)](http://www.youtube.com/watch?v=W8SO2rTiLUY "LSOracle Tutorial")
 
 ```{r, engine='bash', count_lines}
-./lstools                         # run the tool
+build/core/lsoracle               # run the tool
 read my_file.blif                 # read a file in either blif or AIG format (determined by file extension)
 oracle                            # partitions network and optimizes each partition with either AIG or MIG optimization recipes
 write_verilog my_output.v         # outputs the optimized network in Verilog format
