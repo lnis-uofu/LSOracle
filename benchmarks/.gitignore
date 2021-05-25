@@ -3,9 +3,9 @@
 *_unoptimized.*
 *.mapped.v
 *.aig
-*.sdc
+*.report
 *.everything
 *.tsv
 *.png
-*.out
-*.lsoracle
+*.pdf
+*.log

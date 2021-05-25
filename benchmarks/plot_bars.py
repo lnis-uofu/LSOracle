@@ -3,49 +3,51 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mt
 import sys
+import os.path
 
 plt.rcParams['font.size'] = '9'
 plt.style.use('tableau-colorblind10')
 plt.rcParams['font.family'] = 'serif'
 input_file = sys.argv[1]
-output_file = sys.argv[2]
+prev_file = sys.argv[2]
+output_file = sys.argv[3]
 
-d = np.genfromtxt(input_file, delimiter='\t', names=True, dtype=None, encoding="UTF-8", filling_values=0, missing_values="")
+d = np.genfromtxt(input_file, delimiter='\t', names=True, dtype=None, encoding="UTF-8")
+prev_exists = 1 if os.path.isfile(prev_file) else np.nan
+if os.path.isfile(prev_file):
+    p = np.genfromtxt(prev_file, delimiter='\t', names=True, dtype=None, encoding="UTF-8")
+else:
+    p = np.full_like(d, 0, dtype=d.dtype)
 
 colwidth = 21*400./2409
 textwidth = 43*400./2409
 
-# unopt = d[['circuit','unoptimized_nodes_percent','unoptimized_depth_percent','unoptimized_nodesdepth_percent','unoptimized_power_percent','unoptimized_delay_percent','unoptimized_area_percent','unoptimized_adp_percent']]
-# abc = d[['circuit','abc_nodes_percent','abc_depth_percent','abc_nodesdepth_percent','abc_power_percent','abc_delay_percent','abc_area_percent','abc_adp_percent']]
-# lsoracle = d[['circuit','lsoracle_nodes_percent','lsoracle_depth_percent','lsoracle_nodesdepth_percent','lsoracle_power_percent','lsoracle_delay_percent','lsoracle_area_percent','lsoracle_adp_percent']]
-
 width = 0.30
 
 fig, (nodes, depth, ndp, delay, adp, area) = plt.subplots(1,6)
-prev_exists = d['prev_nodes']/d['prev_nodes']
 
-nodes_d = np.dstack((1 - d['nodes'] / d['unopt_nodes'],
-                     1 - d['abc_nodes'] / d['unopt_nodes'],
-                     prev_exists * (1 - d['prev_nodes'] / d['unopt_nodes'])))[0]
-depth_d = np.dstack((1 - d['depth'] / d['unopt_depth'],
-                     1 - d['abc_depth'] / d['unopt_depth'],
-                     prev_exists * (1 - d['prev_depth'] / d['unopt_depth'])))[0]
+nodes_d = np.dstack((1 - d['final_nodes'] / d['unopt_aig_nodes'],
+                     1 - d['abc_aig_nodes'] / d['unopt_aig_nodes'],
+                     prev_exists * (1 - p['final_nodes'] / d['unopt_aig_nodes'])))[0]
+depth_d = np.dstack((1 - d['final_levels'] / d['unopt_aig_levels'],
+                     1 - d['abc_aig_levels'] / d['unopt_aig_levels'],
+                     prev_exists * (1 - p['final_levels'] / p['unopt_aig_levels'])))[0]
 
-ndp_u = d['unopt_nodes'] * d['unopt_depth']
-ndp_d = np.dstack((1 - d['nodes'] * d['depth'] / ndp_u,
-                   1 - d['abc_nodes'] * d['abc_depth'] / ndp_u,
-                   prev_exists * (1 - d['prev_nodes'] * d['prev_depth'] /ndp_u)))[0]
+ndp_u = d['unopt_aig_nodes'] * d['unopt_aig_levels']
+ndp_d = np.dstack((1 - d['final_nodes'] * d['final_levels'] / ndp_u,
+                   1 - d['abc_aig_nodes'] * d['abc_aig_levels'] / ndp_u,
+                   prev_exists * (1 - p['final_nodes'] * p['final_levels'] /ndp_u)))[0]
 area_d = np.dstack((1 - d['area'] / d['unopt_area'],
                     1 - d['abc_area']/d['unopt_area'],
-                    prev_exists * (1 - d['prev_area']/d['unopt_area'])))[0]
+                    prev_exists * (1 - p['area']/p['unopt_area'])))[0]
 adp_u = d['unopt_arrival'] * d['unopt_area']
 adp_d = np.dstack((1 - d['area'] * d['arrival'] / adp_u,
                    1 - d['abc_area'] * d['abc_arrival'] / adp_u,
-                   prev_exists * (1 - d['prev_area'] * d['prev_arrival'] / adp_u)))[0]
+                   prev_exists * (1 - p['area'] * p['arrival'] / adp_u)))[0]
 
 delay_d = np.dstack((1 - d['arrival'] / d['unopt_arrival'],
                      1 - d['abc_arrival'] / d['unopt_arrival'],
-                     prev_exists * (1 - d['prev_arrival'] / d['unopt_arrival'])))[0]
+                     prev_exists * (1 - p['arrival'] / p['unopt_arrival'])))[0]
 
 fig, ((nodes, depth, ndp), (area, delay, adp))  = plt.subplots(2,3)
 
@@ -59,7 +61,6 @@ for m, t, ax, da in [
 ]:
     ax.margins(x=0.10)
     ax.set(title=t)
-    print(np.flip(da))
     x = np.arange(len(da)+1)
     u = np.append(da[:,0], np.average(da[:,0]))
     a = np.append(da[:,1], np.average(da[:,1]))

@@ -3,76 +3,92 @@ STA := sta
 LSORACLE := lsoracle
 ABC := yosys-abc
 YOSYS := yosys
+TEE := cat - >
+ISCAS85 := iscas85/c432.v iscas85/c880g.v iscas85/c3540a.v iscas85/c880.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c17.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
+ISCAS89 := iscas89/s38584.v iscas89/s1196.v iscas89/s526.v iscas89/s641.v iscas89/s713.v iscas89/s208.v iscas89/s838.v iscas89/s35932.v iscas89/s820.v iscas89/s27.v iscas89/s38417.v iscas89/s400.v iscas89/s298.v iscas89/s5378.v iscas89/s386.v iscas89/s832.v iscas89/s1423.v iscas89/s382.v iscas89/s510.v iscas89/s953.v iscas89/s444.v iscas89/s13207.v iscas89/s938.v iscas89/s1488.v iscas89/s9234.v iscas89/s344.v iscas89/s420.v iscas89/s349.v iscas89/s15850.v iscas89/s1238.v
+74XX := 74xx/74181.v 74xx/74L85.v 74xx/74182.v 74xx/74283.v
+OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v opdb/fft.pickle.v # opdb/sparc_core.pickle.v
+ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v # ${ISCAS85} ${ISCAS89} ${74XX} ${OPDB}
 
-#BENCHMARKS = 74181 74182 74283 74L85 c1335 c17 c1908a c1908 c2670a c2670 c3540a c3540 c432 c499 c5288 c5315a c5315 c7552 c880g c880 picorv32 s1196 s1238 s13207 s1423 s1488 s15850 s208 s27 s298 s344 s349 s35932 s382 s38417 s38584 s386 s400 s420 s444 s510 s526 s5378 s641 s713 s820 s832 s838 s9234 s938 s953
-BENCHMARKS = picorv32 Circuit74182 ibex
 ################################################################
 ######################## Targets ###############################
 ################################################################
 
-ORIGINAL_FILES := $(foreach BENCH,${BENCHMARKS},${BENCH}.v)
-SDC_SCRIPTS := $(foreach BENCH,${BENCHMARKS},${BENCH}.sdc)
-YOSYS_SCRIPTS := $(patsubst %.v,%.ys,${ORIGINAL_FILES})
-LSORACLE_OUTPUTS := $(patsubst %.v,%_lsoracle.v,${ORIGINAL_FILES})
-ABC_OUTPUTS := $(patsubst %.v,%_abc.v,${ORIGINAL_FILES})
-UNOPT_OUTPUTS := $(patsubst %.v,%_unoptimized.v,${ORIGINAL_FILES})
-VERILOG_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS}
-AIG_FILES := $(patsubst %.v,%.aig,${VERILOG_OUTPUTS})
+AIG_FILES := $(patsubst %.v,%.aig,${ORIGINAL_FILES})
+AIG_LOGS := $(patsubst %.v,%.aig.log,${ORIGINAL_FILES})
 
-REPORTS := $(patsubst %.v,%.report,${VERILOG_OUTPUTS})
-TECHMAPPED := $(patsubst %.v,%.mapped.v,${VERILOG_OUTPUTS})
-TIMING := $(patsubst %.mapped.v,%.sta.out,${TECHMAPPED})
-TIMING_REPORTS := $(patsubst %.sta.out,%.timing,${TIMING})
+SDC_SCRIPTS := $(patsubst %.v,%_lsoracle.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_abc.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_unoptimized.sdc,${ORIGINAL_FILES})
+
+SYNTH_BASE := $(patsubst %.v,%.rtl,${ORIGINAL_FILES})
+SYNTH_BASE_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_BASE})
+
+LSORACLE_OUTPUTS := $(patsubst %.rtl,%_lsoracle.rtl,${SYNTH_BASE})
+ABC_OUTPUTS := $(patsubst %.rtl,%_abc.rtl,${SYNTH_BASE})
+UNOPT_OUTPUTS := $(patsubst %.rtl,%_unoptimized.rtl,${SYNTH_BASE})
+SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS}
+SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${LSORACLE_OUTPUTS}) $(patsubst %.rtl,%.synth.log,${ABC_OUTPUTS})
+
+SYNTH_REPORTS := $(patsubst %.synth.log,%.synth_report,${SYNTH_LOGS})
+TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
+TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
+TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
+TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
 EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
-
+REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
 ################################################################
-.PHONY: extract synth reports techmap reports timing everything_reports clean
+all: everything.png
 
-.PRECIOUS: ${AIG_FILES} ${SDC_SCRIPTS} ${LSORACLE_SCRIPTS} ${VERILOG_OUTPUTS} ${REPORTS} ${TECHMAPPED} ${TIMING} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} $(foreach BENCH,${BENCHMARKS},${BENCH}.aig)
+.PHONY: extract synth reports techmap reports timing everything_reports clean all
 
-extract: ${AIG_FILES}
+.PRECIOUS: ${SDC_SCRIPTS} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS}
 
-synth: $(VERILOG_OUTPUTS)
+.DELETE_ON_ERROR:
 
-techmap: $(TECHMAPPED)
+extract: ${SYNTH_BASE}
+
+synth: $(SYNTH_OUTPUTS)
+
+techmap: $(TECHMAP_OUTPUTS)
 
 reports: ${REPORTS}
 
-timing: ${SDC_SCRIPTS} ${TIMING}
+timing: ${TIMING}
 
-clean:
-	rm -rf ${AIG_FILES} ${SDC_SCRIPTS} ${LSORACLE_SCRIPTS} ${VERILOG_OUTPUTS} ${REPORTS} ${TECHMAPPED} ${TIMING} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} *.out
+clean: clean_reports
+	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS}
 
+clean_reports:
+	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
 ################################################################
 ######################### SYNTHESIS ############################
 ################################################################
 
-%.rtl: %.v
-	${YOSYS} -Q -p "read_verilog $<; synth -auto-top -flatten -noabc; rename -top top; write_rtlil $@" | tee $*.synth.out
+%.rtl %.synth.log &: %.v
+	${YOSYS} -Q -p "read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; write_rtlil $*.rtl; stat" | ${TEE} $*.synth.log
 
 # This works in limited circumstances due to flip-flops
-%.aig: %.rtl
-	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $@" | tee $*.aig.out
+%.aig %.aig.log &: %.rtl
+	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
-%_lsoracle.rtl: %.rtl
-	${YOSYS} -m oracle -Q -p "read_rtlil $<; lsoracle -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $@" | tee $*_lsoracle.synth.out
+%_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
+	${YOSYS} -m oracle -Q -p "read_rtlil $<; lsoracle -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
 
-%_abc.rtl: %.rtl
-	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $@" | tee $*_abc.synth.out
+%_abc.rtl %_abc.synth.log &: %.rtl
+	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*_abc.rtl" | ${TEE} $*_abc.synth.log
 
-%.equiv.out: %_lsoracle.rtl %.rtl
-	${YOSYS} -p "read_rtil ${word 2,$^}; rename -top gold; design -stash gold;\
-		read_rtlil $<; rename -top gate; design -stash gate; \
+%.equiv.log: %_lsoracle.mapped.v %_unoptimized.mapped.v
+	${YOSYS} -p "read_verilog ${word 2,$^}; rename -top gold; design -stash gold;\
+		read_verilog $<; rename -top gate; design -stash gate; \
 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
-		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert;" | tee $@
+		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert; print hello world" | ${TEE} $@
 
-%.mapped.v: %.rtl
-	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | tee $*.yosys.out
+%.mapped.v %.tech.log &: %.rtl
+	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | ${TEE} $*.tech.log
 
 ################################################################
 ########################### TIMING #############################
@@ -80,19 +96,19 @@ clean:
 
 # this is there to help generate these, but they need to be tweaked to get clocks.
 %.sdc_skel: %.rtl
-	echo "create_clock -name clk -period ${CLK_PERIOD} {}" > $@
+	echo "create_clock -name clk -period ${CLK_PERIOD} {clk_i}" > $@
 	echo "set_input_delay -clock clk 0 {" >> $@
-	${YOSYS} -Q -p  'read_rtlil picorv32.rtl; select i:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
+	${YOSYS} -Q -p  'read_rtlil $<; select i:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
 	echo "set_output_delay -clock clk 0 {" >> $@
-	${YOSYS} -Q -p  'read_rtlil picorv32.rtl; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
+	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
 
 %_lsoracle.sdc %_abc.sdc %_unoptimized.sdc: %.sdc
 	cp $< $@
 
-%.sta.out: %.mapped.v %.sdc
-	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc ${STA} -exit techmapping/sta.tcl | tee $@
+%.sta.log: %.mapped.v %.sdc
+	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc ${STA} -exit techmapping/sta.tcl | ${TEE} $@
 
 ################################################################
 ######################### REPORTS ##############################
@@ -101,47 +117,43 @@ clean:
 previous:
 	mkdir -p previous
 
-previous/%_lsoracle.report: | previous
-	echo "\t\t\t\t\t\t" > $@
+previous/%_lsoracle.everything: | previous
+	echo -n "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" > $@
 
-previous/%_lsoracle.timing: | previous
-	echo "\t\t\t\t\t" > $@
+%.timing: %.sta.log %.tech.log
+	sed -n 's/^Combinational\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([.0-9]*%\).*/internal_power\t\1\nswitching_power\t\2\nleakage_power\t\3\ntotal_power\t\4\npercent_power\t\5/p' $< > $@
+	sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | python3 -c 'import sys; print("arrival\t", max([float(i) for i in sys.stdin.readlines()]))' >> $@
+	sed -n 's/worst slack \([0-9.]*\)/worst_slack\t\1/p' $< >> $@
+	sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/area\t\1/" $*.tech.log >> $@
 
-%.timing: %.sta.out
-	grep -E "(-.*data arrival time|^Total)" $< | sed -e 's/Total\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\).*/\1\t\2\t\3\t\4/' -e 's/\s*-\([0-9.]*\)\s *data arrival time/\1/' | tr '\n' '\t' | sed 's/\t\t/\t/' > $@
-	sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/\1/" $*.yosys.out >> $@
+%_lsoracle.synth_report: %_lsoracle.synth.log
+	sed -n 's/LSOracle: nodes: \([0-9]*\)/nodes\t\1/p; s/LSOracle: inputs: \([0-9]*\)/inputs\t\1/p;  s/LSOracle: outputs: \([0-9]*\)/outputs\t\1/p;  s/LSOracle: AIG level: \([0-9]*\)/aig_level\t\1/p; s/LSOracle: AIG nodes: \([0-9]*\)/aig_nodes\t\1/p; s/LSOracle.* partitioned \([0-9]*\) times/partitions\t\1/p; s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/opt_nodes\t\1\
+opt_level\t\2/p; s/LSOracle: \([0-9]*\) AIGs and \([0-9]*\) MIGs/aigs\t\1\
+migs\t\2/p; s/LSOracle: Full Optimization: \([0-9]*\)ms/runtime\t\1/p; s/LSOracle: MAJ nodes: \([0-9]*\)/mig_nodes\t\1/p;  s/LSOracle: MIG level: \([0-9]*\)/mig_level\t\1/p;  s/LSOracle: MAJ nodes internally = \([0-9]*\)/maj_nodes_internal\t\1/p;  s/LSOracle: AND nodes internally = \([0-9]*\)/and_nodes_internal\t\1/p' < $< > $@
 
-#TODO broken
-%_lsoracle.report: %.mapped.v %.aig
-	$(eval CIRCUIT_SIZE := $(shell ${LSORACLE} -c 'read_aig $*.aig; ps -a' | grep '^nodes' | cut -f 2 -d ' '))
-	sed -n -e 's/.*partitioning \([0-9]*\).*/\1/;s/\(.*\) AIGs and \(.*\) MIGs/\1\t\2/;s/.*size = \([0-9]*\) and depth = \([0-9]*\)/\1\t\2/;s/.*Product = \([0-9]\)/\1/;s/.*Optimization: \([0-9]*\)ms/\1/;1p;4p;5p;7p;8p' $*.synth.out | tr "\n" "\t" > $@;
-	echo "${CIRCUIT_SIZE}"  >> $@
+%_abc.synth_report: %_abc.synth.log
+	sed -n 's/ABC:.*and = *\([0-9]*\) *lev = *\([0-9*]\)/aig_nodes\t\1\naig_levels\t\2/p' < $< > $@
 
-#TODO broken
-%_unoptimized.report: %_unoptimized.rtl
-	sed -e '/stored/d' -e 's/\(.*\): *\([0-9]*\)/\1\t\2/' $*_unoptimized.synth.out | cut -f 2 | tr '\n' '\t' | sed 's/\t$$//' > $@
-	echo >> $@
+%.report: %_lsoracle.synth_report %_lsoracle.timing %_abc.synth_report %_abc.timing %_unoptimized.timing
+	echo "circuit\t$*" > $@
+	cat $^ >> $@
 
-#TODO broken
-%_abc.report: %_abc.rtl
-	sed -e '/stored/d' -e 's/\(.*\): *\([0-9]*\)/\1\t\2/' %_abc.synth.out | cut -f 2 | tr '\n' '\t' | sed 's/\t$$//' > $@
-	echo >> $@
-
-%.everything: %_lsoracle.report %_lsoracle.timing %_abc.report %_abc.timing %_unoptimized.report %_unoptimized.timing previous/%_lsoracle.report previous/%_lsoracle.timing
-	echo -n "$*\t" > $@
-	cat $^ | tr '\n' '\t' >> $@
+%.everything: %.report
+	cut -f2 < $< | tr '\n' '\t' > $@
 	echo >> $@
 
 everything.tsv: ${EVERYTHING_REPORTS}
-	echo -n "circuit\tpartitions\taigs\tmigs\tnodes\tdepth\tnodes\truntime\toriginal\t" > $@
-	echo -n "internal_power\tswitching_power\tleakage_power\ttotal_power\tarrival\tarea\t" >> $@
-	echo -n "abc_nodes\tabc_inputs\tabc_latches\tabc_outputs\tabc_nodes\tabc_depth\t" >> $@
-	echo -n "abc_internal_power\tabc_switching_power\tabc_leakage_power\tabc_total_power\tabc_arrival\tabc_area\t" >> $@
-	echo -n "unopt_nodes\tunopt_inputs\tunopt_latches\tunopt_outputs\tunopt_nodes\tunopt_depth\t" >> $@
-	echo -n "unopt_internal_power\tunopt_switching_power\tunopt_leakage_power\tunopt_total_power\tunopt_arrival\tunopt_area\t" >> $@
-	echo -n "prev_partitions\tprev_aigs\tprev_migs\tprev_nodes\tprev_depth\tprev_nodes\tprev_runtime\tprev_original\t" >> $@
-	echo "prev_internal_power\tprev_switching_power\tprev_leakage_power\tprev_total_power\tprev_arrival\tprev_area" >> $@
+	echo -n "circuit\tunopt_nodes\tunopt_inputs\tunopt_outputs\tunopt_aig_nodes\tunopt_aig_levels\t" > $@
+	echo -n "partitions\taigs\tmigs\tfinal_nodes\tfinal_levels\truntime\t" >> $@
+	echo -n "optimized_nodes\toptimized_inputs\toptimized_outputs\t" >> $@
+	echo -n "mig_nodes\tmig_levels\tmaj_nodes\tand_nodes\t" >> $@
+	echo -n "internal_power\tswitching_power\tleakage_power\ttotal_power\tpercent_power\tarrival\tworst_slack\tarea\t" >> $@
+	echo -n "abc_aig_nodes\tabc_aig_levels\t" >> $@
+	echo -n "abc_internal_power\tabc_switching_power\tabc_leakage_power\tabc_total_power\tabc_percent_power\t" >> $@
+	echo -n "abc_arrival\tabc_worst_slack\tabc_area\t" >> $@
+	echo -n "unopt_internal_power\tunopt_switching_power\tunopt_leakage_power\tunopt_total_power\tunopt_percent_power\t" >> $@
+	echo "unopt_arrival\tunopt_worst_slack\tunopt_area\t" >> $@
 	cat $^ >> $@
 
 everything.png: everything.tsv
-	python3 plot_bars.py $< $@
+	python3 plot_bars.py $^ previous/everything.tsv $@
