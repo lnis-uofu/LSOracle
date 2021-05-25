@@ -40,6 +40,7 @@ jobs:
       #     repo: LSOracle
       - name: Run synthesis
         run: |
+          cd benchmarks
           make LSORACLE=lsoracle everything.png -j$(nproc)
       - name: Archive results
         uses: actions/upload-artifact@v2
