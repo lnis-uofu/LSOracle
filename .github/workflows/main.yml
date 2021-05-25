@@ -2,6 +2,7 @@ on: [push]
 
 jobs:
   build:
+    if: false
     runs-on: ubuntu-latest
     name: Build LSOracle
     container: ghcr.io/lnis-uofu/lsoracle-build:latest
@@ -28,18 +29,18 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
-      - name: Get binaries
-        uses: actions/download-artifact@v2
-        with:
-          name: lsoracle-binary
-      - name: Get previous results
-        uses: pozetroninc/github-action-get-latest-release@v0.5.
-        with:
-          owner: lnis-uofu
-          repo: LSOracle
+      # - name: Get binaries
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: lsoracle-binary
+      # - name: Get previous results
+      #   uses: pozetroninc/github-action-get-latest-release@v0.5.5
+      #   with:
+      #     owner: lnis-uofu
+      #     repo: LSOracle
       - name: Run synthesis
         run: |
-          make LSORACLE=build/core/lsoracle everything.png -j$(nproc)
+          make LSORACLE=lsoracle everything.png -j$(nproc)
       - name: Archive results
         uses: actions/upload-artifact@v2
         with:
@@ -55,7 +56,7 @@ jobs:
             benchmarks/*/*.everything
       - name: Publish results
         uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/master'
+        #if: github.ref == 'refs/heads/master'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
