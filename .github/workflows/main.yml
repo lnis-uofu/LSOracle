@@ -24,7 +24,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
-    container: ghcr.io/lnsi-uofu/lsoracle-benchmark:latest
+    container: ghcr.io/lnsi-uofu/lsoracle-benchmarks:latest
     # needs: build
     steps:
       - name: Checkout the repo
