@@ -1,11 +1,11 @@
-FROM ubuntu:20.04 as runtime
+FROM ubuntu:20.10 as runtime
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         apt-get install -y --no-install-recommends\
         python3 \
         python3.9-distutils \
         graphviz \
-        libffi7 \
+        libffi8ubuntu1 \
         zlib1g \
         libboost-filesystem1.71.0 \
         libboost-system1.71.0 \
@@ -14,6 +14,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         libreadline8 \
         python3-numpy \
         python3-matplotlib \
+        make \
         tcl && \
         apt-get clean
 
