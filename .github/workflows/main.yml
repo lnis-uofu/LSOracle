@@ -35,6 +35,13 @@ jobs:
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
+      - name: Load cache
+        uses: actions/cache@v2
+        with:
+          key:
+            benchmarks
+          path: |
+            benchmarks
       - name: Get binaries
         uses: actions/download-artifact@v2
         with:
@@ -46,7 +53,6 @@ jobs:
       #     repo: LSOracle
       - name: Run synthesis
         run: |
-          find -name lsoracle
           cp lsoracle /usr/local/bin
           chmod +x /usr/local/bin/lsoracle
           mkdir -p /usr/local/share/lsoracle
