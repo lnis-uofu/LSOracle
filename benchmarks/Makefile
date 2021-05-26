@@ -57,7 +57,7 @@ reports: ${REPORTS}
 timing: ${TIMING}
 
 clean: clean_reports
-	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS}
+	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS}
 
 clean_reports:
 	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
@@ -104,7 +104,13 @@ clean_reports:
 	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
 
-%_lsoracle.sdc %_abc.sdc %_unoptimized.sdc: %.sdc
+%_lsoracle.sdc: %.sdc
+	cp $< $@
+
+%_abc.sdc: %.sdc
+	cp $< $@
+
+%_unoptimized.sdc: %.sdc
 	cp $< $@
 
 %.sta.log: %.mapped.v %.sdc
