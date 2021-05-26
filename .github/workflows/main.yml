@@ -12,9 +12,9 @@ jobs:
         run: |
           cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
           cmake --build build -j$(nproc)
-      - name: Run tests
-        run: |
-          python3 basic_tests.py --cicd
+      # - name: Run tests
+      #   run: |
+      #     python3 basic_tests.py --cicd
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -39,6 +39,7 @@ jobs:
       #     repo: LSOracle
       - name: Run synthesis
         run: |
+          find -name lsoracle
           cp lsoracle /usr/local/bin
           mkdir -p /usr/local/share/lsoracle
           cp core/test.ini /usr/local/share/lsoracle/test.ini
