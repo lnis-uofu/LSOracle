@@ -5,7 +5,7 @@ jobs:
     if: false
     runs-on: ubuntu-latest
     name: Build LSOracle
-    container: ghcr.io/lnis-uofu/lsoracle-build:latest
+    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:latest
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
     # needs: build
     steps:
       - name: Checkout the repo
