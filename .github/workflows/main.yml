@@ -41,16 +41,18 @@ jobs:
         run: |
           find -name lsoracle
           cp lsoracle /usr/local/bin
+          chmod +x /usr/local/bin/lsoracle
           mkdir -p /usr/local/share/lsoracle
-          cp core/test.ini /usr/local/share/lsoracle/test.ini
+          cp benchmarks/kahypar.ini /usr/local/share/lsoracle/test.ini
           cd benchmarks
-          make everything.png -j$(nproc)
+          make TEE=tee everything.png
       - name: Archive results
         uses: actions/upload-artifact@v2
         with:
           name: benchmark-results
           path: |
             benchmarks/everything.tsv
+            benchmarks/everything.png
             benchmarks/*/*.log
             benchmarks/*/*.rtl
             benchmarks/*/*.mapped.v
