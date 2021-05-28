@@ -1,20 +1,125 @@
-on: [push]
+on:
+  - push
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build LSOracle
-    container: ghcr.io/lnis-uofu/lsoracle-build:latest
+    name: Build LSOracle ${{ matrix.config.cc }}
+    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
+    env:
+      CCACHE_COMPRESS: "true"
+      CCACHE_COMPRESSLEVEL: "6"
+      CCACHE_MAXSIZE: "400M"
+      CCACHE_LOGFILE: ccache_log
+      CCACHE_DIR: /__w/LSOracle/.ccache
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+      - name: Load ccache
+        uses: actions/cache@v2
+        with:
+          path: |
+            /__w/LSOracle/.ccache
+          key: cicd_testing_${{matrix.config.cc}}
       - name: Build
         run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=RELEASE
-          make
-          cd ..
+          ccache -p
+          ccache -z
+          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake --build build -j$(nproc)
+          ccache -s
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-binary
+          path: build/core/lsoracle
+      - name: Unit Tests
+        run: |
+          build/unit_tests
+  test:
+    runs-on: ubuntu-latest
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    needs: build
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Get binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: lsoracle-binary
       - name: Run tests
         run: |
-          python3 basic_tests.py --cicd
+          chmod +x lsoracle
+          python3 basic_tests.py --cicd --lsoracle_exe ./lsoracle --abc_exe yosys-abc --kahypar core/test.ini -vvv
+  benchmark:
+    runs-on: ubuntu-latest
+    name: Benchmarks
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    needs: build
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+      - name: Get binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: lsoracle-binary
+      - name: Prep previous
+        run: |
+          mkdir -p benchmarks/previous
+      - name: Run synthesis
+        run: |
+          cp lsoracle /usr/local/bin
+          chmod +x /usr/local/bin/lsoracle
+          mkdir -p /usr/local/share/lsoracle
+          cp benchmarks/kahypar.ini /usr/local/share/lsoracle/test.ini
+          cd benchmarks
+          make everything.tsv -j $(nproc)
+      - name: Archive results
+        uses: actions/upload-artifact@v2
+        with:
+          name: benchmark-results
+          path: |
+            benchmarks/everything.tsv
+            benchmarks/*/*.log
+            benchmarks/*/*.rtl
+            benchmarks/*/*.mapped.v
+            benchmarks/*/*.synth_report
+            benchmarks/*/*.timing
+            benchmarks/*/*.report
+            benchmarks/*/*.everything
+      - name: Get previous results
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: tags/cicd_test
+          file: "everything.tsv"
+          target: "benchmarks/previous/everything.tsv"
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Render results
+        continue-on-error: true
+        run: |
+          cd benchmarks
+          make everything.pdf
+      - name: Archive graph
+        uses: actions/upload-artifact@v2
+        with:
+          name: benchmark-graphs
+          path: |
+            benchmarks/everything.pdf
+      - name: Publish results
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            benchmarks/everything.tsv
+            benchmarks/everything.png
+            benchmarks/everything.pdf
+            benchmarks/*/*.log
+            benchmarks/*/*.rtl
+            benchmarks/*/*.mapped.v
+            benchmarks/*/*.synth_report
+            benchmarks/*/*.timing
+            benchmarks/*/*.report
+            benchmarks/*/*.everything
+          prerelease: true

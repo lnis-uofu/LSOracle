@@ -31,9 +31,14 @@ parser.add_argument('--training_model', '-m',
                     help='if you have a custom tensorflow model for the classifier, specify it here.')
 parser.add_argument('--cicd ', action='store_true',
                     help='sets paths, envs, etc, to appropriate values for ci')
+parser.add_argument('--kahypar', default='./core/test.ini',
+                    help='kahypar config file.')
+parser.add_argument('--lsoracle_exe', default='./build/core/lsoracle',
+                    help='LSOracle executable.')
+parser.add_argument('--abc_exe', default='abc',
+                    help='abc executable.')
 args = parser.parse_args()
 
-lstools_path = os.path.abspath('./build/core')
 training_file = os.path.abspath(args.training_model)
 unit_path = os.path.abspath(args.unit_test_directory)
 test_path = os.path.abspath(args.test_directory)
@@ -41,7 +46,6 @@ test_path = os.path.abspath(args.test_directory)
 #configure logging
 timestamp = datetime.now()
 timestamp_format = timestamp.strftime('%Y%m%d%H%M%S')
-
 log_level = 'WARNING'
 
 if args.verbose is None:
@@ -60,89 +64,87 @@ else:
 #Define our function to call the lstools executable
 def optimize(filename, mode, part_num, suffix):
     opt_file = filename + suffix + '.v'
-    cmd = ['./lsoracle','-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + '; ' + mode + ' -o ' + opt_file + ';']
+    cmd = [args.lsoracle_exe,'-c', 'read_aig ' + filename + '; partitioning ' + str(part_num) + ' -c ' + args.kahypar + '; ' + mode + ' -o ' + opt_file + ';']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout, encoding="utf-8").splitlines()
-    string_stderr = str(stderr)
-    if 'None' not in string_stderr:
-        logging.warning(string_stderr)
+    logging.debug(str(stdout, encoding="utf-8"))
+    if stderr is not None:
+        logging.error(str(stderr, encoding="utf-8"))
     return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
     new_file = filename + '.v'
     opt_file = filename + suffix + '.v'
     #need to create verilog file to compare to
-    cmd = ['./lsoracle','-c', 'read_aig ' + curr_file + '; write_verilog ' + new_file + ';']
+    cmd = [args.lsoracle_exe, '-c', 'read_aig ' + curr_file + '; write_verilog ' + new_file + ';']
     subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     #use cec to compare the pre and post optimization files
-    cmd = ['abc', '-c', 'cec -n ' + new_file +' '+ opt_file + ';']
+    cmd = [args.abc_exe, '-c', 'cec -n ' + new_file +' '+ opt_file + ';']
     abc_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     abc_stdout, abc_stderr = abc_process.communicate()
-    print(abc_stdout)
-    if "None" not in str(abc_stderr):
-        logging.warning(str(abc_stderr))
     intermediate_string = str(abc_stdout, encoding="utf-8")
+    logging.debug(intermediate_string)
+    if abc_stderr is not None:
+        logging.error(str(abc_stderr, encoding="utf-8"))
     string_abc = intermediate_string.splitlines()
-    print("str_abc \n")
-    print(string_abc[-1])
     return string_abc[-1]
 
 #Begin tests
-print('LSOracle test suite ' + str(timestamp))
+logging.info('LSOracle test suite')
 #End to end tests
 #Grab my test files
 test_path_glob = test_path + '/*.aig'
-print('\nEnd to end tests: ')
+logging.info('End to end tests:')
 logging.info('Test path: %s', test_path)
 files = glob.glob(test_path_glob)
-logging.debug("List of test files: ")
-logging.debug(files)
+logging.debug("List of test files: " + ", ".join(files))
 #Actual testing
 #we'll have to do some more thinking about what a good end to end test looks like.  For now I'm going to optimize a couple benchmarks
 #using aig, mig, mixed, and brute force, and report those.  I'll have a failure message if our method is slower than
 #both mig and aig.  It ought to, at least, be between them.
 for curr_file in files:
-    print('\n' + curr_file)
-    os.chdir(lstools_path)
+    logging.info(curr_file)
 
     #report statistics
-    cmd = ['./lsoracle','-c', 'read_aig ' + curr_file + '; ps -a;']
+    cmd = [args.lsoracle_exe,'-c', 'read_aig ' + curr_file + '; ps -a;']
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout, encoding='utf-8')
-    print(string_stdout)
+    logging.debug(string_stdout)
+    if stderr is not None:
+        logging.error(str(stderr, encoding='utf-8'))
     #calculate number of nodes
     unoptimized_size = float(string_stdout.splitlines()[1][7:string_stdout.find('\n')])
     num_part = math.ceil(unoptimized_size / 300)
-    print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
+    logging.info('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
 
     #mixed synthesis with classifier
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
-    print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
+    logging.info('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
     abcout = compare(curr_file, '_mixed_out')
     assert('Networks are equivalent' in abcout)
 
     #Brute Force
     cmdstr = 'optimization'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
-    print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
+    logging.info('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
     abcout = compare(curr_file, '_brute_out')
     assert('Networks are equivalent' in abcout)
 
     #AIG only
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
-    print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
+    logging.info('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
     abcout = compare(curr_file, '_aig_out')
     assert('Networks are equivalent' in abcout)
 
     #MIG only
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
-    print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))
+    logging.info('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))
     abcout = compare(curr_file, '_mig_out')
     assert('Networks are equivalent' in abcout)
 
@@ -150,13 +152,10 @@ for curr_file in files:
 
 #unit tests.  This is a stub.
 #Grab my test files
-print('\nUnit tests:')
+logging.info('\nUnit tests:')
 unit_path_glob = unit_path + '/*.aig'
 logging.info('Unit tests\n')
 logging.info('Test path: %s', unit_path)
 files = glob.glob(unit_path_glob)
 logging.debug("List of test files: ")
-logging.debug(files)
-for curr_file in files:
-    print(curr_file + '\n')
-    os.chdir(lstools_path)
+logging.debug(", ".join(files))
