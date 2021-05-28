@@ -4,9 +4,60 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build LSOracle ${{ matrix.config.cc }}
-    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
+    name: Build LSOracle ${{ matrix.config.name }} ${{ matrix.config.image }}
+    container: ghcr.io/lnis-uofu/lsoracle-build:${{ matrix.config.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: gcc-8
+            cc: gcc-8
+            cxx: g++-8
+            image: groovy
+            ccache: true
+          - name: gcc-9
+            cc: gcc-9
+            cxx: g++-9
+            image: groovy
+            ccache: true
+          - name: gcc-10
+            cc: gcc-10
+            cxx: g++-10
+            image: groovy
+            ccache: true
+          - name: clang-8
+            cc: clang-8
+            cxx: clang++-8
+            image: groovy
+            ccache: true
+          - name: clang-9
+            cc: clang-9
+            cxx: clang++-9
+            image: groovy
+            ccache: true
+          - name: clang-10
+            cc: clang-10
+            cxx: clang++-10
+            image: groovy
+            ccache: true
+          - name: clang-11
+            cc: clang-11
+            cxx: clang++-11
+            image: groovy
+            ccache: true
+          - name: gcc-8
+            cc: /opt/rh/devtoolset-8/root/usr/bin/gcc
+            cxx: /opt/rh/devtoolset-8/root/usr/bin/g++
+            image: centos7-gcc8
+            ccache: false
+          - name: clang-7
+            cc: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang
+            cxx: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang++
+            image: centos7-gcc8
+            ccache: false
     env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
       CCACHE_MAXSIZE: "400M"
@@ -17,19 +68,26 @@ jobs:
         uses: actions/checkout@v2
       - name: Load ccache
         uses: actions/cache@v2
+        if: ${{ matrix.config.ccache }}
         with:
           path: |
             /__w/LSOracle/.ccache
-          key: cicd_testing_${{matrix.config.cc}}
+          key: cicd_testing_${{matrix.config.name}}_${{matrix.config.image}}
+      - name: Zero cache stats
+        if: ${{ matrix.config.ccache }}
+        run: |
+          ccache -z
       - name: Build
         run: |
-          ccache -p
-          ccache -z
           cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
           cmake --build build -j$(nproc)
+      - name: Cache stats
+        if: ${{ matrix.config.ccache }}
+        run: |
           ccache -s
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
+        if: ${{ matrix.config.cc == 'gcc-10' && matrix.config.image == 'groovy' }}
         with:
           name: lsoracle-binary
           path: build/core/lsoracle
@@ -50,7 +108,7 @@ jobs:
       - name: Run tests
         run: |
           chmod +x lsoracle
-          python3 basic_tests.py --cicd --lsoracle_exe ./lsoracle --abc_exe yosys-abc --kahypar core/test.ini -vvv
+          python3 basic_tests.py --cicd --lsoracle_exe ./lsoracle --abc_exe /usr/local/bin/yosys-abc --kahypar core/test.ini -vv
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
