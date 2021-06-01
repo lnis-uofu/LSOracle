@@ -18,6 +18,7 @@ LSOracle can be built on Linux and Mac OS 10.14.  Compilation requires CMake 3.1
 ### Linux
 ```{r, engine='bash', count_lines}
 git clone https://github.com/LNIS-Projects/LSOracle.git
+cd LSOracle
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=RELEASE
@@ -44,12 +45,21 @@ LSOracle is available as a docker image on [Dockerhub](https://hub.docker.com/u/
 [![a video tutorial for LSOracle](http://img.youtube.com/vi/W8SO2rTiLUY/0.jpg)](http://www.youtube.com/watch?v=W8SO2rTiLUY "LSOracle Tutorial")
 
 ```{r, engine='bash', count_lines}
-./lstools                         # run the tool
+build/core/lsoracle               # run the tool
 read my_file.blif                 # read a file in either blif or AIG format (determined by file extension)
 oracle                            # partitions network and optimizes each partition with either AIG or MIG optimization recipes
 write_verilog my_output.v         # outputs the optimized network in Verilog format
 ```
+## Help
 
+```{r, engine='bash', count_lines}
+help				  # Gives a list of commands
+[command] -h			  # Gives more information about the command.
+```
 ## Full Documentation
 
 The LSOracle full documentation is available [here](https://lsoracle.readthedocs.io/en/master/?badge=master)
+
+## Using LSOracle as a Yosys Plugin
+
+Refer to the [LSOracle Plugin Repo](https://github.com/lnis-uofu/LSOracle-Plugin)
