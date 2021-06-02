@@ -71,6 +71,7 @@ def optimize(filename, mode, part_num, suffix):
     logging.debug(str(stdout, encoding="utf-8"))
     if stderr is not None:
         logging.error(str(stderr, encoding="utf-8"))
+    logging.debug(string_stdout[-6])
     return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
