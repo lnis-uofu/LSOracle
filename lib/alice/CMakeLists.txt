@@ -27,6 +27,7 @@ include(AliceTools)
 
 add_subdirectory(lib)
 add_subdirectory(include)
+target_link_libraries(pybind11)
 
 if(ALICE_EXAMPLES)
   add_subdirectory(examples)
@@ -35,4 +36,3 @@ endif()
 if(ALICE_TEST)
   add_subdirectory(test)
 endif()
-

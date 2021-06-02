@@ -38,7 +38,7 @@ enum class StatTag : uint8_t {
 };
 
 
-std::ostream& operator<< (std::ostream& os, StatTag tag) {
+static std::ostream& operator<< (std::ostream& os, StatTag tag) {
   switch (tag) {
     case StatTag::Preprocessing: return os << "preprocessing";
     case StatTag::Coarsening: return os << "coarsening";
@@ -50,8 +50,6 @@ std::ostream& operator<< (std::ostream& os, StatTag tag) {
   }
   return os << static_cast<uint8_t>(tag);
 }
-
-#ifdef GATHER_STATS
 template <class Context>
 class Stats {
   using Log = std::map<std::string, double>;
@@ -86,7 +84,7 @@ class Stats {
   }
 
   void add(const StatTag& tag, const std::string& key, const double& value) {
-    _logs[static_cast<size_t>(tag)][key] = value;
+    _logs[static_cast<size_t>(tag)][key] += value;
   }
 
   Stats & topLevel() {
@@ -131,39 +129,4 @@ class Stats {
   Stats* _parent;
   std::array<Log, static_cast<int>(StatTag::COUNT)> _logs;
 };
-
-#else
-template <class Context>
-class Stats {
-  using Log = std::map<std::string, double>;
-
- public:
-  explicit Stats(const Context&) :
-    _oss() { }
-
-  Stats(const Context&, Stats*) :
-    _oss() { }
-
-  Stats(const Stats&) = delete;
-  Stats& operator= (const Stats&) = delete;
-
-  Stats(Stats&&) = delete;
-  Stats& operator= (Stats&&) = delete;
-
-  template <typename T>
-  KAHYPAR_ATTRIBUTE_ALWAYS_INLINE void set(const StatTag&, const T&, const double&) { }
-
-  template <typename T>
-  KAHYPAR_ATTRIBUTE_ALWAYS_INLINE void add(const StatTag&, const T&, const double&) { }
-
-  Stats & topLevel() { return *this; }
-
-  std::ostringstream & serialize() {
-    return _oss;
-  }
-
- private:
-  std::ostringstream _oss;
-};
-#endif
 }  // namespace kahypar

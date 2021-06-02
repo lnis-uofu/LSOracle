@@ -52,6 +52,8 @@ class AnUnweightedHypergraphFile : public Test {
     _num_hyperedges(0),
     _num_hypernodes(0),
     _hypergraph_type(0),
+    _control_num_hyperedges(4),
+    _control_num_hypernodes(7),
     _control_index_vector({ 0, 2, 6, 9, 12 }),
     _control_edge_vector({ 0, 1, 0, 6, 4, 5, 4, 5, 3, 1, 2, 3 }) { }
 
@@ -63,6 +65,8 @@ class AnUnweightedHypergraphFile : public Test {
   HyperedgeID _num_hyperedges;
   HypernodeID _num_hypernodes;
   int _hypergraph_type;
+  HyperedgeID _control_num_hyperedges;
+  HypernodeID _control_num_hypernodes;
   HyperedgeIndexVector _control_index_vector;
   HyperedgeVector _control_edge_vector;
 };
@@ -232,6 +236,7 @@ class APartitionOfAHypergraph : public Test {
     _context.partition.k = 2;
     _context.partition.epsilon = 0.03;
     _context.partition.objective = Objective::cut;
+    _context.partition.mode = Mode::direct_kway;
     _context.partition.rb_lower_k = 0;
     _context.partition.rb_upper_k = _context.partition.k - 1;
     _context.local_search.algorithm = RefinementAlgorithm::twoway_fm;
@@ -242,6 +247,10 @@ class APartitionOfAHypergraph : public Test {
     _context.initial_partitioning.technique = InitialPartitioningTechnique::flat;
     _context.initial_partitioning.algo = InitialPartitionerAlgorithm::pool;
     _context.initial_partitioning.nruns = 20;
+    _context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
+    _context.initial_partitioning.use_heuristic_prepacking = false;
+    _context.initial_partitioning.enable_early_restart = true;
+    _context.initial_partitioning.enable_late_restart = true;
     _context.initial_partitioning.local_search.algorithm = RefinementAlgorithm::twoway_fm;
     _context.initial_partitioning.local_search.fm.max_number_of_fruitless_moves = 50;
     _context.initial_partitioning.local_search.fm.stopping_rule = RefinementStoppingRule::simple;

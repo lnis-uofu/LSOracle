@@ -29,9 +29,6 @@
 // Use bucket PQ for FM refinement.
 // #define USE_BUCKET_QUEUE
 
-// Gather advanced statistics
-// #define GATHER_STATS
-
 namespace kahypar {
 using HypernodeID = uint32_t;
 using HyperedgeID = uint32_t;
@@ -57,8 +54,6 @@ using NodeID = HypernodeID;
 using EdgeID = HyperedgeID;
 using EdgeWeight = long double;
 using ClusterID = PartitionID;
-using Flow = int32_t;
-using Capacity = int32_t;
 
 using HighResClockTimepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 }  // namespace kahypar

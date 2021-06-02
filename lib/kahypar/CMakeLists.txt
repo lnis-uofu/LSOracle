@@ -7,33 +7,97 @@ set(PROJECT_CONTACT "kahypar@sebastianschlag.de")
 set(PROJECT_URL "http://www.kahypar.org")
 set(PROJECT_DESCRIPTION "KaHyPar: Karlsruhe Hypergraph Partitioning")
 
+set(CMAKE_CXX_STANDARD 17)
+
 include_directories(${PROJECT_SOURCE_DIR})
 
 find_package(Threads REQUIRED)
 message(STATUS "Found Threads: ${CMAKE_THREAD_LIBS_INIT}")
 
-#ensure that gmock is built before tests are executed
-add_subdirectory(external_tools/googletest EXCLUDE_FROM_ALL)
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
+# add third-party algorithms to project
+include_directories(external_tools)
 
-# add third-party maximum flow algorithms to project
-include_directories(external_tools/maximum_flow)
+option(KAHYPAR_USE_MINIMAL_BOOST
+  "Download boost automatically and compile required libraries." OFF)
 
-#option(KAHYPAR_USE_GCOV
-#  "Compile and run tests with gcov for coverage analysis." OFF)
+option(KAHYPAR_USE_GCOV
+  "Compile and run tests with gcov for coverage analysis." OFF)
 
 option(KAHYPAR_DISABLE_ASSERTIONS
   "Disable KaHyPar's internal assertions." OFF)
+
+option(KAHYPAR_USE_STANDARD_ASSERTIONS
+  "Use standard C++ asserts instead of custom assertions." OFF)
+
+option(KAHYPAR_USE_CPPCHECK
+  "Enable static analysis via cppcheck" OFF)
 
 if(KAHYPAR_DISABLE_ASSERTIONS)
   add_compile_definitions(KAHYPAR_DISABLE_ASSERTIONS)
 endif(KAHYPAR_DISABLE_ASSERTIONS)
 
+if(KAHYPAR_USE_STANDARD_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_USE_STANDARD_ASSERTIONS)
+endif(KAHYPAR_USE_STANDARD_ASSERTIONS)
+
+# defintions for heavy asserts
+option(KAHYPAR_ENABLE_HEAVY_DATA_STRUCTURE_ASSERTIONS
+  "Enable costly assertions for data structures." ON)
+
+option(KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS
+  "Enable costly assertions in preprocessing phase." ON)
+
+option(KAHYPAR_ENABLE_HEAVY_COARSENING_ASSERTIONS
+  "Enable costly assertions in coarsening phase." ON)
+
+option(KAHYPAR_ENABLE_HEAVY_INITIAL_PARTITIONING_ASSERTIONS
+  "Enable costly assertions in initial partitioning phase." ON)
+
+option(KAHYPAR_ENABLE_HEAVY_REFINEMENT_ASSERTIONS
+  "Enable costly assertions in refinement phase." ON)
+
+if(KAHYPAR_ENABLE_HEAVY_DATA_STRUCTURE_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_ENABLE_HEAVY_DATA_STRUCTURE_ASSERTIONS)
+endif(KAHYPAR_ENABLE_HEAVY_DATA_STRUCTURE_ASSERTIONS)
+
+if(KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS)
+endif(KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS)
+
+if(KAHYPAR_ENABLE_HEAVY_COARSENING_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_ENABLE_HEAVY_COARSENING_ASSERTIONS)
+endif(KAHYPAR_ENABLE_HEAVY_COARSENING_ASSERTIONS)
+
+if(KAHYPAR_ENABLE_HEAVY_INITIAL_PARTITIONING_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_ENABLE_HEAVY_INITIAL_PARTITIONING_ASSERTIONS)
+endif(KAHYPAR_ENABLE_HEAVY_INITIAL_PARTITIONING_ASSERTIONS)
+
+if(KAHYPAR_ENABLE_HEAVY_REFINEMENT_ASSERTIONS)
+  add_compile_definitions(KAHYPAR_ENABLE_HEAVY_REFINEMENT_ASSERTIONS)
+endif(KAHYPAR_ENABLE_HEAVY_REFINEMENT_ASSERTIONS)
+
+# # Remove dependency of "install" target to the "all" target
+# set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
+
+if(KAHYPAR_USE_CPPCHECK)
+  find_program(CMAKE_CXX_CPPCHECK cppcheck)
+  if(CMAKE_CXX_CPPCHECK)
+    list(
+      APPEND CMAKE_CXX_CPPCHECK
+      "--enable=all"
+      "--inconclusive"
+      "--force"
+      "--inline-suppr"
+      )
+  endif(CMAKE_CXX_CPPCHECK)
+endif(KAHYPAR_USE_CPPCHECK)
+
+#find_package(Python ${PY_VERSION} REQUIRED)
+#find_package(PythonLibs ${PY_VERSION} REQUIRED)
 
 if(KAHYPAR_USE_GCOV)
-   #include(CodeCoverage)
-   #setup_target_for_coverage(${PROJECT_NAME}_coverage tests coverage)
+   include(CodeCoverage)
+   setup_target_for_coverage(${PROJECT_NAME}_coverage tests coverage)
 
   # find programs
   find_program(GENHTML genhtml)
@@ -44,9 +108,9 @@ if(KAHYPAR_USE_GCOV)
   endif()
 
   # add coverage anaylsis compile and link flags
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
-  #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov")
 
   # add cached variable containing parameters for lcov/genhtml
   set(LCOV_FLAGS "" CACHE STRING "parameters for lcov")
@@ -59,10 +123,10 @@ if(KAHYPAR_USE_GCOV)
     COMMENT "Resetting code coverage counters")
 
   # custom lcov target to run tests
-  #add_custom_target(lcov-runtests
-  #  COMMAND make
-  #  DEPENDS lcov-reset
-  #  COMMENT "Running all unit tests")
+  add_custom_target(lcov-runtests
+    COMMAND make
+    DEPENDS lcov-reset
+    COMMENT "Running all unit tests")
 
   # get git version description
   execute_process(COMMAND git describe --tags
@@ -71,18 +135,18 @@ if(KAHYPAR_USE_GCOV)
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # command sequence to gather, clean and generate HTML coverage report
-  #add_custom_target(lcov-html
-  #  COMMAND ${LCOV} -q --directory . --capture --output-file lcov.info
-  #  COMMAND ${LCOV} -q --remove lcov.info '/usr/*' '*/extlib/*' ${LCOV_FLAGS} --output-file lcov-clean.info
-  #  COMMAND ${GENHTML} -q -o coverage --title "KaHyPar ${GITDESC}" --prefix ${PROJECT_SOURCE_DIR} ${GENHTML_FLAGS} lcov-clean.info
-  #  DEPENDS lcov-runtests
-  #  COMMENT "Capturing code coverage counters and create HTML coverage report"
-  #  WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  add_custom_target(lcov-html
+    COMMAND ${LCOV} -q --directory . --capture --output-file lcov.info
+    COMMAND ${LCOV} -q --remove lcov.info '/usr/*' '*/extlib/*' ${LCOV_FLAGS} --output-file lcov-clean.info
+    COMMAND ${GENHTML} -q -o coverage --title "KaHyPar ${GITDESC}" --prefix ${PROJECT_SOURCE_DIR} ${GENHTML_FLAGS} lcov-clean.info
+    DEPENDS lcov-runtests
+    COMMENT "Capturing code coverage counters and create HTML coverage report"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
   # top-level target to run tests and generate coverage report
-  #add_custom_target(test-coverage
-  #  COMMENT "Generate HTML coverage report"
-  #  DEPENDS lcov-html)
+  add_custom_target(test-coverage
+    COMMENT "Generate HTML coverage report"
+    DEPENDS lcov-html)
 
 endif(KAHYPAR_USE_GCOV)
 
@@ -92,6 +156,38 @@ file(GLOB MINI_BOOST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/program_options/src/*.c
 add_library(mini_boost STATIC ${MINI_BOOST_SOURCES})
 set_target_properties(mini_boost PROPERTIES LINKER_LANGUAGE CXX)
 set(Boost_LIBRARIES mini_boost)
+
+if (FALSE)
+if (KAHYPAR_USE_MINIMAL_BOOST)
+  execute_process(COMMAND cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/download_boost.cmake)
+
+  include_directories(SYSTEM ${CMAKE_CURRENT_BINARY_DIR}/external_tools/boost/)
+
+  # glob boost sources
+  file(GLOB MINI_BOOST_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/external_tools/boost/libs/program_options/src/*.cpp)
+
+  add_library(mini_boost STATIC ${MINI_BOOST_SOURCES})
+  set_target_properties(mini_boost PROPERTIES LINKER_LANGUAGE CXX)
+  set(Boost_LIBRARIES mini_boost)
+  set(Boost_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/external_tools/boost/boost/)
+  include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+else()
+  find_package(Boost 1.69 REQUIRED COMPONENTS program_options)
+  if(Boost_FOUND)
+    include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+    set(KAHYPAR_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${KAHYPAR_INCLUDE_DIRS})
+    set(KAHYPAR_LINK_LIBRARIES ${Boost_LIBRARIES} ${KAHYPAR_LINK_LIBRARIES})
+    message(STATUS "Boost Include: ${Boost_INCLUDE_DIRS}")
+    message(STATUS "Boost Library Dirs: ${Boost_LIBRARY_DIRS}")
+    message(STATUS "Boost Libraries: ${Boost_LIBRARIES}")
+    if(WIN32)
+      add_definitions(-DBOOST_ALL_NO_LIB)
+      add_definitions(-DBOOST_PROGRAM_OPTIONS_DYN_LINK=1)
+    endif()
+
+  endif()
+endif()
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set( CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -109,21 +205,23 @@ WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
+if (FALSE)
 find_package(Git)
 
-#include(GetGitRevisionDescription)
-#get_git_head_revision(KAHYPAR_VERSION_GIT_REFSPEC KAHYPAR_VERSION_GIT_SHA1)
-#if(KAHYPAR_VERSION_GIT_REFSPEC)
-#  message(STATUS "Detected git refspec ${KAHYPAR_VERSION_GIT_REFSPEC} sha ${KAHYPAR_VERSION_GIT_SHA1}")
-#  configure_file(${PROJECT_SOURCE_DIR}/kahypar/git_revision.h.in ${PROJECT_BINARY_DIR}/kahypar/git_revision.h)
-#  # add the binary tree to the search path for include files so that we will find GitRevision.h
-#  include_directories(${PROJECT_BINARY_DIR})
-#else(KAHYPAR_VERSION_GIT_REFSPEC)
-#  #we do need the sha hash to log with build version was used during experiments
-#  message(STATUS "No git refspec detected")
-#  configure_file(${PROJECT_SOURCE_DIR}/kahypar/git_revision.h.in ${PROJECT_BINARY_DIR}/kahypar/git_revision.h)
-#  include_directories(${PROJECT_BINARY_DIR})
-#endif(KAHYPAR_VERSION_GIT_REFSPEC)
+include(GetGitRevisionDescription)
+get_git_head_revision(KAHYPAR_VERSION_GIT_REFSPEC KAHYPAR_VERSION_GIT_SHA1)
+if(KAHYPAR_VERSION_GIT_REFSPEC)
+  message(STATUS "Detected git refspec ${KAHYPAR_VERSION_GIT_REFSPEC} sha ${KAHYPAR_VERSION_GIT_SHA1}")
+  configure_file(${PROJECT_SOURCE_DIR}/kahypar/git_revision.h.in ${PROJECT_BINARY_DIR}/kahypar/git_revision.h)
+  # add the binary tree to the search path for include files so that we will find GitRevision.h
+  include_directories(${PROJECT_BINARY_DIR})
+else(KAHYPAR_VERSION_GIT_REFSPEC)
+  # we do need the sha hash to log with build version was used during experiments
+  message(STATUS "No git refspec detected")
+  configure_file(${PROJECT_SOURCE_DIR}/kahypar/git_revision.h.in ${PROJECT_BINARY_DIR}/kahypar/git_revision.h)
+  include_directories(${PROJECT_BINARY_DIR})
+endif(KAHYPAR_VERSION_GIT_REFSPEC)
+endif()
 
 add_custom_target(AnalyzeModifiedSources  perl "${PROJECT_SOURCE_DIR}/codestyle/analyze-source.pl" "-w")
 add_custom_target(AnalyzeAllSources  perl "${PROJECT_SOURCE_DIR}/codestyle/analyze-source.pl" "-aw")
@@ -139,16 +237,18 @@ if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wredundant-decls")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Winit-self")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnoexcept")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnoexcept")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPARANOID ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-function")
   endif()
 
-#  include(CheckSSE4_2)
-#  if( BUILTIN_POPCNT )
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
-#  endif()
+  if (FALSE)
+  include(CheckSSE4_2)
+  if( BUILTIN_POPCNT )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2")
+  endif()
+  endif()
 
   include(CheckCXXCompilerFlag)
   check_cxx_compiler_flag(-mcrc32 KAHYPAR_HAS_CRC32)
@@ -164,12 +264,19 @@ if(NOT MSVC)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -mtune=native -march=native -g3 ")
 
+if(DEFINED ENV{TRAVIS_ENV})
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mno-avx")
+endif()
+
   if(ENABLE_PROFILE MATCHES ON)
     message(STATUS "Profiling activated")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_PROFILE")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g3 -DENABLE_PROFILE -fno-omit-frame-pointer")
     set(PROFILE_FLAGS "-lprofiler")
   endif()
+
+  # disable warnings for the register keyword which is deprecated but used in the python 2.7 bindings
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
 
 elseif(MSVC)
   string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -223,9 +330,10 @@ message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 
-#include(gmock)
-#enable_testing()
-#add_subdirectory(kahypar/application)
+include(cmake/modules/gmock.cmake)
+# enable_testing()
+add_subdirectory(kahypar/application)
 add_subdirectory(tools)
 add_subdirectory(lib)
 #add_subdirectory(tests)
+add_subdirectory(python)

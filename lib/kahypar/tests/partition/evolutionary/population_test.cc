@@ -42,7 +42,7 @@ class APopulation : public Test {
     population(),
     context(),
     hypergraph(8, 5, HyperedgeIndexVector { 0, 2, 4, 7, 10,  /*sentinel*/ 15 },
-              HyperedgeVector { 0, 1, 4, 5, 1, 5, 6, 3, 6, 7, 0, 1, 2, 4, 5 }) { 
+               HyperedgeVector { 0, 1, 4, 5, 1, 5, 6, 3, 6, 7, 0, 1, 2, 4, 5 }) {
     hypergraph.changeK(4);
     context.partition.quiet_mode = true;
   }
@@ -53,11 +53,12 @@ class APopulation : public Test {
 };
 
 TEST_F(APopulation, IsCorrectlyGeneratingIndividuals) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 8;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::cut;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.local_search.algorithm = RefinementAlgorithm::kway_fm;
   context.partition.graph_filename = "../../../../tests/partition/evolutionary/TestHypergraph";
   Hypergraph hypergraph(
@@ -70,11 +71,12 @@ TEST_F(APopulation, IsCorrectlyGeneratingIndividuals) {
   ASSERT_EQ(population.size(), 2);
 }
 TEST_F(APopulation, IsCorrectlyReplacingWithDiverseStrategy) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 4;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::cut;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.local_search.algorithm = RefinementAlgorithm::kway_fm;
   context.evolutionary.replace_strategy = EvoReplaceStrategy::diverse;
   population.generateIndividual(hypergraph, context);
@@ -139,11 +141,12 @@ TEST_F(APopulation, IsCorrectlyReplacingWithDiverseStrategy) {
   ASSERT_EQ(population.best(), 1);
 }
 TEST_F(APopulation, IsCorrectlyReplacingWithStrongDiverseStrategy) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 4;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::km1;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.local_search.algorithm = RefinementAlgorithm::kway_fm;
   context.evolutionary.replace_strategy = EvoReplaceStrategy::strong_diverse;
   population.generateIndividual(hypergraph, context);
@@ -237,11 +240,12 @@ TEST_F(APopulation, IsCorrectlyReplacingWithStrongDiverseStrategy) {
   ASSERT_EQ(population.difference(ind1, 0, true), 0);
 }
 TEST_F(APopulation, IsPerformingTournamentSelection) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 4;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::km1;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.local_search.algorithm = RefinementAlgorithm::kway_fm;
   context.evolutionary.replace_strategy = EvoReplaceStrategy::diverse;
   population.generateIndividual(hypergraph, context);
