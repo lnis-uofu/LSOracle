@@ -1,0 +1,12 @@
+*_lsoracle.*
+*_abc.*
+*_unoptimized.*
+*.mapped.v
+*.aig
+*.report
+*.everything
+*.tsv
+*.png
+*.pdf
+*.log
+*.rtl

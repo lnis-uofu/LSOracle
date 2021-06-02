@@ -1,0 +1,20 @@
+strash
+balance
+resub -K 6
+rewrite
+resub -K 6 -N 2
+refactor
+resub -K 8
+balance
+resub -K 8 -N 2
+rewrite
+resub -K 10
+rewrite -z
+resub -K 10 -N 2
+balance
+resub -K 12
+refactor -z
+resub -K 12 -N 2
+rewrite -z
+balance
+print_stats

@@ -1,0 +1,3 @@
+for i in {s27,s208,s298,s344,s349,s382,s386,s400,s420,s444,s499,s510,s526,s635,s641,s713,s820,s832,s838,s938,s953,s967,s991,s1196,s1238,s1269,s1423,s1488,s1494,s1512,s3271,s3330,s3384,s4863,s5378,s6669,s9234,s13207,s15850,s35932,s38417,s38584}; do
+    wget https://s2.smu.edu/~dhoungninou/Benchmarks/ISCAS89/VERILOG/$i.v;
+done
