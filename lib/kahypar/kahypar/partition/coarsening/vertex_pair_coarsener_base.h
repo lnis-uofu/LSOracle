@@ -35,18 +35,15 @@
 #include "kahypar/partition/context.h"
 #include "kahypar/partition/metrics.h"
 #include "kahypar/partition/refinement/i_refiner.h"
+#include "kahypar/utils/progress_bar.h"
 #include "kahypar/utils/randomize.h"
+#include "kahypar/utils/time_limit.h"
 
 namespace kahypar {
 template <class PrioQueue = ds::BinaryMaxHeap<HypernodeID, RatingType> >
 class VertexPairCoarsenerBase : public CoarsenerBase {
  private:
   static constexpr bool debug = false;
-
- protected:
-  using CoarsenerBase::performLocalSearch;
-  using CoarsenerBase::initializeRefiner;
-  using CoarsenerBase::performContraction;
 
  public:
   VertexPairCoarsenerBase(Hypergraph& hypergraph, const Context& context,
@@ -74,51 +71,66 @@ class VertexPairCoarsenerBase : public CoarsenerBase {
     switch (_context.partition.objective) {
       case Objective::cut:
         initial_objective = current_metrics.cut;
-        _context.stats.set(StatTag::InitialPartitioning, "inititalCut", initial_objective);
         break;
       case Objective::km1:
         initial_objective = current_metrics.km1;
-        _context.stats.set(StatTag::InitialPartitioning, "inititalKm1", initial_objective);
         break;
       default:
         LOG << "Unknown Objective";
         exit(-1);
     }
 
-    _context.stats.set(StatTag::InitialPartitioning, "initialImbalance", current_metrics.imbalance);
+    if (_context.type == ContextType::main) {
+      _context.stats.set(StatTag::InitialPartitioning, "initialCut", current_metrics.cut);
+      _context.stats.set(StatTag::InitialPartitioning, "initialKm1", current_metrics.km1);
+      _context.stats.set(StatTag::InitialPartitioning, "initialImbalance",
+                         current_metrics.imbalance);
+    }
 
-    initializeRefiner(refiner);
+    CoarsenerBase::initializeRefiner(refiner);
     std::vector<HypernodeID> refinement_nodes(2, 0);
     UncontractionGainChanges changes;
     changes.representative.push_back(0);
     changes.contraction_partner.push_back(0);
-    while (!_history.empty()) {
-      restoreParallelHyperedges();
-      restoreSingleNodeHyperedges();
 
-      DBG << "Uncontracting: (" << _history.back().contraction_memento.u << ","
-          << _history.back().contraction_memento.v << ")";
+    ProgressBar uncontraction_progress_bar(
+      _hg.initialNumNodes(), current_metrics.getMetric(
+        _context.partition.mode, _context.partition.objective),
+      _context.partition.verbose_output && _context.type == ContextType::main);
+    uncontraction_progress_bar += _hg.currentNumNodes();
+    while (!_history.empty()) {
+      if (time_limit::isSoftTimeLimitExceeded(_context, _history.size())) {
+        /*
+         * There are two ways to implement this time limit.
+         * 1) skip refinement but perform full uncontractions, including updates. This can be slow
+         * 2) only perform the partition projection of the uncontractions. This leaves the dynamic hypergraph in a "broken" state, i.e.
+         * hyperedges are still as in the contracted hypergraph, whereas vertices are unpacked and activated.
+         *
+         * We implement 2) because all considered output measures are either already maintained (i.e. part weights and imbalance)
+         * or can be computed on the state of hyperedges in the contracted hypergraph.
+         * This means, this time limit should not be used to
+         */
+          while (!_history.empty()) {
+            _hg.restoreMemento(_history.back().contraction_memento);
+            _history.pop_back();
+          }
+        break;
+      }
 
       refinement_nodes.clear();
       refinement_nodes.push_back(_history.back().contraction_memento.u);
       refinement_nodes.push_back(_history.back().contraction_memento.v);
 
-      if (_hg.currentNumNodes() > _max_hn_weights.back().num_nodes) {
-        _max_hn_weights.pop_back();
-      }
+      uncontract(changes);
 
-      if (_context.local_search.algorithm == RefinementAlgorithm::twoway_fm ||
-          _context.local_search.algorithm == RefinementAlgorithm::twoway_fm_flow) {
-        _hg.uncontract(_history.back().contraction_memento, changes,
-                       meta::Int2Type<static_cast<int>(RefinementAlgorithm::twoway_fm)>());
-      } else {
-        _hg.uncontract(_history.back().contraction_memento);
-      }
-
-      performLocalSearch(refiner, refinement_nodes, current_metrics, changes);
+      CoarsenerBase::performLocalSearch(refiner, refinement_nodes, current_metrics, changes);
       changes.representative[0] = 0;
       changes.contraction_partner[0] = 0;
-      _history.pop_back();
+
+      // Update Progress Bar
+      uncontraction_progress_bar += 1;
+      uncontraction_progress_bar.setObjective(current_metrics.getMetric(
+        _context.partition.mode, _context.partition.objective));
     }
 
     // This currently cannot be guaranteed for RB-partitioning and k != 2^x, since it might be
@@ -127,12 +139,12 @@ class VertexPairCoarsenerBase : public CoarsenerBase {
     // ASSERT(current_imbalance <= _context.partition.epsilon,
     //        "balance_constraint is violated after uncontraction:" << metrics::imbalance(_hg, _context)
     //        << ">" << __context.partition.epsilon);
-    _context.stats.set(StatTag::LocalSearch, "finalImbalance", current_metrics.imbalance);
+    // _context.stats.set(StatTag::LocalSearch, "finalImbalance", current_metrics.imbalance);
 
     bool improvement_found = false;
     switch (_context.partition.objective) {
       case Objective::cut:
-        _context.stats.set(StatTag::LocalSearch, "finalCut", current_metrics.cut);
+        // _context.stats.set(StatTag::LocalSearch, "finalCut", current_metrics.cut);
         improvement_found = current_metrics.cut < initial_objective;
         break;
       case Objective::km1:
@@ -145,7 +157,7 @@ class VertexPairCoarsenerBase : public CoarsenerBase {
           // we explicitly calculated the metric after uncoarsening.
           current_metrics.km1 = metrics::km1(_hg);
         }
-        _context.stats.set(StatTag::LocalSearch, "finalKm1", current_metrics.km1);
+        // _context.stats.set(StatTag::LocalSearch, "finalKm1", current_metrics.km1);
         improvement_found = current_metrics.km1 < initial_objective;
         break;
       default:
@@ -154,6 +166,26 @@ class VertexPairCoarsenerBase : public CoarsenerBase {
     }
 
     return improvement_found;
+  }
+
+  void uncontract(UncontractionGainChanges& changes) {
+    DBG << "Uncontracting: (" << _history.back().contraction_memento.u << ","
+        << _history.back().contraction_memento.v << ")";
+    restoreParallelHyperedges();
+    restoreSingleNodeHyperedges();
+
+    if (_hg.currentNumNodes() > _max_hn_weights.back().num_nodes) {
+      _max_hn_weights.pop_back();
+    }
+
+    if (_context.local_search.algorithm == RefinementAlgorithm::twoway_fm ||
+        _context.local_search.algorithm == RefinementAlgorithm::twoway_fm_hyperflow_cutter) {
+      _hg.uncontract(_history.back().contraction_memento, changes,
+                     meta::Int2Type<static_cast<int>(RefinementAlgorithm::twoway_fm)>());
+    } else {
+      _hg.uncontract(_history.back().contraction_memento);
+    }
+    _history.pop_back();
   }
 
   template <typename Rater>

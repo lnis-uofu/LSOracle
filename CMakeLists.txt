@@ -36,13 +36,6 @@ add_subdirectory(core)
 install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-)
-# find_package(GTest REQUIRED)
-# include_directories(${GTEST_INCLUDE_DIR})
 enable_testing()
 add_executable(unit_tests tests/basic.cpp)
 target_link_libraries(unit_tests gtest_main)

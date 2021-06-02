@@ -49,11 +49,12 @@ class AMutation : public Test {
 };
 
 TEST_F(AMutation, IsPerformingVcyclesCorrectly) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 2;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::cut;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.partition_evolutionary = true;
   context.local_search.algorithm = RefinementAlgorithm::do_nothing;
   context.evolutionary.replace_strategy = EvoReplaceStrategy::diverse;
@@ -74,11 +75,12 @@ TEST_F(AMutation, IsPerformingVcyclesCorrectly) {
   ASSERT_EQ(ind2.partition().at(3), ind2.partition().at(5));
 }
 TEST_F(AMutation, IsPerformingVcyclesNewIPCorrectly) {
-  parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+  parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
   context.partition.k = 2;
   context.partition.epsilon = 0.03;
   context.partition.objective = Objective::cut;
   context.partition.mode = Mode::direct_kway;
+  context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
   context.local_search.algorithm = RefinementAlgorithm::do_nothing;
   context.evolutionary.replace_strategy = EvoReplaceStrategy::diverse;
   context.evolutionary.mutate_strategy = EvoMutateStrategy::new_initial_partitioning_vcycle;

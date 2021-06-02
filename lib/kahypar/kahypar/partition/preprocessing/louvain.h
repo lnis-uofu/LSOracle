@@ -138,11 +138,6 @@ class Louvain {
     return cur_quality;
   }
 
-
-  Graph getGraph() {
-    return _graph_hierarchy[0];
-  }
-
   ClusterID clusterID(const NodeID node) const {
     return _graph_hierarchy[0].clusterID(node);
   }
@@ -257,10 +252,10 @@ class Louvain {
 namespace internal {
 inline std::vector<ClusterID> detectCommunities(const Hypergraph& hypergraph,
                                                 const Context& context) {
-  const bool verbose_output = (context.type == ContextType::main &&
-                               context.partition.verbose_output) ||
-                              (context.type == ContextType::initial_partitioning &&
-                               context.initial_partitioning.verbose_output);
+  const bool verbose_output = !context.partition.quiet_mode && ((context.type == ContextType::main &&
+                                                                 context.partition.verbose_output) ||
+                                                                (context.type == ContextType::initial_partitioning &&
+                                                                 context.initial_partitioning.verbose_output));
   if (verbose_output) {
     LOG << "Performing community detection:";
   }
@@ -272,8 +267,10 @@ inline std::vector<ClusterID> detectCommunities(const Hypergraph& hypergraph,
   std::chrono::duration<double> elapsed_seconds = end - start;
   Timer::instance().add(context, Timepoint::pre_community_detection,
                         std::chrono::duration<double>(end - start).count());
-  context.stats.set(StatTag::Preprocessing, "Communities", louvain.numCommunities());
-  context.stats.set(StatTag::Preprocessing, "Modularity", quality);
+  if (context.type == ContextType::main) {
+    context.stats.set(StatTag::Preprocessing, "Communities", louvain.numCommunities());
+    context.stats.set(StatTag::Preprocessing, "Modularity", quality);
+  }
 
   if (verbose_output) {
     LOG << "  # communities         =" << louvain.numCommunities();

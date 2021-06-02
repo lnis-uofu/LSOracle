@@ -47,6 +47,8 @@
 #define QUOTE(name) #name
 #define STR(macro) QUOTE(macro)
 
+#define  JOIN(a, b)       a ## b
+
 // Logging inspired by https://github.com/thrill/thrill/blob/master/thrill/common/logger.hpp
 /*!
 
@@ -148,7 +150,11 @@ debug output will disappear.
 #endif
 
 #ifdef KAHYPAR_USE_ASSERTIONS
-  #define ASSERT_2(cond, msg)                 \
+#ifdef KAHYPAR_USE_STANDARD_ASSERTIONS
+#define ASSERT_2(cond, msg) \
+  assert(cond)
+#else
+#define ASSERT_2(cond, msg)                   \
   do {                                        \
     if (!(cond)) {                            \
       DBG1 << "Assertion `" #cond "` failed:" \
@@ -156,6 +162,7 @@ debug output will disappear.
       std::abort();                           \
     }                                         \
   } while (0)
+#endif
 
   #define ASSERT_1(cond) ASSERT_2(cond, "")
 #else
@@ -168,7 +175,11 @@ debug output will disappear.
 #define ASSERT(...) EXPAND(ASSERT_EVAL(EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
 
 // *** an always-on ASSERT
-#define ALWAYS_ASSERT(cond, msg)              \
+#ifdef KAHYPAR_USE_STANDARD_ASSERTIONS
+#define ALWAYS_ASSERT_2(cond, msg) \
+  assert(cond)
+# else
+#define ALWAYS_ASSERT_2(cond, msg)            \
   do {                                        \
     if (!(cond)) {                            \
       DBG1 << "Assertion `" #cond "` failed:" \
@@ -176,6 +187,78 @@ debug output will disappear.
       std::abort();                           \
     }                                         \
   } while (0)
+#endif
+
+#define ALWAYS_ASSERT_1(cond) ALWAYS_ASSERT_2(cond, "")
+
+#define ALWAYS_ASSERT_(N) ALWAYS_ASSERT_ ## N
+#define ALWAYS_ASSERT_EVAL(N) ALWAYS_ASSERT_(N)
+#define ALWAYS_ASSERT(...) EXPAND(ALWAYS_ASSERT_EVAL(EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
+
+// definitions for heavy assertions
+#define HEAVY_ASSERT0(cond) \
+  !(enable_heavy_assert) ? (void)0 : [&]() { ASSERT(cond); } ()
+#define HEAVY_ASSERT1(cond, msg) \
+  !(enable_heavy_assert) ? (void)0 : [&]() { ASSERT(cond, msg); } ()
+
+#ifdef KAHYPAR_ENABLE_HEAVY_DATA_STRUCTURE_ASSERTIONS
+  #define HEAVY_DATA_STRUCTURE_ASSERT_1(cond) ASSERT(cond)
+  #define HEAVY_DATA_STRUCTURE_ASSERT_2(cond, msg) ASSERT(cond, msg)
+#else
+  #define HEAVY_DATA_STRUCTURE_ASSERT_1(cond) HEAVY_ASSERT0(cond)
+  #define HEAVY_DATA_STRUCTURE_ASSERT_2(cond, msg) HEAVY_ASSERT1(cond, msg)
+#endif
+
+
+#ifdef KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS
+  #define HEAVY_PREPROCESSING_ASSERT_1(cond) ASSERT(cond)
+  #define HEAVY_PREPROCESSING_ASSERT_2(cond, msg) ASSERT(cond, msg)
+#else
+  #define HEAVY_PREPROCESSING_ASSERT_1(cond) HEAVY_ASSERT0(cond)
+  #define HEAVY_PREPROCESSING_ASSERT_2(cond, msg) HEAVY_ASSERT1(cond, msg)
+#endif
+
+#ifdef KAHYPAR_ENABLE_HEAVY_COARSENING_ASSERTIONS
+  #define HEAVY_COARSENING_ASSERT_1(cond) ASSERT(cond)
+  #define HEAVY_COARSENING_ASSERT_2(cond, msg) ASSERT(cond, msg)
+#else
+  #define HEAVY_COARSENING_ASSERT_1(cond) HEAVY_ASSERT0(cond)
+  #define HEAVY_COARSENING_ASSERT_2(cond, msg) HEAVY_ASSERT1(cond, msg)
+#endif
+
+#ifdef KAHYPAR_ENABLE_HEAVY_INITIAL_PARTITIONING_ASSERTIONS
+  #define HEAVY_INITIAL_PARTITIONING_ASSERT_1(cond) ASSERT(cond)
+  #define HEAVY_INITIAL_PARTITIONING_ASSERT_2(cond, msg) ASSERT(cond, msg)
+#else
+  #define HEAVY_INITIAL_PARTITIONING_ASSERT_1(cond) HEAVY_ASSERT0(cond)
+  #define HEAVY_INITIAL_PARTITIONING_ASSERT_2(cond, msg) HEAVY_ASSERT1(cond, msg)
+#endif
+
+#ifdef KAHYPAR_ENABLE_HEAVY_REFINEMENT_ASSERTIONS
+  #define HEAVY_REFINEMENT_ASSERT_1(cond) ASSERT(cond)
+  #define HEAVY_REFINEMENT_ASSERT_2(cond, msg) ASSERT(cond, msg)
+#else
+  #define HEAVY_REFINEMENT_ASSERT_1(cond) HEAVY_ASSERT0(cond)
+  #define HEAVY_REFINEMENT_ASSERT_2(cond, msg) HEAVY_ASSERT1(cond, msg)
+#endif
+
+#define HEAVY_ASSERT_(TYPE, N) HEAVY_ ## TYPE ## _ASSERT_ ## N
+#define HEAVY_ASSERT_EVAL(TYPE, N) HEAVY_ASSERT_(TYPE, N)
+
+// Heavy assertions are assertions which increase the complexity of the scope
+// which they are executed in by an polynomial factor. In debug mode you are often only
+// interested in certain phase of the multilevel paradigm. However, when enabling all assertions
+// it can take a while to reach the point which you are really interested in, because heavy assertions
+// radicaly downgrade the performance of the application. Therefore such assertions should be packed
+// in a heavy assertion macro. Heavy assertions can be enabled via cmake flag for specific phase or for
+// specific scope by adding
+// static constexpr bool enable_heavy_assert = false;
+// to the corresponding scope.
+#define HEAVY_DATA_STRUCTURE_ASSERT(...) EXPAND(HEAVY_ASSERT_EVAL(DATA_STRUCTURE, EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
+#define HEAVY_PREPROCESSING_ASSERT(...) EXPAND(HEAVY_ASSERT_EVAL(PREPROCESSING, EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
+#define HEAVY_COARSENING_ASSERT(...) EXPAND(HEAVY_ASSERT_EVAL(COARSENING, EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
+#define HEAVY_INITIAL_PARTITIONING_ASSERT(...) EXPAND(HEAVY_ASSERT_EVAL(INITIAL_PARTITIONING, EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
+#define HEAVY_REFINEMENT_ASSERT(...) EXPAND(HEAVY_ASSERT_EVAL(REFINEMENT, EXPAND(NARG(__VA_ARGS__)))(__VA_ARGS__))
 
 #define ONLYDEBUG(x) ((void)x)
 #define UNUSED_FUNCTION(x) ((void)x)
@@ -209,3 +292,11 @@ void unused(T&&) {
 #else
 #define KAHYPAR_ATTRIBUTE_FALLTHROUGH
 #endif
+
+// Shell Color Codes
+#define GREEN "\033[1;92m"
+#define CYAN "\033[1;96m"
+#define YELLOW "\033[1;93m"
+#define RED "\033[1;91m"
+#define BOLD "\033[1m"
+#define END "\033[0m"

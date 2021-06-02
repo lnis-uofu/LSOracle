@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "kahypar/definitions.h"
-//#include "kahypar/git_revision.h"
+#include "kahypar/git_revision.h"
 #include "kahypar/partition/context.h"
 #include "kahypar/partition/metrics.h"
 #include "kahypar/utils/math.h"
@@ -205,13 +205,15 @@ inline void printObjectives(const Hypergraph& hypergraph, const Context& context
 
 
 inline void printQualityOfInitialSolution(const Hypergraph& hypergraph, const Context& context) {
-  LOG << "********************************************************************************";
-  LOG << "*                              Initial Partition                               *";
-  LOG << "********************************************************************************";
-  printObjectives(hypergraph, context);
+  if (!context.partition.quiet_mode) {
+    LOG << "********************************************************************************";
+    LOG << "*                              Initial Partition                               *";
+    LOG << "********************************************************************************";
+    printObjectives(hypergraph, context);
 
-  LOG << "\nPartition sizes and weights: ";
-  printPartSizesAndWeights(hypergraph);
+    LOG << "\nPartition sizes and weights: ";
+    printPartSizesAndWeights(hypergraph);
+  }
 }
 
 inline void printPartitioningResults(const Hypergraph& hypergraph,
@@ -230,44 +232,47 @@ inline void printPartitioningResults(const Hypergraph& hypergraph,
 
     LOG << "\nTimings:";
     LOG << "Partition time                     =" << elapsed_seconds.count() << "s";
-    LOG << "  + Preprocessing                  =" << timings.total_preprocessing << "s";
-    LOG << "    | min hash sparsifier          =" << timings.pre_sparsifier << "s";
-    LOG << "    | community detection          =" << timings.pre_community_detection << "s";
-    LOG << "  + Coarsening                     =" << timings.total_coarsening << "s";
-    if (context.partition.mode == Mode::recursive_bisection) {
-      for (const auto& timing : timings.bisection_coarsening) {
-        LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
+    if (!context.partition_evolutionary && !context.partition.time_limited_repeated_partitioning) {
+      LOG << "  + Preprocessing                  =" << timings.total_preprocessing << "s";
+      LOG << "    | min hash sparsifier          =" << timings.pre_sparsifier << "s";
+      LOG << "    | community detection          =" << timings.pre_community_detection << "s";
+      LOG << "  + Coarsening                     =" << timings.total_coarsening << "s";
+      if (context.partition.mode == Mode::recursive_bisection) {
+        for (const auto& timing : timings.bisection_coarsening) {
+          LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
       }
-    }
-    LOG << "  + Initial Partitioning           =" << timings.total_initial_partitioning << "s";
-    if (context.partition.mode == Mode::direct_kway) {
-      LOG << "    + Coarsening                   =" << timings.total_ip_coarsening << "s";
-      for (const auto& timing : timings.bisection_coarsening) {
-        LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
+      LOG << "  + Initial Partitioning           =" << timings.total_initial_partitioning << "s";
+      if (context.partition.mode == Mode::direct_kway) {
+        LOG << "    + Coarsening                   =" << timings.total_ip_coarsening << "s";
+        for (const auto& timing : timings.bisection_coarsening) {
+          LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
+        LOG << "    + Initial Partitioning         =" << timings.total_ip_initial_partitioning << "s";
+        for (const auto& timing : timings.bisection_initial_partitioning) {
+          LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
+        LOG << "    + Local Search                 =" << timings.total_ip_local_search << "s";
+        for (const auto& timing : timings.bisection_local_search) {
+          LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
+      } else {
+        for (const auto& timing : timings.bisection_initial_partitioning) {
+          LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
       }
-      LOG << "    + Initial Partitioning         =" << timings.total_ip_initial_partitioning << "s";
-      for (const auto& timing : timings.bisection_initial_partitioning) {
-        LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
-      }
-      LOG << "    + Local Search                 =" << timings.total_ip_local_search << "s";
-      for (const auto& timing : timings.bisection_local_search) {
-        LOG << "          | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
-      }
-    } else {
-      for (const auto& timing : timings.bisection_initial_partitioning) {
-        LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
-      }
-    }
-    LOG << "  + Local Search                   =" << timings.total_local_search << "s";
-    if (context.partition.mode == Mode::recursive_bisection) {
-      for (const auto& timing : timings.bisection_local_search) {
-        LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
-            << ")        =" << timing.time << "s";
+      LOG << "  + Local Search                   =" << timings.total_local_search << "s";
+      LOG << "           | flow refinement       =" << timings.total_flow_refinement << " s";
+      if (context.partition.mode == Mode::recursive_bisection) {
+        for (const auto& timing : timings.bisection_local_search) {
+          LOG << "        | bisection" << timing.no << "(" << timing.lk << "," << timing.rk
+              << ")        =" << timing.time << "s";
+        }
       }
     }
 
@@ -285,18 +290,13 @@ inline void printPartitioningResults(const Hypergraph& hypergraph,
         ++i;
       }
     }
-    LOG << "  + Postprocessing                 =" << timings.total_postprocessing << "s";
-    LOG << "    | undo sparsifier              =" << timings.post_sparsifier_restore << "s";
-  }
-  LOG << "";
-}
 
-inline void printPartitioningStatistics() {
-  LOG << "\nStatistics ********************************************************************";
-  LOG << "numRemovedParalellHEs: Number of HEs that were removed because they were parallel to some other HE.";
-  LOG << "removedSingleNodeHEWeight: Total weight of HEs that were removed because they contained only 1 HN.\n"
-      << "This sum includes the weight of previously removed parallel HEs, because we sum over the edge weights";
-  // LOG << Stats::instance().toConsoleString();
+    if (!context.partition_evolutionary && !context.partition.time_limited_repeated_partitioning) {
+      LOG << "  + Postprocessing                 =" << timings.total_postprocessing << "s";
+      LOG << "    | undo sparsifier              =" << timings.post_sparsifier_restore << "s";
+    }
+    LOG << "";
+  }
 }
 
 inline void printConnectivityStats(const std::vector<PartitionID>& connectivity_stats) {
@@ -341,8 +341,12 @@ static inline void printMaximumWeightedBipartiteMatchingBanner(const Context& co
   }
 }
 
+static inline void printStripe() {
+  LOG << "--------------------------------------------------------------------------------";
+}
+
 static inline void printTopLevelPreprocessingBanner(const Context& context) {
-  if (context.partition.verbose_output) {
+  if (context.partition.verbose_output && !context.partition.quiet_mode) {
     LOG << "\n********************************************************************************";
     LOG << "*                          Top Level Preprocessing..                           *";
     LOG << "********************************************************************************";
@@ -350,7 +354,7 @@ static inline void printTopLevelPreprocessingBanner(const Context& context) {
 }
 
 static inline void printCoarseningBanner(const Context& context) {
-  if (context.partition.verbose_output && context.type == ContextType::main) {
+  if (!context.partition.quiet_mode && context.partition.verbose_output && context.type == ContextType::main) {
     LOG << "********************************************************************************";
     LOG << "*                                Coarsening...                                 *";
     LOG << "********************************************************************************";
@@ -358,8 +362,8 @@ static inline void printCoarseningBanner(const Context& context) {
 }
 
 static inline void printInitialPartitioningBanner(const Context& context) {
-  if (context.type == ContextType::main && (context.partition.verbose_output ||
-                                            context.initial_partitioning.verbose_output)) {
+  if (!context.partition.quiet_mode && context.type == ContextType::main && (context.partition.verbose_output ||
+                                                                             context.initial_partitioning.verbose_output)) {
     LOG << "\n********************************************************************************";
     LOG << "*                           Initial Partitioning...                            *";
     LOG << "********************************************************************************";
@@ -367,21 +371,21 @@ static inline void printInitialPartitioningBanner(const Context& context) {
 }
 
 static inline void printLocalSearchBanner(const Context& context) {
-  if (context.partition.verbose_output && context.type == ContextType::main) {
+  if (!context.partition.quiet_mode && context.partition.verbose_output && context.type == ContextType::main) {
     LOG << "\n********************************************************************************";
     LOG << "*                               Local Search...                                *";
     LOG << "********************************************************************************";
   }
 }
 static inline void printPopulationBanner(const Context& context) {
-  if (context.partition.verbose_output && context.type == ContextType::main) {
+  if (!context.partition.quiet_mode && context.partition.verbose_output && context.type == ContextType::main) {
     LOG << "\n********************************************************************************";
     LOG << "*                                Population...                                 *";
     LOG << "********************************************************************************";
   }
 }
 static inline void printVcycleBanner(const Context& context) {
-  if (context.partition.verbose_output && context.type == ContextType::main) {
+  if (!context.partition.quiet_mode && context.partition.verbose_output && context.type == ContextType::main) {
     if (context.partition.verbose_output) {
       LOG << "================================================================================";
       LOG << "V-Cycle No. " << context.partition.current_v_cycle;
@@ -391,17 +395,11 @@ static inline void printVcycleBanner(const Context& context) {
 }
 
 static inline void printResultBanner(const Context& context) {
-  if (context.partition.time_limit != 0) {
+  if (!context.partition.quiet_mode && (context.partition.time_limited_repeated_partitioning || context.partition_evolutionary)) {
     LOG << "********************************************************************************";
     LOG << "*                          FINAL Partitioning Result                           *";
     LOG << "********************************************************************************";
   }
-}
-
-static inline void printStatsBanner() {
-  LOG << "*******************************";
-  LOG << "***** GATHER_STATS ACTIVE *****";
-  LOG << "*******************************";
 }
 
 static inline void printFinalPartitioningResults(const Hypergraph& hypergraph,
@@ -415,7 +413,7 @@ static inline void printFinalPartitioningResults(const Hypergraph& hypergraph,
 }
 
 static inline void printLocalSearchResults(const Context& context, const Hypergraph& hypergraph) {
-  if (context.partition.verbose_output && context.type == ContextType::main) {
+  if (!context.partition.quiet_mode && context.partition.verbose_output && context.type == ContextType::main) {
     LOG << "Local Search Result:";
     LOG << "Final" << context.partition.objective << "      ="
         << (context.partition.objective == Objective::cut ? metrics::hyperedgeCut(hypergraph) :
