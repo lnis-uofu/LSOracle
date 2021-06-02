@@ -1,0 +1,44 @@
+create_clock -name clk -period 10 {CK}
+set_input_delay -clock clk 0 {
+VDD
+GND
+G9
+G8
+G7
+G6
+G5
+G4
+G3
+G2
+G18
+G16
+G15
+G14
+G13
+G12
+G11
+G10
+G1
+G0
+}
+set_output_delay -clock clk 0 {
+G55
+G53
+G49
+G47
+G45
+G43
+G327
+G325
+G322
+G315
+G312
+G310
+G302
+G300
+G298
+G296
+G292
+G290
+G288
+}

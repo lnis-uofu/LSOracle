@@ -1,0 +1,88 @@
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    name: Build compatibility ${{ matrix.config.name }} ${{ matrix.config.image }}
+    container: ghcr.io/lnis-uofu/lsoracle-build:${{ matrix.config.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: gcc-8
+            cc: gcc-8
+            cxx: g++-8
+            image: groovy
+            ccache: true
+          - name: gcc-9
+            cc: gcc-9
+            cxx: g++-9
+            image: groovy
+            ccache: true
+          - name: gcc-10
+            cc: gcc-10
+            cxx: g++-10
+            image: groovy
+            ccache: true
+          - name: clang-8
+            cc: clang-8
+            cxx: clang++-8
+            image: groovy
+            ccache: true
+          - name: clang-9
+            cc: clang-9
+            cxx: clang++-9
+            image: groovy
+            ccache: true
+          - name: clang-10
+            cc: clang-10
+            cxx: clang++-10
+            image: groovy
+            ccache: true
+          - name: clang-11
+            cc: clang-11
+            cxx: clang++-11
+            image: groovy
+            ccache: true
+          - name: gcc-8
+            cc: /opt/rh/devtoolset-8/root/usr/bin/gcc
+            cxx: /opt/rh/devtoolset-8/root/usr/bin/g++
+            image: centos7-gcc8
+            ccache: false
+          - name: clang-7
+            cc: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang
+            cxx: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang++
+            image: centos7-gcc8
+            ccache: false
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
+      CCACHE_COMPRESS: "true"
+      CCACHE_COMPRESSLEVEL: "6"
+      CCACHE_MAXSIZE: "400M"
+      CCACHE_LOGFILE: ccache_log
+      CCACHE_DIR: /__w/LSOracle/.ccache
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Load ccache
+        uses: actions/cache@v2
+        if: ${{ matrix.config.ccache }}
+        with:
+          path: |
+            /__w/LSOracle/.ccache
+          key: cicd_testing_${{matrix.config.name}}_${{matrix.config.image}}
+      - name: Zero cache stats
+        if: ${{ matrix.config.ccache }}
+        run: |
+          ccache -z
+      - name: Build
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake --build build -j$(nproc)
+      - name: Cache stats
+        if: ${{ matrix.config.ccache }}
+        run: |
+          ccache -s
