@@ -33,14 +33,14 @@
 #include "kahypar/partition/coarsening/policies/rating_score_policy.h"
 #include "kahypar/partition/initial_partitioning/i_initial_partitioner.h"
 #include "kahypar/partition/refinement/2way_fm_refiner.h"
-#include "kahypar/partition/refinement/flow/2way_flow_refiner.h"
-#include "kahypar/partition/refinement/flow/kway_flow_refiner.h"
+#include "kahypar/partition/refinement/flow/2way_hyperflowcutter_refiner.h"
+#include "kahypar/partition/refinement/flow/kway_hyperflowcutter_refiner.h"
 #include "kahypar/partition/refinement/flow/policies/flow_execution_policy.h"
-#include "kahypar/partition/refinement/flow/policies/flow_network_policy.h"
 #include "kahypar/partition/refinement/i_refiner.h"
 #include "kahypar/partition/refinement/kway_fm_cut_refiner.h"
 #include "kahypar/partition/refinement/kway_fm_km1_refiner.h"
 #include "kahypar/partition/refinement/policies/fm_stop_policy.h"
+#include "kahypar/partition/bin_packing/i_bin_packer.h"
 
 namespace kahypar {
 using CoarsenerFactory = meta::Factory<CoarseningAlgorithm,
@@ -49,6 +49,12 @@ using CoarsenerFactory = meta::Factory<CoarseningAlgorithm,
 
 using InitialPartitioningFactory = meta::Factory<InitialPartitionerAlgorithm,
                                                  IInitialPartitioner* (*)(Hypergraph&, Context&)>;
+
+using RefinerFactory = meta::Factory<RefinementAlgorithm,
+                                     IRefiner* (*)(Hypergraph&, const Context&)>;
+
+using BinPackerFactory = meta::Factory<BinPackingAlgorithm,
+                                       IBinPacker* (*)(Hypergraph&, const Context&)>;
 
 using RatingPolicies = meta::Typelist<RatingScorePolicies, HeavyNodePenaltyPolicies,
                                       CommunityPolicies, PartitionPolicies, AcceptancePolicies,
@@ -78,13 +84,11 @@ using KWayKMinusOneFactoryDispatcher = meta::StaticMultiDispatchFactory<KWayKMin
                                                                         IRefiner,
                                                                         meta::Typelist<StoppingPolicyClasses> >;
 
-using TwoWayFlowFactoryDispatcher = meta::StaticMultiDispatchFactory<TwoWayFlowRefiner,
-                                                                     IRefiner,
-                                                                     meta::Typelist<FlowNetworkPolicyClasses,
-                                                                                    FlowExecutionPolicyClasses> >;
+using TwoWayHyperFlowCutterFactoryDispatcher = meta::StaticMultiDispatchFactory<TwoWayHyperFlowCutterRefiner,
+                                                                                IRefiner,
+                                                                                meta::Typelist<FlowExecutionPolicyClasses> >;
 
-using KWayFlowFactoryDispatcher = meta::StaticMultiDispatchFactory<KWayFlowRefiner,
-                                                                   IRefiner,
-                                                                   meta::Typelist<FlowNetworkPolicyClasses,
-                                                                                  FlowExecutionPolicyClasses> >;
+using KWayHyperFlowCutterFactoryDispatcher = meta::StaticMultiDispatchFactory<KWayHyperFlowCutterRefiner,
+                                                                              IRefiner,
+                                                                              meta::Typelist<FlowExecutionPolicyClasses> >;
 }  // namespace kahypar

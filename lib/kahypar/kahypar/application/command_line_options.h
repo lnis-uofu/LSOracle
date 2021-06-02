@@ -22,9 +22,9 @@
 
 #include <boost/program_options.hpp>
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
+#include <windows.h>
 #include <process.h>
-#include <Windows.h>
 #else
 #include <sys/ioctl.h>
 #endif
@@ -42,7 +42,7 @@ namespace kahypar {
 namespace platform {
 int getTerminalWidth() {
   int columns = 0;
-#if defined(_MSC_VER)
+#if defined(_WIN32)
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -55,7 +55,7 @@ int getTerminalWidth() {
 }
 
 int getProcessID() {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
   return _getpid();
 #else
   return getpid();
@@ -77,12 +77,7 @@ po::options_description createGeneralOptionsDescription(Context& context, const 
     po::value<std::string>(&context.partition.input_partition_filename)->value_name("<string>"),
     "Input Partition filename. The input partition is then refined using direct k-way V-cycles.")
     ("cmaxnet",
-    po::value<HyperedgeID>(&context.partition.hyperedge_size_threshold)->value_name("<int>")->notifier(
-      [&](const HyperedgeID) {
-      if (context.partition.hyperedge_size_threshold == -1) {
-        context.partition.hyperedge_size_threshold = std::numeric_limits<HyperedgeID>::max();
-      }
-    }),
+    po::value<HyperedgeID>(&context.partition.hyperedge_size_threshold)->value_name("<uint32_t>"),
     "Hyperedges larger than cmaxnet are ignored during partitioning process.")
     ("vcycles",
     po::value<uint32_t>(&context.partition.global_search_iterations)->value_name("<uint32_t>"),
@@ -121,37 +116,8 @@ po::options_description createFlowRefinementOptionsDescription(Context& context,
   po::options_description options((initial_partitioning ?
                                    "Initial Partitioning Flow Refinement Options" :
                                    "Flow Refinement Options"), num_columns);
+
   options.add_options()
-    ((initial_partitioning ? "i-r-flow-algorithm" : "r-flow-algorithm"),
-    po::value<std::string>()->value_name("<string>")->notifier(
-      [&context, initial_partitioning](const std::string& ftype) {
-      if (initial_partitioning) {
-        context.initial_partitioning.local_search.flow.algorithm = kahypar::flowAlgorithmFromString(ftype);
-      } else {
-        context.local_search.flow.algorithm = kahypar::flowAlgorithmFromString(ftype);
-      }
-    }),
-    "Flow Algorithms:\n"
-    " - edmond_karp       : Edmond-Karp Max-Flow algorithm\n"
-    " - goldberg_tarjan   : GoldbergTarjan Max-Flow algorithm\n"
-    " - boykov_kolmogorov : Boykov-Kolmogorov Max-Flow algorithm\n"
-    " - ibfs              : IBFS Max-Flow algorithm\n"
-    "(default: ibfs)")
-    ((initial_partitioning ? "i-r-flow-network" : "r-flow-network"),
-    po::value<std::string>()->value_name("<string>")->notifier(
-      [&context, initial_partitioning](const std::string& type) {
-      if (initial_partitioning) {
-        context.initial_partitioning.local_search.flow.network = kahypar::flowNetworkFromString(type);
-      } else {
-        context.local_search.flow.network = kahypar::flowNetworkFromString(type);
-      }
-    }),
-    "Flow Networks:\n"
-    " - lawler : Lawler Network\n"
-    " - heuer  : Heuer Network (Removes all hypernodes with d(v) <= 3)\n"
-    " - wong   : Wong Network (Model each HE with |e| = 2 as graph edge)\n"
-    " - hybrid : Hybrid Network (Combination of Heuer + Wong Network)\n"
-    "(default: hybrid)")
     ((initial_partitioning ? "i-r-flow-execution-policy" : "r-flow-execution-policy"),
     po::value<std::string>()->value_name("<string>")->notifier(
       [&context, initial_partitioning](const std::string& ftype) {
@@ -166,32 +132,64 @@ po::options_description createFlowRefinementOptionsDescription(Context& context,
     " - exponential : Execute flows in each level i with i = 2^j (j \\in {1,2,...})\n"
     " - multilevel  : Execute flows in each level i with i = |V|/2^j (j \\in {1,2,...})\n"
     "(default: exponential)")
-    ((initial_partitioning ? "i-r-flow-alpha" : "r-flow-alpha"),
-    po::value<double>((initial_partitioning ? &context.initial_partitioning.local_search.flow.alpha : &context.local_search.flow.alpha))->value_name("<double>"),
-    "Determine maximum size of a flow problem during adaptive flow iterations (epsilon' = alpha * epsilon) \n"
-    "(default: 16.0)")
     ((initial_partitioning ? "i-r-flow-beta" : "r-flow-beta"),
     po::value<size_t>((initial_partitioning ? &context.initial_partitioning.local_search.flow.beta : &context.local_search.flow.beta))->value_name("<size_t>"),
     "Beta of CONSTANT flow execution policy \n"
-    "(default: 128)")
-    ((initial_partitioning ? "i-r-flow-use-most-balanced-minimum-cut" : "r-flow-use-most-balanced-minimum-cut"),
-    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.flow.use_most_balanced_minimum_cut : &context.local_search.flow.use_most_balanced_minimum_cut))->value_name("<bool>"),
-    "Heuristic to balance a min-cut bipartition after a maximum flow computation \n"
+    "(default: 128)");
+
+  return options;
+}
+
+po::options_description createHyperFlowCutterRefinementOptionsDescription(Context& context,
+                                                                          const int num_columns,
+                                                                          const bool initial_partitioning) {
+  po::options_description options(("HyperFlowCutter Refinement Options"), num_columns);
+  options.add_options()
+    ((initial_partitioning ? "i-r-hfc-size-constraint" : "r-hfc-size-constraint"),
+    po::value<std::string>()->value_name("<string>")->notifier([&context, initial_partitioning](const std::string& ftype) {
+      FlowHypergraphSizeConstraint sc = FlowHypergraphSizeConstraint::part_weight_fraction;               // = "pw"
+      if (ftype == "mpw") {
+        sc = FlowHypergraphSizeConstraint::max_part_weight_fraction;
+      } else if (ftype == "mf-style") {
+        sc = FlowHypergraphSizeConstraint::scaled_max_part_weight_fraction_minus_opposite_side;
+        if (initial_partitioning) {
+          if (context.initial_partitioning.local_search.hyperflowcutter.snapshot_scaling < 1.0) {
+            context.initial_partitioning.local_search.hyperflowcutter.snapshot_scaling = 16.0;
+          }
+        } else {
+          if (context.local_search.hyperflowcutter.snapshot_scaling < 1.0) {
+            context.local_search.hyperflowcutter.snapshot_scaling = 16.0;
+          }
+        }
+      } else if (ftype != "pw") {
+        throw std::runtime_error("Unknown option flow hypergraph size constraint option");
+      }
+      if (initial_partitioning) {
+        context.initial_partitioning.local_search.hyperflowcutter.flowhypergraph_size_constraint = sc;
+      } else {
+        context.local_search.hyperflowcutter.flowhypergraph_size_constraint = sc;
+      }
+    }),
+    "Size Constraints:\n"
+    " - mpw            : |N_0| <= max_part_weight[b0] * alpha \n"
+    " - pw             : |N_0| <= |V_0| * alpha \n"
+    " - mf-style       : |N_0| <= (1 + alpha * epsilon) * perfect_part_weight[b0] - |V_1|. Same as KaHyPar-MF. Default scaling is 16. \n"
+    "(default: pw)")
+    ((initial_partitioning ? "i-r-hfc-scaling" : "r-hfc-scaling"),
+    po::value<double>((initial_partitioning ? &context.initial_partitioning.local_search.hyperflowcutter.snapshot_scaling : &context.local_search.hyperflowcutter.snapshot_scaling))->value_name("<double>"),
+    "Scaling parameter for flow hypergraph sizes for HFC refinement. see size constraints for semantics.\n"
+    "(default: 0.2)")
+    ((initial_partitioning ? "i-r-hfc-distance-based-piercing" : "r-hfc-distance-based-piercing"),
+    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.hyperflowcutter.use_distances_from_cut : &context.local_search.hyperflowcutter.use_distances_from_cut))->value_name("<bool>"),
+    "Preferably pierce vertices further away from the old cut \n"
     "(default: true)")
-    ((initial_partitioning ? "i-r-flow-use-adaptive-alpha-stopping-rule" : "r-flow-use-adaptive-alpha-stopping-rule"),
-    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.flow.use_adaptive_alpha_stopping_rule : &context.local_search.flow.use_adaptive_alpha_stopping_rule))->value_name("<bool>"),
-    "Stop adaptive flow iterations, when cut equal to old cut \n"
-    "(default: true)")
-    ((initial_partitioning ? "i-r-flow-ignore-small-hyperedge-cut" : "r-flow-ignore-small-hyperedge-cut"),
-    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.flow.ignore_small_hyperedge_cut : &context.local_search.flow.ignore_small_hyperedge_cut))->value_name("<bool>"),
-    "If cut is small between two blocks, don't use flow refinement \n"
-    "(default: true)")
-    ((initial_partitioning ? "i-r-flow-use-improvement-history" : "r-flow-use-improvement-history"),
-    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.flow.use_improvement_history : &context.local_search.flow.use_improvement_history))->value_name("<bool>"),
-    "Decides if flow-based refinement is used between two adjacent blocks based on improvement history of the corresponding blocks \n"
+    ((initial_partitioning ? "i-r-hfc-mbc" : "r-hfc-mbc"),
+    po::value<bool>((initial_partitioning ? &context.initial_partitioning.local_search.hyperflowcutter.most_balanced_cut : &context.local_search.hyperflowcutter.most_balanced_cut))->value_name("<bool>"),
+    "Keep piercing after the first balanced partition to improve balance \n"
     "(default: true)");
   return options;
 }
+
 
 po::options_description createCoarseningOptionsDescription(Context& context,
                                                            const int num_columns,
@@ -208,7 +206,7 @@ po::options_description createCoarseningOptionsDescription(Context& context,
         context.coarsening.algorithm = kahypar::coarseningAlgorithmFromString(ctype);
       }
     }),
-    "Algorithm:\n"
+    "Coarsening Algorithm:\n"
     " - ml_style\n"
     " - heavy_full\n"
     " - heavy_lazy")
@@ -231,8 +229,7 @@ po::options_description createCoarseningOptionsDescription(Context& context,
       }
     }),
     "Rating function used to calculate scores for vertex pairs:\n"
-    "heavy_edge "
-    "edge_frequency")
+    "- heavy_edge")
     ((initial_partitioning ? "i-c-rating-use-communities" : "c-rating-use-communities"),
     po::value<bool>()->value_name("<bool>")->notifier(
       [&context, initial_partitioning](bool use_communities) {
@@ -260,8 +257,8 @@ po::options_description createCoarseningOptionsDescription(Context& context,
       }
     }),
     "Penalty function to discourage heavy vertices:\n"
-    "multiplicative "
-    "no_penalty")
+    "- multiplicative\n"
+    "- no_penalty")
     ((initial_partitioning ? "i-c-rating-acceptance-criterion" : "c-rating-acceptance-criterion"),
     po::value<std::string>()->value_name("<string>")->notifier(
       [&context, initial_partitioning](const std::string& crit) {
@@ -274,8 +271,8 @@ po::options_description createCoarseningOptionsDescription(Context& context,
       }
     }),
     "Acceptance/Tiebreaking criterion for contraction partners having the same score:\n"
-    "random "
-    "prefer_unmatched")
+    "- best\n"
+    "- best_prefer_unmatched")
     ((initial_partitioning ? "i-c-fixed-vertex-acceptance-criterion" : "c-fixed-vertex-acceptance-criterion"),
     po::value<std::string>()->value_name("<string>")->notifier(
       [&context, initial_partitioning](const std::string& crit) {
@@ -310,14 +307,15 @@ po::options_description createRefinementOptionsDescription(Context& context,
       }
     }),
     "Local Search Algorithm:\n"
-    " - twoway_fm        : 2-way FM algorithm        (recursive bisection: cut & km1)\n"
-    " - twoway_flow      : 2-way Flow algorithm      (recursive bisection: cut & km1)\n"
-    " - twoway_fm_flow   : 2-way FM + Flow algorithm (recursive bisection: cut & km1)\n"
-    " - kway_fm          : k-way FM algorithm        (direct k-way       : cut)\n"
-    " - kway_fm_flow     : k-way FM + Flow algorithm (direct k-way       : cut)\n"
-    " - kway_fm_km1      : k-way FM algorithm        (direct k-way       : km1)\n"
-    " - kway_fm_flow_km1 : k-way FM + Flow algorithm (direct k-way       : km1)\n"
-    " - kway_flow        : k-way Flow algorithm      (direct k-way       : cut & km1)")
+    " - twoway_fm                    : 2-way FM algorithm         (recursive bisection : cut & km1)\n"
+    " - twoway_hyperflow_cutter      : 2-way HyperFlowCutter      (recursive bisection : cut & km1)\n"
+    " - twoway_fm_hyperflow_cutter   : 2-way FM + HyperFlowCutter (recursive bisection : cut & km1)\n"
+    " - kway_fm                      : k-way FM algorithm         (direct k-way        : cut)\n"
+    " - kway_fm_hyperflow_cutter     : k-way FM + HyperFlowCutter (direct k-way        : cut)\n"
+    " - kway_fm_km1                  : k-way FM algorithm         (direct k-way        : km1)\n"
+    " - kway_fm_hyperflow_cutter_km1 : k-way FM + HyperFlowCutter (direct k-way        : km1)\n"
+    " - kway_hyperflow_cutter        : k-way HyperFlowCutter      (direct k-way        : cut & km1)\n"
+    )
     ((initial_partitioning ? "i-r-runs" : "r-runs"),
     po::value<int>((initial_partitioning ? &context.initial_partitioning.local_search.iterations_per_level : &context.local_search.iterations_per_level))->value_name("<int>")->notifier(
       [&context, initial_partitioning](const int) {
@@ -353,6 +351,7 @@ po::options_description createRefinementOptionsDescription(Context& context,
     "Parameter alpha for adaptive stopping rule \n"
     "(infinity: -1)");
   options.add(createFlowRefinementOptionsDescription(context, num_columns, initial_partitioning));
+  options.add(createHyperFlowCutterRefinementOptionsDescription(context, num_columns, initial_partitioning));
   return options;
 }
 
@@ -372,7 +371,7 @@ po::options_description createInitialPartitioningOptionsDescription(Context& con
     po::value<std::string>()->value_name("<string>")->notifier(
       [&](const std::string& ip_technique) {
       context.initial_partitioning.technique =
-        kahypar::inititalPartitioningTechniqueFromString(ip_technique);
+        kahypar::initialPartitioningTechniqueFromString(ip_technique);
     }),
     "IP Technique:\n"
     " - flat\n"
@@ -384,6 +383,28 @@ po::options_description createInitialPartitioningOptionsDescription(Context& con
         kahypar::initialPartitioningAlgorithmFromString(ip_algo);
     }),
     "Algorithm used to create initial partition: pool ")
+    ("i-bp-algorithm",
+    po::value<std::string>()->value_name("<string>")->notifier(
+      [&](const std::string& ip_bp_algo) {
+      context.initial_partitioning.bp_algo =
+        kahypar::binPackingAlgorithmFromString(ip_bp_algo);
+    }),
+    "Bin packing algorithm:\n"
+    " - worst_fit\n"
+    " - first_fit"
+    "(default: worst_fit)")
+    ("i-bp-early-restart",
+    po::value<bool>(&context.initial_partitioning.enable_early_restart)->value_name("<bool>"),
+    "Enable early restart with prepacking of current bisection if infeasible"
+    "(default: false)")
+    ("i-bp-late-restart",
+    po::value<bool>(&context.initial_partitioning.enable_late_restart)->value_name("<bool>"),
+    "Enable late restart with prepacking of bisections, i.e. if the resulting partition is imbalanced"
+    "(default: false)")
+    ("i-bp-heuristic-prepacking",
+    po::value<bool>(&context.initial_partitioning.use_heuristic_prepacking)->value_name("<bool>"),
+    "Try a heuristic prepacking berfore using the one with balance guarantees"
+    "(default: true)")
     ("i-runs",
     po::value<uint32_t>(&context.initial_partitioning.nruns)->value_name("<uint32_t>"),
     "# initial partition trials");
@@ -397,6 +418,9 @@ po::options_description createPreprocessingOptionsDescription(Context& context,
                                                               const int num_columns) {
   po::options_description options("Preprocessing Options", num_columns);
   options.add_options()
+    ("p-enable-deduplication",
+    po::value<bool>(&context.preprocessing.enable_deduplication)->value_name("<bool>"),
+    "Remove identical vertices and parallel nets before partitioning")
     ("p-use-sparsifier",
     po::value<bool>(&context.preprocessing.enable_min_hash_sparsifier)->value_name("<bool>"),
     "Use min-hash pin sparsifier before partitioning")
@@ -567,18 +591,25 @@ po::options_description createGenericOptionsDescription(Context& context,
     ("quiet,q", po::value<bool>(&context.partition.quiet_mode)->value_name("<bool>"),
     "Quiet Mode: Completely suppress console output")
     ("time-limit", po::value<int>(&context.partition.time_limit)->value_name("<int>"),
-    "Time limit in seconds")
+    "Sets a time limit in seconds. default: disabled. "
+    "We stop refinement once a large part (default 99%) is exceeded."
+    "It is never triggered before an initial partition is available, so you should still provide an external timeout (only now you might get a solution).")
+    ("time-limit-factor", po::value<double>(&context.partition.soft_time_limit_factor)->value_name("<double>"),
+    "Controls the refinement time limit. default: 0.99")
+    ("time-limit-check-frequency", po::value<int>(&context.partition.soft_time_limit_check_frequency)->value_name("<int>"),
+    "After how many uncontractions the soft time limit shall be checked. default 10000")
+    ("time-limited-repeated-partitioning", po::value<bool>(&context.partition.time_limited_repeated_partitioning)->value_name("<bool>"),
+    "Use repeated partitioning with the strict time limit set using --time-limit. This also uses the soft time limit.")
     ("sp-process,s", po::value<bool>(&context.partition.sp_process_output)->value_name("<bool>"),
     "Summarize partitioning results in RESULT line compatible with sqlplottools "
-    "(https://github.com/bingmann/sqlplottools)");
+    "(https://github.com/bingmann/sqlplottools)")
+    ("write-partition,w", po::value<bool>(&context.partition.write_partition_file)->value_name("<bool>"), "Write output partition. Default: false");
   return generic_options;
 }
 
 void processCommandLineInput(Context& context, int argc, char* argv[]) {
   const int num_columns = platform::getTerminalWidth();
-
-  po::options_description generic_options = createGenericOptionsDescription(context,
-                                                                            num_columns);
+  po::options_description generic_options = createGenericOptionsDescription(context, num_columns);
 
   po::options_description required_options("Required Options", num_columns);
   required_options.add_options()
@@ -609,23 +640,20 @@ void processCommandLineInput(Context& context, int argc, char* argv[]) {
 
   po::options_description general_options = createGeneralOptionsDescription(context, num_columns);
 
-  po::options_description preprocessing_options =
-    createPreprocessingOptionsDescription(context, num_columns);
+  po::options_description preprocessing_options = createPreprocessingOptionsDescription(context, num_columns);
 
-  po::options_description coarsening_options = createCoarseningOptionsDescription(context,
-                                                                                  num_columns,
-                                                                                  false);
+  po::options_description coarsening_options = createCoarseningOptionsDescription(context, num_columns, false);
 
-
-  po::options_description ip_options = createInitialPartitioningOptionsDescription(context,
-                                                                                   num_columns);
+  po::options_description ip_options = createInitialPartitioningOptionsDescription(context, num_columns);
 
 
-  po::options_description refinement_options =
-    createRefinementOptionsDescription(context, num_columns, false);
+  po::options_description write_snapshot("write snapshot", num_columns);
+  write_snapshot.add_options()
+    ("snapshot-path", po::value<std::string>(&context.local_search.hyperflowcutter.snapshot_path)->value_name("<string>"), "Path for flow hypergraph snapshots. Default: None (don't write them)");
 
-  po::options_description evolutionary_options =
-    createEvolutionaryOptionsDescription(context, num_columns);
+  po::options_description refinement_options = createRefinementOptionsDescription(context, num_columns, false);
+
+  po::options_description evolutionary_options = createEvolutionaryOptionsDescription(context, num_columns);
 
   po::options_description cmd_line_options;
   cmd_line_options.add(generic_options)
@@ -636,7 +664,8 @@ void processCommandLineInput(Context& context, int argc, char* argv[]) {
   .add(coarsening_options)
   .add(ip_options)
   .add(refinement_options)
-  .add(evolutionary_options);
+  .add(evolutionary_options)
+  .add(write_snapshot);
 
   po::variables_map cmd_vm;
   po::store(po::parse_command_line(argc, argv, cmd_line_options), cmd_vm);
@@ -658,7 +687,8 @@ void processCommandLineInput(Context& context, int argc, char* argv[]) {
   }
 
   po::options_description ini_line_options;
-  ini_line_options.add(general_options)
+  ini_line_options.add(generic_options)
+  .add(general_options)
   .add(preprocessing_options)
   .add(coarsening_options)
   .add(ip_options)
@@ -709,7 +739,7 @@ void parseIniToContext(Context& context, const std::string& ini_filename) {
   po::store(po::parse_config_file(file, ini_line_options, true), cmd_vm);
   po::notify(cmd_vm);
 
-  if (context.partition.use_individual_part_weights) {
+  if (context.partition.use_individual_part_weights) {  // Note(Lars): This affects flow network sizes!
     context.partition.epsilon = 0;
   }
 }

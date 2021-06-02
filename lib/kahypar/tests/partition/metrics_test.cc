@@ -72,6 +72,7 @@ class APartitionedHypergraph : public Test {
     refiner(nullptr) {
     context.partition.k = 2;
     context.partition.objective = Objective::cut;
+    context.partition.mode = Mode::direct_kway;
     context.local_search.algorithm = RefinementAlgorithm::twoway_fm;
     context.coarsening.contraction_limit = 2;
     context.coarsening.max_allowed_node_weight = 5;
@@ -89,6 +90,10 @@ class APartitionedHypergraph : public Test {
     context.initial_partitioning.technique = InitialPartitioningTechnique::flat;
     context.initial_partitioning.algo = InitialPartitionerAlgorithm::pool;
     context.initial_partitioning.nruns = 20;
+    context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
+    context.initial_partitioning.use_heuristic_prepacking = false;
+    context.initial_partitioning.enable_early_restart = true;
+    context.initial_partitioning.enable_late_restart = true;
     context.initial_partitioning.local_search.algorithm = RefinementAlgorithm::twoway_fm;
     context.initial_partitioning.local_search.fm.max_number_of_fruitless_moves = 50;
     context.initial_partitioning.local_search.fm.stopping_rule = RefinementStoppingRule::simple;

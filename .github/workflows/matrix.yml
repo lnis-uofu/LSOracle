@@ -2,7 +2,7 @@ on:
   - push
 
 jobs:
-  build:
+  compat-build:
     runs-on: ubuntu-latest
     continue-on-error: true
     name: Build compatibility ${{ matrix.config.name }} ${{ matrix.config.image }}

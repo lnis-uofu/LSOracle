@@ -45,6 +45,8 @@ class GreedyHypergraphGrowingInitialPartitioner : public IInitialPartitioner,
                                                       GainComputation,
                                                       QueueSelection> >{
  private:
+  static constexpr bool enable_heavy_assert = false;
+
   using KWayRefinementPQ = ds::KWayPriorityQueue<HypernodeID, Gain,
                                                  std::numeric_limits<Gain>, true>;
   using Base = InitialPartitionerBase<GreedyHypergraphGrowingInitialPartitioner<StartNodeSelection,
@@ -59,7 +61,8 @@ class GreedyHypergraphGrowingInitialPartitioner : public IInitialPartitioner,
     Base(hypergraph, context),
     _pq(context.initial_partitioning.k),
     _visit(_hg.initialNumNodes()),
-    _hyperedge_in_queue(context.initial_partitioning.k * _hg.initialNumEdges()) {
+    _hyperedge_in_queue(static_cast<size_t>(context.initial_partitioning.k) *
+                        _hg.initialNumEdges()) {
     _pq.initialize(_hg.initialNumNodes());
   }
 
@@ -114,7 +117,7 @@ class GreedyHypergraphGrowingInitialPartitioner : public IInitialPartitioner,
     if (_context.initial_partitioning.unassigned_part != -1) {
       _pq.disablePart(_context.initial_partitioning.unassigned_part);
       minimum_unassigned_part_weight =
-        _context.initial_partitioning.perfect_balance_partition_weight[unassigned_part];
+        _context.initial_partitioning.perfect_balance_partition_weight[_context.initial_partitioning.unassigned_part];
     }
 
     bool is_upper_bound_released = false;
@@ -178,7 +181,7 @@ class GreedyHypergraphGrowingInitialPartitioner : public IInitialPartitioner,
         ASSERT(_hg.partID(current_hn) == current_id,
                "Assignment of hypernode" << current_hn << "to partition" << current_id
                                          << "failed!");
-        ASSERT([&]() {
+        HEAVY_INITIAL_PARTITIONING_ASSERT([&]() {
             if (_context.initial_partitioning.unassigned_part != -1 &&
                 GainComputation::getType() == GainType::fm_gain) {
               _hg.changeNodePart(current_hn, current_id,
@@ -335,7 +338,7 @@ class GreedyHypergraphGrowingInitialPartitioner : public IInitialPartitioner,
     }
 
 
-    ASSERT([&]() {
+    HEAVY_INITIAL_PARTITIONING_ASSERT([&]() {
         for (const HyperedgeID& he : _hg.incidentEdges(hn)) {
           if (_hg.edgeSize(he) <= _context.partition.hyperedge_size_threshold) {
             for (const HypernodeID& pin : _hg.pins(he)) {

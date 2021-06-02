@@ -43,11 +43,12 @@ class TheEvoPartitioner : public Test {
                HyperedgeVector { 0, 1, 2, 3, 4, 5 })
   {
     hypergraph.changeK(2);
-    parseIniToContext(context, "../../../../config/km1_direct_kway_gecco18.ini");
+    parseIniToContext(context, "../../../../config/old_reference_configs/km1_direct_kway_gecco18.ini");
     context.partition.k = 2;
     context.partition.epsilon = 0.03;
     context.partition.objective = Objective::cut;
     context.partition.mode = Mode::direct_kway;
+    context.initial_partitioning.bp_algo = BinPackingAlgorithm::worst_fit;
     context.local_search.algorithm = RefinementAlgorithm::kway_fm;
     context.partition_evolutionary = true;
     context.evolutionary.replace_strategy = EvoReplaceStrategy::diverse;

@@ -20,15 +20,17 @@
 
 #pragma once
 
+#include "kahypar/macros.h"
+
 #include "kahypar/meta/registrar.h"
 #include "kahypar/partition/context.h"
+#include "kahypar/partition/factories.h"
 #include "kahypar/partition/refinement/2way_fm_flow_refiner.h"
 #include "kahypar/partition/refinement/2way_fm_refiner.h"
 #include "kahypar/partition/refinement/do_nothing_refiner.h"
-#include "kahypar/partition/refinement/flow/2way_flow_refiner.h"
-#include "kahypar/partition/refinement/flow/kway_flow_refiner.h"
+#include "kahypar/partition/refinement/flow/2way_hyperflowcutter_refiner.h"
+#include "kahypar/partition/refinement/flow/kway_hyperflowcutter_refiner.h"
 #include "kahypar/partition/refinement/flow/policies/flow_execution_policy.h"
-#include "kahypar/partition/refinement/flow/policies/flow_network_policy.h"
 #include "kahypar/partition/refinement/i_refiner.h"
 #include "kahypar/partition/refinement/kway_fm_cut_refiner.h"
 #include "kahypar/partition/refinement/kway_fm_flow_refiner.h"
@@ -45,11 +47,11 @@
       );                                                          \
   })
 
-#define REREGISTER_REFINER(id, refiner, t)                            \
-  static meta::Registrar<RefinerFactory> register_ ## refiner ## t(   \
-    id,                                                               \
-    [](Hypergraph& hypergraph, const Context& context) -> IRefiner* { \
-    return new refiner(hypergraph, context);                          \
+#define REREGISTER_REFINER(id, refiner, t)                              \
+  static meta::Registrar<RefinerFactory> JOIN(register_ ## refiner, t)( \
+    id,                                                                 \
+    [](Hypergraph& hypergraph, const Context& context) -> IRefiner* {   \
+    return new refiner(hypergraph, context);                            \
   })
 
 #define REGISTER_REFINER(id, refiner)  REREGISTER_REFINER(id, refiner, 1)
@@ -68,20 +70,18 @@ REGISTER_DISPATCHED_REFINER(RefinementAlgorithm::kway_fm_km1,
                             KWayKMinusOneFactoryDispatcher,
                             meta::PolicyRegistry<RefinementStoppingRule>::getInstance().getPolicy(
                               context.local_search.fm.stopping_rule));
-REGISTER_DISPATCHED_REFINER(RefinementAlgorithm::twoway_flow,
-                            TwoWayFlowFactoryDispatcher,
-                            meta::PolicyRegistry<FlowNetworkType>::getInstance().getPolicy(
-                              context.local_search.flow.network),
+REGISTER_DISPATCHED_REFINER(RefinementAlgorithm::twoway_hyperflow_cutter,
+                            TwoWayHyperFlowCutterFactoryDispatcher,
                             meta::PolicyRegistry<FlowExecutionMode>::getInstance().getPolicy(
                               context.local_search.flow.execution_policy));
-REGISTER_DISPATCHED_REFINER(RefinementAlgorithm::kway_flow,
-                            KWayFlowFactoryDispatcher,
-                            meta::PolicyRegistry<FlowNetworkType>::getInstance().getPolicy(
-                              context.local_search.flow.network),
+REGISTER_DISPATCHED_REFINER(RefinementAlgorithm::kway_hyperflow_cutter,
+                            KWayHyperFlowCutterFactoryDispatcher,
                             meta::PolicyRegistry<FlowExecutionMode>::getInstance().getPolicy(
                               context.local_search.flow.execution_policy));
-REGISTER_REFINER(RefinementAlgorithm::twoway_fm_flow, TwoWayFMFlowRefiner);
-REGISTER_REFINER(RefinementAlgorithm::kway_fm_flow_km1, KWayFMFlowRefiner);
-REREGISTER_REFINER(RefinementAlgorithm::kway_fm_flow, KWayFMFlowRefiner, 2);
+
+REGISTER_REFINER(RefinementAlgorithm::twoway_fm_hyperflow_cutter, TwoWayFMFlowRefiner);
+REGISTER_REFINER(RefinementAlgorithm::kway_fm_hyperflow_cutter_km1, KWayFMFlowRefiner);
+REREGISTER_REFINER(RefinementAlgorithm::kway_fm_hyperflow_cutter, KWayFMFlowRefiner, 2);
+
 REGISTER_REFINER(RefinementAlgorithm::do_nothing, DoNothingRefiner);
 }  // namespace kahypar

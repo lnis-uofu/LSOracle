@@ -4,7 +4,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build LSOracle ${{ matrix.config.cc }}
+    name: Build LSOracle
     container: ghcr.io/lnis-uofu/lsoracle-build:groovy
     env:
       CCACHE_COMPRESS: "true"
@@ -20,7 +20,7 @@ jobs:
         with:
           path: |
             /__w/LSOracle/.ccache
-          key: cicd_testing_${{matrix.config.cc}}
+          key: cicd_testing_build
       - name: Build
         run: |
           ccache -p

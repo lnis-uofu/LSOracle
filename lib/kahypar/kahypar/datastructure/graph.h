@@ -58,6 +58,8 @@ struct IncidentClusterWeight {
 
 class Graph {
  private:
+  static constexpr bool enable_heavy_assert = false;
+
   class NodeIDIterator : public std::iterator<
                            std::forward_iterator_tag,  // iterator_category
                            NodeID,  // value_type
@@ -107,7 +109,8 @@ class Graph {
     _cluster_id(),
     _cluster_size(),
     _incident_cluster_weight(),
-    _incident_cluster_weight_position(hypergraph.initialNumNodes() + hypergraph.initialNumEdges()),
+    _incident_cluster_weight_position(static_cast<size_t>(hypergraph.initialNumNodes()) +
+                                      hypergraph.initialNumEdges()),
     _hypernode_mapping() {
     for (const HyperedgeID he : hypergraph.edges()) {
       if (hypergraph.edgeSize(he) > 2) {
@@ -116,10 +119,10 @@ class Graph {
       }
     }
 
-    const bool verbose_output = (context.type == ContextType::main &&
-                                 context.partition.verbose_output) ||
-                                (context.type == ContextType::initial_partitioning &&
-                                 context.initial_partitioning.verbose_output);
+    const bool verbose_output = !context.partition.quiet_mode && ((context.type == ContextType::main &&
+                                                                   context.partition.verbose_output) ||
+                                                                  (context.type == ContextType::initial_partitioning &&
+                                                                   context.initial_partitioning.verbose_output));
     if (verbose_output) {
       LOG << "  hypergraph is a graph =" << std::boolalpha << _is_graph;
     }
@@ -307,7 +310,7 @@ class Graph {
 
     _cluster_id[node] = to;
 
-    ASSERT([&]() {
+    HEAVY_DATA_STRUCTURE_ASSERT([&]() {
           std::set<ClusterID> distinct_comm;
           size_t from_size = 0;
           size_t to_size = 0;
@@ -373,7 +376,7 @@ class Graph {
       }
     }
 
-    ASSERT([&]() {
+    HEAVY_DATA_STRUCTURE_ASSERT([&]() {
           const auto incident_cluster_weight_range =
             std::make_pair(_incident_cluster_weight.begin(),
                            _incident_cluster_weight.begin() + idx);

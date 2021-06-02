@@ -35,6 +35,7 @@
 #include "kahypar/partition/refinement/kway_fm_cut_refiner.h"
 #include "kahypar/partition/refinement/policies/fm_improvement_policy.h"
 #include "kahypar/partition/refinement/policies/fm_stop_policy.h"
+#include "kahypar/utils/randomize.h"
 
 namespace kahypar {
 template <typename Derived = Mandatory>
@@ -45,9 +46,12 @@ class InitialPartitionerBase {
   static constexpr bool debug = false;
 
  public:
-  InitialPartitionerBase(Hypergraph& hypergraph, Context& context) :
+  InitialPartitionerBase(Hypergraph& hypergraph,
+                         Context& context,
+                         const bool enable_randomization = true) :
     _hg(hypergraph),
     _context(context),
+    _enable_randomization(enable_randomization),
     _unassigned_nodes(),
     _unassigned_node_bound(std::numeric_limits<PartitionID>::max()),
     _max_hypernode_weight(hypergraph.weightOfHeaviestNode()) {
@@ -55,6 +59,10 @@ class InitialPartitionerBase {
       _unassigned_nodes.push_back(hn);
     }
     _unassigned_node_bound = _unassigned_nodes.size();
+    if ( _enable_randomization ) {
+      Randomize::instance().shuffleVector(
+        _unassigned_nodes, _unassigned_nodes.size());
+    }
   }
 
   InitialPartitionerBase(const InitialPartitionerBase&) = delete;
@@ -78,8 +86,6 @@ class InitialPartitionerBase {
     }
     _context.partition.max_part_weights =
       _context.initial_partitioning.upper_allowed_partition_weight;
-    _context.partition.max_part_weights =
-      _context.initial_partitioning.upper_allowed_partition_weight;
   }
 
   void resetPartitioning() {
@@ -94,6 +100,10 @@ class InitialPartitionerBase {
       _hg.initializeNumCutHyperedges();
     }
     _unassigned_node_bound = _unassigned_nodes.size();
+    if ( _enable_randomization ) {
+      Randomize::instance().shuffleVector(
+        _unassigned_nodes, _unassigned_nodes.size());
+    }
   }
 
   void multipleRunsInitialPartitioning() {
@@ -184,8 +194,6 @@ class InitialPartitionerBase {
       for (const HyperedgeID& he : _hg.edges()) {
         max_he_weight = std::max(max_he_weight, _hg.edgeWeight(he));
       }
-      LOG << V(max_degree);
-      LOG << V(max_he_weight);
       refiner->initialize(static_cast<HyperedgeWeight>(max_degree * max_he_weight));
 #else
       refiner->initialize(0);
@@ -285,6 +293,7 @@ class InitialPartitionerBase {
  protected:
   Hypergraph& _hg;
   Context& _context;
+  bool _enable_randomization;
 
  private:
   void preassignAllFixedVertices() {

@@ -1,0 +1,14 @@
+%two paths from s (1) to t (8). augmenting path based algorithms without scaling need to perform one operation of pushing flow back
+9 8 1
+%first short path
+1 1 2
+5 2 3
+1 3 8
+%second longer path
+5 1 4
+5 4 3
+%3 -> 2
+5 2 5
+5 5 6
+5 6 7
+5 7 8
