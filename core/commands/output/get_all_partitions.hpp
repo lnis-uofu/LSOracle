@@ -52,7 +52,7 @@ namespace alice
                 oracle::partition_view<mig_names> part = partitions.create_part(ntk, partition);
                 auto part_ntk = mockturtle::node_resynthesis<mockturtle::mig_network>(part, resyn_mig);
                 
-                std::string filename = dir + "/" + ntk._storage->net_name + "_" + std::to_string(partition) + ".v";;
+                std::string filename = dir + "/" + ntk._storage->_network_name + "_" + std::to_string(partition) + ".v";;
                 filenames.push_back(filename);
                 parts.push_back(part_ntk);
                 
@@ -80,7 +80,7 @@ namespace alice
               auto partitions = *store<part_man_aig_ntk>().current();
               mockturtle::node_map<std::string, aig_names> node_names( ntk );
               mockturtle::node_map<std::string, aig_names> input_names( ntk );
-              std::string toplevel_module = std::filesystem::path(ntk._storage->net_name).filename();
+              std::string toplevel_module = std::filesystem::path(ntk._storage->_network_name).filename();
               std::string toplevel_file = dir + "/" + toplevel_module + ".v"; 
               for(int i = 0; i < partitions.get_part_num(); i++){
                 std::vector<mockturtle::aig_network> parts;
@@ -94,7 +94,7 @@ namespace alice
                 oracle::partition_view<aig_names> part = partitions.create_part(ntk, partition);
                 auto part_ntk = mockturtle::node_resynthesis<aig_names>(part, resyn_aig);
                 
-                std::string modulename = std::filesystem::path( ntk._storage->net_name + "_" + std::to_string(partition) ).filename();
+                std::string modulename = std::filesystem::path( ntk._storage->_network_name + "_" + std::to_string(partition) ).filename();
                 std::string filename = dir + "/" + modulename + ".v";
                 filenames.push_back(filename);
                 parts.push_back(part_ntk);
@@ -109,8 +109,11 @@ namespace alice
                 }
 
                 if (i == 0)
+                  //to do: write_toplevel_verilog has been removed along with the rest of the duplicate write_verilog method because it was not
+                  //  compatible with the newest version of mockturtle.  We'll want it back, but for now I'm disabling this feature
                   oracle::write_toplevel_verilog(ntk, partitions, toplevel_file, node_names, input_names, toplevel_module);
                 
+                //to do: see above, but for call_submodule
                 oracle::call_submodule( ntk, part_ntk, toplevel_file, modulename, i, part, node_names, input_names);
 
                 std::cout << "\n";
