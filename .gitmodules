@@ -13,3 +13,6 @@
 #[submodule "lib/percy"]
 #	path = lib/percy
 #	url = https://github.com/whaaswijk/percy
+[submodule "lib/mockturtle"]
+	path = lib/mockturtle
+	url = https://github.com/lsils/mockturtle.git
