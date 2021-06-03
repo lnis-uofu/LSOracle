@@ -35,10 +35,6 @@ target_include_directories(any INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/any)
 add_library(cli11 INTERFACE) # v1.3
 target_include_directories(cli11 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/cli11)
 
-add_library(fmt INTERFACE) # v4.1.0
-target_include_directories(fmt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fmt)
-target_compile_definitions(fmt INTERFACE FMT_HEADER_ONLY)
-
 add_library(json INTERFACE) # v3.0.0
 target_include_directories(json INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/json)
 
@@ -49,6 +45,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(mockturtle)
 target_compile_options(mockturtle INTERFACE -w)
+target_link_libraries(mockturtle INTERFACE fmt)
 
 #set(PERCY_BUILD_KITTY OFF CACHE BOOL "Build kitty for percy" FORCE)
 #add_subdirectory(percy)
