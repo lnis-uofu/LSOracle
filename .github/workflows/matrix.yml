@@ -2,11 +2,43 @@ on:
   - push
 
 jobs:
-  compat-build:
+  osx-compat:
+    runs-on: macos-latest
+    name: Build compatibility with Apple Clang
+    env:
+      CC: /Library/Developer/CommandLineTools/usr/bin/clang
+      CXX: /Library/Developer/CommandLineTools/usr/bin/clang++
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake --build build -j$(nproc)
+  centos-compat:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    name: Build compatibility ${{ matrix.config.name }} ${{ matrix.config.image }}
-    container: ghcr.io/lnis-uofu/lsoracle-build:${{ matrix.config.image }}
+    name: Build compatibility ${{ matrix.config.name }} centos7
+    container: ghcr.io/lnis-uofu/lsoracle-build:centos7
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: gcc-8
+            scl: /opt/rh/devtoolset-8/enable
+          - name: clang-7
+            scl: /opt/rh/llvm-toolset-7.0/enable
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          source ${{ matrix.config.scl }}
+          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake --build build -j$(nproc)
+  ubuntu-compat:
+    runs-on: ubuntu-latest
+    name: Build compatibility ${{ matrix.config.name }} ubuntu groovy
+    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
     strategy:
       fail-fast: false
       matrix:
@@ -14,48 +46,24 @@ jobs:
           - name: gcc-8
             cc: gcc-8
             cxx: g++-8
-            image: groovy
-            ccache: true
           - name: gcc-9
             cc: gcc-9
             cxx: g++-9
-            image: groovy
-            ccache: true
           - name: gcc-10
             cc: gcc-10
             cxx: g++-10
-            image: groovy
-            ccache: true
           - name: clang-8
             cc: clang-8
             cxx: clang++-8
-            image: groovy
-            ccache: true
           - name: clang-9
             cc: clang-9
             cxx: clang++-9
-            image: groovy
-            ccache: true
           - name: clang-10
             cc: clang-10
             cxx: clang++-10
-            image: groovy
-            ccache: true
           - name: clang-11
             cc: clang-11
             cxx: clang++-11
-            image: groovy
-            ccache: true
-          - name: gcc-8
-            cc: /opt/rh/devtoolset-8/root/usr/bin/gcc
-            cxx: /opt/rh/devtoolset-8/root/usr/bin/g++
-            image: centos7-gcc8
-            ccache: false
-          - name: clang-7
-            cc: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang
-            cxx: /opt/rh/llvm-toolset-7.0/root/usr/bin/clang++
-            image: centos7-gcc8
-            ccache: false
     env:
       CC: ${{ matrix.config.cc }}
       CXX: ${{ matrix.config.cxx }}
