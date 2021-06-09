@@ -25,8 +25,15 @@ jobs:
         config:
           - name: gcc-8
             scl: /opt/rh/devtoolset-8/enable
+            cc: gcc
+            cxx: g++
           - name: clang-7
             scl: /opt/rh/llvm-toolset-7.0/enable
+            cc: clang
+            cxx: clang++
+    env:
+      CC: ${{ matrix.config.cc }}
+      CXX: ${{ matrix.config.cxx }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
