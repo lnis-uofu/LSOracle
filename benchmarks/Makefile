@@ -1,6 +1,7 @@
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
+LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
 TEE := cat - >
@@ -74,10 +75,25 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
 %_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
-	${YOSYS} -m oracle -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	${YOSYS} -m ${LSORACLE_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
+
+%.hpg: %.rtl
+	$(eval TEMP=$(shell mktemp))
+	echo "write_hypergraph $@" > ${TEMP}
+	${YOSYS} -m ${LSORACLE_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}"
+	rm ${TEMP}
+
+%_weighted.nodes: %.hpg
+	python3 generate_weights.py $< $@
+
+%_weighted.rtl %_weighted.synth.log: %.rtl %_weighted.nodes
+	$(eval TEMP=$(shell mktemp))
+	echo "partitioning 10 -c kahypar.ini -w ${word 2,$^}; optimization; ps -a; crit_path_stats; ntk_stats " > ${TEMP}
+	${YOSYS} -m ${LSORACLE_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}" | ${TEE} $*_weighted.synth.log
+	rm ${TEMP}
 
 %_abc.rtl %_abc.synth.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*_abc.rtl" | ${TEE} $*_abc.synth.log

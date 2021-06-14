@@ -98,7 +98,7 @@ namespace oracle
               _part_scope[partition[curr_node]].insert(curr_node);
               _part_pis.insert(std::pair<int, node>(partition[curr_node], ntk.index_to_node(conn.index)));
               _part_pos.insert(std::pair<int, node>(partition[ntk.index_to_node(conn.index)],ntk.index_to_node(conn.index)));
-              
+
             }
           });
         }
@@ -111,7 +111,7 @@ namespace oracle
       }
     }
 
-    partition_manager(Ntk& ntk, std::vector<std::set<node>> scope, std::unordered_map<int, std::set<node>> inputs, 
+    partition_manager(Ntk& ntk, std::vector<std::set<node>> scope, std::unordered_map<int, std::set<node>> inputs,
       std::unordered_map<int, std::set<node>> outputs, std::unordered_map<int, std::set<node>> regs, std::unordered_map<int, std::set<node>> regs_in, int part_num){
 
       num_partitions = part_num;
@@ -122,7 +122,7 @@ namespace oracle
       partitionRegIn = regs_in;
     }
 
-    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini" ) : Ntk( ntk )
+    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini", kahypar_hypernode_weight_t *hypernode_weights=nullptr, kahypar_hyperedge_weight_t *hyperedge_weights=nullptr ) : Ntk( ntk )
     {
       static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
       static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
@@ -136,7 +136,7 @@ namespace oracle
 
       for(int i = 0; i<part_num; ++i)
         _part_scope.push_back(std::set<node>());
-      
+
       if(part_num == 1){
         ntk.foreach_pi( [&](auto pi){
           _part_scope[0].insert(ntk.index_to_node(pi));
@@ -194,10 +194,12 @@ namespace oracle
         const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
 
         //set all edges to have the same weight
-        std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
-
-        for( int i = 0; i < kahyp_num_vertices; i++ )
-          hyperedge_weights[i] = 2;
+        if (hyperedge_weights == nullptr) {
+          hyperedge_weights = new kahypar_hyperedge_weight_t[kahyp_num_vertices];
+          for( int i = 0; i < kahyp_num_vertices; i++ ) {
+            hyperedge_weights[i] = 2;
+          }
+        }
 
         //vector with indeces where each set starts
         std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
@@ -220,7 +222,7 @@ namespace oracle
         std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
 
         kahypar_partition(num_vertices, num_hyperedges,
-                          imbalance, k, nullptr, hyperedge_weights.get(),
+                          imbalance, k, hypernode_weights, hyperedge_weights,
                           hyperedge_indices.get(), hyperedges.get(),
                           &objective, context, partition.data());
 
@@ -233,7 +235,7 @@ namespace oracle
             _part_ros.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
           }
         }
-        
+
         ntk.foreach_node( [&](auto curr_node){
           if (!ntk.is_constant(curr_node)) {
             _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
@@ -246,7 +248,7 @@ namespace oracle
                 _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
                 _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)], ntk.index_to_node(conn.index)));
                 _part_pos.insert(std::pair<int, node>(partition[conn.index],ntk.index_to_node(conn.index)));
-                
+
               }
             });
           }
@@ -273,7 +275,7 @@ namespace oracle
         }
         kahypar_context_free(context);
       }
-      
+
     }
 
   private:
@@ -332,7 +334,7 @@ namespace oracle
     void tt_build(Ntk& ntk, int partition, node curr_node, node root){
       int nodeIdx = ntk.node_to_index(curr_node);
       if(logic_cone_inputs[root].find(nodeIdx) != logic_cone_inputs[root].end() || _part_scope[partition].find(curr_node) == _part_scope[partition].end()){
-        
+
         if(logic_cone_inputs[root].find(root) != logic_cone_inputs[root].end()){
           auto output = ntk._storage->outputs.at(get_output_index(ntk,root));
           if(output.data & 1){
@@ -341,20 +343,20 @@ namespace oracle
         }
         return;
       }
-            
+
       std::vector<signal> children;
       ntk.foreach_fanin(curr_node, [&]( auto const& child, auto i){
         children.push_back(child);
       });
       int child1Idx = ntk._storage->nodes[nodeIdx].children[0].index;
       int child2Idx = ntk._storage->nodes[nodeIdx].children[1].index;
-            
+
       for(auto child : children){
         tt_build(ntk, partition, ntk.get_node(child), root);
       }
 
       if(!ntk.is_constant(nodeIdx) && logic_cone_inputs[root].find(nodeIdx) == logic_cone_inputs[root].end() ){
-        
+
         std::vector<kitty::dynamic_truth_table> child_tts;
         for(auto child : children){
           child_tts.push_back(tt_map[child.index]);
@@ -380,10 +382,10 @@ namespace oracle
         }
         else{
           tt = kitty::binary_and(child_tts.at(0), child_tts.at(1));;
-        } 
+        }
         tt_map[nodeIdx] = tt;
       }
-            
+
       if(ntk.is_po(nodeIdx) && nodeIdx == root){
         auto output = ntk._storage->outputs.at(get_output_index(ntk,nodeIdx));
         if(output.data & 1){
@@ -393,7 +395,7 @@ namespace oracle
     }
 
   public:
-    partition_view<Ntk> create_part( Ntk& ntk, int part ){ 
+    partition_view<Ntk> create_part( Ntk& ntk, int part ){
       partition_view<Ntk> partition(ntk, partitionInputs[part], partitionOutputs[part], partitionReg[part], partitionRegIn[part], false);
       return partition;
     }
@@ -454,12 +456,12 @@ namespace oracle
     }
 
     void generate_truth_tables(Ntk& ntk){
-      
-      for(int i = 0; i < num_partitions; i++){                 
+
+      for(int i = 0; i < num_partitions; i++){
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
-          auto curr_output = *it;  
-          BFS_traversal(ntk, curr_output, i); 
+          auto curr_output = *it;
+          BFS_traversal(ntk, curr_output, i);
           if(ntk.is_constant(curr_output)){
             std::cout << "CONSTANT\n";
           }
@@ -470,7 +472,7 @@ namespace oracle
               int nodeIdx = *input_it;
               kitty::dynamic_truth_table tt( logic_cone_inputs[curr_output].size() );
               kitty::create_nth_var(tt, idx);
-                                  
+
               tt_map[nodeIdx] = tt;
               idx++;
             }
@@ -480,7 +482,7 @@ namespace oracle
             ntk.foreach_node( [&]( auto node ) {
               int index = ntk.node_to_index(node);
               ntk._storage->nodes[index].data[1].h1 = 0;
-            });        
+            });
           }
           else{
             std::cout << "Logic Cone too big at " << logic_cone_inputs[curr_output].size() << " inputs\n";
@@ -628,8 +630,8 @@ namespace oracle
         typename std::set<node>::iterator it;
         for(it = partitionOutputs[i].begin(); it != partitionOutputs[i].end(); ++it){
           auto output = *it;
-		      if(ntk.is_constant(output)) 
-            continue;  	
+		      if(ntk.is_constant(output))
+            continue;
         	total_depth += computeLevel(ntk, output, partitionInputs[partition]);
         	total_outputs++;
         }
@@ -752,7 +754,7 @@ namespace oracle
             }
             std::reverse(onset_indeces.at(k).begin(), onset_indeces.at(k).end());
           }
-          
+
           int columns = num_inputs / 2;
           int rows;
           if(num_inputs <= 16 && num_inputs >= 2){
@@ -950,9 +952,9 @@ namespace oracle
       std::set_union(partitionOutputs[part_1].begin(), partitionOutputs[part_1].end(),
                      partitionOutputs[part_2].begin(), partitionOutputs[part_2].end(),
                      std::inserter(merged_outputs, merged_outputs.end()));
-      
+
       for(it = partitionInputs[part_2].begin(); it != partitionInputs[part_2].end(); ++it){
-        
+
         for(int i = 0; i < input_partition[*it].size(); i++){
           if(input_partition[*it].at(i) == part_2){
             input_partition[*it].at(i) = part_1;
@@ -975,12 +977,12 @@ namespace oracle
           merged_outputs.erase(shared_node);
         }
 
-        if(combined_deleted_nodes[part_1].find(shared_node) == combined_deleted_nodes[part_1].end() && 
+        if(combined_deleted_nodes[part_1].find(shared_node) == combined_deleted_nodes[part_1].end() &&
           !ntk.is_pi(shared_node) && !ntk.is_po(shared_node)){
 
           combined_deleted_nodes[part_1].insert(shared_node);
         }
-        
+
       }
 
       result_io.push_back(merged_inputs);

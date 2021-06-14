@@ -10,3 +10,6 @@
 *.pdf
 *.log
 *.rtl
+*.nodes
+*.edges
+*.hpg
