@@ -1,6 +1,7 @@
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
+LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
 TEE := cat - >
