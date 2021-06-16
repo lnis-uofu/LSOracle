@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.9)
 cmake_policy(SET CMP0079 NEW)
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "None")
+if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "None")
   message(STATUS "CMAKE_BUILD_TYPE is 'None', defaulting to 'Release'")
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "DEBUG")
+  message(WARNING "Build type is DEBUG, be aware that performance will be unusable for any non-trivial circuit.")
+endif()
+
+option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -35,6 +40,14 @@ add_subdirectory(core)
 
 install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
+
+if (${YOSYS_PLUGIN})
+  if (NOT DEFINED YOSYS_SHARE_DIR)
+    message(FATAL_ERROR "YOSYS_SHARE_DIR was not set, but plugin build was requested. If using a system installed yosys, this is typically located in /usr/local/share/yosys. In the yosys repository, the directory is ./share")
+  endif()
+  add_subdirectory(yosys-plugin)
+  install(TARGETS yosys-plugin CONFIGURATIONS RELEASE DESTINATION ${YOSYS_SHARE_DIR}/plugin)
+endif()
 
 enable_testing()
 add_executable(unit_tests tests/basic.cpp)
