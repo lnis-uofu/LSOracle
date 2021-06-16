@@ -62,4 +62,4 @@ The LSOracle full documentation is available [here](https://lsoracle.readthedocs
 
 ## Using LSOracle as a Yosys Plugin
 
-Refer to the [LSOracle Plugin Repo](https://github.com/lnis-uofu/LSOracle-Plugin)
+LSOracle is available as a plugin to yosys. To build the plugin, pass the arguments `-D YOSYS_PLUGIN=ON -D YOSYS_INCLUDE_DIR=/path/to/yosys` during cmake configuration, specifying the absolute path to the yosys directory. The plugin shared object will be compile to build/yosys-plugin/oracle.so. The plugin can be copied into the share/plugin directory in the yosys build and used with the flag `-m oracle`, or can be specified by full path `-m LSOracle/build/yosys-plugin/oracle.so`.
