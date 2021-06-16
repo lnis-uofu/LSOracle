@@ -5,5 +5,5 @@ RUN mkdir -p /LSOracle
 COPY LSOracle /LSOracle/
 WORKDIR /LSOracle
 RUN source /opt/rh/devtoolset-8/enable && \
-        cmake -B build -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_SHARE_DIR=/yosys -D YOSYS_PLUGIN=ON . && \
+        cmake -B build -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON . && \
         cmake --build build -j$(nproc)
