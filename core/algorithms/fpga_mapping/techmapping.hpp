@@ -36,6 +36,9 @@
 #include <variant>
 #include <vector>
 
+#include <kitty/kitty.hpp>
+#include <mockturtle/mockturtle.hpp>
+
 namespace oracle
 {
 namespace techmap
@@ -47,8 +50,8 @@ struct cut {
     {
     }
 
-    cut(std::vector<size_t> _inputs, size_t _output) :
-        inputs{std::move(_inputs)}, output{_output}
+    cut(std::vector<size_t> _inputs, size_t _output, kitty::dynamic_truth_table _truth_table) :
+        inputs{std::move(_inputs)}, output{_output}, truth_table{std::move(_truth_table)}
     {
         std::sort(inputs.begin(), inputs.end());
     }
@@ -57,7 +60,7 @@ struct cut {
     {
         std::vector<size_t> new_inputs;
         std::set_union(inputs.begin(), inputs.end(), rhs.inputs.begin(), rhs.inputs.end(), std::back_inserter(new_inputs));
-        return cut(std::move(new_inputs), new_output);
+        return cut(std::move(new_inputs), new_output, kitty::dynamic_truth_table{});
     }
 
     bool input_count() const
@@ -72,16 +75,28 @@ struct cut {
 
     std::vector<size_t> inputs;
     size_t output;
+    kitty::dynamic_truth_table truth_table;
 };
 
 
 struct cell {
+    cell(size_t _index, std::vector<kitty::dynamic_truth_table> _truth_table) :
+        index{_index}, truth_table{std::move(_truth_table)}
+    {
+    }
+
     size_t index;
+    std::vector<kitty::dynamic_truth_table> truth_table;
 };
 
 
 struct lut {
-    unsigned long long lut_mask;
+    lut(kitty::dynamic_truth_table _truth_table) :
+        truth_table{std::move(_truth_table)}
+    {
+    }
+
+    kitty::dynamic_truth_table truth_table;
 };
 
 
@@ -144,7 +159,7 @@ struct graph {
 
     bool is_primary_output(size_t index) const
     {
-        return std::holds_alternative<primary_output>(nodes[index]);   
+        return std::holds_alternative<primary_output>(nodes[index]);
     }
 
     size_t add_cell(cell_type const& c)
@@ -271,8 +286,9 @@ struct mapping_settings {
 
 struct mapping_info {
     std::optional<cut> selected_cut;
+    std::optional<kitty::dynamic_truth_table> truth_table;
     unsigned int depth;
-    unsigned int references;
+    int references; // Signed to detect underflow.
     float area_flow;
     unsigned int required;
 };
@@ -296,7 +312,7 @@ struct frontier_info {
 class mapper {
 public:
     mapper(graph<cell> _g, mapping_settings _settings) :
-        g{std::move(_g)}, info(g.nodes.size()), settings{_settings}
+        g{std::move(_g)}, info{g.nodes.size()}, settings{_settings}
     {
         assert(settings.cut_input_limit >= 2 && "invalid argument: mapping for less than 2 inputs is impossible");
         assert(settings.node_cut_count >= 1 && "invalid argument: must store at least one cut per node");
@@ -373,14 +389,15 @@ private:
             // We should have at least one cut provided by the trivial cut.
             assert(!cut_set.empty() && "bug: node has no cuts"); // TODO: maybe this is redundant given the assert in area_optimisation?
 
-            // Choose the best cut as the representative cut for this node, and add the cut set of this node to the frontier.
+            // Choose the best cut as the representative cut for this node.
             for (size_t input : cut_set[0].inputs) {
-                frontier.at(input).references++;
+                info[input].references++;
             }
 
-            unsigned int depth = cut_depth(cut_set[0], frontier);
+            // Add the cut set of this node to the frontier.
+            unsigned int depth = cut_depth(cut_set[0], info);
             info[node].selected_cut = std::make_optional(cut_set[0]);
-            frontier.insert({node, frontier_info{std::move(cut_set), depth}});
+            frontier.insert({node, frontier_info{std::move(cut_set)}});
 
             // Erase fan-in nodes that have their fan-out completely mapped as they will never be used again.
             for (size_t fanin_node : g.node_fanin_nodes(node)) {
@@ -420,16 +437,15 @@ private:
             for (size_t cut_input : info[node].selected_cut->inputs) {
                 info[cut_input].required = std::min(info[cut_input].required, required);
 
-                // If we end up with a negative required time, we have a bug. For instance:
+                // If we end up with a negative required time, we have a bug. For instance, this might fire if:
                 // - the maximum depth isn't actually the maximum depth
                 // - the graph has a loop
-                // - the 
                 assert(info[cut_input].required >= 0 && "bug: node has negative arrival time");
             }
         }
     }
 
-    graph<lut> derive_mapping()
+    graph<lut> derive_mapping() const
     {
         // The mapping frontier is the list of all nodes which do not have selected cuts.
         // We start with the primary outputs and work downwards.
@@ -460,7 +476,7 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
-                size_t index = mapping.add_cell(lut{});
+                size_t index = mapping.add_cell(lut{info[node].selected_cut->truth_table});
                 gate_graph_to_lut_graph.insert({node, index});
             }
 
@@ -490,7 +506,6 @@ private:
                 if (!g.is_primary_input(input) && !visited.count(input)) {
                     frontier.push_back(input);
                 }
-
                 mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
             }
         }
@@ -500,46 +515,78 @@ private:
 
     std::vector<cut> node_cut_set(size_t node, std::unordered_map<size_t, frontier_info> const& frontier) const
     {
+        assert(std::holds_alternative<cell>(g.nodes[node]));
+        assert(std::get<cell>(g.nodes[node]).truth_table.size() == 1);
+
         std::vector<size_t> node_inputs{g.node_fanin_nodes(node)};
 
         // The trivial cut of a node is just the node itself.
-        cut trivial_cut{node_inputs, node};
+        cut trivial_cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]};
 
         // To calculate the cut set of a node, we need to compute the cartesian product of its child cuts.
         // This is implemented as performing a 2-way cartesian product N times.
 
         // Start with the cut set of input zero.
-        std::vector<cut> cut_set{frontier.at(node_inputs[0]).cuts};
+        std::vector<std::tuple<cut, std::vector<int>>> cut_set{};
+
+        for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
+            cut_set.push_back({frontier.at(node_inputs[0]).cuts[index], std::vector{index}});
+        }
 
         // For each other input:
         std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
-            std::vector<cut> new_cuts;
-            
+            std::vector<std::tuple<cut, std::vector<int>>> new_cuts;
+
             // Merge the present cut set with the cuts of this input.
-            for (cut c : cut_set) {
-                std::transform(frontier.at(node_input).cuts.begin(), frontier.at(node_input).cuts.end(), std::back_inserter(new_cuts), [&](cut const& input_cut) {
-                    return c.merge(input_cut, node);
-                });
+            for (auto const& [c, children] : cut_set) {
+                for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
+                    std::vector<int> new_children{children};
+                    new_children.push_back(input_cut);
+                    new_cuts.push_back({c.merge(input_cut, node), new_children});
+                }
             }
 
             // Filter out cuts which exceed the cut input limit.
-            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](cut const& candidate) {
-                return candidate.input_count() > settings.cut_input_limit;
+            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
+                return std::get<0>(candidate).input_count() > settings.cut_input_limit;
             }), new_cuts.end());
+
+            // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
+            // Or does that negatively affect cut quality?
 
             // Replace the present cut set with the new one.
             cut_set = std::move(new_cuts);
         });
 
+        // Now calculate the LUT masks.
+        std::vector<cut> new_cut_set;
+
+        for (auto& [c, children] : cut_set) {
+            assert(children.size() > 0);
+            kitty::dynamic_truth_table result{frontier.at(c.inputs[0]).cuts[children[0]].truth_table.construct()};
+            for (int bit = 0; bit < result.num_bits(); bit++) {
+                uint32_t pattern = 0u;
+                for (int fanin_index = 0; fanin_index < children.size(); fanin_index++) {
+                    pattern |= kitty::get_bit(frontier.at(c.inputs[fanin_index]).cuts[children[fanin_index]].truth_table, bit) << fanin_index;
+                }
+
+                if (kitty::get_bit(std::get<cell>(g.nodes[c.output]).truth_table, bit)) {
+                    kitty::set_bit(result, bit);
+                }
+            }
+            new_cut_set.push_back(std::move(c));
+            new_cut_set.back().truth_table = std::move(result);
+        }
+
         // Include the trivial cut in the cut set.
-        cut_set.push_back(std::move(trivial_cut));
+        new_cut_set.push_back(std::move(trivial_cut));
 
         // Also include the previous-best cut in the cut set, if it exists, to avoid forgetting good cuts.
         if (info[node].selected_cut.has_value()) {
-            cut_set.push_back(*info[node].selected_cut);
+            new_cut_set.push_back(*info[node].selected_cut);
         }
 
-        return cut_set;
+        return new_cut_set;
     }
 
     // Ordering by cut depth is vital to find the best possible mapping for a network.
@@ -582,6 +629,7 @@ private:
 
         for (size_t input : c.inputs) {
             info[input].references--;
+            assert(info[input].references >= 0 && "bug: decremented node reference below zero");
         }
 
         for (size_t input : c.inputs) {
@@ -601,6 +649,34 @@ private:
     std::vector<mapping_info> info;
     mapping_settings settings;
 };
+
+
+mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
+{
+    mockturtle::klut_network ntk{};
+    std::unordered_map<size_t, mockturtle::klut_network::signal> node_to_mockturtle{};
+
+    for (size_t pi : g.primary_inputs) {
+        node_to_mockturtle.insert({pi, ntk.create_pi()});
+    }
+
+    for (size_t node : g.topological_ordering()) {
+        std::vector<mockturtle::klut_network::signal> children{};
+        for (size_t input : g.node_fanin_nodes(node)) {
+            children.push_back(node_to_mockturtle.at(input));
+        }
+        node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
+    }
+
+    for (size_t po : g.primary_outputs) {
+        for (size_t fanin : g.node_fanin_nodes(po)) {
+            node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
+            break;
+        }
+    }
+
+    return ntk;
+}
 
 } // namespace techmap
 
