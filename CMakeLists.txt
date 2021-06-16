@@ -48,11 +48,13 @@ install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INST
 install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
 
 if (${YOSYS_PLUGIN})
-  if (NOT DEFINED YOSYS_SHARE_DIR)
-    message(FATAL_ERROR "YOSYS_SHARE_DIR was not set, but plugin build was requested. If using a system installed yosys, this is typically located in /usr/local/share/yosys. In the yosys repository, the directory is ./share")
+  if (NOT DEFINED YOSYS_INCLUDE_DIR)
+    message(FATAL_ERROR "YOSYS_INCLUDE_DIR was not set, but plugin build was requested. If using a system installed yosys, this is typically located in /usr/local/share/yosys/include. In the yosys repository, the directory is ./share/include, or can also be specified as the root of the repository.")
   endif()
   add_subdirectory(yosys-plugin)
-  install(TARGETS yosys-plugin CONFIGURATIONS RELEASE DESTINATION ${YOSYS_SHARE_DIR}/plugin)
+  if (DEFINED YOSYS_SHARE_DIR)
+    install(TARGETS yosys-plugin CONFIGURATIONS RELEASE DESTINATION ${YOSYS_SHARE_DIR}/plugin)
+  endif()
 endif()
 
 enable_testing()
