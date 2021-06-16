@@ -1,12 +1,18 @@
 cmake_minimum_required(VERSION 3.9)
 cmake_policy(SET CMP0079 NEW)
 
-if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "None")
-  message(STATUS "CMAKE_BUILD_TYPE is 'None', defaulting to 'Release'")
-  set(CMAKE_BUILD_TYPE "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE STREQUAL "None")
+  # "None" is specifically checked, because launchpad builders set the value to None when invoking cmake
+  message(STATUS "Setting build type to 'Release' as no value or 'None' was specified.")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
+    "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if (${CMAKE_BUILD_TYPE} AND ${CMAKE_BUILD_TYPE} STREQUAL "DEBUG")
+message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
   message(WARNING "Build type is DEBUG, be aware that performance will be unusable for any non-trivial circuit.")
 endif()
 
