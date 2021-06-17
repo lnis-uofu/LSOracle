@@ -85,6 +85,11 @@ struct cell {
     {
     }
 
+    cell(std::vector<kitty::dynamic_truth_table> _truth_table) :
+        index{}, truth_table{std::move(_truth_table)}
+    {
+    }
+
     size_t index;
     std::vector<kitty::dynamic_truth_table> truth_table;
 };
@@ -649,6 +654,35 @@ private:
     std::vector<mapping_info> info;
     mapping_settings settings;
 };
+
+
+template<class Ntk>
+graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
+{
+    mockturtle::topo_view<Ntk> topo{ntk};
+    graph<cell> g;
+    std::unordered_map<typename Ntk::node, size_t> mockturtle_to_node;
+
+    topo.foreach_pi([&](typename Ntk::node const& node, uint32_t index) {
+        mockturtle_to_node.insert({node, g.add_primary_input()});
+    });
+
+    topo.foreach_po([&](typename Ntk::node const& node, uint32_t index) {
+        mockturtle_to_node.insert({node, g.add_primary_output()});
+    });
+
+    topo.foreach_node([&](typename Ntk::node const& node) {
+        std::vector<kitty::dynamic_truth_table> truth_table{};
+        truth_table.push_back(topo.cell_function(node));
+        cell c{truth_table};
+        mockturtle_to_node.insert({node, g.add_cell(c)});
+        topo.foreach_fanin(node, [&](typename Ntk::node const& fanin) {
+            g.add_connection(mockturtle_to_node.at(fanin), mockturtle_to_node.at(node));
+        });
+    });
+
+    return g;
+}
 
 
 mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
