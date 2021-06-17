@@ -1,3 +1,4 @@
+#Build context must include both yosys and lsoracle directories; move this dockerfile or supply an appropriate context using -f during the build
 FROM openroad/centos7-dev:latest
 RUN yum update -y && yum install -y readline-devel && yum clean -y all
 COPY yosys /yosys
