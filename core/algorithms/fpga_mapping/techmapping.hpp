@@ -141,6 +141,7 @@ template<class cell_type>
 struct graph {
     size_t add_primary_input()
     {
+        assert(!frozen);
         size_t index = nodes.size();
         primary_input pi{index};
         nodes.push_back(pi);
@@ -155,6 +156,7 @@ struct graph {
 
     size_t add_primary_output()
     {
+        assert(!frozen);
         size_t index = nodes.size();
         primary_output po{index};
         nodes.push_back(po);
@@ -169,6 +171,7 @@ struct graph {
 
     size_t add_cell(cell_type const& c)
     {
+        assert(!frozen);
         size_t index = nodes.size();
         nodes.push_back(c);
         return index;
@@ -176,6 +179,7 @@ struct graph {
 
     size_t add_connection(size_t from, size_t to)
     {
+        assert(!frozen);
         auto index = connections.size();
         connections.push_back(connection(from, to, index));
         return index;
@@ -183,10 +187,18 @@ struct graph {
 
     void remove_connection(size_t index)
     {
+        assert(!frozen);
         connections[index].reset();
     }
 
-    std::vector<connection> node_fanin_connections(size_t node) const
+    void freeze()
+    {
+        frozen = true;
+        node_fanin_nodes = std::vector<std::vector<size_t>>{nodes.size()};
+        node_fanout_nodes = std::vector<std::vector<size_t>>{nodes.size()};
+    }
+
+    std::vector<connection> compute_node_fanin_connections(size_t node) const
     {
         std::vector<connection> fanin;
         for (std::optional<connection> const& conn : connections) {
@@ -197,18 +209,43 @@ struct graph {
         return fanin;
     }
 
-    std::vector<size_t> node_fanin_nodes(size_t node) const
+    std::vector<size_t> compute_node_fanin_nodes(size_t node)
     {
+        if (frozen && !node_fanin_nodes[node].empty()) {
+            return node_fanin_nodes[node];
+        }
+
         std::vector<size_t> fanin;
         for (std::optional<connection> const& conn : connections) {
             if (conn && conn->to == node) {
                 fanin.push_back(conn->from);
             }
         }
+
+        if (frozen) {
+            node_fanin_nodes[node] = fanin;
+        }
+
         return fanin;
     }
 
-    std::vector<connection> node_fanout_connections(size_t node) const
+    std::vector<size_t> compute_node_fanin_nodes(size_t node) const
+    {
+        if (frozen && !node_fanin_nodes[node].empty()) {
+            return node_fanin_nodes[node];
+        }
+
+        std::vector<size_t> fanin;
+        for (std::optional<connection> const& conn : connections) {
+            if (conn && conn->to == node) {
+                fanin.push_back(conn->from);
+            }
+        }
+
+        return fanin;
+    }
+
+    std::vector<connection> compute_node_fanout_connections(size_t node) const
     {
         std::vector<connection> fanout;
         for (std::optional<connection> const& conn : connections) {
@@ -219,8 +256,32 @@ struct graph {
         return fanout;
     }
 
-    std::vector<size_t> node_fanout_nodes(size_t node) const
+    std::vector<size_t> compute_node_fanout_nodes(size_t node)
     {
+        if (frozen && !node_fanout_nodes[node].empty()) {
+            return node_fanout_nodes[node];
+        }
+
+        std::vector<size_t> fanout;
+        for (std::optional<connection> const& conn : connections) {
+            if (conn && conn->from == node) {
+                fanout.push_back(conn->to);
+            }
+        }
+
+        if (frozen) {
+            node_fanout_nodes[node] = fanout;
+        }
+
+        return fanout;
+    }
+
+    std::vector<size_t> compute_node_fanout_nodes(size_t node) const
+    {
+        if (frozen && !node_fanout_nodes[node].empty()) {
+            return node_fanout_nodes[node];
+        }
+
         std::vector<size_t> fanout;
         for (std::optional<connection> const& conn : connections) {
             if (conn && conn->from == node) {
@@ -230,8 +291,12 @@ struct graph {
         return fanout;
     }
 
-    std::vector<size_t> topological_ordering() const
+    std::vector<size_t> compute_topological_ordering()
     {
+        if (frozen && !forward_topological_ordering.empty()) {
+            return forward_topological_ordering;
+        }
+
         std::vector<size_t> ordering;
         std::vector<size_t> no_incoming{primary_inputs};
         graph g{*this};
@@ -240,9 +305,40 @@ struct graph {
             size_t node = no_incoming.back();
             ordering.push_back(node);
             no_incoming.pop_back();
-            for (connection conn : g.node_fanout_connections(node)) {
+            for (connection conn : g.compute_node_fanout_connections(node)) {
                 g.remove_connection(conn.index);
-                if (g.node_fanin_connections(conn.to).empty()) {
+                if (g.compute_node_fanin_connections(conn.to).empty()) {
+                    no_incoming.push_back(conn.to);
+                }
+            }
+        }
+
+        // TODO: if `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+
+        if (frozen) {
+            forward_topological_ordering = ordering;
+        }
+
+        return ordering;
+    }
+
+    std::vector<size_t> compute_topological_ordering() const
+    {
+        if (frozen && !forward_topological_ordering.empty()) {
+            return forward_topological_ordering;
+        }
+
+        std::vector<size_t> ordering;
+        std::vector<size_t> no_incoming{primary_inputs};
+        graph g{*this};
+
+        while (!no_incoming.empty()) {
+            size_t node = no_incoming.back();
+            ordering.push_back(node);
+            no_incoming.pop_back();
+            for (connection conn : g.compute_node_fanout_connections(node)) {
+                g.remove_connection(conn.index);
+                if (g.compute_node_fanin_connections(conn.to).empty()) {
                     no_incoming.push_back(conn.to);
                 }
             }
@@ -253,8 +349,12 @@ struct graph {
         return ordering;
     }
 
-    std::vector<size_t> reverse_topological_ordering() const
+    std::vector<size_t> compute_reverse_topological_ordering()
     {
+        if (frozen && !reverse_topological_ordering.empty()) {
+            return reverse_topological_ordering;
+        }
+
         std::vector<size_t> ordering;
         std::vector<size_t> no_outgoing{primary_outputs};
         graph g{*this};
@@ -263,15 +363,19 @@ struct graph {
             size_t node = no_outgoing.back();
             ordering.push_back(node);
             no_outgoing.pop_back();
-            for (connection conn : g.node_fanin_connections(node)) {
+            for (connection conn : g.compute_node_fanin_connections(node)) {
                 g.remove_connection(conn.index);
-                if (g.node_fanout_connections(conn.to).empty()) {
+                if (g.compute_node_fanout_connections(conn.to).empty()) {
                     no_outgoing.push_back(conn.to);
                 }
             }
         }
 
         // TODO: if `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+
+        if (frozen) {
+            reverse_topological_ordering = ordering;
+        }
 
         return ordering;
     }
@@ -280,6 +384,12 @@ struct graph {
     std::vector<size_t> primary_outputs;
     std::vector<std::variant<primary_input, primary_output, cell_type>> nodes;
     std::vector<std::optional<connection>> connections;
+
+    bool frozen;
+    std::vector<size_t> forward_topological_ordering;
+    std::vector<size_t> reverse_topological_ordering;
+    std::vector<std::vector<size_t>> node_fanin_nodes;
+    std::vector<std::vector<size_t>> node_fanout_nodes;
 };
 
 
@@ -327,6 +437,8 @@ public:
 
     graph<lut> map()
     {
+        g.freeze();
+
         // Mapping phase 1: prioritise depth.
         enumerate_cuts(cut_depth, cut_input_count, cut_area_flow, false);
 
@@ -359,7 +471,7 @@ private:
             frontier.insert({pi, frontier_info{pi}});
         }
 
-        for (size_t node : g.topological_ordering()) {
+        for (size_t node : g.compute_topological_ordering()) {
             // Skip primary inputs.
             if (g.is_primary_input(node)) {
                 continue;
@@ -405,8 +517,8 @@ private:
             frontier.insert({node, frontier_info{std::move(cut_set)}});
 
             // Erase fan-in nodes that have their fan-out completely mapped as they will never be used again.
-            for (size_t fanin_node : g.node_fanin_nodes(node)) {
-                std::vector<size_t> node_fanout{g.node_fanout_nodes(fanin_node)};
+            for (size_t fanin_node : g.compute_node_fanin_nodes(node)) {
+                std::vector<size_t> node_fanout{g.compute_node_fanout_nodes(fanin_node)};
                 if (std::all_of(node_fanout.begin(), node_fanout.end(), [&](size_t node) {
                     return info[node].selected_cut.has_value();
                 })) {
@@ -437,7 +549,7 @@ private:
         }
 
         // Then work from PO to PI, propagating required times.
-        for (size_t node : g.reverse_topological_ordering()) {
+        for (size_t node : g.compute_reverse_topological_ordering()) {
             unsigned int required = info[node].required - 1;
             for (size_t cut_input : info[node].selected_cut->inputs) {
                 info[cut_input].required = std::min(info[cut_input].required, required);
@@ -523,7 +635,7 @@ private:
         assert(std::holds_alternative<cell>(g.nodes[node]));
         assert(std::get<cell>(g.nodes[node]).truth_table.size() == 1);
 
-        std::vector<size_t> node_inputs{g.node_fanin_nodes(node)};
+        std::vector<size_t> node_inputs{g.compute_node_fanin_nodes(node)};
 
         // The trivial cut of a node is just the node itself.
         cut trivial_cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]};
@@ -694,16 +806,16 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
         node_to_mockturtle.insert({pi, ntk.create_pi()});
     }
 
-    for (size_t node : g.topological_ordering()) {
+    for (size_t node : g.compute_topological_ordering()) {
         std::vector<mockturtle::klut_network::signal> children{};
-        for (size_t input : g.node_fanin_nodes(node)) {
+        for (size_t input : g.compute_node_fanin_nodes(node)) {
             children.push_back(node_to_mockturtle.at(input));
         }
         node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
     }
 
     for (size_t po : g.primary_outputs) {
-        for (size_t fanin : g.node_fanin_nodes(po)) {
+        for (size_t fanin : g.compute_node_fanin_nodes(po)) {
             node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
             break;
         }
