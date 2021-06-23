@@ -14,12 +14,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(lsoracle lsoracle.cpp)
 
-target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
-#target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
-#target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar galois_utah)
+add_library(liblsoracle lsoracle.cpp)
+target_include_directories(liblsoracle INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(liblsoracle PROPERTIES PREFIX "")
+
+target_link_libraries(lsoracle alice mockturtle kahypar)
+target_link_libraries(liblsoracle alice mockturtle kahypar)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
-  target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar)
-else()
-  target_link_libraries(lsoracle alice mockturtle kahypar)
+  target_link_libraries(lsoracle stdc++fs)
+  target_link_libraries(lsoracle-lib stdc++fs)
 endif()
