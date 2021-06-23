@@ -681,13 +681,14 @@ private:
         for (auto& [c, children] : cut_set) {
             assert(children.size() > 0);
             kitty::dynamic_truth_table result{frontier.at(c.inputs[0]).cuts[children[0]].truth_table.construct()};
-            for (int bit = 0; bit < result.num_bits(); bit++) {
+            for (uint32_t bit = 0; bit < result.num_bits(); bit++) {
                 uint32_t pattern = 0u;
                 for (int fanin_index = 0; fanin_index < children.size(); fanin_index++) {
                     pattern |= kitty::get_bit(frontier.at(c.inputs[fanin_index]).cuts[children[fanin_index]].truth_table, bit) << fanin_index;
                 }
 
-                if (kitty::get_bit(std::get<cell>(g.nodes[c.output]).truth_table, bit)) {
+                // TODO: the below code is almost certainly wrong, because we need to check which specific child this is.
+                if (kitty::get_bit(std::get<cell>(g.nodes[c.output]).truth_table[0], bit)) {
                     kitty::set_bit(result, bit);
                 }
             }
