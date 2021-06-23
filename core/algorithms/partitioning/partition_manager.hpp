@@ -41,6 +41,7 @@
 
 #include <mockturtle/traits.hpp>
 #include "partition_view.hpp"
+#include "structure_partition.hpp"
 #include "hyperg.hpp"
 #include <mockturtle/networks/detail/foreach.hpp>
 #include <mockturtle/views/fanout_view.hpp>
@@ -122,7 +123,7 @@ namespace oracle
       partitionRegIn = regs_in;
     }
 
-    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini" ) : Ntk( ntk )
+    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini", kahypar_hypernode_weight_t *hypernode_weights=nullptr, kahypar_hyperedge_weight_t *hyperedge_weights=nullptr, bool sap=false ) : Ntk( ntk )
     {
       static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
       static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
@@ -194,10 +195,12 @@ namespace oracle
         const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
 
         //set all edges to have the same weight
-        std::unique_ptr<kahypar_hyperedge_weight_t[]> hyperedge_weights = std::make_unique<kahypar_hyperedge_weight_t[]>(kahyp_num_vertices);
-
-        for( int i = 0; i < kahyp_num_vertices; i++ )
-          hyperedge_weights[i] = 2;
+        if (hyperedge_weights == nullptr) {
+          hyperedge_weights = new kahypar_hyperedge_weight_t[kahyp_num_vertices];
+          for( int i = 0; i < kahyp_num_vertices; i++ ) {
+            hyperedge_weights[i] = 2;
+          }
+        }
 
         //vector with indeces where each set starts
         std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>(kahyp_num_sets+1);
@@ -218,9 +221,12 @@ namespace oracle
         kahypar_hyperedge_weight_t objective = 0;
 
         std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
-
+        if (sap) {
+          structure_partition<Ntk> sap(ntk);
+          sap.sap_fixed(partition, ntk.size()/part_num, 3);
+        }
         kahypar_partition(num_vertices, num_hyperedges,
-                          imbalance, k, nullptr, hyperedge_weights.get(),
+                          imbalance, k, hypernode_weights, hyperedge_weights,
                           hyperedge_indices.get(), hyperedges.get(),
                           &objective, context, partition.data());
 
