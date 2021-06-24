@@ -28,7 +28,6 @@ namespace oracle {
 
       //fanout view to iterate over fanouts and generate hyper edges
       mockturtle::fanout_view fanout{ntk};
-
       //Remove all children indeces from nodes so that the only connections remaining are outputs
       ntk.foreach_node([&](auto node) {
         nodes.clear();
@@ -38,7 +37,7 @@ namespace oracle {
 
         int nodeNdx = ntk.node_to_index(node);
 
-        if(!ntk.is_po(node)) {
+        if(!is_po(ntk, node)) {
           fanout.foreach_fanout(node, [&](const auto &p) {
             nodes.insert(p);
           });
@@ -48,7 +47,7 @@ namespace oracle {
           }
         }
 
-        else if (ntk.is_po(node) && !ntk.is_ro(node)) {
+        else if (is_po(ntk, node) && !ntk.is_ro(node)) {
           ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
             connections.push_back(ntk._storage->nodes[node].children[i].index);
           });

@@ -13,17 +13,19 @@ namespace oracle{
     public:
         mockturtle::mig_network run(mockturtle::mig_network& mig){
             
+            mockturtle::sop_rebalancing<mockturtle::mig_network> balfn;
             mockturtle::mig_npn_resynthesis resyn;
             mockturtle::cut_rewriting_params ps;
             mockturtle::mig_algebraic_depth_rewriting_params pm;
-            pm.selective;
+            mockturtle::balancing_params bs;
 
-            ps.cut_enumeration_ps.cut_size = 4;
+            bs.cut_enumeration_ps.cut_size = 4u;
+            //pm.selective; //this line does nothing after mockturtle upgrade.  Revisit.
 
-            mockturtle::depth_view mig_depth{mig};
+            ps.cut_enumeration_ps.cut_size = 4u;
             
             //b
-            mockturtle::balancing(mig_depth);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -38,10 +40,8 @@ namespace oracle{
             mockturtle::mig_algebraic_depth_rewriting(mig_ref_depth1, pm);
             mig = mockturtle::cleanup_dangling( mig );
 
-            mockturtle::depth_view mig_depth1{mig};
-
             //b
-            mockturtle::balancing(mig_depth1);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -55,11 +55,9 @@ namespace oracle{
             mockturtle::cut_rewriting(mig, resyn, ps);
             mig = mockturtle::cleanup_dangling(mig);
             // std::cout << "6\n";
-
-            mockturtle::depth_view mig_depth2{mig};
             
             //b
-            mockturtle::balancing(mig_depth2);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rfz
@@ -74,11 +72,9 @@ namespace oracle{
             mockturtle::cut_rewriting(mig, resyn, ps);
             mig = mockturtle::cleanup_dangling(mig);
             // std::cout << "9\n";
-
-            mockturtle::depth_view mig_depth3{mig};
             
             //b
-            mockturtle::balancing(mig_depth3);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             return mig;

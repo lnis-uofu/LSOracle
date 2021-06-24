@@ -51,10 +51,10 @@ namespace alice
                   if(part.is_pi(node_to_find)){
                     std::cout << "Input\n";
                   }
-                  else if(part.is_po(node_to_find)){
+                  else if(is_po(part, node_to_find)){
                     std::cout << "Output\n";
                   }
-                  else if(part.is_pi(node_to_find) && part.is_po(node_to_find)){
+                  else if(part.is_pi(node_to_find) && is_po(part, node_to_find)){
                     std::cout << "Input and Output\n";
                   }
                   else{
@@ -91,10 +91,10 @@ namespace alice
                   if(part.is_pi(node_to_find)){
                     std::cout << "Input\n";
                   }
-                  else if(part.is_po(node_to_find)){
+                  else if(is_po(part, node_to_find)){
                     std::cout << "Output\n";
                   }
-                  else if(part.is_pi(node_to_find) && part.is_po(node_to_find)){
+                  else if(part.is_pi(node_to_find) && is_po(part, node_to_find)){
                     std::cout << "Input and Output\n";
                   }
                   else{

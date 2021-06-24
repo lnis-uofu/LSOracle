@@ -1,5 +1,5 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle
+ * Copyright (C) 2018  University of Utah
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -68,7 +68,7 @@ namespace oracle
         mockturtle::depth_view ntk_depth{ntk};
         ntk.foreach_node([&](auto node){
           _arr[node] = ntk_depth.level(node);
-          if(ntk.is_po(node)){
+          if(is_po(ntk, node)){
             if(_arr[node] > dmax){
               dmax = _arr[node];
               rmax = _arr[node];
@@ -123,7 +123,12 @@ namespace oracle
       });
       mockturtle::topo_view top_view{ntk};
       mockturtle::fanout_view fanout{ntk};
-      std::vector<node> top_nodes = top_view.get_node_vec();
+      std::vector<node> top_nodes; //this is a bit of a kludge, but the actual vector is now private and we aren't modifying mockturtle
+      //std::vector<node> top_nodes = top_view.get_node_vec();
+      //std::reverse(top_nodes.begin(), top_nodes.end());
+      top_view.foreach_node([&] (auto node){
+        top_nodes.push_back(node);
+      });
       std::reverse(top_nodes.begin(), top_nodes.end());
       for(int i = 0; i < top_nodes.size(); i++){
         node curr_node = top_nodes.at(i);

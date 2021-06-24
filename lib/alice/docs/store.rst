@@ -13,6 +13,7 @@ Stores
    data
    current_index
    extend
+   pop_current
    clear
 
 .. doxygenclass:: alice::store_container

@@ -1,4 +1,5 @@
 #include <alice/alice.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <mockturtle/algorithms/cleanup.hpp>
 #include <mockturtle/algorithms/cut_rewriting.hpp>
@@ -51,10 +52,12 @@ namespace alice
         }
         else{
           if(!store<aig_ntk>().empty()){
-            auto& ntk = *store<aig_ntk>().current(); 
-            mockturtle::depth_view ntk_depth{ntk};
-            // oracle::balancing( ntk );
-            mockturtle::balancing(ntk_depth);
+            auto& ntk = *store<aig_ntk>().current();
+            mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
+            mockturtle::balancing_params bs;
+            bs.cut_enumeration_ps.cut_size = 4u;
+
+            ntk = mockturtle::balancing(ntk, {balfn}, bs);
             ntk = mockturtle::cleanup_dangling(ntk);
 
             mockturtle::depth_view depth{ntk};

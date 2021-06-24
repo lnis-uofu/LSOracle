@@ -54,12 +54,12 @@ namespace oracle{
         mig_parts.push_back(i);
       }
     }
-    else if(!nn_model.empty()){
+    /*else if(!nn_model.empty()){
       std::cout << "Performing Classification using Neural Network\n";
       partitions_aig.run_classification(ntk_aig, nn_model);
       aig_parts = partitions_aig.get_aig_parts();
       mig_parts = partitions_aig.get_mig_parts();
-    }
+    }*/
     else{
       std::cout << "Performing High Effort Classification and Optimization\n";
       for(int i = 0; i < num_parts; i++){

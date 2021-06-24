@@ -89,6 +89,17 @@ public:
   }
 
 private:
+  static constexpr const char* HISTORY = "./.history";
+  readline_wrapper()
+  {
+    read_history(HISTORY);
+  }
+
+  ~readline_wrapper()
+  {
+    write_history(HISTORY);
+  }
+
   static char** readline_completion_s( const char* text, int start, int end )
   {
     (void)end;

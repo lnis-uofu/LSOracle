@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(alice LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Options
@@ -27,7 +27,6 @@ include(AliceTools)
 
 add_subdirectory(lib)
 add_subdirectory(include)
-target_link_libraries(pybind11)
 
 if(ALICE_EXAMPLES)
   add_subdirectory(examples)
@@ -36,3 +35,4 @@ endif()
 if(ALICE_TEST)
   add_subdirectory(test)
 endif()
+

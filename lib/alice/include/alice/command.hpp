@@ -32,6 +32,7 @@
 
 #pragma once
 
+#include <any>
 #include <fstream>
 #include <functional>
 #include <memory>
@@ -40,9 +41,8 @@
 #include <vector>
 
 #include <CLI11.hpp>
-#include <any.hpp>
 #include <fmt/format.h>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "detail/logging.hpp"
 #include "detail/utils.hpp"
@@ -197,6 +197,12 @@ public:
     return ALICE_SETTINGS_WITH_DEFAULT_OPTION && !_default_option.empty();
   }
 
+  /*! \brief Checks whether a default store option is enabled and set from a set of options */
+  bool has_default_option( std::vector<std::string> const& list ) const
+  {
+    return ALICE_SETTINGS_WITH_DEFAULT_OPTION && std::find( list.begin(), list.end(), _default_option ) != list.end();
+  }
+
   /*! \brief Checks whether option is default store option
     
     This method also checks whether default store options are enabled.  If not,
@@ -285,6 +291,8 @@ public:
         scaption( caption )
   {
   }
+
+  virtual ~command() = default;
 
 protected:
   /*! \brief Returns rules to check validity of command line arguments  
@@ -442,7 +450,7 @@ public:
   {
     const auto index = options.size();
     options.push_back( T() );
-    auto opt = opts.add_option( name, linb::any_cast<T&>( options.back() ), description );
+    auto opt = opts.add_option( name, std::any_cast<T&>( options.back() ), description );
 
     for ( const auto& name : detail::split( opt->get_name(), "," ) )
     {
@@ -475,8 +483,8 @@ public:
     }
     else
     {
-      const linb::any& a = options.at( it->second );
-      return *linb::any_cast<T>( &a );
+      const std::any& a = options.at( it->second );
+      return *std::any_cast<T>( &a );
     }
   }
 
@@ -522,6 +530,12 @@ public:
   inline store_container<T>& store() const
   {
     return env->store<T>();
+  }
+
+  template<typename T>
+  void set_default_store()
+  {
+    env->set_default_option( store_info<T>::option );
   }
 
 /* A small hack to get the Python bindings to work */
@@ -589,7 +603,7 @@ public:
 
 private:
   std::string scaption;
-  std::vector<linb::any> options;
+  std::vector<std::any> options;
   std::unordered_map<std::string, unsigned> option_index;
 
 private:

@@ -9,6 +9,8 @@
 #include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
 #include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
 
+#include "union_find.hpp"
+
 #include <stdio.h>
 #include <fstream>
 
@@ -299,12 +301,8 @@ namespace oracle
         children.push_back( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
       } );
 
-      if(skip_edge_min == 1){
-        node2new[n] = mig.create_maj_part(mig.get_constant( false ), children.at(0), children.at(1));
-      }
-      else{
-        node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
-      }
+      //removed create_maj_part() call; it just aliased create_maj
+      node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
       
       if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
       {
@@ -354,12 +352,7 @@ namespace oracle
         children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
       } );
 
-      if(skip_edge_min == 1){
-        node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
-      }
-      else{
-        node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
-      }
+      node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2)); //see above re: create_maj_part()
     } );
 
     /* map primary outputs */
@@ -454,6 +447,16 @@ namespace oracle
   /***************************************************
     Network helpers
   ***************************************************/
+  template <typename Ntk>
+  bool is_po( Ntk const& ntk, typename Ntk::node const& n ) {
+    int nodeIdx = ntk.node_to_index(n);
+    bool result = false;
+    for(int i = 0; i < ntk._storage->outputs.size(); i++){
+      if(ntk._storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
+    return result;
+  }
 
   bool is_in_vector(std::vector<int> vec, int nodeIdx){
 

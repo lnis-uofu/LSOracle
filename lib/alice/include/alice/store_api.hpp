@@ -36,7 +36,7 @@
 #include <iostream>
 #include <string>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "command.hpp"
 
@@ -79,7 +79,7 @@ class command;
            static constexpr const char* option = "graph";
            static constexpr const char* mnemonic = "g";
            static constexpr const char* name = "graph";
-           static constexpr const char* name = "graphs";
+           static constexpr const char* plural_name = "graphs";
          };
 
          }

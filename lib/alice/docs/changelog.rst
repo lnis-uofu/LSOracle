@@ -1,8 +1,14 @@
 Change Log
 ==========
 
-v0.3 (not yet released)
+v0.4 (not yet released)
 -----------------------
+
+* General commands: ``help --docs`` to generate documentation of all commands
+  `#10 <https://github.com/msoeken/alice/pull/10>`_
+
+v0.3 (July 22, 2018)
+--------------------
 
 * Throw and catch errors in `read`.
 
@@ -14,6 +20,12 @@ v0.3 (not yet released)
 
 * Support for default store option (enabled via setting ``ALICE_SETTINGS_WITH_DEFAULT_OPTION``)
   `#7 <https://github.com/msoeken/alice/pull/7>`_
+
+* General commands: ``store --pop`` to remove current store element
+  `#8 <https://github.com/msoeken/alice/pull/8>`_
+
+* Automatic ``to_<tag>`` in Python interface as shortcut for ``write_<tag>(log=True)["contents"]``
+  `#9 <https://github.com/msoeken/alice/pull/9>`_
 
 v0.2 (May 7, 2018)
 ------------------

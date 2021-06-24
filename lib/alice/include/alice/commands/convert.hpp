@@ -52,14 +52,14 @@ int add_combination_helper_inner( CLI::App& opts )
                    fmt::format( "convert {} to {}", source_name, dest_name ) );
   }
   return 0;
-};
+}
 
 template<typename D, class... S>
 int add_combination_helper( CLI::App& opts )
 {
   []( ... ) {}( add_combination_helper_inner<D, S>( opts )... );
   return 0;
-};
+}
 
 template<typename D, class S>
 int convert_helper_inner( const environment::ptr& env, const command& cmd )

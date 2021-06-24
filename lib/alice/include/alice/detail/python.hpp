@@ -38,6 +38,7 @@
 
 #include <fmt/format.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "../command.hpp"
 
@@ -61,7 +62,19 @@ py::object json_to_python( const nlohmann::json& json )
   }
   else if ( json.is_number() )
   {
-    return py::float_( json.get<double>() );
+    using nlohmann::detail::value_t;
+    if ( static_cast<value_t>( json ) == value_t::number_unsigned )
+    {
+      return py::int_( json.get<unsigned long>() );
+    }
+    else if ( static_cast<value_t>( json ) == value_t::number_integer )
+    {
+      return py::int_( json.get<long>() );
+    }
+    else
+    {
+      return py::float_( json.get<double>() );
+    }
   }
   else if ( json.is_object() )
   {
@@ -72,7 +85,7 @@ py::object json_to_python( const nlohmann::json& json )
       _dict[py::str( it.key() )] = json_to_python( it.value() );
     }
 
-    return _dict;
+    return std::move( _dict );
   }
   else if ( json.is_array() )
   {
@@ -83,7 +96,7 @@ py::object json_to_python( const nlohmann::json& json )
       _list.append( json_to_python( element ) );
     }
 
-    return _list;
+    return std::move( _list );
   }
   else if ( json.is_string() )
   {
@@ -159,8 +172,41 @@ private:
   std::string repr_html;
 };
 
+inline std::vector<std::string> make_args( const std::string& name, py::kwargs kwargs )
+{
+  std::vector<std::string> pargs = {name};
+
+  for ( const auto& kp : kwargs )
+  {
+    // get the key as string
+    const auto skey = kp.first.cast<std::string>();
+    const auto value = kp.second;
+
+    // TODO cast float to string?
+    if ( py::isinstance<py::bool_>( value ) )
+    {
+      if ( value.cast<bool>() )
+      {
+        pargs.push_back( "--" + skey );
+      }
+    }
+    else if ( py::isinstance<py::int_>( value ) )
+    {
+      pargs.push_back( "--" + skey );
+      pargs.push_back( std::to_string( value.cast<int>() ) );
+    }
+    else
+    {
+      pargs.push_back( "--" + skey );
+      pargs.push_back( value.cast<std::string>() );
+    }
+  }
+
+  return pargs;
+}
+
 template<typename CLI>
-void create_python_module( const CLI& cli, py::module& m )
+void create_python_module( CLI& cli, py::module& m )
 {
   m.doc() = "Python bindings";
 
@@ -174,34 +220,7 @@ void create_python_module( const CLI& cli, py::module& m )
   for ( const auto& p : cli.env->commands() )
   {
     m.def( p.first.c_str(), [p]( py::kwargs kwargs ) -> py::object {
-      std::vector<std::string> pargs = {p.first};
-
-      for ( const auto& kp : kwargs )
-      {
-        // get the key as string
-        const auto skey = kp.first.cast<std::string>();
-        const auto value = kp.second;
-
-        // TODO cast float to string?
-        if ( py::isinstance<py::bool_>( value ) )
-        {
-          if ( value.cast<bool>() )
-          {
-            pargs.push_back( "--" + skey );
-          }
-        }
-        else if ( py::isinstance<py::int_>( value ) )
-        {
-          pargs.push_back( "--" + skey );
-          pargs.push_back( std::to_string( value.cast<int>() ) );
-        }
-        else
-        {
-          pargs.push_back( "--" + skey );
-          pargs.push_back( value.cast<std::string>() );
-        }
-      }
-      p.second->run( pargs );
+      p.second->run( make_args( p.first, kwargs ) );
 
       const auto log = p.second->log();
 
