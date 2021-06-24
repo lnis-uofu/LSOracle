@@ -89,22 +89,16 @@ inline std::string trim_copy( std::string s )
   return s;
 }
 
-/* format with vector (see https://stackoverflow.com/questions/39493542/building-a-dynamic-list-of-named-arguments-for-fmtlib) */
 inline std::string format_with_vector( const std::string& fmtstr, const std::vector<std::string>& values )
 {
-  assert( values.size() <= 16u );
-
-  std::vector<fmt::internal::Value> data( values.size() );
-  fmt::ULongLong types = 0;
-
-  for ( auto i = 0u; i < values.size(); ++i )
+  using ctx = fmt::format_context;
+  std::vector<fmt::basic_format_arg<ctx>> args;
+  for ( const auto& v : values )
   {
-    types |= static_cast<uint64_t>( fmt::internal::Value::STRING ) << ( i * 4 );
-    data[i].string.value = values[i].data();
-    data[i].string.size = values[i].size();
+    args.emplace_back( fmt::internal::make_arg<ctx>( v ) );
   }
 
-  return fmt::format( fmtstr, fmt::ArgList( types, &data[0] ) );
+  return fmt::vformat( fmtstr, fmt::basic_format_args<ctx>( args.data(), static_cast<unsigned>( args.size() ) ) );
 }
 
 template<char sep>
@@ -190,17 +184,13 @@ inline std::vector<std::string> split( const std::string& str, const std::string
   size_t next = 0;
   while ( ( next = str.find( sep, last ) ) != std::string::npos )
   {
-    std::string substring = str.substr( last, next - last );
-    if ( substring.length() > 0 ){
-      result.push_back( str.substr( last, next - last ) );
-    }
+    result.push_back( str.substr( last, next - last ) );
     last = next + 1;
   }
   result.push_back( str.substr( last ) );
 
   return result;
 }
-
 
 #ifdef _WIN32
 inline std::pair<int, std::string> execute_program( const std::string& cmd )

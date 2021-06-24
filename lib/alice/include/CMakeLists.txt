@@ -1,10 +1,9 @@
 # library for stand-alone executables
 add_library(alice INTERFACE)
-target_include_directories(alice INTERFACE ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(alice INTERFACE alice_any)
+target_include_directories(alice SYSTEM INTERFACE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(alice INTERFACE alice_cli11)
-target_link_libraries(alice INTERFACE alice_fmt)
-target_link_libraries(alice INTERFACE alice_json)
+target_link_libraries(alice INTERFACE fmt)
+target_link_libraries(alice INTERFACE json)
 
 # library for Python bindings
 add_library(alice_python INTERFACE)
@@ -41,8 +40,4 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-Wno-unneeded-internal-declaration" HAS_NO_UNNEEDED_INTERNAL_DECLARATION)
 if (HAS_NO_UNNEEDED_INTERNAL_DECLARATION)
   target_compile_options(alice INTERFACE "-Wno-unneeded-internal-declaration")
-endif()
-check_cxx_compiler_flag("-Wno-deprecated-declarations" HAS_NO_DEPRECATED_DECLARATIONS)
-if (HAS_NO_DEPRECATED_DECLARATIONS)
-  target_compile_options(alice INTERFACE "-Wno-deprecated-declarations")
 endif()

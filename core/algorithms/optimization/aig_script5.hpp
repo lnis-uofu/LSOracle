@@ -13,8 +13,12 @@ namespace oracle{
     public:
         mockturtle::aig_network run(mockturtle::aig_network& aig){
             
+            mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::refactoring_params rp;
+            mockturtle::balancing_params bs;
+
+            bs.cut_enumeration_ps.cut_size = 4u;
 
             oracle::rw_script rw_opt;
 
@@ -22,8 +26,7 @@ namespace oracle{
             rp.max_pis = 4;
             
             //b
-            mockturtle::depth_view aig_depth{aig};
-            mockturtle::balancing(aig_depth);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth1{aig};
@@ -40,8 +43,7 @@ namespace oracle{
             mockturtle::depth_view rf_depth1{aig};
 
             //b
-            mockturtle::depth_view aig_depth1{aig};
-            mockturtle::balancing(aig_depth1);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth2{aig};
@@ -57,8 +59,7 @@ namespace oracle{
             mockturtle::depth_view rwz_depth1{aig};
             
             //b
-            mockturtle::depth_view aig_depth2{aig};
-            mockturtle::balancing(aig_depth2);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth3{aig};
@@ -76,8 +77,7 @@ namespace oracle{
             mockturtle::depth_view rwz_depth2{aig};
 
             //b
-            mockturtle::depth_view aig_depth3{aig};
-            mockturtle::balancing(aig_depth3);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth4{aig};

@@ -41,7 +41,7 @@ namespace alice
             std::cout << "MIG network stored" << std::endl;
 
             filename.erase(filename.end() - 2, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
           else{
             mockturtle::aig_network aig;
@@ -52,7 +52,7 @@ namespace alice
             std::cout << "AIG network stored" << std::endl;
 
             filename.erase(filename.end() - 2, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
         }
         else{

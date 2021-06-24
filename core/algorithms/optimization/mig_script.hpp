@@ -15,7 +15,7 @@ namespace oracle{
             mockturtle::depth_view mig_depth{mig};
 
             mockturtle::mig_algebraic_depth_rewriting_params pm;
-            pm.selective;
+            //pm.selective;
 
             // std::cout << "1st round depth optimization " << std::endl;
 

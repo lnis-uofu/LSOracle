@@ -13,18 +13,19 @@ namespace oracle{
     public:
         mockturtle::mig_network run(mockturtle::mig_network& mig){
             
+            mockturtle::sop_rebalancing<mockturtle::mig_network> balfn;
             mockturtle::mig_npn_resynthesis resyn;
             mockturtle::akers_resynthesis<mockturtle::mig_network> rf_resyn;
             mockturtle::cut_rewriting_params ps;
             mockturtle::refactoring_params rp;
+            mockturtle::balancing_params bs;
 
-            ps.cut_enumeration_ps.cut_size = 4;
+            bs.cut_enumeration_ps.cut_size = 4u;
+            ps.cut_enumeration_ps.cut_size = 4u;
             rp.allow_zero_gain = false;
-
-            mockturtle::depth_view mig_depth{mig};
             
             //b
-            mockturtle::balancing(mig_depth);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -38,7 +39,7 @@ namespace oracle{
             mockturtle::depth_view mig_depth1{mig};
 
             //b
-            mockturtle::balancing(mig_depth1);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -54,7 +55,7 @@ namespace oracle{
             mockturtle::depth_view mig_depth2{mig};
             
             //b
-            mockturtle::balancing(mig_depth2);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rfz
@@ -68,7 +69,7 @@ namespace oracle{
 
             mockturtle::depth_view mig_depth3{mig};
             //b
-            mockturtle::balancing(mig_depth3);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             return mig;

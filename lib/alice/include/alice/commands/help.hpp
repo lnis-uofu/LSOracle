@@ -33,6 +33,7 @@
 #pragma once
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -49,6 +50,7 @@ public:
   {
     add_flag( "-d,--detailed", "show command descriptions" );
     add_option( "-s,--search", search, "search for commands in help descriptions" );
+    add_option( "--docs", filename, "create output for documentation into filename (use - for stdout)" );
   }
 
 protected:
@@ -57,6 +59,10 @@ protected:
     if ( is_set( "-s" ) )
     {
       search_command();
+    }
+    else if ( is_set( "--docs" ) )
+    {
+      print_docs();
     }
     else
     {
@@ -104,8 +110,8 @@ private:
       if ( !output.empty() )
       {
         env->out() << "[i] found match in command \033[1;34m" << command.first << "\033[0m" << std::endl
-                  << output << std::endl
-                  << std::endl;
+                   << output << std::endl
+                   << std::endl;
       }
     }
   }
@@ -136,18 +142,53 @@ private:
           if ( counter > 0 && ( counter % 4 == 0 ) )
           {
             env->out() << std::endl
-                      << " ";
+                       << " ";
           }
           env->out() << fmt::format( "{:<17}", name );
           ++counter;
         }
         env->out() << std::endl
-                  << std::endl;
+                   << std::endl;
+      }
+    }
+  }
+
+  void print_docs()
+  {
+    std::streambuf* buf{nullptr};
+    std::ofstream of;
+
+    if ( filename == "-" )
+    {
+      buf = env->out().rdbuf();
+    }
+    else
+    {
+      of.open( filename );
+      buf = of.rdbuf();
+    }
+    std::ostream os( buf );
+
+    os << "Commands\n"
+       << "========\n\n";
+
+    for ( auto& p : env->_categories )
+    {
+      os << p.first << " commands\n"
+         << std::string( p.first.size() + 9, '-' ) << "\n\n";
+
+      for ( const auto& name : p.second )
+      {
+        os << name << "\n"
+           << std::string( name.size(), '~' ) << "\n";
+        os << "\n";
+        os << env->commands().at( name )->opts.help( 50, "", true ) << "\n\n----\n\n";
       }
     }
   }
 
 private:
   std::string search;
+  std::string filename;
 };
-}
+} // namespace alice

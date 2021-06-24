@@ -80,7 +80,7 @@ TEST_CASE( "Adding commands to CLI", "[cli]" )
   char* args[] = {"", "-c", "store -s; test; store -s; write_file file; write_file -p -v abc file2"};
   cli.run( 3, args );
 
-  CHECK( sstr.str() == "[i] no strings in store\n"
+  CHECK( sstr.str() == "[w] no string in store\n"
                        "Hello world\n"
                        "[i] strings in store:\n"
                        "  *  0: \n"

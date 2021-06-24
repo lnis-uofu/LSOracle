@@ -37,6 +37,7 @@
 #include <memory>
 #include <regex>
 #include <string>
+#include <vector>
 
 #include <CLI11.hpp>
 #include <fmt/format.h>
@@ -84,7 +85,8 @@ public:
   */
   explicit cli( const std::string& prefix )
       : env( std::make_shared<environment>() ),
-        prefix( prefix )
+        prefix( prefix ),
+        opts( std::make_shared<CLI::App>() )
   {
     /* for each type in S ... */
     []( ... ) {}( ( env->add_store<S>(), 0 )... );
@@ -105,12 +107,12 @@ public:
       insert_command( "store", std::make_shared<store_command<S...>>( env ) );
     }
 
-    opts.add_option( "-c,--command", command, "process semicolon-separated list of commands" );
-    opts.add_option( "-f,--filename", file, "process file with new-line separated list of commands" );
-    opts.add_flag( "-e,--echo", "echo the command if read from command line or file" );
-    opts.add_flag( "-n,--counter", "show a counter in the prefix" );
-    opts.add_flag( "-i,--interactive", "continue in interactive mode after processing commands (in command or file mode)" );
-    opts.add_option( "-l,--log", logname, "logs the execution and stores many statistical information" );
+    opts->add_option( "-c,--command", command, "process semicolon-separated list of commands" );
+    opts->add_option( "-f,--filename", file, "process file with new-line separated list of commands" );
+    opts->add_flag( "-e,--echo", "echo the command if read from command line or file" );
+    opts->add_flag( "-n,--counter", "show a counter in the prefix" );
+    opts->add_flag( "-i,--interactive", "continue in interactive mode after processing commands (in command or file mode)" );
+    opts->add_option( "-l,--log", logname, "logs the execution and stores many statistical information" );
   }
 
   /*! \brief Sets the current category
@@ -195,11 +197,11 @@ public:
   {
     try
     {
-      opts.parse( argc, argv );
+      opts->parse( argc, argv );
     }
     catch ( const CLI::CallForHelp& e )
     {
-      env->out() << opts.help();
+      env->out() << opts->help();
       return 1;
     }
     catch ( const CLI::ParseError& e )
@@ -210,13 +212,13 @@ public:
 
     read_aliases();
 
-    if ( opts.count( "-l" ) )
+    if ( opts->count( "-l" ) )
     {
       env->log = true;
       env->logger.start( logname );
     }
 
-    if ( opts.count( "-c" ) )
+    if ( opts->count( "-c" ) )
     {
       auto split = detail::split_with_quotes<';'>( command );
 
@@ -226,7 +228,7 @@ public:
       {
         detail::trim( line );
 
-        if ( opts.count( "-e" ) )
+        if ( opts->count( "-e" ) )
         {
           env->out() << get_prefix() << line << std::endl;
         }
@@ -240,18 +242,22 @@ public:
           break;
         }
       }
-    }
-    else if ( opts.count( "-f" ) )
-    {
-      process_file( file, opts.count( "-e" ) );
 
-      if ( !opts.count( "-i" ) )
+      // cleanup to prevent memory leak
+      env->_categories.clear();
+      env->_commands.clear();
+    }
+    else if ( opts->count( "-f" ) )
+    {
+      process_file( file, opts->count( "-e" ) );
+
+      if ( !opts->count( "-i" ) )
       {
         env->quit = true;
       }
     }
 
-    if ( ( !opts.count( "-c" ) && !opts.count( "-f" ) ) || ( !env->quit && opts.count( "-i" ) ) )
+    if ( ( !opts->count( "-c" ) && !opts->count( "-f" ) ) || ( !env->quit && opts->count( "-i" ) ) )
     {
       auto& rl = readline_wrapper::instance();
       rl.init( env );
@@ -327,7 +333,7 @@ private:
     {
       auto filename = line.substr( 1u );
       detail::trim( filename );
-      process_file( filename, opts.count( "-e" ) );
+      process_file( filename, opts->count( "-e" ) );
       return true;
     }
 
@@ -400,7 +406,7 @@ private:
     {
       r += fmt::format( " [{}]", env->default_option() );
     }
-    if ( opts.count( "-n" ) )
+    if ( opts->count( "-n" ) )
     {
       r += fmt::format( " {}", counter++ );
     }
@@ -451,7 +457,7 @@ public:
 
 private:
   std::string prefix;
-  CLI::App opts;
+  std::shared_ptr<CLI::App> opts;
   std::string category;
 
   std::string command, file, logname;

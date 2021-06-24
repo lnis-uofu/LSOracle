@@ -138,8 +138,9 @@ inline std::string trim_copy(const std::string &str, const std::string &filter) 
     return trim(s, filter);
 }
 /// Print a two part "help" string
-inline void format_help(std::stringstream &out, std::string name, std::string description, size_t wid) {
-    name = "  " + name;
+inline void format_help(std::stringstream &out, std::string name, std::string description, size_t wid, bool rst) {
+    if (!rst)
+        name = "  " + name;
     out << std::setw(static_cast<int>(wid)) << std::left << name;
     if(!description.empty()) {
         if(name.length() >= wid)
@@ -1122,7 +1123,7 @@ class Option : public OptionBase<Option> {
     }
 
     /// Sets required options
-    Option *requires(Option *opt) {
+    Option *requires_option(Option *opt) {
         auto tup = requires_.insert(opt);
         if(!tup.second)
             throw OptionAlreadyAdded::Requires(get_name(), opt->get_name());
@@ -1130,17 +1131,17 @@ class Option : public OptionBase<Option> {
     }
 
     /// Can find a string if needed
-    template <typename T = App> Option *requires(std::string opt_name) {
+    template <typename T = App> Option *requires_option(std::string opt_name) {
         for(const Option_p &opt : dynamic_cast<T *>(parent_)->options_)
             if(opt.get() != this && opt->check_name(opt_name))
-                return requires(opt.get());
+                return requires_option(opt.get());
         throw IncorrectConstruction::MissingOption(opt_name);
     }
 
     /// Any number supported, any mix of string and Opt
-    template <typename A, typename B, typename... ARG> Option *requires(A opt, B opt1, ARG... args) {
-        requires(opt);
-        return requires(opt1, args...);
+    template <typename A, typename B, typename... ARG> Option *requires_option(A opt, B opt1, ARG... args) {
+        requires_option(opt);
+        return requires_option(opt1, args...);
     }
 
     /// Sets excluded options
@@ -1231,7 +1232,7 @@ class Option : public OptionBase<Option> {
             name_list.push_back("-" + sname);
         for(const std::string &lname : lnames_)
             name_list.push_back("--" + lname);
-        return detail::join(name_list);
+        return detail::join(name_list, ", ");
     }
 
     /// The name and any extras needed for positionals
@@ -1622,6 +1623,8 @@ class App {
     App(std::string description_ = "") : App(description_, nullptr) {
         set_help_flag("-h,--help", "Print this help message and exit");
     }
+
+    virtual ~App() = default;
 
     /// Set a callback for the end of parsing.
     ///
@@ -2278,7 +2281,7 @@ class App {
     }
 
     /// Makes a help message, with a column wid for column 1
-    std::string help(size_t wid = 30, std::string prev = "") const {
+    std::string help(size_t wid = 30, std::string prev = "", bool rst = false) const {
         // Delegate to subcommand if needed
         if(prev.empty())
             prev = name_;
@@ -2291,7 +2294,9 @@ class App {
 
         std::stringstream out;
         out << description_ << std::endl;
-        out << "Usage: " << prev;
+        if (rst)
+            out << std::endl;
+        out << (rst ? "**Usage:** " : "Usage: ") << prev;
 
         // Check for options_
         bool npos = false;
@@ -2329,13 +2334,23 @@ class App {
 
         // Positional descriptions
         if(pos) {
-            out << std::endl << "Positionals:" << std::endl;
+            if (rst)
+                out << std::endl << "**Positionals:**" << std::endl << std::endl;
+            else
+                out << std::endl << "Positionals:" << std::endl;
+            int dwid = 0;
+            if (rst) {
+                dwid = (*std::max_element(options_.begin(), options_.end(), []( const Option_p& o1, const Option_p& o2 ) { return o1->get_description().size() < o2->get_description().size(); } ))->get_description().size();
+                out << std::string(wid - 1, '=') << " " << std::string(dwid, '=') << std::endl;
+            }
             for(const Option_p &opt : options_) {
                 if(detail::to_lower(opt->get_group()).empty())
                     continue; // Hidden
                 if(opt->_has_help_positional())
-                    detail::format_help(out, opt->help_pname(), opt->get_description(), wid);
+                    detail::format_help(out, opt->help_pname(), opt->get_description(), wid, rst);
             }
+            if (rst)
+                out << std::string(wid - 1, '=') << " " << std::string(dwid, '=') << std::endl;
         }
 
         // Options
@@ -2343,11 +2358,22 @@ class App {
             for(const std::string &group : groups) {
                 if(detail::to_lower(group).empty())
                     continue; // Hidden
-                out << std::endl << group << ":" << std::endl;
+                if (rst)
+                    out << std::endl << "**" << group << ":**" << std::endl << std::endl;
+                else
+                    out << std::endl << group << ":" << std::endl;
+                
+                int dwid = 0;
+                if (rst) {
+                    dwid = (*std::max_element(options_.begin(), options_.end(), []( const Option_p& o1, const Option_p& o2 ) { return o1->get_description().size() < o2->get_description().size(); } ))->get_description().size();
+                    out << std::string(wid - 1, '=') << " " << std::string(dwid, '=') << std::endl;
+                }
                 for(const Option_p &opt : options_) {
                     if(opt->nonpositional() && opt->get_group() == group)
-                        detail::format_help(out, opt->help_name(true), opt->get_description(), wid);
+                        detail::format_help(out, opt->help_name(true), opt->get_description(), wid, rst);
                 }
+                if (rst)
+                    out << std::string(wid - 1, '=') << " " << std::string(dwid, '=') << std::endl;
             }
         }
 
@@ -2363,7 +2389,7 @@ class App {
                 out << std::endl << com->get_group() << ":" << std::endl;
                 for(const App_p &new_com : subcommands_)
                     if(detail::to_lower(new_com->get_group()) == group_key)
-                        detail::format_help(out, new_com->get_name(), new_com->description_, wid);
+                        detail::format_help(out, new_com->get_name(), new_com->description_, wid, rst);
             }
         }
 
@@ -2592,7 +2618,7 @@ class App {
 
                 // Required but empty
                 if(opt->get_required() && opt->count() == 0)
-                    throw RequiredError(opt->single_name() + " is required");
+                    throw RequiredError(opt->single_name());
             }
             // Requires
             for(const Option *opt_req : opt->requires_)

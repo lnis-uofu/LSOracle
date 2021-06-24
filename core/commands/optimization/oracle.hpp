@@ -29,7 +29,7 @@ namespace alice
                 opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
-		opts.add_option("--config,-f", config_file, "Config file", true);
+		            opts.add_option("--config,-f", config_file, "Config file", true);
                 // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
@@ -42,18 +42,29 @@ namespace alice
       void execute(){
 
         if(!store<aig_ntk>().empty()){
+          std::cout << "\n\n\n1\n";
           auto ntk = *store<aig_ntk>().current();
+          std::cout << "\n\n\n2\n";
+
           //If number of partitions is not specified
           if(num_partitions == 0){
+            std::cout << "\n\n\nif1\n";
+
             double size = ( (double) ntk.size() ) / 300.0;
             num_partitions = ceil(size);
           }
+          std::cout << "\n\n\n3\n";
 
           mockturtle::depth_view orig_depth{ntk};
+          std::cout << "\n\n\n4\n";
+          std::cout << "constructing partition manager with " << num_partitions << " partitionis and config_file: " <<config_file << "\n";
+
           oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
+          std::cout << "\n\n\n5\n";
+
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
-          std::cout << ntk._storage->_network_name << " partitioned " << num_partitions << " times\n";
+          std::cout << ntk.get_network_name() << " partitioned " << num_partitions << " times\n";
           if(!nn_model.empty())
             high = false;
           else

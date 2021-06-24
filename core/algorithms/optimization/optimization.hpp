@@ -147,15 +147,15 @@ namespace oracle{
       }
     }
     else{
-      if(!nn_model.empty()){
+      /*if(!nn_model.empty()){
         partitions_aig.run_classification(ntk_aig, nn_model);
         aig_parts = partitions_aig.get_aig_parts();
                 mig_parts = partitions_aig.get_mig_parts();
       }
-      else{
-        std::cout << "Must include Neural Network model json file\n";
-      }
-
+      else{ */
+     //   std::cout << "Must include Neural Network model json file\n";
+     // }
+      std::cout << "Neural network driven classification has been disabled during refactoring; please check back soon.\n";
     }
 
     std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";

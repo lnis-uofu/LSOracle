@@ -1,5 +1,5 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle
+ * Copyright (C) 2018  University of Utah
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,11 +23,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*!
-  \file window_view.hpp
-  \brief Implements an isolated view on a window in a network
-  \author Heinz Riener
-*/
 
 #pragma once
 
@@ -78,12 +73,12 @@ namespace oracle
         if (ntk.is_ro(curr_node) && !ntk.is_constant(curr_node)) {
           _part_scope[partition[curr_node]].insert(curr_node);
           _part_pis.insert(std::pair<int, node>(partition[curr_node], curr_node));
-          if(ntk.is_po(curr_node) && !ntk.is_constant(curr_node)){
+          if(is_po(ntk, curr_node) && !ntk.is_constant(curr_node)){
             _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
           }
         }
         //get rid of circuit POs
-        else if (ntk.is_po(curr_node) && !ntk.is_constant(curr_node)) {
+        else if (is_po(ntk, curr_node) && !ntk.is_constant(curr_node)) {
           _part_scope[partition[curr_node]].insert(curr_node);
           _part_pos.insert(std::pair<int, node>(partition[curr_node], curr_node));
         }
@@ -132,7 +127,9 @@ namespace oracle
       static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
       static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
 
+      std::cout << "PARTITION_MANAGER\n";
       num_partitions = part_num;
+      std::cout << "num_partitions: " << num_partitions <<"\n";
 
       for(int i = 0; i<part_num; ++i)
         _part_scope.push_back(std::set<node>());
@@ -161,6 +158,7 @@ namespace oracle
       }
 
       else{
+
         uint32_t kahyp_num_hyperedges = 0;
         uint32_t kahyp_num_vertices = 0;
         uint32_t kahyp_num_indeces_hyper = 0;
@@ -171,7 +169,6 @@ namespace oracle
         /******************
         Generate HyperGraph
         ******************/
-
         hypergraph<Ntk> t(ntk);
         t.get_hypergraph(ntk);
         t.return_hyperedges(kahypar_connections);
@@ -366,7 +363,7 @@ namespace oracle
             child_tts.at(i) = ~tt_map[childIdx];
           }
 
-          if(ntk.is_po(childIdx) && logic_cone_inputs[root].find(childIdx) != logic_cone_inputs[root].end()){
+          if(is_po(ntk, childIdx)&& logic_cone_inputs[root].find(childIdx) != logic_cone_inputs[root].end()){
             auto output = ntk._storage->outputs.at(get_output_index(ntk,childIdx));
             if(output.data & 1){
               child_tts.at(i) = ~child_tts.at(i);
@@ -384,7 +381,7 @@ namespace oracle
         tt_map[nodeIdx] = tt;
       }
             
-      if(ntk.is_po(nodeIdx) && nodeIdx == root){
+      if(is_po(ntk, nodeIdx) && nodeIdx == root){
         auto output = ntk._storage->outputs.at(get_output_index(ntk,nodeIdx));
         if(output.data & 1){
           tt_map[nodeIdx] = ~tt_map[nodeIdx];
@@ -414,7 +411,7 @@ namespace oracle
       int pi_idx = 0;
       std::set<signal> visited_pis;
       opt_top.foreach_node( [&]( auto node ) {
-        if(opt_top.is_po(node)){
+        if(is_po(opt_top, node)){
         }
         if ( opt.is_constant( node ) || opt.is_pi( node ) || opt.is_ro( node ))
           return;
@@ -599,7 +596,8 @@ namespace oracle
       return default_image;
     }
 
-    void run_classification( Ntk& ntk, std::string model_file ){
+//temporarily commenting out fdeep dependency to get core functionality running.
+/*    void run_classification( Ntk& ntk, std::string model_file ){
 
       int row_num = 256;
       int col_num = 256;
@@ -618,7 +616,7 @@ namespace oracle
         int partition = i;
         auto total_outputs = 0;
         auto total_depth = 0;
-        auto weight = 1.3;
+        auto weight = 2; //old: 1.3
         auto weight_nodes = 1;
         auto average_nodes = 0;
         auto average_depth = 0;
@@ -647,6 +645,12 @@ namespace oracle
             fdeep::tensor5 input(fdeep::shape5(1, 1, row_num, col_num, chann_num), sv);
             const auto result = model.predict_class({input});
 
+            //weights are ints according to compiler so this is broken.  Annotating wich old weights to help with debugging
+            // 1    --> 1
+            // 1.3  --> 2
+            // 1.5  --> 3
+            // 2    --> 4
+            //3     --> 5
             weight = 1;
             weight_nodes = 1;
 
@@ -656,15 +660,15 @@ namespace oracle
               int depth = computeLevel(ntk, output, partitionInputs[partition]);
               if(depth > average_depth && average_depth > 0 ){
                 if(depth > average_depth + 1)
-                  weight = 2;
-                weight = 1.3;
+                  weight = 4; //old: 2
+                weight = 2; //old: 1.3
 
                 if(depth > average_depth + 2 && average_depth > 0  )
-                  weight = 3;
+                  weight = 5; //old: 3
               }
 
               if(_num_nodes_cone > average_nodes && average_nodes > 0  ) {
-                weight_nodes = 1.5;
+                weight_nodes = 3; //old 1.5
               }
 
               aig_score += ((weight_nodes*_num_nodes_cone)+(weight*depth));
@@ -677,14 +681,14 @@ namespace oracle
 
               if(depth > average_depth && average_depth > 0 ){
                 if(depth > average_depth + 1 && average_depth > 0  )
-                  weight = 2;
+                  weight = 4; //old: 2
                 if(depth > average_depth + 2 && average_depth > 0  )
-                  weight = 3;
-                weight = 1.3;
+                  weight = 5; //old: 3
+                weight = 2; //old: 1.3
               }
 
               if(_num_nodes_cone > average_nodes && average_nodes > 0  ) {
-                weight_nodes = 1.5;
+                weight_nodes = 3; //old: 1.5
               }
 
               mig_score += ( (weight_nodes*_num_nodes_cone)+(weight*depth));
@@ -706,9 +710,10 @@ namespace oracle
           mig_parts.push_back(partition);
         }
       }
-    }
+    } */
 
-    void write_karnaugh_maps( Ntk& ntk, std::string directory ){
+    //v.s.
+    /* void write_karnaugh_maps( Ntk& ntk, std::string directory ){
 
       if(output_tt.empty()){
         generate_truth_tables(ntk);
@@ -839,7 +844,7 @@ namespace oracle
 
         }
       }
-    }
+    } */
 
     void connect_outputs(Ntk ntk){
       // std::cout << "Number of output substitutions = " << output_substitutions.size() << "\n";
@@ -971,12 +976,12 @@ namespace oracle
         if(!ntk.is_pi(shared_node)){
           merged_inputs.erase(shared_node);
         }
-        if(!ntk.is_po(shared_node)){
+        if(!is_po(ntk, shared_node)){
           merged_outputs.erase(shared_node);
         }
 
         if(combined_deleted_nodes[part_1].find(shared_node) == combined_deleted_nodes[part_1].end() && 
-          !ntk.is_pi(shared_node) && !ntk.is_po(shared_node)){
+          !ntk.is_pi(shared_node) && !is_po(ntk, shared_node)){
 
           combined_deleted_nodes[part_1].insert(shared_node);
         }

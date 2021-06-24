@@ -44,58 +44,6 @@
 namespace alice
 {
 
-template<typename Tag, typename S>
-int add_read_io_option_helper( command& cmd, unsigned& option_count, std::string& default_option )
-{
-  if ( can_read<S, Tag>( cmd ) )
-  {
-    constexpr auto option = store_info<S>::option;
-
-    option_count++;
-    default_option = option;
-    add_option_helper<S>( cmd.opts );
-  }
-
-  return 0;
-}
-
-template<typename Tag, typename S>
-int read_io_helper( const command& cmd, const std::string& default_option, bool multiple, const environment::ptr& env, const std::string& filename )
-{
-  constexpr auto option = store_info<S>::option;
-
-  if ( cmd.is_set( option ) || option == default_option || env->is_default_option( option ) )
-  {
-    const auto names = detail::split( filename, " " );
-
-    for ( const auto& name : names )
-    {
-      try
-      {
-        const auto element = read<S, Tag>( name, cmd );
-
-        if ( multiple || names.size() > 1 || cmd.is_set( "new" ) || env->store<S>().empty() )
-        {
-          env->store<S>().extend();
-        }
-
-        env->store<S>().current() = element;
-      }
-      catch ( const std::string& error )
-      {
-        env->err() << "[e] " << error << "\n";
-      }
-      catch ( ... )
-      {
-        /* do nothing, user should display error or warning in `read` function */
-      }
-    }
-
-    env->set_default_option( option );
-  }
-  return 0;
-}
-
 template<class Tag, class... S>
 class read_io_command : public command
 {
@@ -103,10 +51,10 @@ public:
   read_io_command( const environment::ptr& env, const std::string& name )
       : command( env, fmt::format( "Read {} file", name ) )
   {
-    []( ... ) {}( add_read_io_option_helper<Tag, S>( *this, option_count, default_option )... );
-    if ( option_count != 1u )
+    []( ... ) {}( add_read_io_option_helper<S>()... );
+    if ( allowed_options.size() == 1u )
     {
-      default_option.clear();
+      default_option = allowed_options.front();
     }
 
     add_option( "filename,--filename", filenames, "one or multiple filenames" )->check( ExistingFileWordExp )->required();
@@ -118,7 +66,7 @@ protected:
   {
     rules rules;
 
-    rules.push_back( {[this]() { return option_count == 1 || env->has_default_option() || exactly_one_true_helper( {is_set( store_info<S>::option )...} ); }, "exactly one store needs to be specified"} );
+    rules.push_back( {[this]() { return allowed_options.size() == 1 || env->has_default_option( allowed_options ) || exactly_one_true_helper( {is_set( store_info<S>::option )...} ); }, "exactly one store needs to be specified"} );
 
     return rules;
   }
@@ -128,13 +76,65 @@ protected:
     bool multiple{filenames.size() > 1};
     for ( const auto& filename : filenames )
     {
-      []( ... ) {}( read_io_helper<Tag, S>( *this, default_option, multiple, env, detail::word_exp_filename( filename ) )... );
+      []( ... ) {}( read_io_helper<S>( multiple, detail::word_exp_filename( filename ) )... );
     }
   }
 
 private:
+  template<typename Store>
+  int add_read_io_option_helper()
+  {
+    if ( can_read<Store, Tag>( *this ) )
+    {
+      constexpr auto option = store_info<Store>::option;
+
+      allowed_options.push_back( option );
+      add_option_helper<Store>( opts );
+    }
+
+    return 0;
+  }
+
+  template<typename Store>
+  int read_io_helper( bool multiple, const std::string& filename )
+  {
+    constexpr auto option = store_info<Store>::option;
+
+    if ( is_set( option ) || option == default_option || env->is_default_option( option ) )
+    {
+      const auto names = detail::split( filename, " " );
+
+      for ( const auto& name : names )
+      {
+        try
+        {
+          const auto element = read<Store, Tag>( name, static_cast<command const&>( *this ) );
+
+          if ( multiple || names.size() > 1 || is_set( "new" ) || env->store<Store>().empty() )
+          {
+            env->store<Store>().extend();
+          }
+
+          env->store<Store>().current() = element;
+        }
+        catch ( const std::string& error )
+        {
+          env->err() << "[e] " << error << "\n";
+        }
+        catch ( ... )
+        {
+          /* do nothing, user should display error or warning in `read` function */
+        }
+      }
+
+      env->set_default_option( option );
+    }
+    return 0;
+  }
+
+private:
   std::vector<std::string> filenames;
-  unsigned option_count = 0u;
+  std::vector<std::string> allowed_options;
   std::string default_option;
 };
 }

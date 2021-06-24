@@ -38,8 +38,7 @@ namespace alice
           if(is_set("mig")){
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ), &diag);
+            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
@@ -55,13 +54,12 @@ namespace alice
             std::cout << "MIG network stored\n";
 
             filename.erase(filename.end() - 5, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else if(is_set("xag")){
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ), &diag);
+            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
@@ -77,14 +75,13 @@ namespace alice
             std::cout << "XAG network stored\n";
 
             filename.erase(filename.end() - 5, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else if(is_set("aig")){
 
             mockturtle::klut_network ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ), &diag);
+            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
 
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
@@ -99,13 +96,12 @@ namespace alice
             std::cout << "AIG network stored\n";
 
             filename.erase(filename.end() - 5, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else{
             mockturtle::klut_network ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ), &diag);
+            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
 
             if(result != lorina::return_code::success)
               std::cout << "parsing failed\n";
@@ -114,7 +110,7 @@ namespace alice
             std::cout << "KLUT network stored\n";
 
             filename.erase(filename.end() - 5, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
         }
         else{

@@ -50,6 +50,7 @@ public:
   {
     add_flag( "--show", "show contents" );
     add_flag( "--clear", "clear contents" );
+    add_flag( "--pop", "pop current element" );
 
     []( ... ) {}( add_option_helper<S>( opts )... );
   }
@@ -64,13 +65,17 @@ protected:
 
   void execute()
   {
-    if ( is_set( "show" ) || !is_set( "clear" ) )
+    if ( is_set( "show" ) || ( !is_set( "clear" ) && !( is_set( "pop" ) ) ) )
     {
       []( ... ) {}( show_store<S>()... );
     }
     else if ( is_set( "clear" ) )
     {
       []( ... ) {}( clear_store<S>()... );
+    }
+    else if ( is_set( "pop" ) )
+    {
+      []( ... ) {}( pop_store<S>()... );
     }
   }
 
@@ -86,6 +91,7 @@ private:
   int show_store()
   {
     constexpr auto option = store_info<Store>::option;
+    constexpr auto name = store_info<Store>::name;
     constexpr auto name_plural = store_info<Store>::name_plural;
 
     const auto& _store = store<Store>();
@@ -94,7 +100,7 @@ private:
     {
       if ( _store.empty() )
       {
-        env->out() << fmt::format( "[i] no {} in store", name_plural ) << std::endl;
+        env->out() << fmt::format( "[w] no {} in store", name ) << std::endl;
       }
       else
       {
@@ -122,6 +128,19 @@ private:
     if ( is_set( option ) || env->is_default_option( option ) )
     {
       store<Store>().clear();
+      env->set_default_option( option );
+    }
+    return 0;
+  }
+
+  template<typename Store>
+  int pop_store()
+  {
+    constexpr auto option = store_info<Store>::option;
+
+    if ( is_set( option ) || env->is_default_option( option ) )
+    {
+      store<Store>().pop_current();
       env->set_default_option( option );
     }
     return 0;

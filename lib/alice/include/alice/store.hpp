@@ -154,11 +154,30 @@ public:
 
     The current element is set to the added store element.
   */
-  T& extend()
+  template<class... Args>
+  T& extend( Args&&... args )
   {
     _current = _data.size();
-    _data.push_back( T() );
+    _data.push_back( T(std::forward<Args>( args )...) );
     return _data.back();
+  }
+
+  /*! \brief Removes current store element
+
+    If the current element is the only element, the store is empty after this
+    operation.  If the current element is last element, the store points to
+    the next last-but-one element after this operation.  Otherwise, the element
+    after the operation will be the one at the same position.
+  */
+  void pop_current()
+  {
+    if ( _data.empty() || _current == -1 ) return;
+
+    _data.erase( _data.begin() + _current );
+    if ( _current == static_cast<int>( _data.size() ) )
+    {
+      --_current;
+    }
   }
 
   /*! \brief Clears all elements in the store
@@ -167,6 +186,19 @@ public:
   {
     _data.clear();
     _current = -1;
+  }
+
+  template<class... Args>
+  T& extend_if_empty( Args&&... args )
+  {
+    if ( empty() )
+    {
+      return extend( std::forward<Args>( args )... );
+    }
+    else
+    {
+      return current();
+    }
   }
 
 private:

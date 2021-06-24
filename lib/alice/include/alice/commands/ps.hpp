@@ -34,7 +34,7 @@
 
 #include <vector>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "../command.hpp"
 

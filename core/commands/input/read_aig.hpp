@@ -43,7 +43,7 @@ namespace alice
             std::cout << "MIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
           else if(is_set("xag")){
             mockturtle::xag_network ntk;
@@ -54,7 +54,7 @@ namespace alice
             std::cout << "XAG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
           else{
             mockturtle::aig_network ntk;
@@ -65,7 +65,7 @@ namespace alice
             std::cout << "AIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
 
         }

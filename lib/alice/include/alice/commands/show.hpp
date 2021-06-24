@@ -32,6 +32,10 @@
 
 #pragma once
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 #include <cstdlib>
 #include <cstdio>
 #include <string>
@@ -113,7 +117,15 @@ private:
       {
         if ( !is_set( "filename" ) )
         {
+#if _WIN32
           filename = fmt::format( "{}.{}", std::tmpnam( nullptr ), extensions.at( option ) );
+#else
+          char* tmpname = new char[18 + extensions.at( option ).size()];
+          sprintf( tmpname, "/tmp/aliceXXXXXX.%s", extensions.at( option ).c_str() );
+          mkstemps( tmpname, extensions.at( option ).size() + 1 );
+          filename = tmpname;
+          delete[] tmpname;
+#endif
         }
 
         std::ofstream os( filename.c_str(), std::ofstream::out );
@@ -141,6 +153,8 @@ private:
   std::string filename;
 #ifdef __APPLE__
   std::string program = "open {}";
+#elif _WIN32
+  std::string program = "start {}";
 #else
   std::string program = "xdg-open {}";
 #endif
