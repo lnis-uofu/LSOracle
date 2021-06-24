@@ -35,8 +35,9 @@ namespace alice
       explicit partitioning_command( const environment::ptr& env )
         : command( env, "Partitions current network using k-means hypergraph partitioner" ) {
 
-          opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
-          opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar (../../core/test.ini is default)" );
+          auto num_opt = opts.add_option( "--num,num", num_partitions, "Number of desired partitions" );
+          opts.add_option( "--size", size_partitions, "Number of desired average nodes per partition." )->excludes(num_opt);
+          opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar." );
           opts.add_option("--file,-f", part_file, "External file containing partition information");
           opts.add_option("--node_weights,-n", node_weight_file, "External file containing node weights");
           opts.add_option("--edge_weights,-e", edge_weight_file, "External file containing edge weights");
@@ -122,9 +123,11 @@ namespace alice
             node_weights = &data[0];
           }
         }
-        if(config_direc == ""){
-          config_direc = "../../core/test.ini";
+        if (!is_set("num")) {
+          num_partitions = ntk.size() / size_partitions;
         }
+        std::cout << "Using " << num_partitions << " partitions";
+        std::cout << "Using " << config_direc << " KaHyPar configuration";
         oracle::partition_manager<gen_names> partitions(ntk, num_partitions, config_direc, node_weights, edge_weights, is_set("sap"));
         store<part_man_gen_ntk>().extend() = std::make_shared<part_man_gen>( partitions );
         //}
@@ -153,7 +156,8 @@ namespace alice
     }
     private:
       int num_partitions{};
-      std::string config_direc = "";
+      int size_partitions = 2048;
+      std::string config_direc = "/usr/local/share/lsoracle/test.ini";
       std::string part_file = "";
       std::string edge_weight_file = "";
       std::string node_weight_file = "";
