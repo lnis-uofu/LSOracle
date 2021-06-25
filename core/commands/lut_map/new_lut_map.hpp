@@ -52,10 +52,10 @@ namespace alice
                 map_param.node_cut_count = cut_per_node_limit;
                 mapped_network = oracle::techmap::mockturtle_to_lut_graph(prelim);
                 oracle::techmap::mapper* m = new oracle::techmap::mapper(mapped_network, map_param);
-                m->map();
+                oracle::techmap::graph <oracle::techmap::lut> lut_network = m->map();
 
                 //return to mockturtle to allow output
-                mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(mapped_network);
+                mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(lut_network);
 
                 if(out_file != ""){
                   std::cout << "filename = " << out_file << "\n";
@@ -93,10 +93,10 @@ namespace alice
               map_param.node_cut_count = cut_per_node_limit;
               mapped_network = oracle::techmap::mockturtle_to_lut_graph(prelim);
               oracle::techmap::mapper* m = new oracle::techmap::mapper(mapped_network, map_param);
-              m->map();
+              oracle::techmap::graph <oracle::techmap::lut> lut_network = m->map();
               
               //return to mockturtle to allow output
-              mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(mapped_network);
+              mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(lut_network);
 
               if(out_file != ""){
                 std::cout << "filename = " << out_file << "\n";
