@@ -198,6 +198,11 @@ struct graph {
         node_fanout_nodes = std::vector<std::vector<size_t>>{nodes.size()};
     }
 
+    void unfreeze()
+    {
+        frozen = false;
+    }
+
     std::vector<connection> compute_node_fanin_connections(size_t node) const
     {
         std::vector<connection> fanin;
@@ -300,6 +305,7 @@ struct graph {
         std::vector<size_t> ordering;
         std::vector<size_t> no_incoming{primary_inputs};
         graph g{*this};
+        g.unfreeze();
 
         while (!no_incoming.empty()) {
             size_t node = no_incoming.back();
@@ -331,6 +337,7 @@ struct graph {
         std::vector<size_t> ordering;
         std::vector<size_t> no_incoming{primary_inputs};
         graph g{*this};
+        g.unfreeze();
 
         while (!no_incoming.empty()) {
             size_t node = no_incoming.back();
