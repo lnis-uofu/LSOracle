@@ -187,7 +187,7 @@ struct graph {
 
     void remove_connection(size_t index)
     {
-        assert(!frozen);
+        assert(!frozen && "Attempted to remove connection from frozen graph");
         connections[index].reset();
     }
 
@@ -365,6 +365,7 @@ struct graph {
         std::vector<size_t> ordering;
         std::vector<size_t> no_outgoing{primary_outputs};
         graph g{*this};
+        g.unfreeze();
 
         while (!no_outgoing.empty()) {
             size_t node = no_outgoing.back();
@@ -446,22 +447,22 @@ public:
     {
         g.freeze();
 
-        // Mapping phase 1: prioritise depth.
+        std::cout << "Mapping phase 1: prioritise depth.\n";
         enumerate_cuts(cut_depth, cut_input_count, cut_area_flow, false);
 
-        // Mapping phase 2: prioritise global area.
+        /*std::cout << "Mapping phase 2: prioritise global area.\n";
         enumerate_cuts(cut_area_flow, cut_fanin_refs, cut_depth, true);
 
-        // Mapping phase 3: prioritise local area.
+        std::cout << "Mapping phase 3: prioritise local area.\n";
         enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);
 
-        // Mapping phase 4: prioritise global area.
+        std::cout << "Mapping phase 4: prioritise global area.\n";
         enumerate_cuts(cut_area_flow, cut_fanin_refs, cut_depth, true);
 
-        // Mapping phase 5: prioritise local area.
-        enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);
+        std::cout << "Mapping phase 5: prioritise local area.\n";
+        enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);*/
 
-        // Derive the final mapping of the network.
+        std::cout << "Deriving the final mapping of the network.\n";
         return derive_mapping();
     }
 
@@ -479,8 +480,8 @@ private:
         }
 
         for (size_t node : g.compute_topological_ordering()) {
-            // Skip primary inputs.
-            if (g.is_primary_input(node)) {
+            // Skip primary inputs and outputs.
+            if (g.is_primary_input(node) || g.is_primary_output(node)) {
                 continue;
             }
 
@@ -529,7 +530,7 @@ private:
                 if (std::all_of(node_fanout.begin(), node_fanout.end(), [&](size_t node) {
                     return info[node].selected_cut.has_value();
                 })) {
-                    frontier.erase(node);
+                    frontier.erase(fanin_node);
                 }
             }
         }
@@ -687,20 +688,23 @@ private:
 
         for (auto& [c, children] : cut_set) {
             assert(children.size() > 0);
+            /*
             kitty::dynamic_truth_table result{frontier.at(c.inputs[0]).cuts[children[0]].truth_table.construct()};
             for (uint32_t bit = 0; bit < result.num_bits(); bit++) {
                 uint32_t pattern = 0u;
                 for (int fanin_index = 0; fanin_index < children.size(); fanin_index++) {
-                    pattern |= kitty::get_bit(frontier.at(c.inputs[fanin_index]).cuts[children[fanin_index]].truth_table, bit) << fanin_index;
+                    std::cout << "techmapping.hpp:694: bit = " << bit << '\n';
+                    std::cout << "techmapping.hpp:695: frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table.num_bits() = " << frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table.num_bits() << '\n';
+                    pattern |= kitty::get_bit(frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table, bit) << fanin_index;
                 }
 
                 // TODO: the below code is almost certainly wrong, because we need to check which specific child this is.
                 if (kitty::get_bit(std::get<cell>(g.nodes[c.output]).truth_table[0], bit)) {
                     kitty::set_bit(result, bit);
                 }
-            }
+            }*/
             new_cut_set.push_back(std::move(c));
-            new_cut_set.back().truth_table = std::move(result);
+            //new_cut_set.back().truth_table = std::move(result);
         }
 
         // Include the trivial cut in the cut set.
