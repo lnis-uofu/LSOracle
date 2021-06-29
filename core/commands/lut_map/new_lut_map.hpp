@@ -23,8 +23,8 @@ namespace alice
     public:
       explicit new_lut_map_command( const environment::ptr& env )
           : command( env, "Performs technology mapping of the network using LSOracle's native technology mapper" ){
-        opts.add_option( "--cut_size,-C", cut_size, "Size of cut to calculate [Default = 2]" );
-        opts.add_option( "--cpn_limit,-L", cut_per_node_limit, "Maximum number of cuts to calculate per node [Default = 50]" );
+        opts.add_option( "--lut_size,-K", cut_size, "Size of cut to calculate [Default = 2]" );
+        opts.add_option( "--cut_size,-C", cut_per_node_limit, "Maximum number of cuts to calculate per node [Default = 50]" );
 
         add_flag("--mig,-m", "Read from the stored MIG network");
         opts.add_option( "--out,-o", out_file, "Write LUT mapping to bench file" );
@@ -118,7 +118,7 @@ namespace alice
 
     private:
       int cut_size = 4;
-      int cut_per_node_limit = 50; //mockturtle uses 30 by default.  ABC uses 2k or something. I met in the middle.
+      int cut_per_node_limit = 6; //mockturtle uses 30 by default.  ABC uses 2k or something. I met in the middle.
       std::string out_file = "";
     };
 

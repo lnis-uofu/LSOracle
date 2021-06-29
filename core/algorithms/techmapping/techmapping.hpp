@@ -772,25 +772,31 @@ private:
 template<class Ntk>
 graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
 {
+    static_assert(mockturtle::is_network_type_v<Ntk>);
+    static_assert(mockturtle::has_foreach_pi_v<Ntk>);
+    static_assert(mockturtle::has_foreach_po_v<Ntk>);
+    static_assert(mockturtle::has_foreach_node_v<Ntk>);
+    static_assert(mockturtle::has_cell_function_v<Ntk>);
+
     mockturtle::topo_view<Ntk> topo{ntk};
     graph<cell> g;
     std::unordered_map<typename Ntk::node, size_t> mockturtle_to_node;
 
-    topo.foreach_pi([&](typename Ntk::node const& node, uint32_t index) {
+    topo.foreach_pi([&](typename Ntk::node const& node, uint32_t index) -> void {
         mockturtle_to_node.insert({node, g.add_primary_input()});
     });
 
-    topo.foreach_po([&](typename Ntk::node const& node, uint32_t index) {
-        mockturtle_to_node.insert({node, g.add_primary_output()});
+    topo.foreach_po([&](typename Ntk::signal const& signal, uint32_t index) -> void {
+        mockturtle_to_node.insert({ntk.get_node(signal), g.add_primary_output()});
     });
 
-    topo.foreach_node([&](typename Ntk::node const& node) {
+    topo.foreach_node([&](typename Ntk::node const& node) -> void {
         std::vector<kitty::dynamic_truth_table> truth_table{};
         truth_table.push_back(topo.cell_function(node));
         cell c{truth_table};
         mockturtle_to_node.insert({node, g.add_cell(c)});
-        topo.foreach_fanin(node, [&](typename Ntk::node const& fanin) {
-            g.add_connection(mockturtle_to_node.at(fanin), mockturtle_to_node.at(node));
+        topo.foreach_fanin(node, [&](typename Ntk::signal const& fanin) -> void {
+            g.add_connection(mockturtle_to_node.at(ntk.get_node(fanin)), mockturtle_to_node.at(node));
         });
     });
 
