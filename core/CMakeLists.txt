@@ -23,3 +23,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSIO
 else()
   target_link_libraries(lsoracle alice mockturtle kahypar)
 endif()
+
+
+configure_file(test.ini test.ini COPYONLY)
