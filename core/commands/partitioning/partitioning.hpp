@@ -39,10 +39,13 @@ namespace alice
           opts.add_option( "--size", size_partitions, "Number of desired average nodes per partition." )->excludes(num_opt);
           opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar." );
           opts.add_option("--file,-f", part_file, "External file containing partition information");
+          opts.add_option("--output,-o", output_file, "External file to write the generated partitions to.");
+          opts.add_option("--initial,-i", initial_file, "External file to write the initial partitions to.");
           opts.add_option("--node_weights,-n", node_weight_file, "External file containing node weights");
           opts.add_option("--edge_weights,-e", edge_weight_file, "External file containing edge weights");
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
           add_flag("--sap,-s", "Do the SAP thing.");
+          opts.add_option("--epsilon", imbalance, "Hypergraph partitioning epsilon imbalance parameter.");
           // add_flag("--bipart,-g", "Run hypergraph partitionining using BiPart from the Galois system");
         }
 
@@ -107,13 +110,15 @@ namespace alice
         // }
         // else{
         std::cout << "Partitioning stored " << type_name << " network using KaHyPar\n";
-        int *node_weights;
-        int *edge_weights;
+        int *node_weights = nullptr;
+        int *edge_weights = nullptr;
         if (edge_weight_file != "") {
+          std::cout << "Reading edge weights from " << edge_weight_file << std::endl;
           std::vector<int> data = read_file(edge_weight_file);
           edge_weights = &data[0];
         }
         if (node_weight_file != "") {
+          std::cout << "Reading node weights from " << node_weight_file << std::endl;
           std::vector<int> data = read_file(node_weight_file);
           if(data.size() != ntk.size()){
             std::cout << "Node weight file contains the incorrect number of nodes: got " << data.size() << " expected " << ntk.size() << std::endl;
@@ -123,13 +128,36 @@ namespace alice
             node_weights = &data[0];
           }
         }
-        if (!is_set("num")) {
-          num_partitions = ntk.size() / size_partitions;
+        if (num_partitions == 0) {
+          num_partitions = std::max(ntk.size() / size_partitions, 1u);
         }
-        std::cout << "Using " << num_partitions << " partitions";
-        std::cout << "Using " << config_direc << " KaHyPar configuration";
-        oracle::partition_manager<gen_names> partitions(ntk, num_partitions, config_direc, node_weights, edge_weights, is_set("sap"));
+        std::cout << "Using " << num_partitions << " partitions" << std::endl;
+        std::cout << "Using KaHyPar configuration " << config_direc << std::endl;
+        if (is_set("sap")) {
+          std::cout << "Using SAP" << std::endl;
+        }
+        oracle::partition_manager<gen_names> partitions(ntk, num_partitions, config_direc, node_weights, edge_weights, is_set("sap"), imbalance);
         store<part_man_gen_ntk>().extend() = std::make_shared<part_man_gen>( partitions );
+        if (output_file != "") {
+          std::ofstream out;
+          out.open(output_file);
+
+          for (auto i = partitions.get_partitions().begin(); i != partitions.get_partitions().end(); i++) {
+            out << *i << std::endl;
+          }
+          out.close();
+        }
+
+        if (initial_file != "") {
+          std::ofstream out;
+          out.open(initial_file);
+
+          for (auto i = partitions.get_initial_partitions().begin(); i != partitions.get_initial_partitions().end(); i++) {
+            out << *i << std::endl;
+          }
+          out.close();
+        }
+
         //}
       }
     }
@@ -155,12 +183,15 @@ namespace alice
       }
     }
     private:
-      int num_partitions{};
-      int size_partitions = 2048;
+      uint32_t num_partitions = 0;
+      uint32_t size_partitions = 2048;
       std::string config_direc = "/usr/local/share/lsoracle/test.ini";
       std::string part_file = "";
+      std::string output_file = "";
+      std::string initial_file = "";
       std::string edge_weight_file = "";
       std::string node_weight_file = "";
+      double imbalance = 0.9;
   };
 
   ALICE_ADD_COMMAND(partitioning, "Partitioning");

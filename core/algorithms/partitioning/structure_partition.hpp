@@ -8,10 +8,10 @@ namespace oracle
   class structure_partition
   {
   public:
-    void sap_fixed(std::vector<kahypar_partition_id_t>& assigned, uint32_t max_size, uint32_t max_inflections) {
+    double sap_fixed(std::vector<kahypar_partition_id_t>& assigned, uint32_t max_size, uint32_t max_inflections) {
       ntk.clear_values();
       std::vector<std::vector<typename Ntk::node>> parts = extract_parts(max_inflections);
-      bin_pack(assigned, parts, max_size);
+      return bin_pack(assigned, parts, max_size);
     }
 
     int32_t distance_from_pi(typename Ntk::node pi, typename Ntk::node node) {
@@ -25,7 +25,7 @@ namespace oracle
 
     structure_partition(Ntk& ntk): ntk(ntk) {
       distances_pi.resize(ntk.num_pis(), std::vector(ntk.size(), -1));
-      calculate_distance_from_pi();
+      //calculate_distance_from_pi();
     }
   private:
     void calculate_distance_from_pi() {
@@ -53,6 +53,7 @@ namespace oracle
       std::vector<typename Ntk::node> max_cone;
 
       ntk.foreach_po([this, &max_depth, &max_po, &max_cone](auto po) {
+        //        std::cout << "PO " << po.index << std::endl;
         ntk.incr_trav_id();
         uint32_t trav_id = ntk.trav_id();
         ntk.clear_visited();
@@ -91,6 +92,7 @@ namespace oracle
       while (true) {
 
         auto [po, cone, max_depth] = deepest_po();
+        std::cout << max_depth << std::endl;
         if (cone.size() == 0 || max_depth <= 0) {
           break;
         }
@@ -116,7 +118,8 @@ namespace oracle
       return parts;
     }
 
-    void bin_pack(std::vector<kahypar_partition_id_t>& assigned, std::vector<std::vector<typename Ntk::node>> parts, size_t bin_size){
+    uint32_t bin_pack(std::vector<kahypar_partition_id_t>& assigned, std::vector<std::vector<typename Ntk::node>> parts, size_t bin_size){
+      uint32_t max_bin = 0;
       int32_t partition = 0;
       std::vector<typename Ntk::node> bin;
       for (auto part: parts) {
@@ -128,14 +131,21 @@ namespace oracle
             assigned[ntk.node_to_index(node)] = partition;
           }
           partition++;
+          if (bin.size() > max_bin) {
+            max_bin = bin.size();
+          }
           bin.clear();
         }
       }
       if (bin.size() >= 0) {
+        if (bin.size() > max_bin) {
+          max_bin = bin.size();
+         }
         for (auto node: bin) {
           assigned[ntk.node_to_index(node)] = partition;
         }
       }
+      return max_bin;
     }
 
     Ntk& ntk;

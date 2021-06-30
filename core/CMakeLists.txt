@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.9)                  # CMake minimum version
 project(lsoracle)
 
-include_directories(${PROJECT_SOURCE_DIR}/lib/kahypar/include)
+include_directories(../lib/kahypar/include)
 #include_directories(${PROJECT_SOURCE_DIR}/lib/Galois/lonestar)
 
 include_directories(${PROJECT_SOURCE_DIR}/algorithms/classification/fplus/include)
@@ -17,6 +17,7 @@ target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 
 add_library(liblsoracle lsoracle.cpp)
 target_include_directories(liblsoracle INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(liblsoracle INTERFACE ../lib/kahypar/include)
 set_target_properties(liblsoracle PROPERTIES PREFIX "")
 
 target_link_libraries(lsoracle alice mockturtle kahypar)
