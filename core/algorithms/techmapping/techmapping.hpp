@@ -599,6 +599,8 @@ private:
             size_t node = frontier.back();
             frontier.pop_back();
 
+            std::cout << "Mapping node " << node << '\n';
+
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
                 size_t index = mapping.add_cell(lut{info[node].selected_cut->truth_table});
@@ -606,8 +608,29 @@ private:
             }
 
             // Add all the inputs in that cut which are not primary inputs or already-discovered nodes to the mapping frontier.
+            if (g.is_primary_input(node)) {
+                std::cout << "  Node is primary input\n";
+            } else if (g.is_primary_output(node)) {
+                std::cout << "  Node is primary output\n";
+            } else {
+                std::cout << "  Node has " << info[node].selected_cut->input_count() << " inputs\n";
+            }
+
+            if (g.is_primary_output(node)) {
+                for (size_t input : g.compute_node_fanin_nodes(node)) {
+                    frontier.push_back(input);
+                    break;
+                }
+            }
+
             for (size_t input : info[node].selected_cut->inputs) {
+                if (g.is_primary_input(input)) {
+                    std::cout << "    Skipping primary input " << input << '\n';
+                } else if (gate_graph_to_lut_graph.count(input)) {
+                    std::cout << "    Skipping already mapped node " << input << '\n';
+                }
                 if (!g.is_primary_input(input) && !gate_graph_to_lut_graph.count(input)) {
+                    std::cout << "    Adding node " << input << '\n';
                     frontier.push_back(input);
                 }
             }
@@ -634,6 +657,8 @@ private:
                 mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
             }
         }
+
+        std::cout << "LUTs: " << g.nodes.size() - g.primary_inputs.size() - g.primary_outputs.size() << '\n';
 
         return mapping;
     }
@@ -829,7 +854,9 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
         for (size_t input : g.compute_node_fanin_nodes(node)) {
             children.push_back(node_to_mockturtle.at(input));
         }
-        node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
+        if (!g.is_primary_input(node)) {
+            node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
+        }
     }
 
     for (size_t po : g.primary_outputs) {
