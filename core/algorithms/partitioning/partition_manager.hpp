@@ -45,6 +45,7 @@
 #include <mockturtle/networks/detail/foreach.hpp>
 #include <mockturtle/views/fanout_view.hpp>
 #include <libkahypar.h>
+#include "kahypar_config.hpp"
 
 namespace oracle
 {
@@ -111,7 +112,7 @@ namespace oracle
       }
     }
 
-    partition_manager(Ntk& ntk, std::vector<std::set<node>> scope, std::unordered_map<int, std::set<node>> inputs, 
+    partition_manager(Ntk& ntk, std::vector<std::set<node>> scope, std::unordered_map<int, std::set<node>> inputs,
       std::unordered_map<int, std::set<node>> outputs, std::unordered_map<int, std::set<node>> regs, std::unordered_map<int, std::set<node>> regs_in, int part_num){
 
       num_partitions = part_num;
@@ -122,7 +123,7 @@ namespace oracle
       partitionRegIn = regs_in;
     }
 
-    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini" ) : Ntk( ntk )
+    partition_manager( Ntk& ntk, int part_num, std::string config_direc="" ) : Ntk( ntk )
     {
       static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
       static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
@@ -187,6 +188,8 @@ namespace oracle
         ******************/
         //configures kahypar
         kahypar_context_t* context = kahypar_context_new();
+
+        std::cout << "Using config file " << config_direc << std::endl;
         kahypar_configure_context_from_file(context, config_direc.c_str());
 
         //set number of hyperedges and vertices. These variables are defined by the hyperG command

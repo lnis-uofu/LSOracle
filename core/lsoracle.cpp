@@ -104,4 +104,6 @@
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
 
+#include "kahypar_config.hpp"
+
 ALICE_MAIN( lsoracle )
