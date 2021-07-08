@@ -11,4 +11,3 @@ examples/abc/scala/project
 examples/abc/scala/target
 
 tests/**/*.v
-hypergraph.txt
