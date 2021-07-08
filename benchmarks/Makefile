@@ -4,6 +4,7 @@ LSORACLE := lsoracle
 LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
+YOSYS_PLUGIN := oracle
 TEE := cat - >
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v
@@ -75,7 +76,7 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
 %_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
-	${YOSYS} -m oracle -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -c kahypar.ini; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
