@@ -16,6 +16,9 @@
 #include <stdlib.h>
 // #include <utah/BiPart.h>
 #include "kahypar_config.hpp"
+#ifdef ENABLE_GALOIS
+#include <utah/BiPart.h>
+#endif
 
 namespace alice
 {
@@ -39,14 +42,16 @@ namespace alice
           opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar." );
           opts.add_option("--file,-f", part_file, "External file containing partitiion information");
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
-          // add_flag("--bipart,-g", "Run hypergraph partitionining using BiPart from the Galois system");
+#ifdef ENABLE_GALOIS
+          add_flag("--bipart,-g", "Run hypergraph partitionining using BiPart from the Galois system");
+#endif
         }
 
     protected:
       void execute(){
         mockturtle::mig_npn_resynthesis resyn_mig;
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-        
+
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
             auto ntk = *store<mig_ntk>().current();
@@ -78,34 +83,37 @@ namespace alice
               }
             }
             else{
-              // if(is_set("bipart")){
-              //   std::cout << "Partitioning stored MIG network using Galois BiPart\n";
-              //   oracle::hypergraph<mig_names> t(ntk);
-              //   uint32_t num_vertices = 0;
-          
-              //   t.get_hypergraph(ntk);
-              //   std::vector<std::vector<uint32_t>> hedges = t.get_hyperedges();
-              //   num_vertices = t.get_num_vertices();
+#ifdef ENABLE_GALOIS
+              if(is_set("bipart")){
+                std::cout << "Partitioning stored MIG network using Galois BiPart\n";
+                oracle::hypergraph<mig_names> t(ntk);
+                uint32_t num_vertices = 0;
 
-              //   int num_threads = 14;
-              //   scheduleMode mode = PP;
-              //   std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
-              //   std::map<mockturtle::mig_network::node, int> part_data;
-              //   ntk.foreach_node([&](auto node){
-              //     part_data[node] = bipart[node];
-              //   });
+                t.get_hypergraph(ntk);
+                std::vector<std::vector<uint32_t>> hedges = t.get_hyperedges();
+                num_vertices = t.get_num_vertices();
 
-              //   oracle::partition_manager<mig_names> partitions(ntk, part_data, num_partitions);
-              //   store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
-              // }
-              // else{
+                int num_threads = 14;
+                scheduleMode mode = PP;
+                std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
+                std::map<mockturtle::mig_network::node, int> part_data;
+                ntk.foreach_node([&](auto node){
+                  part_data[node] = bipart[node];
+                });
+
+                oracle::partition_manager<mig_names> partitions(ntk, part_data, num_partitions);
+                store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+              }
+              else
+#endif
+              {
                 std::cout << "Partitioning stored MIG network using KaHyPar\n";
                 if(config_direc == ""){
                   config_direc = make_temp_config();
                 }
                 oracle::partition_manager<mig_names> partitions(ntk, num_partitions, config_direc);
                 store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
-              //}
+              }
             }
           }
           else{
@@ -143,34 +151,37 @@ namespace alice
               }
             }
             else{
-              // if(is_set("bipart")){
-              //   std::cout << "Partitioning stored AIG network using Galois BiPart\n";
-              //   oracle::hypergraph<aig_names> t(ntk);
-              //   uint32_t num_vertices = 0;
-          
-              //   t.get_hypergraph(ntk);
-              //   std::vector<std::vector<uint32_t>> hedges = t.get_hyperedges();
-              //   num_vertices = t.get_num_vertices();
+#ifdef ENABLE_GALOIS
+              if(is_set("bipart")){
+                std::cout << "Partitioning stored AIG network using Galois BiPart\n";
+                oracle::hypergraph<aig_names> t(ntk);
+                uint32_t num_vertices = 0;
 
-              //   int num_threads = 14;
-              //   scheduleMode mode = PP;
-              //   std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
-              //   std::map<mockturtle::aig_network::node, int> part_data;
-              //   ntk.foreach_node([&](auto node){
-              //     part_data[node] = bipart[node];
-              //   });
+                t.get_hypergraph(ntk);
+                std::vector<std::vector<uint32_t>> hedges = t.get_hyperedges();
+                num_vertices = t.get_num_vertices();
 
-              //   oracle::partition_manager<aig_names> partitions(ntk, part_data, num_partitions);
-              //   store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
-              // }
-              // else{
+                int num_threads = 14;
+                scheduleMode mode = PP;
+                std::map<int, int> bipart = biparting(hedges, num_vertices, num_partitions, num_threads, mode);
+                std::map<mockturtle::aig_network::node, int> part_data;
+                ntk.foreach_node([&](auto node){
+                  part_data[node] = bipart[node];
+                });
+
+                oracle::partition_manager<aig_names> partitions(ntk, part_data, num_partitions);
+                store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+              }
+              else
+#endif
+              {
                 std::cout << "Partitioning stored AIG network using KaHyPar\n";
                 if(config_direc == ""){
                   config_direc = make_temp_config();
                 }
                 oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_direc);
                 store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
-              //}
+              }
             }
           }
           else{

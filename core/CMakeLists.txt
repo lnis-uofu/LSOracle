@@ -22,8 +22,12 @@ add_executable(lsoracle lsoracle.cpp ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.
 
 target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
 target_include_directories(lsoracle PRIVATE .)
-#target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
-#target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar galois_utah)
+
+if (${ENABLE_GALOIS})
+  add_definitions(-DENABLE_GALOIS)
+  target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
+  target_link_libraries(lsoracle galois_utah)
+endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
   target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar)

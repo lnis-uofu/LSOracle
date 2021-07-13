@@ -30,12 +30,13 @@ namespace alice
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
 		opts.add_option("--config,-f", config_file, "Config file", true);
-                // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
                 add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
-
+#ifdef ENABLE_GALOIS
+                add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
+#endif
         }
 
     protected:
@@ -100,7 +101,7 @@ namespace alice
                 mockturtle::write_blif_params ps;
                 if(is_set("skip-feedthrough"))
                   ps.skip_feedthrough = 1u;
-                
+
                 mockturtle::write_blif(ntk_mig, out_file, ps);
                 std::cout << "Resulting network written to " << out_file << "\n";
               }
@@ -130,6 +131,9 @@ namespace alice
       bool aig = false;
       bool mig = false;
       bool combine = false;
+#ifdef ENABLE_GALOIS
+      bool bipart = false;
+#endif
     };
 
   ALICE_ADD_COMMAND(oracle, "Optimization");

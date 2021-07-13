@@ -22,7 +22,9 @@ message(STATUS ${gtest_SOURCE_DIR})
 target_include_directories(kahypar INTERFACE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 target_include_directories(kahypar INTERFACE ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
 
-#add_subdirectory(Galois EXCLUDE_FROM_ALL)
+if (${ENABLE_GALOIS})
+  add_subdirectory(Galois EXCLUDE_FROM_ALL)
+endif()
 
 add_subdirectory(alice)
 target_include_directories(alice INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/alice)

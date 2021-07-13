@@ -17,7 +17,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 endif()
 
 option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
+option(ENABLE_GALOIS
+  "Enable Galois library for hypergraph partitioning." OFF)
 
+option(ENABLE_LIBABC
+  "Enable libabc library." OFF)
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -37,9 +41,6 @@ if (HAS_FCOLOR_DIAGNOSTICS)
 endif()
 
 add_subdirectory(lib)
-
-set(CMAKE_CXX_STANDARD 17)                            # enable c++17
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 add_subdirectory(core)
