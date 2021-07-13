@@ -14,7 +14,8 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
-
+// #include <utah/BiPart.h>
+#include "kahypar_config.hpp"
 #ifdef ENABLE_GALOIS
 #include <utah/BiPart.h>
 #endif
@@ -38,7 +39,7 @@ namespace alice
         : command( env, "Partitionins current network using k-means hypergraph partitioner" ) {
 
           opts.add_option( "--num,num", num_partitions, "Number of desired partitions" )->required();
-          opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar (../../core/test.ini is default)" );
+          opts.add_option( "--config_direc,-c", config_direc, "Path to the configuration file for KaHyPar." );
           opts.add_option("--file,-f", part_file, "External file containing partitiion information");
           add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
 #ifdef ENABLE_GALOIS
@@ -107,14 +108,11 @@ namespace alice
 #endif
               {
                 std::cout << "Partitioning stored MIG network using KaHyPar\n";
-                if(config_direc != ""){
-                  oracle::partition_manager<mig_names> partitions(ntk, num_partitions, config_direc);
-                  store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
+                if(config_direc == ""){
+                  config_direc = make_temp_config();
                 }
-                else{
-                  oracle::partition_manager<mig_names> partitions(ntk, num_partitions);
-                  store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
-                }
+                oracle::partition_manager<mig_names> partitions(ntk, num_partitions, config_direc);
+                store<part_man_mig_ntk>().extend() = std::make_shared<part_man_mig>( partitions );
               }
             }
           }
@@ -178,14 +176,11 @@ namespace alice
 #endif
               {
                 std::cout << "Partitioning stored AIG network using KaHyPar\n";
-                if(config_direc != ""){
-                  oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_direc);
-                  store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
+                if(config_direc == ""){
+                  config_direc = make_temp_config();
                 }
-                else{
-                  oracle::partition_manager<aig_names> partitions(ntk, num_partitions);
-                  store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
-                }
+                oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_direc);
+                store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
               }
             }
           }

@@ -51,6 +51,10 @@ namespace alice
           }
 
           mockturtle::depth_view orig_depth{ntk};
+          if(config_file == ""){
+            config_file = make_temp_config();
+          }
+
           oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
@@ -121,7 +125,7 @@ namespace alice
       int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};
-      std::string config_file{"/usr/local/share/lsoracle/test.ini"};
+      std::string config_file{};
       unsigned strategy{0u};
       bool high = false;
       bool aig = false;
