@@ -1623,7 +1623,7 @@ struct ORACLEPass : public Pass {
 			log("Invalid number of arguments\n");
 		}
 
-
+                log_pop();
 	}
 } MIGPass;
 

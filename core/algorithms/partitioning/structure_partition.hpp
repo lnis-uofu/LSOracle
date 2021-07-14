@@ -14,39 +14,9 @@ namespace oracle
       return bin_pack(assigned, parts, max_size);
     }
 
-    int32_t distance_from_pi(typename Ntk::node pi, typename Ntk::node node) {
-      ptrdiff_t idx = find(ntk._storage->inputs.begin(), ntk._storage->inputs.end(), ntk.node_to_index(pi)) - ntk._storage->inputs.begin();
-      return distances_pi[idx][ntk.node_to_index(node)];
-    }
-
-    int32_t distance_from_pi(typename Ntk::signal in, typename Ntk::signal out) {
-      return distance_from_pi(ntk.get_node(in), ntk.get_node(out));
-    }
-
     structure_partition(Ntk& ntk): ntk(ntk) {
-      distances_pi.resize(ntk.num_pis(), std::vector(ntk.size(), -1));
-      //calculate_distance_from_pi();
     }
   private:
-    void calculate_distance_from_pi() {
-      mockturtle::topo_view<Ntk> topo{ntk};
-      topo.foreach_pi([this, topo](auto pi, auto pi_i) {
-        distances_pi[pi_i][pi] = 0;
-        topo.foreach_node([this, topo, pi, pi_i](auto node) {
-          topo.foreach_fanin(node, [this, topo, pi, pi_i, node](auto fin) {
-            uint32_t n_i = topo.node_to_index(node);
-            // std::cout << po_i << " " << po << " " << n_i << " " << f_i << " " << this->distances_pi[po_i][f_i] << " " << this->distances_pi[po_i][n_i];
-            auto x = this->distances_pi[pi_i][fin.index];
-            if (x >= 0) {
-              this->distances_pi[pi_i][n_i] = std::max(x+1, this->distances_pi[pi_i][n_i]); //TODO weights
-            }
-
-            // std::cout << " " << this->distances_pi[po_i][n_i] << std::endl;
-          });
-        });
-      });
-    }
-
     std::tuple<typename Ntk::signal, std::vector<typename Ntk::node>, int32_t> deepest_po(){
       typename Ntk::signal max_po;
       int32_t max_depth = -1;
@@ -149,6 +119,5 @@ namespace oracle
     }
 
     Ntk& ntk;
-    std::vector<std::vector<int32_t>> distances_pi;
   };
 }
