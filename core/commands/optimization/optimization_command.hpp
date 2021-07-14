@@ -65,7 +65,10 @@ namespace alice
              }
 
             if (threshold == 0 && strategy == 3) {
-              threshold = calculate_depth_percentile();
+              threshold = calculate_depth_percentile(ntk_aig);
+            }
+            if (strategy == 3) {
+              std::cout << "Using threshold " << threshold << " max depth for optimization." << std::endl;
             }
 
             std::copy(aig_parts.begin(), aig_parts.end(), std::inserter(aig_always_partitions, aig_always_partitions.end()));
@@ -130,8 +133,22 @@ namespace alice
         }
       }
     private:
-        int calculate_depth_percentile() {
-          return 42;
+    uint32_t calculate_depth_percentile(mockturtle::names_view<mockturtle::aig_network> net) {
+          std::vector<uint32_t> depths;
+          mockturtle::depth_view view(net);
+          net.foreach_po([this, &depths, &view](auto po) {
+            depths.push_back(view.level(view.get_node(po)));
+          });
+          std::sort(depths.begin(), depths.end());
+          if (depths.size() == 1) {
+            return depths[0];
+          } else if (depths.size() == 0) {
+            return 0;
+          } else {
+            // 95 percentile element or the second to last value, whichever is earlier.
+            size_t index = (size_t) min(ceil(0.95 * depths.size()), (double)(depths.size() - 1)) - 1;
+            return depths[index];
+          }
         }
         std::string nn_model{};
         std::string out_file{};
