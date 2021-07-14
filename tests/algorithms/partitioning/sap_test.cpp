@@ -27,60 +27,6 @@ network::signal add_chain(network *net, size_t depth) {
 }
 
 /*
- * verify distance calculations over ISCAS C17
- */
-TEST(sap_test, sap_c17_distance_calculation_case)
-{
-// {
-  network *net = new network;
-  network::signal e_n1 = net->create_pi();
-  network::signal e_n2 = net->create_pi();
-  network::signal e_n3 = net->create_pi();
-  network::signal e_n4 = net->create_pi();
-  network::signal e_n5 = net->create_pi();
-  network::signal e_w0 = net->create_nand(e_n1, e_n3);
-  network::signal e_w1 = net->create_nand(e_n3, e_n4);
-  network::signal e_w2 = net->create_nand(e_w1, e_n2);
-  network::signal e_m1 = net->create_nand(e_w1, e_n5);
-
-  network::signal e_s1_a0 = e_w0;
-  network::signal e_s1_a1 = e_w2;
-  network::signal e_s1_a2 = e_n5;
-  network::signal e_s1_aw0 = net->create_nand(e_s1_a1, e_s1_a2);
-  network::signal e_s1_aw1 = net->create_not(e_s1_a0);
-  network::signal e_s1_aw2 = net->create_nand(e_s1_aw0, e_s1_aw1);
-  network::signal e_s1_aw3 = net->create_nand(e_s1_aw1, net->create_nand(e_s1_a2, e_s1_a0));
-  network::signal e_s1_b1 = net->create_nand(e_s1_aw2, e_s1_aw3);
-
-  network::signal e_w3 = e_s1_b1;
-
-  network::signal e_s2_a0 = e_w2;
-  network::signal e_s2_a1 = e_w3;
-  network::signal e_s2_a2 = e_w1;
-  network::signal e_s2_aw0 = net->create_nand(e_s2_a1, e_s2_a2);
-  network::signal e_s2_aw1 = net->create_not(e_s2_a0);
-  network::signal e_s2_aw2 = net->create_nand(e_s2_aw0, e_s2_aw1);
-  network::signal e_s2_aw3 = net->create_nand(e_s2_aw1, net->create_nand(e_s2_a2, e_s2_a0));
-  network::signal e_s2_b1 = net->create_nand(e_s2_aw2, e_s2_aw3);
-
-  network::signal e_m2 = e_s2_b1;
-
-  uint32_t e_m1_po = net->create_po(e_m1);
-  uint32_t e_m2_po = net->create_po(e_m2);
-  mockturtle::write_dot(*net, "ntk.dot");
-
-  std::vector<kahypar_partition_id_t> partition(net->size(), -1);
-  oracle::structure_partition<network> sap(*net);
-
-  ASSERT_EQ(sap.distance_from_pi(e_n1, e_n1), 0);
-  ASSERT_EQ(sap.distance_from_pi(e_n1, e_n2), -1);
-  ASSERT_EQ(sap.distance_from_pi(e_n1, e_w0), 1);
-  ASSERT_EQ(sap.distance_from_pi(e_n1, e_m1), -1);
-  ASSERT_EQ(sap.distance_from_pi(e_n1, e_m2), 7);
-  ASSERT_EQ(sap.distance_from_pi(e_n3, e_m1), 2);
-}
-
-/*
  * Calculating a fully extracted network.
  */
 TEST(sap_test, sap_cones_case)
