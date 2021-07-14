@@ -17,7 +17,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 endif()
 
 option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
+option(ENABLE_GALOIS
+  "Enable Galois library for hypergraph partitioning." OFF)
 
+option(ENABLE_LIBABC
+  "Enable libabc library." OFF)
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -40,6 +44,13 @@ add_subdirectory(lib)
 
 find_package(Threads REQUIRED)                        # thread library (pthread)
 add_subdirectory(core)
+
+# Link against LibRT on older Linux distros
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  find_library(LIBRT rt)
+  target_link_libraries(lsoracle ${LIBRT})
+endif()
 
 install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)

@@ -46,6 +46,7 @@
 #include <mockturtle/networks/detail/foreach.hpp>
 #include <mockturtle/views/fanout_view.hpp>
 #include <libkahypar.h>
+#include "kahypar_config.hpp"
 
 namespace oracle
 {
@@ -64,7 +65,7 @@ namespace oracle
   public:
     partition_manager(){}
 
-    partition_manager(Ntk& ntk, std::map<node, int> partition, int part_num) {
+    partition_manager(Ntk& ntk, std::map<node, int> partition, int part_num){
       num_partitions = part_num;
       for(int i = 0; i < part_num; ++i)
         _part_scope.push_back(std::set<node>());
@@ -123,7 +124,7 @@ namespace oracle
       partitionRegIn = regs_in;
     }
 
-    partition_manager( Ntk& ntk, int part_num, std::string config_direc="../../core/test.ini", kahypar_hypernode_weight_t *hypernode_weights=nullptr, kahypar_hyperedge_weight_t *hyperedge_weights=nullptr, bool sap=false, double imbalance = 0.9) : Ntk( ntk )
+    partition_manager( Ntk& ntk, int part_num, std::string config_direc="", kahypar_hypernode_weight_t *hypernode_weights=nullptr, kahypar_hyperedge_weight_t *hyperedge_weights=nullptr, bool sap=false, double imbalance = 0.9 ) : Ntk( ntk )
     {
       static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
       static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
@@ -181,13 +182,15 @@ namespace oracle
         kahyp_num_indeces_hyper = t.get_num_indeces();
         kahyp_num_sets = t.get_num_sets();
         t.get_indeces(kahyp_set_indeces);
-        t.dump();
+        // t.dump();
 
         /******************
         Partition with kahypar
         ******************/
         //configures kahypar
         kahypar_context_t* context = kahypar_context_new();
+
+        std::cout << "Using config file " << config_direc << std::endl;
         kahypar_configure_context_from_file(context, config_direc.c_str());
 
         //set number of hyperedges and vertices. These variables are defined by the hyperG command
@@ -1111,6 +1114,7 @@ namespace oracle
       }
       return ids;
     }
+
   private:
     int num_partitions = 0;
 
