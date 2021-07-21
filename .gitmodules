@@ -19,3 +19,48 @@
 [submodule "lib/alice"]
 	path = lib/alice
 	url = https://github.com/msoeken/alice.git
+[submodule "lib/boost/any"]
+	path = lib/boost/any
+	url = https://github.com/boostorg/any.git
+[submodule "lib/boost/bind"]
+	path = lib/boost/bind
+	url = https://github.com/boostorg/bind.git
+[submodule "lib/boost/config"]
+	path = lib/boost/config
+	url = https://github.com/boostorg/config.git
+[submodule "lib/boost/core"]
+	path = lib/boost/core
+	url = https://github.com/boostorg/core.git
+[submodule "lib/boost/detail"]
+	path = lib/boost/detail
+	url = https://github.com/boostorg/detail.git
+[submodule "lib/boost/function"]
+	path = lib/boost/function
+	url = https://github.com/boostorg/function.git
+[submodule "lib/boost/iterator"]
+	path = lib/boost/iterator
+	url = https://github.com/boostorg/iterator.git
+[submodule "lib/boost/lexical_cast"]
+	path = lib/boost/lexical_cast
+	url = https://github.com/boostorg/lexical_cast.git
+[submodule "lib/boost/program_options"]
+	path = lib/boost/program_options
+	url = https://github.com/boostorg/program_options.git
+[submodule "lib/boost/smart_ptr"]
+	path = lib/boost/smart_ptr
+	url = https://github.com/boostorg/smart_ptr.git
+[submodule "lib/boost/static_assert"]
+	path = lib/boost/static_assert
+	url = https://github.com/boostorg/static_assert.git
+[submodule "lib/boost/throw_exception"]
+	path = lib/boost/throw_exception
+	url = https://github.com/boostorg/throw_exception.git
+[submodule "lib/boost/tokenizer"]
+	path = lib/boost/tokenizer
+	url = https://github.com/boostorg/tokenizer.git
+[submodule "lib/boost/type_traits"]
+	path = lib/boost/type_traits
+	url = https://github.com/boostorg/type_traits.git
+[submodule "lib/kahypar"]
+	path = lib/kahypar
+	url = https://github.com/kahypar/kahypar.git
