@@ -19,6 +19,9 @@
 [submodule "lib/alice"]
 	path = lib/alice
 	url = https://github.com/msoeken/alice.git
+[submodule "lib/pybind11"]
+	path = lib/pybind11
+	url = https://github.com/pybind/pybind11.git
 [submodule "lib/boost/any"]
 	path = lib/boost/any
 	url = https://github.com/boostorg/any.git
