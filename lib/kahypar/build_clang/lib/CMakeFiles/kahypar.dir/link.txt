@@ -1,2 +1,0 @@
-/usr/bin/ar qc libkahypar.a CMakeFiles/kahypar.dir/libkahypar.cc.o
-/usr/bin/ranlib libkahypar.a
