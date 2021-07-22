@@ -28,6 +28,7 @@ namespace alice
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2, delay_threshold=3]" );
                 opts.add_option( "--threshold", threshold, "maximum delay threshold for strategy 3" );
+                opts.add_flag( "--fixed_initial", "Depth optimize initial partitions.");
                 opts.add_option( "--aig_partitions", aig_parts, "space separated list of partitions to always be AIG optimized" );
                 opts.add_option( "--mig_partitions", mig_parts, "space separated list of partitions to always be MIG optimized" );
                 opts.add_option( "--depth_partitions", depth_parts, "space separated list of partitions to always be depth optimized" );
@@ -57,6 +58,18 @@ namespace alice
               mig = true;
             if(is_set("combine"))
               combine = true;
+
+            if (is_set("fixed_initial")) {
+              std::set<kahypar_partition_id_t> fixed_partitions = partitions_aig.fixed_partitions();
+              std::copy(fixed_partitions.begin(), fixed_partitions.end(), std::inserter(depth_parts, depth_parts.end()));
+             }
+
+            if (threshold == 0 && strategy == 3) {
+              threshold = calculate_depth_percentile(ntk_aig);
+            }
+            if (strategy == 3) {
+              std::cout << "Using threshold " << threshold << " max depth for optimization." << std::endl;
+            }
 
             std::copy(aig_parts.begin(), aig_parts.end(), std::inserter(aig_always_partitions, aig_always_partitions.end()));
             std::copy(mig_parts.begin(), mig_parts.end(), std::inserter(mig_always_partitions, mig_always_partitions.end()));
@@ -121,6 +134,23 @@ namespace alice
         }
       }
     private:
+    uint32_t calculate_depth_percentile(mockturtle::names_view<mockturtle::aig_network> net) {
+          std::vector<uint32_t> depths;
+          mockturtle::depth_view view(net);
+          net.foreach_po([this, &depths, &view](auto po) {
+            depths.push_back(view.level(view.get_node(po)));
+          });
+          std::sort(depths.begin(), depths.end());
+          if (depths.size() == 1) {
+            return depths[0];
+          } else if (depths.size() == 0) {
+            return 0;
+          } else {
+            // 95 percentile element or the second to last value, whichever is earlier.
+            size_t index = (size_t) min(ceil(0.95 * depths.size()), (double)(depths.size() - 1)) - 1;
+            return depths[index];
+          }
+        }
         std::string nn_model{};
         std::string out_file{};
         std::vector<int32_t> aig_parts{};

@@ -1,0 +1,10 @@
+#Build context must include both yosys and lsoracle directories; move this dockerfile or supply an appropriate context using -f during the build
+FROM openroad/centos7-dev:latest
+RUN yum update -y && yum install -y readline-devel && yum clean -y all
+COPY yosys /yosys
+RUN mkdir -p /LSOracle
+COPY LSOracle /LSOracle/
+WORKDIR /LSOracle
+RUN source /opt/rh/devtoolset-8/enable && \
+        cmake -B build -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON . && \
+        cmake --build build -j$(nproc)

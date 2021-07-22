@@ -23,3 +23,7 @@ target_compile_options(kahypar PRIVATE -w)
 #Literally everything that isn't KaHyPar goes here
 add_subdirectory(mockturtle)
 add_subdirectory(alice)
+if (${ENABLE_GALOIS})
+  add_subdirectory(Galois EXCLUDE_FROM_ALL)
+endif()
+
