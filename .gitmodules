@@ -3,7 +3,7 @@
 	url = https://github.com/lsils/mockturtle.git
 [submodule "lib/alice"]
 	path = lib/alice
-	url = https://github.com/msoeken/alice.git
+	url = https://github.com/lnis-uofu/alice.git
 [submodule "lib/pybind11"]
 	path = lib/pybind11
 	url = https://github.com/pybind/pybind11.git
@@ -51,7 +51,7 @@
 	url = https://github.com/boostorg/type_traits.git
 [submodule "lib/kahypar"]
 	path = lib/kahypar
-	url = https://github.com/kahypar/kahypar.git
+	url = https://github.com/lnis-uofu/kahypar.git
 [submodule "lib/boost/assert"]
 	path = lib/boost/assert
 	url = https://github.com/boostorg/assert.git
