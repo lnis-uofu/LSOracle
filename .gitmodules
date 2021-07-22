@@ -1,18 +1,3 @@
-#[submodule "lib/kitty"]
-#	path = lib/kitty
-#	url = https://github.com/msoeken/kitty
-#[submodule "lib/alice"]
-#	path = lib/alice
-#	url = https://github.com/msoeken/alice
-#[submodule "lib/lorina"]
-#	path = lib/lorina
-#	url = https://github.com/hriener/lorina.git
-#[submodule "lib/abc"]
-#	path = lib/abc
-#	url = https://github.com/msoeken/abc.git
-#[submodule "lib/percy"]
-#	path = lib/percy
-#	url = https://github.com/whaaswijk/percy
 [submodule "lib/mockturtle"]
 	path = lib/mockturtle
 	url = https://github.com/lsils/mockturtle.git
@@ -67,3 +52,87 @@
 [submodule "lib/kahypar"]
 	path = lib/kahypar
 	url = https://github.com/kahypar/kahypar.git
+[submodule "lib/boost/assert"]
+	path = lib/boost/assert
+	url = https://github.com/boostorg/assert.git
+[submodule "lib/boost/type_index"]
+	path = lib/boost/type_index
+	url = https://github.com/boostorg/type_index.git
+[submodule "lib/boost/preprocessor"]
+	path = lib/boost/preprocessor
+	url = https://github.com/boostorg/preprocessor.git
+[submodule "lib/boost/integer"]
+	path = lib/boost/integer
+	url = https://github.com/boostorg/integer.git
+[submodule "lib/boost/range"]
+	path = lib/boost/range
+	url = https://github.com/boostorg/range.git
+[submodule "lib/boost/mpl"]
+	path = lib/boost/mpl
+	url = https://github.com/boostorg/mpl.git
+[submodule "lib/boost/array"]
+	path = lib/boost/array
+	url = https://github.com/boostorg/array.git
+[submodule "lib/boost/move"]
+	path = lib/boost/move
+	url = https://github.com/boostorg/move.git
+[submodule "lib/boost/utility"]
+	path = lib/boost/utility
+	url = https://github.com/boostorg/utility.git
+[submodule "lib/boost/io"]
+	path = lib/boost/io
+	url = https://github.com/boostorg/io.git
+[submodule "lib/boost/numeric_conversion"]
+	path = lib/boost/numeric_conversion
+	url = https://github.com/boostorg/numeric_conversion.git
+[submodule "lib/boost/container"]
+	path = lib/boost/container
+	url = https://github.com/boostorg/container.git
+[submodule "lib/boost/concept_check"]
+	path = lib/boost/concept_check
+	url = https://github.com/boostorg/concept_check.git
+[submodule "lib/boost/container_hash"]
+	path = lib/boost/container_hash
+	url = https://github.com/boostorg/container_hash.git
+[submodule "lib/boost/regex"]
+	path = lib/boost/regex
+	url = https://github.com/boostorg/regex.git
+[submodule "lib/boost/optional"]
+	path = lib/boost/optional
+	url = https://github.com/boostorg/optional.git
+[submodule "lib/boost/tuple"]
+	path = lib/boost/tuple
+	url = https://github.com/boostorg/tuple.git
+[submodule "lib/boost/intrusive"]
+	path = lib/boost/intrusive
+	url = https://github.com/boostorg/intrusive.git
+[submodule "lib/boost/predef"]
+	path = lib/boost/predef
+	url = https://github.com/boostorg/predef.git
+[submodule "lib/boost/winapi"]
+	path = lib/boost/winapi
+	url = https://github.com/boostorg/winapi.git
+[submodule "lib/boost/conversion"]
+	path = lib/boost/conversion
+	url = https://github.com/boostorg/conversion.git
+[submodule "lib/boost/typeof"]
+	path = lib/boost/typeof
+	url = https://github.com/boostorg/typeof.git
+[submodule "lib/boost/fusion"]
+	path = lib/boost/fusion
+	url = https://github.com/boostorg/fusion.git
+[submodule "lib/boost/function_types"]
+	path = lib/boost/function_types
+	url = https://github.com/boostorg/function_types.git
+[submodule "lib/boost/dynamic_bitset"]
+	path = lib/boost/dynamic_bitset
+	url = https://github.com/boostorg/dynamic_bitset.git
+[submodule "lib/boost/algorithm"]
+	path = lib/boost/algorithm
+	url = https://github.com/boostorg/algorithm.git
+[submodule "lib/boost/unordered"]
+	path = lib/boost/unordered
+	url = https://github.com/boostorg/unordered.git
+[submodule "lib/boost/exception"]
+	path = lib/boost/exception
+	url = https://github.com/boostorg/exception.git
