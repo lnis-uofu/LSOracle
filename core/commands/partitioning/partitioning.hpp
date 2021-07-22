@@ -14,6 +14,7 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
+// #include <utah/BiPart.h>
 #include "kahypar_config.hpp"
 #ifdef ENABLE_GALOIS
 #include <utah/BiPart.h>
@@ -46,7 +47,7 @@ namespace alice
       opts.add_option("--node_weights,-n", node_weight_file, "External file containing node weights");
       opts.add_option("--edge_weights,-e", edge_weight_file, "External file containing edge weights");
       add_flag("--mig,-m", "Partitions stored MIG network (AIG network is default)");
-      add_flag("--sap,-s", "Do the SAP thing.");
+      add_flag("--sap,-s", "Apply Structure Aware Partitioning");
       opts.add_option("--epsilon", imbalance, "Hypergraph partitioning epsilon imbalance parameter.");
 #ifdef ENABLE_GALOIS
       add_flag("--bipart,-g", "Run hypergraph partitionining using BiPart from the Galois system");
