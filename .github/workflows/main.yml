@@ -15,7 +15,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-        submodule: recursive
+        with:
+          submodules: recursive
       - name: Load ccache
         uses: actions/cache@v2
         with:
