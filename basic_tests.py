@@ -64,9 +64,13 @@ def optimize(filename, mode, part_num, suffix):
     process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     string_stdout = str(stdout, encoding="utf-8").splitlines()
+    #For debugging
+    print("command: ", cmd, "result: ", stdout)   
     string_stderr = str(stderr)
     if 'None' not in string_stderr:
         logging.warning(string_stderr)
+    #For debugging
+    print (string_stdout)
     return [int(s) for s in string_stdout[-6].split() if s.isdigit()]
 
 def compare(filename, suffix):
@@ -119,6 +123,7 @@ for curr_file in files:
     print('Size (# nodes before optimization): ' + str(unoptimized_size) +' partitions = size/300:  ' + str(num_part))
 
     #mixed synthesis with classifier
+    print('Running Mixed Synthesis only')
     cmdstr = 'optimization -n ' + training_file
     mixed_size = optimize(curr_file, cmdstr, num_part, '_mixed_out')
     print('ntk size after mixed synthesis: ' + str(mixed_size[0]) + ' depth: ' + str(mixed_size[1]))
@@ -126,6 +131,7 @@ for curr_file in files:
     assert('Networks are equivalent' in abcout)
 
     #Brute Force
+    print('Running Brute Force only')
     cmdstr = 'optimization'
     brute_size = optimize(curr_file, cmdstr, num_part, '_brute_out')
     print('ntk size after brute force: ' + str(brute_size[0]) + ' depth: ' + str(brute_size[1]))
@@ -133,6 +139,7 @@ for curr_file in files:
     assert('Networks are equivalent' in abcout)
 
     #AIG only
+    print('Running AIG only')
     cmdstr = 'optimization -a'
     aig_size = optimize(curr_file, cmdstr, num_part, '_aig_out')
     print('ntk size after aig optimization: ' + str(aig_size[0]) + ' depth: ' + str(aig_size[1]))
@@ -140,6 +147,7 @@ for curr_file in files:
     assert('Networks are equivalent' in abcout)
 
     #MIG only
+    print('Running MIG only')
     cmdstr = 'optimization -m'
     mig_size = optimize(curr_file, cmdstr, num_part, '_mig_out')
     print('ntk size after mig optimization: ' + str(mig_size[0]) + ' depth: ' + str(mig_size[1]))

@@ -28,6 +28,8 @@ namespace oracle{
   using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
   
   ///Main opt function, returns mig_names  
+
+
   mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model, 
     bool high, bool aig, bool mig, bool combine){
 
@@ -306,5 +308,21 @@ namespace oracle{
     return ntk_mig;
     
     
+  }
+  mig_names optimization_aig(aig_names ntk_aig, part_man_aig partitions_aig){
+    //return optimization(ntk_aig, partitions_aig, strategy, nn_model, false, true, false, false);
+    return optimization(ntk_aig, partitions_aig, 0, "", false, true, false, false);
+  }
+
+  mig_names optimization_mig(aig_names ntk_aig, part_man_aig partitions_aig){
+    return optimization(ntk_aig, partitions_aig, 0, "", false, false, true, false);
+  }
+
+  mig_names optimization_high(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, bool combine){
+    return optimization(ntk_aig, partitions_aig, strategy, "", true, false, false, combine);
+  }
+  
+  mig_names optimization_nn(aig_names ntk_aig, part_man_aig partitions_aig, std::string nn_model, bool combine){
+    return optimization(ntk_aig, partitions_aig, 0, nn_model, false, false, false, false);
   }
 }

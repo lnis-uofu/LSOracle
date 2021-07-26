@@ -41,20 +41,39 @@ namespace alice
           mockturtle::depth_view orig_depth{ntk_aig};
           if(!store<part_man_aig_ntk>().empty()){
             auto partitions_aig = *store<part_man_aig_ntk>().current();
-            if(!nn_model.empty())
-              high = false;
-            else
-              high = true;
-            if(is_set("aig"))
-              aig = true;
-            if(is_set("mig"))
-              mig = true;
-            if(is_set("combine"))
-              combine = true;
+	    aig = is_set("aig");
+	    mig = is_set("mig");
+	    combine = is_set("combine");	    
+	
+	    //neural network with or without combine
+	    //aig only
+	    //mig only
+	    //high effort with or without combine, (includes strategy)
 
             auto start = std::chrono::high_resolution_clock::now();
-            auto ntk_mig = oracle::optimization(ntk_aig, partitions_aig, strategy, nn_model, 
-                high, aig, mig, combine);
+	    
+	    mig_names ntk_mig;
+	    //Aig only
+	    if(aig && !mig && !combine && nn_model.empty()){
+	      ntk_mig = oracle::optimization_aig(ntk_aig, partitions_aig);
+	    }
+	    //Mig only
+	    else if(!aig && mig && !combine && nn_model.empty()){
+	      ntk_mig = oracle::optimization_mig(ntk_aig, partitions_aig);
+	    }
+	    //High effort classification
+	    else if(!aig && !mig && nn_model.empty()){
+   	      ntk_mig = oracle::optimization_high(ntk_aig, partitions_aig, strategy, combine);
+	    }
+	    //Neural network model
+	    else if(!mig && !aig && !nn_model.empty()){
+	      ntk_mig = oracle::optimization_nn(ntk_aig, partitions_aig, nn_model, combine);
+	    }
+	    //Invalid combo
+	    else{
+	      throw std::runtime_error("Invalid flag combination");
+	    }
+
             auto stop = std::chrono::high_resolution_clock::now();
 
             
