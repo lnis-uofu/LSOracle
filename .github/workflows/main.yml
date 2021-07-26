@@ -35,9 +35,11 @@ jobs:
         with:
           name: lsoracle-binary
           path: build/core/lsoracle
-      - name: Unit Tests
-        run: |
-          build/core/unit_tests
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-tests
+          path: build/core/unit_tests
   test:
     runs-on: ubuntu-latest
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
@@ -48,11 +50,11 @@ jobs:
       - name: Get binaries
         uses: actions/download-artifact@v2
         with:
-          name: lsoracle-binary
-      - name: Run tests
+          name: lsoracle-tests
+      - name: Unit Tests
         run: |
-          chmod +x lsoracle
-          python3 basic_tests.py --cicd --lsoracle_exe ./lsoracle --abc_exe yosys-abc --kahypar core/test.ini -vvv
+          chmod +x unit_tests
+          ./unit_tests
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
