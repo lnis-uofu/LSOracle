@@ -34,26 +34,42 @@ namespace alice
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
-                add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
-
+                //add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
+#ifdef ENABLE_GALOIS
+                add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
+#endif
         }
 
     protected:
       void execute(){
 
         if(!store<aig_ntk>().empty()){
+          std::cout << "\n\n\n1\n";
           auto ntk = *store<aig_ntk>().current();
+          std::cout << "\n\n\n2\n";
+
           //If number of partitions is not specified
           if(num_partitions == 0){
+            std::cout << "\n\n\nif1\n";
+
             double size = ( (double) ntk.size() ) / 300.0;
             num_partitions = ceil(size);
           }
+          std::cout << "\n\n\n3\n";
 
           mockturtle::depth_view orig_depth{ntk};
+          if(config_file == ""){
+            config_file = make_temp_config();
+          }
+          std::cout << "\n\n\n4\n";
+          std::cout << "constructing partition manager with " << num_partitions << " partitionis and config_file: " <<config_file << "\n";
+
           oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
+          std::cout << "\n\n\n5\n";
+
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
-          std::cout << ntk._storage->net_name << " partitioned " << num_partitions << " times\n";
+          std::cout << ntk.get_network_name() << " partitioned " << num_partitions << " times\n";
           if(!nn_model.empty())
             high = false;
           else
@@ -86,16 +102,17 @@ namespace alice
             if(out_file != ""){
               if(oracle::checkExt(out_file, "v")){
                 mockturtle::write_verilog_params ps;
-                if(is_set("skip-feedthrough"))
-                  ps.skip_feedthrough = 1u;
+                //might be nice to have again, but for now commenting this out to allow us to use stock mockturtle I/O
+                //if(is_set("skip-feedthrough"))
+                  //ps.skip_feedthrough = 1u;
 
                 mockturtle::write_verilog(ntk_mig, out_file, ps);
                 std::cout << "Resulting network written to " << out_file << "\n";
               }
               else if(oracle::checkExt(out_file, "blif")){
                 mockturtle::write_blif_params ps;
-                if(is_set("skip-feedthrough"))
-                  ps.skip_feedthrough = 1u;
+                //if(is_set("skip-feedthrough"))
+                  //ps.skip_feedthrough = 1u;
                 
                 mockturtle::write_blif(ntk_mig, out_file, ps);
                 std::cout << "Resulting network written to " << out_file << "\n";
@@ -120,12 +137,15 @@ namespace alice
       int num_partitions{0u};
       std::string nn_model{};
       std::string out_file{};
-      std::string config_file{"/usr/local/share/lsoracle/test.ini"};
+      std::string config_file{};
       unsigned strategy{0u};
       bool high = false;
       bool aig = false;
       bool mig = false;
       bool combine = false;
+#ifdef ENABLE_GALOIS
+      bool bipart = false;
+#endif
     };
 
   ALICE_ADD_COMMAND(oracle, "Optimization");

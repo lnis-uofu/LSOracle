@@ -27,15 +27,15 @@ namespace alice
         opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
         add_flag("--mig,-m", "Read from the MIG network");
         add_flag("--xag,-x", "Read from the XAG network");
-        add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
+        //add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
       }
 
     protected:
         void execute(){
         if(oracle::checkExt(filename, "v")){
           mockturtle::write_verilog_params ps;
-          if(is_set("skip-feedthrough"))
-            ps.skip_feedthrough = 1u;
+          //if(is_set("skip-feedthrough"))
+            //ps.skip_feedthrough = 1u;
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
               auto& mig = *store<mig_ntk>().current();

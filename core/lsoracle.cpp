@@ -2,20 +2,24 @@
 #define ALICE_SETTINGS_WITH_DEFAULT_OPTION true
 #endif
 
-#include <fdeep/fdeep.hpp>
+/*** Core Libraries ***/
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
-// #include <utah/BiPart.h>
+
+
+/*** low priority ***/
+//#include <fdeep/fdeep.hpp>
+//#include <utah/BiPart.h>
 
 /*** Algorithms ***/
 #include "algorithms/partitioning/partition_view.hpp"
-#include "algorithms/partitioning/hyperg.hpp"
 #include "utility.hpp"
+#include "algorithms/partitioning/hyperg.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
-#include "algorithms/partitioning/cluster.hpp"
-#include "algorithms/partitioning/seed_partitioner.hpp"
-#include "algorithms/partitioning/fpga_seed_partitioner.hpp"
+//#include "algorithms/partitioning/cluster.hpp"
+//#include "algorithms/partitioning/seed_partitioner.hpp"
+//#include "algorithms/partitioning/fpga_seed_partitioner.hpp"
 #include "algorithms/partitioning/slack_view.hpp"
 #include "algorithms/optimization/rw_script.hpp"
 #include "algorithms/optimization/aig_script.hpp"
@@ -29,9 +33,8 @@
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
-#include "algorithms/output/verilog.hpp"
-#include "algorithms/asic_mapping/techmapping.hpp"
-#include "algorithms/output/mapped_verilog.hpp"
+//#include "algorithms/asic_mapping/techmapping.hpp"
+//#include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/
 #include "store/aig.hpp"
@@ -58,8 +61,8 @@
 #include "commands/output/write_hypergraph.hpp"
 #include "commands/output/show_ntk.hpp"
 #include "commands/output/disjoint_clouds.hpp"
-#include "commands/output/get_all_partitions.hpp"
-#include "commands/output/print_karnaugh_map.hpp"
+//#include "commands/output/get_all_partitions.hpp" //need to add a write_toplevel_verilog method to recover this feature
+//#include "commands/output/print_karnaugh_map.hpp" //removed because of frugally deep dependence; will get back to it
 
 //Stats
 #include "commands/stats/crit_path_stats.hpp"
@@ -72,7 +75,7 @@
 #include "commands/partitioning/partition_detail.hpp"
 
 //Classification
-#include "commands/classification/generate_truth_tables.hpp"
+//#include "commands/classification/generate_truth_tables.hpp"
 
 //Optimization
 #include "commands/optimization/rwscript.hpp"
@@ -84,18 +87,20 @@
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/interleaving.hpp"
-#include "commands/optimization/balance.hpp"
+//#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it  
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
 
+/* these were commented out in previous master */
 // #include "commands/optimization/depth_partition.hpp"
 // #include "commands/optimization/depth_based.hpp"
 // #include "commands/optimization/mixed_2steps.hpp"
 
 //Asic mapping
-#include "commands/asic_map/asic_map.hpp"
+//#include "commands/asic_map/asic_map.hpp"
 
 //Testing
+/* these were commented out in previous master */
 // #include "commands/testing/find_xor.hpp"
 // #include "commands/testing/find_part.hpp"
 // #include "commands/testing/get_fanout.hpp"
@@ -103,5 +108,7 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
+
+#include "kahypar_config.hpp"
 
 ALICE_MAIN( lsoracle )

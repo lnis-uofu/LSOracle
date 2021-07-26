@@ -1,20 +1,48 @@
-cmake_minimum_required (VERSION 3.9)                  # CMake minimum version
 project(lsoracle)
 
-include_directories(${PROJECT_SOURCE_DIR}/lib/kahypar/include)
-#include_directories(${PROJECT_SOURCE_DIR}/lib/Galois/lonestar)
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/generate_kahypar.py ${PROJECT_SOURCE_DIR}/test.ini ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
+  MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/test.ini
+)
 
-include_directories(${PROJECT_SOURCE_DIR}/algorithms/classification/fplus/include)
-include_directories(${PROJECT_SOURCE_DIR}/algorithms/classification/eigen)
-include_directories(${PROJECT_SOURCE_DIR}/algorithms/classification/json/include)
-include_directories(${PROJECT_SOURCE_DIR}/algorithms/classification/fdeep_keras/include)
+# "We do not recommend using GLOB to collect a list of source files from your source tree.
+# If no CMakeLists.txt file changes when a source is added or removed then the generated
+# build system cannot know when to ask CMake to regenerate."
+# https://cmake.org/cmake/help/latest/command/file.html
+set(LSORACLE_SOURCE
+  ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
+  kahypar_temp_config.cpp
+)
 
-set(CMAKE_CXX_STANDARD 17)                            # enable c++17
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})
+target_include_directories(lsoracle PRIVATE .)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable(lsoracle lsoracle.cpp)
-
-target_include_directories(lsoracle PRIVATE ../lib/kahypar/include)
-#target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
-#target_link_libraries(lsoracle alice mockturtle stdc++fs kahypar galois_utah)
 target_link_libraries(lsoracle alice mockturtle kahypar)
+
+if (${ENABLE_GALOIS})
+  add_definitions(-DENABLE_GALOIS)
+  target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
+  target_link_libraries(lsoracle galois_utah)
+endif()
+
+set(LSORACLE_TESTS
+  algorithms/partitioning/__tests__/sap_test.cpp
+)
+add_executable(unit_tests ${LSORACLE_SOURCE} ${LSORACLE_TESTS})
+target_link_libraries(unit_tests gtest_main alice mockturtle kahypar)
+target_include_directories(unit_tests INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
+  target_link_libraries(lsoracle stdc++fs)
+  target_link_libraries(unit_tests stdc++fs)
+endif()
+
+enable_testing()
+include(GoogleTest)
+gtest_discover_tests(unit_tests)
+
+configure_file(test.ini test.ini COPYONLY)
+install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
