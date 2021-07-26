@@ -4,8 +4,8 @@ set(BUILD_GMOCK ON)
 add_subdirectory(googletest EXCLUDE_FROM_ALL)
 target_compile_options(gmock PRIVATE -w)
 target_compile_options(gtest PRIVATE -w)
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-include_directories(SYSTEM ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
+# include_directories(SYSTEM ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+# include_directories(SYSTEM ${gtest_SOURCE_DIR}/../googlemock/include ${gtest_SOURCE_DIR}/../googlemock/)
 
 #set up pybind11 or else kahypar gets angry
 add_subdirectory(pybind11)
@@ -26,4 +26,3 @@ add_subdirectory(alice)
 if (${ENABLE_GALOIS})
   add_subdirectory(Galois EXCLUDE_FROM_ALL)
 endif()
-

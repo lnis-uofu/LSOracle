@@ -35,3 +35,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(lib)
 add_subdirectory(core)
+
+if (${YOSYS_PLUGIN})
+  add_subdirectory(yosys-plugin)
+endif()

@@ -37,7 +37,7 @@ jobs:
           path: build/core/lsoracle
       - name: Unit Tests
         run: |
-          build/tests/unit_tests
+          build/core/unit_tests
   test:
     runs-on: ubuntu-latest
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
