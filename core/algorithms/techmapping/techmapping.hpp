@@ -203,6 +203,17 @@ struct graph {
         frozen = false;
     }
 
+    void dump_to_stdout() const
+    {
+        std::cout << "digraph {\n";
+        for (std::optional<connection> conn : connections) {
+            if (conn.has_value()) {
+                std::cout << conn->from << " -> " << conn->to << '\n';
+            }
+        }
+        std::cout << "}\n";
+    }
+
     std::vector<connection> compute_node_fanin_connections(size_t node) const
     {
         std::vector<connection> fanin;
@@ -650,15 +661,34 @@ private:
 
             visited.insert(node);
 
-            for (size_t input : info[node].selected_cut->inputs) {
-                if (!g.is_primary_input(input) && !visited.count(input)) {
+            std::cout << "Connecting node " << node << '\n';
+
+            if (g.is_primary_input(node)) {
+                std::cout << "  Node is primary input\n";
+            } else if (g.is_primary_output(node)) {
+                std::cout << "  Node is primary output\n";
+            } else {
+                std::cout << "  Node has " << info[node].selected_cut->input_count() << " inputs\n";
+            }
+
+            if (g.is_primary_output(node)) {
+                for (size_t input : g.compute_node_fanin_nodes(node)) {
                     frontier.push_back(input);
+                    mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
+                    break;
                 }
-                mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
+            } else {
+                for (size_t input : info[node].selected_cut->inputs) {
+                    if (!g.is_primary_input(input) && !visited.count(input)) {
+                        frontier.push_back(input);
+                    }
+                    mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
+                    std::cout << "  Adding connection between " << input << " and " << node << '\n';
+                }
             }
         }
 
-        std::cout << "LUTs: " << g.nodes.size() - g.primary_inputs.size() - g.primary_outputs.size() << '\n';
+        std::cout << "LUTs: " << mapping.nodes.size() - mapping.primary_inputs.size() - mapping.primary_outputs.size() << '\n';
 
         return mapping;
     }
@@ -836,14 +866,17 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
         });
     });
 
+    g.dump_to_stdout();
+
     return g;
 }
-
 
 mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
 {
     mockturtle::klut_network ntk{};
     std::unordered_map<size_t, mockturtle::klut_network::signal> node_to_mockturtle{};
+
+    g.dump_to_stdout();
 
     for (size_t pi : g.primary_inputs) {
         node_to_mockturtle.insert({pi, ntk.create_pi()});
