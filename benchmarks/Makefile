@@ -92,6 +92,12 @@ clean_reports:
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 	rm ${TEMP}
 
+%_aigscript.rtl %_aigscript.synth.log: %.rtl
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
+
+%_migscript.rtl %_migscript.synth.log: %.rtl
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log}
+
 # %_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed: %.rtl
 # 	$(eval TEMP=$(shell mktemp))
 # 	echo "ps -a; partitioning -c ../../lso-benchmarks/ff_km1_kKaHyPar_sea20.ini -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization ; ps -m; crit_path_stats; ntk_stats " > ${TEMP}

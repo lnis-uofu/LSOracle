@@ -43,7 +43,7 @@
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
 #define LSO_COMMAND_MIG "ps -m; migscript; ps -m; crit_path_stats; ntk_stats "
-#define LSO_COMMAND_AIG "ps -a; aigscript; ps -a "
+#define LSO_COMMAND_AIG "ps -a; aigscript --strategy 4; ps -a "
 #define LSO_COMMAND_PART_EXCLU_AIG "ps -a; partitioning {P}; optimization -a; ps -a "
 #define LSO_COMMAND_PART_EXCLU_MIG "ps -a; partitioning {P}; optimization -m; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_DEEP "ps -a; partitioning {P}; optimization -i {D}; ps -m; crit_path_stats; ntk_stats "
