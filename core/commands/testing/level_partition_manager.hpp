@@ -37,10 +37,8 @@
 #include <vector>
 #include <set>
 #include <cassert>
+#include <mockturtle/mockturtle.hpp>
 
-#include <mockturtle/traits.hpp>
-#include <mockturtle/networks/detail/foreach.hpp>
-#include <mockturtle/views/fanout_view.hpp>
 #include <libkahypar.h>
 
 namespace oracle
