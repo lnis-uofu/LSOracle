@@ -23,9 +23,6 @@ namespace oracle{
   mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model, 
     bool high, bool aig, bool mig, bool combine){
 
-    mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-    mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
     std::vector<int> comb_aig_parts;
