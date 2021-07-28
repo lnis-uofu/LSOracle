@@ -41,7 +41,7 @@
 #include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
 #include "kahypar_config.hpp"
-#include <fdeep/fdeep.hpp>
+//#include <fdeep/fdeep.hpp>
 
 namespace oracle
 {
