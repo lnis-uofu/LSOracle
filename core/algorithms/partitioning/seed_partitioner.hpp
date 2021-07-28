@@ -38,9 +38,7 @@
 #include <set>
 #include <cassert>
 
-#include <mockturtle/traits.hpp>
-#include <mockturtle/networks/detail/foreach.hpp>
-#include <mockturtle/views/fanout_view.hpp>
+#include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
 
 namespace oracle

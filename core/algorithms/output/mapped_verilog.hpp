@@ -46,8 +46,7 @@ endmodule
 #include <algorithm>
 
 #include <fmt/format.h>
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/utils/string_utils.hpp>
+#include <mockturtle/mockturtle.hpp>
 #include <kitty/operations.hpp>
 #include <kitty/print.hpp>
 #include <nlohmann/json.hpp>
