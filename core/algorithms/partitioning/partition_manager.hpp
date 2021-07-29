@@ -34,14 +34,14 @@
 #include <cassert>
 #include <queue>
 
-#include <mockturtle/traits.hpp>
+#include <kitty/kitty.hpp>
 #include "partition_view.hpp"
 #include "structure_partition.hpp"
 #include "hyperg.hpp"
-#include <mockturtle/networks/detail/foreach.hpp>
-#include <mockturtle/views/fanout_view.hpp>
+#include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
 #include "kahypar_config.hpp"
+//#include <fdeep/fdeep.hpp>
 
 namespace oracle
 {

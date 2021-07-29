@@ -1,13 +1,6 @@
 #include <alice/alice.hpp>
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <stdio.h>
 #include <fstream>
@@ -33,9 +26,6 @@ namespace oracle{
                          std::set<int32_t> depth_always_partitions, std::set<int32_t> area_always_partitions,
                          std::set<int32_t> skip_partitions){
 
-    mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-    mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
     std::vector<int> skip_parts;
@@ -45,6 +35,12 @@ namespace oracle{
     std::vector<mockturtle::aig_network> aig_opts;
 
     int num_parts = partitions_aig.get_part_num();
+
+    auto ntk_mig = *aig_to_mig(ntk_aig, 1);
+    oracle::partition_manager<mig_names> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(),
+            partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
+            partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
+
     if(aig){
       for(int i = 0; i < num_parts; i++){
         aig_parts.push_back(i);
@@ -70,23 +66,24 @@ namespace oracle{
           continue;
         }
 
-        oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk_aig, i);
+        oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
-        auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
-	//Runs optimization
+        auto opt_part_aig = *part_to_mig(part, 1);
+        auto opt_aig = *mig_to_aig(opt_part_aig);
+
         oracle::aig_script aigopt;
         opt_aig = aigopt.run(opt_aig);
         mockturtle::depth_view part_aig_opt_depth{opt_aig};
         int aig_opt_size = opt_aig.num_gates();
         int aig_opt_depth = part_aig_opt_depth.depth();
 
-        auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
+        auto opt_mig = *part_to_mig(part, 0);
         oracle::mig_script migopt;
         opt_mig = migopt.run(opt_mig);
         mockturtle::depth_view part_mig_opt_depth{opt_mig};
         int mig_opt_size = opt_mig.num_gates();
         int mig_opt_depth = part_mig_opt_depth.depth();
-      }
+      
         unsigned local_strategy;
         if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
           local_strategy = 2;
@@ -101,11 +98,16 @@ namespace oracle{
           {
             if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
               aig_parts.push_back(i);
-	      aig_opts.push_back(opt_aig);
+              if(!combine){
+                auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+              }
             }
             else{
               mig_parts.push_back(i);
-	      mig_opts.push_back(opt_mig);
+              if(!combine){
+                partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+              }
             }
           }
           break;
@@ -113,11 +115,16 @@ namespace oracle{
           {
             if((aig_opt_size) <= (mig_opt_size)){
               aig_parts.push_back(i);
-	      aig_opts.push_back(opt_aig);
+              if(!combine){
+                auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+              }
             }
             else{
               mig_parts.push_back(i);
-	      mig_opts.push_back(opt_mig);
+              if(!combine){
+                partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+              }
             }
           }
           break;
@@ -125,11 +132,16 @@ namespace oracle{
           {
             if((aig_opt_depth) <= (mig_opt_depth)){
               aig_parts.push_back(i);
-	      aig_opts.push_back(opt_aig);
+              if(!combine){
+                auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+              }
             }
             else{
               mig_parts.push_back(i);
-	      mig_opts.push_back(opt_mig);
+              if(!combine){
+                partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+              }
             }
           }
           break;
@@ -138,18 +150,39 @@ namespace oracle{
             if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
               if (aig_opt_size < mig_opt_size) {
                 aig_parts.push_back(i);
+                if(!combine){
+                  auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                  partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                }
               } else {
                 mig_parts.push_back(i);
+                if(!combine){
+                  partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                }
               }
             } else if(aig_opt_depth <= delay_threshold && mig_opt_depth > delay_threshold) {
               aig_parts.push_back(i);
+              if(!combine){
+                  auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                  partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+              }
             } else if (aig_opt_depth > delay_threshold && mig_opt_depth <= delay_threshold) {
               mig_parts.push_back(i);
+              if(!combine){
+                partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+              }
             } else {
               if(aig_opt_depth <= mig_opt_depth) {
                 aig_parts.push_back(i);
+                if(!combine){
+                  auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                  partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                }
               } else{
                 mig_parts.push_back(i);
+                if(!combine){
+                  partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                }
               }
             }
           }
@@ -285,58 +318,42 @@ namespace oracle{
       std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
     }
 
-    auto ntk_mig = *aig_to_mig(ntk_aig, 1);
-    oracle::partition_manager<mig_names> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(),
-            partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
-            partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
+    if(!high){
+      for(int i = 0; i < aig_parts.size(); i++){
 
-    for(int i = 0; i < aig_parts.size(); i++){
+        oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
+        mockturtle::depth_view part_depth{part};
 
-      oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
-      mockturtle::depth_view part_depth{part};
+        auto opt_part = *part_to_mig(part, 1);
+        auto opt = *mig_to_aig(opt_part);
 
-      auto opt_part = *part_to_mig(part, 1);
-      auto opt = *mig_to_aig(opt_part);
+        mockturtle::depth_view opt_part_depth{opt};
 
-      mockturtle::depth_view opt_part_depth{opt};
+        oracle::aig_script aigopt;
+        opt = aigopt.run(opt);
 
-      //uses previously found optimizations
-      if(high){
-	opt = aig_opts[i];
-      }
-      else{
-	//Runs optimization algorithm
-	oracle::aig_script aigopt;
-	opt = aigopt.run(opt);
-      }
-      auto opt_mig = *aig_to_mig(opt, 0);
-      mockturtle::depth_view part_opt_depth{opt_mig};
+        auto opt_mig = *aig_to_mig(opt, 0);
+        mockturtle::depth_view part_opt_depth{opt_mig};
 
-      partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-    }
-
-    for(int i = 0; i < mig_parts.size(); i++){
-
-      oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
-      mockturtle::depth_view part_depth{part};
-
-      auto opt = *part_to_mig(part, 0);
-
-      mockturtle::depth_view opt_part_depth{opt};
-
-      //uses previously found optimizations
-      if(high){
-        opt = mig_opts[i];
-      }
-      else{
-	//Runs optimization algorithm
-	oracle::mig_script migopt;
-	opt = migopt.run(opt);
+        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
       }
 
-      mockturtle::depth_view part_opt_depth{opt};
+      for(int i = 0; i < mig_parts.size(); i++){
 
-      partitions_mig.synchronize_part(part, opt, ntk_mig);
+        oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
+        mockturtle::depth_view part_depth{part};
+
+        auto opt = *part_to_mig(part, 0);
+
+        mockturtle::depth_view opt_part_depth{opt};
+
+        oracle::mig_script migopt;
+        opt = migopt.run(opt);
+
+        mockturtle::depth_view part_opt_depth{opt};
+
+        partitions_mig.synchronize_part(part, opt, ntk_mig);
+      }
     }
 
     partitions_mig.connect_outputs(ntk_mig);
@@ -347,7 +364,18 @@ namespace oracle{
 
     return ntk_mig;
 
+  }
 
+  mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, std::string nn_model,
+                         bool high, bool aig, bool mig, bool combine){
+    std::set<int32_t> aig_always_partitions;
+    std::set<int32_t> mig_always_partitions;
+    std::set<int32_t> depth_always_partitions;
+    std::set<int32_t> area_always_partitions;
+    std::set<int32_t> skip_partitions;
+    unsigned delay_threshold = 0;
+    
+    return optimization(ntk_aig, partitions_aig, strategy, delay_threshold, nn_model, high, aig, mig, combine, aig_always_partitions, mig_always_partitions, depth_always_partitions, area_always_partitions, skip_partitions);
   }
 
   mig_names optimization_aig(aig_names ntk_aig, part_man_aig partitions_aig){
@@ -366,14 +394,4 @@ namespace oracle{
   mig_names optimization_nn(aig_names ntk_aig, part_man_aig partitions_aig, std::string nn_model, bool combine){
     return optimization(ntk_aig, partitions_aig, 0, nn_model, false, false, false, false);
   }
-
-  mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, unsigned delay_threshold, std::string nn_model,
-                         bool high, bool aig, bool mig, bool combine){
-    std::set<int32_t> aig_always_partitions;
-    std::set<int32_t> mig_always_partitions;
-    std::set<int32_t> depth_always_partitions;
-    std::set<int32_t> area_always_partitions;
-    std::set<int32_t> skip_partitions;
-    
-    return optimization(ntk_aig, partitions_aig, strategy, delay_threshold, nn_model, high, aig, mig, combine, aig_always_partitions, mig_always_partitions, depth_always_partitions, area_always_partitions, skip_partitions)
-}} 
+} 

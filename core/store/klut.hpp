@@ -1,13 +1,11 @@
+#pragma once
+
 #include <memory>
 
 #include <alice/alice.hpp>
 #include <lorina/bench.hpp>
-#include <mockturtle/io/bench_reader.hpp>
 #include <lorina/blif.hpp>
-#include <mockturtle/io/blif_reader.hpp>
-#include <mockturtle/networks/klut.hpp>
-#include <mockturtle/views/depth_view.hpp>
-#include <mockturtle/views/names_view.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <fmt/format.h>
 

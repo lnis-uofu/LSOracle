@@ -1,13 +1,6 @@
 #include <alice/alice.hpp>
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <stdio.h>
 #include <fstream>
@@ -29,9 +22,6 @@ namespace oracle{
     
   mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model, 
     bool high, bool aig, bool mig, bool combine){
-
-    mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-    mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
 
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
