@@ -19,7 +19,7 @@ ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EFPL} # ${ISCAS85} $
 AIG_FILES := $(patsubst %.v,%.aig,${ORIGINAL_FILES})
 AIG_LOGS := $(patsubst %.v,%.aig.log,${ORIGINAL_FILES})
 
-SDC_SCRIPTS := $(patsubst %.v,%_lsoracle.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_abc.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_unoptimized.sdc,${ORIGINAL_FILES})
+SDC_SCRIPTS := $(patsubst %.v,%_lsoracle.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_abc.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_unoptimized.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_aigscript.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_migscript.sdc,${ORIGINAL_FILES})
 
 SYNTH_BASE := $(patsubst %.v,%.rtl,${ORIGINAL_FILES})
 SYNTH_BASE_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_BASE})
@@ -32,10 +32,13 @@ LSORACLE_TECHMAP_LOGS := $(patsubst %.rtl,%_lsoracle.tech.log,${SYNTH_BASE})
 LSORACLE_TIMING_REPORT := $(patsubst %.rtl,%_lsoracle.timing,${SYNTH_BASE})
 LSORACLE_TIMING_LOG := $(patsubst %.rtl,%_lsoracle.sta.log,${SYNTH_BASE})
 
+AIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_aigscript.rtl,${SYNTH_BASE})
+MIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_migscript.rtl,${SYNTH_BASE})
+
 ABC_OUTPUTS := $(patsubst %.rtl,%_abc.rtl,${SYNTH_BASE})
 UNOPT_OUTPUTS := $(patsubst %.rtl,%_unoptimized.rtl,${SYNTH_BASE})
-SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS}
-SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${LSORACLE_OUTPUTS}) $(patsubst %.rtl,%.synth.log,${ABC_OUTPUTS})
+SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS} ${AIGSCRIPT_OUTPUTS} ${MIGSCRIPT_OUTPUTS}
+SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_OUTPUTS})
 
 SYNTH_REPORTS := $(patsubst %.synth.log,%.synth_report,${SYNTH_LOGS})
 TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
@@ -86,23 +89,18 @@ clean_reports:
 %.aig %.aig.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
-%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed: %.rtl
+
+%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed &: %.rtl
 	$(eval TEMP=$(shell mktemp))
-	echo "ps -a; partitioning --sap --size 2048 --epsilon 6 -c $$(pwd)/ff_.ini -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization --strategy 3 --fixed_initial; ps -m; crit_path_stats; ntk_stats " > ${TEMP}
+	echo "ps -a; partitioning -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization ; ps -m; crit_path_stats; ntk_stats " > ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 	rm ${TEMP}
 
-%_aigscript.rtl %_aigscript.synth.log: %.rtl
+%_aigscript.rtl %_aigscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
 
-%_migscript.rtl %_migscript.synth.log: %.rtl
+%_migscript.rtl %_migscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log}
-
-# %_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed: %.rtl
-# 	$(eval TEMP=$(shell mktemp))
-# 	echo "ps -a; partitioning -c ../../lso-benchmarks/ff_km1_kKaHyPar_sea20.ini -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization ; ps -m; crit_path_stats; ntk_stats " > ${TEMP}
-# 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
-# 	rm ${TEMP}
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
@@ -144,13 +142,7 @@ clean_reports:
 	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
 
-%_lsoracle.sdc: %.sdc
-	cp $< $@
-
-%_abc.sdc: %.sdc
-	cp $< $@
-
-%_unoptimized.sdc: %.sdc
+%_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc
 	cp $< $@
 
 %.sta.log: %.mapped.v %.sdc
@@ -167,44 +159,61 @@ previous/%_lsoracle.everything: | previous
 	@ echo -n "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" > $@
 
 %.timing: %.sta.log %.tech.log
+	$(eval TYPE=$(shell echo $* | sed 's/^.*_\([a-z]*\)$$/\1/'))
 	@ echo generating report $@
-	@ sed -n 's/^Combinational\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([.0-9]*%\).*/internal_power\t\1\nswitching_power\t\2\nleakage_power\t\3\ntotal_power\t\4\npercent_power\t\5/p' $< > $@
-	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | python3 -c 'import sys; print("arrival\t", max([float(i) for i in sys.stdin.readlines()]))' >> $@
-	@ sed -n 's/worst slack \([0-9.]*\)/worst_slack\t\1/p' $< >> $@
-	@ sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/area\t\1/" $*.tech.log >> $@
+	@ sed -n 's/^Combinational\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([.0-9]*\)%.*/${TYPE}_internal_power\t\1\n${TYPE}_switching_power\t\2\n${TYPE}_leakage_power\t\3\n${TYPE}_total_power\t\4\n${TYPE}_percent_power\t\5/p' $< > $@
+	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | python3 -c 'import sys; print("${TYPE}_arrival\t", max([float(i) for i in sys.stdin.readlines()]))' >> $@
+	@ sed -n 's/worst slack \([0-9.]*\)/${TYPE}_worst_slack\t\1/p' $< >> $@
+	@ sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/${TYPE}_area\t\1/" $*.tech.log >> $@
 
 %_lsoracle.synth_report: %_lsoracle.synth.log
 	@ echo generating report $@
-	@ sed -n 's/LSOracle: nodes: \([0-9]*\)/nodes\t\1/p; s/LSOracle: inputs: \([0-9]*\)/inputs\t\1/p;  s/LSOracle: outputs: \([0-9]*\)/outputs\t\1/p;  s/LSOracle: AIG level: \([0-9]*\)/aig_level\t\1/p; s/LSOracle: AIG nodes: \([0-9]*\)/aig_nodes\t\1/p; s/LSOracle.* Using \([0-9]*\) partitions/partitions\t\1/p; s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/opt_nodes\t\1\
-opt_level\t\2/p; s/LSOracle: \([0-9]*\) AIGs and \([0-9]*\) MIGs/aigs\t\1\
-migs\t\2/p; s/LSOracle: Full Optimization: \([0-9]*\)ms/runtime\t\1/p; s/LSOracle: MAJ nodes: \([0-9]*\)/mig_nodes\t\1/p;  s/LSOracle: MIG level: \([0-9]*\)/mig_level\t\1/p;  s/LSOracle: MAJ nodes internally = \([0-9]*\)/maj_nodes_internal\t\1/p;  s/LSOracle: AND nodes internally = \([0-9]*\)/and_nodes_internal\t\1/p' < $< > $@
+	@ sed -n -e "s/LSOracle: inputs: \([0-9]*\)/inputs\t\1/p" \
+	-e "s/LSOracle: outputs: \([0-9]*\)/outputs\t\1/p" \
+	-e "s/LSOracle: AIG level: \([0-9]*\)/unoptimized_level\t\1/p" \
+	-e "s/LSOracle: AIG nodes: \([0-9]*\)/unoptimized_nodes\t\1/p" \
+	-e "s/LSOracle.* Using \([0-9]*\) partitions/lsoracle_partitions\t\1/p" \
+	-e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/lsoracle_nodes\t\1\nlsoracle_level\t\2/p" \
+	-e "s/LSOracle: \([0-9]*\) AIGs and \([0-9]*\) MIGs/lsoracle_aigs\t\1\\nlsoracle_migs\t\2/p" \
+	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/lsoracle_runtime\t\1/p" \
+	-e "s/LSOracle: MAJ nodes internally = \([0-9]*\)/lsoracle_maj_nodes_internal\t\1/p" \
+	-e "s/LSOracle: AND nodes internally = \([0-9]*\)/lsoracle_and_nodes_internal\t\1/p" \
+	-e "s/LSOracle: AND nodes on critical path = \([0-9]*\)/lsoracle_critical_and\t\1/p" \
+	-e "s/LSOracle: MAJ nodes on critical path = \([0-9]*\)/lsoracle_critical_maj\t\1/p" \
+	-e "s/LSOracle: INPUTS nodes on critical path = \([0-9]*\)/lsoracle_critical_inputs\t\1/p" < $< > $@
+
+%_migscript.synth_report: %_migscript.synth.log
+	@ echo generating report $@
+	@ sed -n -e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/migscript_nodes\t\1\\nmigscript_level\t\2/p" \
+	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/migscript_runtime\t\1/p" \
+	-e "s/LSOracle: MAJ nodes internally = \([0-9]*\)/migscript_maj_nodes_internal\t\1/p" \
+	-e "s/LSOracle: AND nodes internally = \([0-9]*\)/migscript_and_nodes_internal\t\1/p" \
+	-e "s/LSOracle: AND nodes on critical path = \([0-9]*\)/migscript_critical_and\t\1/p" \
+	-e "s/LSOracle: MAJ nodes on critical path = \([0-9]*\)/migscript_critical_maj\t\1/p" \
+	-e "s/LSOracle: INPUTS nodes on critical path = \([0-9]*\)/migscript_critical_inputs\t\1/p" < $< > $@
+
+%_aigscript.synth_report: %_aigscript.synth.log
+	@ sed -n -e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/aigscript_nodes\t\1\\naigscript_level\t\2/p" \
+	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/aigscript_runtime\t\1/p" < $< > $@
 
 %_abc.synth_report: %_abc.synth.log
 	@ echo generating report $@
-	@ sed -n 's/ABC:.*and = *\([0-9]*\) *lev = *\([0-9*]\)/aig_nodes\t\1\naig_levels\t\2/p' < $< > $@
+	@ sed -n 's/ABC:.*and = *\([0-9]*\) *lev = *\([0-9*]\)/abc_nodes\t\1\nabc_level\t\2/p' < $< > $@
 
-%.report: %_lsoracle.synth_report %_lsoracle.timing %_abc.synth_report %_abc.timing %_unoptimized.timing
+%.report: %_lsoracle.synth_report %_lsoracle.timing %_abc.synth_report %_abc.timing %_unoptimized.timing %_migscript.synth_report %_migscript.timing %_aigscript.synth_report %_aigscript.timing
 	@ echo "circuit\t$*" > $@
 	cat $^ >> $@
 
 %.everything: %.report
 	@ echo generating report $@
-	@ cut -f2 < $< | tr '\n' '\t' > $@
+	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
+	@ echo >> $@
+	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
 	@ echo >> $@
 
 everything.tsv: ${EVERYTHING_REPORTS}
 	@ echo generating report $@
-	@ echo -n "circuit\tunopt_nodes\tunopt_inputs\tunopt_outputs\tunopt_aig_nodes\tunopt_aig_levels\t" > $@
-	@ echo -n "partitions\taigs\tmigs\tfinal_nodes\tfinal_levels\truntime\t" >> $@
-	@ echo -n "optimized_nodes\toptimized_inputs\toptimized_outputs\t" >> $@
-	@ echo -n "mig_nodes\tmig_levels\tmaj_nodes\tand_nodes\t" >> $@
-	@ echo -n "internal_power\tswitching_power\tleakage_power\ttotal_power\tpercent_power\tarrival\tworst_slack\tarea\t" >> $@
-	@ echo -n "abc_aig_nodes\tabc_aig_levels\t" >> $@
-	@ echo -n "abc_internal_power\tabc_switching_power\tabc_leakage_power\tabc_total_power\tabc_percent_power\t" >> $@
-	@ echo -n "abc_arrival\tabc_worst_slack\tabc_area\t" >> $@
-	@ echo -n "unopt_internal_power\tunopt_switching_power\tunopt_leakage_power\tunopt_total_power\tunopt_percent_power\t" >> $@
-	@ echo "unopt_arrival\tunopt_worst_slack\tunopt_area\t" >> $@
-	cat $^ >> $@
+	python3 combine_report.py $< $^
 
 everything.png everything.pdf: everything.tsv
-	python3 plot_bars.py everything.tsv "Latest LSOracle"  previous/everything.tsv "Previous LSOracle" $@
+	python3 plot_bars.py everything.tsv previous/everything.tsv $@
