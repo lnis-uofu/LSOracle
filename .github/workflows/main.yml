@@ -75,7 +75,6 @@ jobs:
           cp lsoracle /usr/local/bin
           chmod +x /usr/local/bin/lsoracle
           mkdir -p /usr/local/share/lsoracle
-          cp benchmarks/kahypar.ini /usr/local/share/lsoracle/test.ini
           cd benchmarks
           make everything.tsv -j $(nproc)
       - name: Archive results
