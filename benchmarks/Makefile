@@ -100,7 +100,7 @@ clean_reports:
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
 
 %_migscript.rtl %_migscript.synth.log &: %.rtl
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
@@ -142,8 +142,19 @@ clean_reports:
 	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
 
-%_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc
+%_lsoracle.sdc: %.sdc
 	cp $< $@
+%_unoptimized.sdc: %.sdc
+	cp $< $@
+%_migscript.sdc: %.sdc
+	cp $< $@
+%_aigscript.sdc: %.sdc
+	cp $< $@
+%_abc.sdc: %.sdc
+	cp $< $@
+
+# %_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc
+# 	cp $< $@
 
 %.sta.log: %.mapped.v %.sdc
 	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc ${STA} -exit techmapping/sta.tcl | ${TEE} $@
