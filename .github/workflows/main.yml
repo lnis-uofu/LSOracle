@@ -70,6 +70,8 @@ jobs:
       - name: Prep previous
         run: |
           mkdir -p benchmarks/previous
+      - name: Debugging with tmate
+        uses: mxschmitt/action-tmate@v3.5
       - name: Run synthesis
         run: |
           cp lsoracle /usr/local/bin
