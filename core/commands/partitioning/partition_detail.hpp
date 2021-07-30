@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -60,7 +86,7 @@ namespace alice
               std::cout << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
                 std::cout << *it << " ";
-              } 
+              }
               std::cout << "}\n";
             }
             node_num = node_num / (double)num_part;
@@ -88,7 +114,7 @@ namespace alice
               std::cout << "Number of PO = " << part.num_pos() << "\n";
               std::cout << "Number of latches = " << part.num_latches() << "\n";
               std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-              
+
               std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
               node_num += double(part.num_gates()) / double(part.num_pis());
               std::cout << "Inputs = {";
@@ -111,7 +137,7 @@ namespace alice
               std::cout << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
                 std::cout << *it << " ";
-              } 
+              }
               std::cout << "}\n";
             }
             node_num = node_num / (double)num_part;

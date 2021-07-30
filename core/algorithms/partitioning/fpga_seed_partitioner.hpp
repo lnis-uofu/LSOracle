@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,13 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/*!
-  \file window_view.hpp
-  \brief Implements an isolated view on a window in a network
-  \author Heinz Riener
-*/
-
 #pragma once
 
 #include <algorithm>
@@ -86,7 +81,7 @@ namespace oracle
           if(_arr[node] > dmax){
             dmax = _arr[node];
             rmax = _arr[node];
-          } 
+          }
         }
       });
 
@@ -116,7 +111,7 @@ namespace oracle
       while(true){
 
         if(nodes2part.size() == 0)
-          break; 
+          break;
 
         cluster<Ntk> curr_cluster(ntk);
 
@@ -136,7 +131,7 @@ namespace oracle
 
           if((curr_cluster.num_pis() >= pi_const && curr_cluster.size() >= node_count_const) || nodes2part.size() == 0)
             break;
-          
+
           start = std::chrono::high_resolution_clock::now();
           std::set<node> connected_nodes = curr_cluster.get_conn_nodes(ntk, nodes2part);
           stop = std::chrono::high_resolution_clock::now();
@@ -164,7 +159,7 @@ namespace oracle
               best_attr = curr_attr;
               best_node = curr_node;
             }
-            
+
           }
           // mapped_part[best_node] = num_partitions;
           curr_cluster.add_to_cluster(ntk, best_node);
@@ -189,13 +184,13 @@ namespace oracle
           // std::cout << curr_input << " ";
           if(ntk.is_pi(curr_input))
             mapped_part[curr_input] = num_partitions;
-        } 
+        }
         // std::cout << "}\n";
         // std::cout << "Outputs = {";
         // for(node curr_output : curr_cluster_outputs){
         //   std::cout << curr_output << " ";
         //   // mapped_part[curr_output] = num_partitions;
-        // } 
+        // }
         // std::cout << "}\n";
         num_partitions++;
       }

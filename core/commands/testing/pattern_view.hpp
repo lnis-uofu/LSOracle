@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,8 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 #pragma once
 
 #include <algorithm>
@@ -68,17 +68,17 @@ namespace oracle
           in_pattern[node] = false;
         });
 
-        
+
         mockturtle::topo_view top{ntk};
         std::vector<node> reverse_top = top.get_node_vec();
         std::reverse(reverse_top.begin(), reverse_top.end());
 
-        
+
         for(int i = 0; i < xor_patterns.size(); i++){
           Ntk curr_pattern = xor_patterns.at(i);
-          
-          std::vector<node> xor_nodes;       
-          
+
+          std::vector<node> xor_nodes;
+
           for(int j = 0; j < reverse_top.size() - ntk.num_pis(); j++){
             node ntk_node = reverse_top.at(j);
             if(!considered[ntk_node]){
@@ -138,12 +138,12 @@ namespace oracle
         while(true){
 
           if(nodes2part.size() == 0)
-            break; 
+            break;
 
           cluster<Ntk> curr_cluster(ntk);
           std::vector<node> seed = find_seed(ntk);
           curr_cluster.add_to_cluster(ntk, seed);
-          
+
           std::cout << "Seed = {";
           for(int i = 0; i < seed.size(); i++){
             std::cout << seed.at(i) << " ";
@@ -219,13 +219,13 @@ namespace oracle
             // std::cout << curr_input << " ";
             if(ntk.is_pi(curr_input))
               mapped_part[curr_input] = num_partitions;
-          } 
+          }
           // std::cout << "}\n";
           // std::cout << "Outputs = {";
           // for(node curr_output : curr_cluster_outputs){
           //   std::cout << curr_output << " ";
           //   // mapped_part[curr_output] = num_partitions;
-          // } 
+          // }
           // std::cout << "}\n";
           num_partitions++;
         }
@@ -297,7 +297,7 @@ namespace oracle
       // xor_patt_5.create_po(xor_patt_5.create_not(n3));
 
       // xor_patterns.push_back(xor_patt_5);
-      
+
     }
 
     bool node_equivalence(Ntk ntk, Ntk curr_pattern, node ntk_node, node patt_node){
@@ -375,11 +375,11 @@ namespace oracle
             }
           });
         }
-        
+
       }
-      
+
       return inputs;
-      
+
     }
 
     double attraction( Ntk const& ntk, node curr_node, cluster<Ntk> curr_cluster ){
@@ -408,20 +408,20 @@ namespace oracle
       std::vector<node> xor_nodes;
       mockturtle::fanout_view fanout{ntk};
 
-      std::map<node, bool> visited; 
+      std::map<node, bool> visited;
       ntk.foreach_node([&](auto node){
         visited[ntk.node_to_index(node)] = false;
       });
-      // Create a queue for BFS 
-      std::queue<node> net_queue; 
-    
-      // Mark the current node as visited and enqueue it 
-      visited[root_node] = true; 
-      net_queue.push(root_node); 
-     
+      // Create a queue for BFS
+      std::queue<node> net_queue;
+
+      // Mark the current node as visited and enqueue it
+      visited[root_node] = true;
+      net_queue.push(root_node);
+
       while(!net_queue.empty()){
         node curr_node = net_queue.front();
-        net_queue.pop();  
+        net_queue.pop();
         xor_nodes.push_back(curr_node);
 
         if(xor_nodes.size() > 1 && xor_nodes.size() < (curr_pattern.size() - curr_pattern.num_pos() - curr_pattern.num_pis() + 1)
@@ -440,19 +440,19 @@ namespace oracle
               net_queue.push(curr_child);
               visited[curr_child] = true;
             }
-          });   
-        }   
-      } 
+          });
+        }
+      }
 
       // Ensure xor_nodes is in topological order
       std::sort(xor_nodes.begin(), xor_nodes.end());
-      // Separating inputs from xor_nodes 
+      // Separating inputs from xor_nodes
       if(xor_nodes.size() > 2){
 
         xor_nodes.erase(xor_nodes.begin());
         xor_nodes.erase(xor_nodes.begin());
       }
-      
+
       std::vector<node> inputs = xor_inputs(ntk, xor_nodes);
       std::vector<node> output = {xor_nodes.back()};
       std::sort(xor_nodes.begin(), xor_nodes.end());
@@ -535,10 +535,10 @@ namespace oracle
         std::cout << "node seed added = " << seed.at(0) << "\n";
         nodes2part.erase(seed.at(0));
       }
-      
+
       return seed;
     }
-    
+
     int num_partitions = 0;
     double max_net = 0.0;
     double net_delay = 0.0;

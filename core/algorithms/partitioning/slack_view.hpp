@@ -1,5 +1,7 @@
-/* LSOracle
- * Copyright (C) 2018  University of Utah
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,8 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 #pragma once
 
 #include <algorithm>
@@ -70,7 +70,7 @@ namespace oracle
             if(_arr[node] > dmax){
               dmax = _arr[node];
               rmax = _arr[node];
-            } 
+            }
           }
         });
 
@@ -111,7 +111,7 @@ namespace oracle
 
   private:
 
-    
+
 
     void get_required_arrival( Ntk const& ntk ){
 
@@ -137,7 +137,7 @@ namespace oracle
         _req_arr[curr_node] = dmax - level[curr_node];
       }
     }
-    
+
     mockturtle::node_map<uint32_t, Ntk> _req_arr;
     mockturtle::node_map<uint32_t, Ntk> _arr;
     int dmax = 0;

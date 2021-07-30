@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 /********************************************
  *  Source file: gts.hpp                    *
@@ -15,7 +41,7 @@
 
 #define GTS_FAIL 1
 
-#define TRUE 1 
+#define TRUE 1
 #define FALSE 0
 
 namespace gts {
@@ -24,7 +50,7 @@ namespace gts {
     /* Configure internal variables */
     void add_benchmark_list(std::string input_list) {
       benchmark_list.assign(input_list);
-    } 
+    }
     void add_output_label_file(std::string input_filename) {
       output_label_file.assign(input_filename);
     }
@@ -55,10 +81,10 @@ namespace gts {
     }
     bool get_label_aig() {
       return label_aig;
-    } 
+    }
     bool get_label_mig() {
       return label_mig;
-    } 
+    }
     int get_partition_input_size() {
       return partition_input_size;
     }
@@ -114,7 +140,7 @@ namespace alice {
   };
 
   /* Generate scripts for P&R */
-   
+
 
   /* Class for generate_training_set */
   class gts_command : public alice::command {
@@ -127,7 +153,7 @@ namespace alice {
       opts.add_flag("--label_mig,-m", "Use MIG optimization as a label");
       opts.add_option("--partition_size,partition_size", partition_size, "Specify the partition size when generating training set")->required();
       opts.add_option("--type,type", training_set_type, "Specify the type of training set generation: [logic_level|gate_level|pnr_level]")->required();
-    } 
+    }
     /* Function to echo options */
     void echo_options() {
       std::cout << "Echo options for confirmation:\n";
@@ -148,27 +174,27 @@ namespace alice {
       gts_opts.add_benchmark_list(benchmark_list);
       gts_opts.add_output_label_file(output_label_file);
       gts_opts.add_partition_size(partition_size);
-      gts_opts.add_label_aig(is_set("label_aig"));  
-      gts_opts.add_label_mig(is_set("label_mig"));  
-      /* Set flag for different types of training sets  */   
+      gts_opts.add_label_aig(is_set("label_aig"));
+      gts_opts.add_label_mig(is_set("label_mig"));
+      /* Set flag for different types of training sets  */
       /* Logic level */
       found = training_set_type.find(GTS_LOGIC_LEVEL_TAG);
       gts_opts.enable_logic_level_training_set(FALSE);
       if (found != std::string::npos) {
         gts_opts.enable_logic_level_training_set(TRUE);
-      } 
+      }
       /* Gate level */
       found = training_set_type.find(GTS_GATE_LEVEL_TAG);
       gts_opts.enable_gate_level_training_set(FALSE);
       if (found != std::string::npos) {
         gts_opts.enable_gate_level_training_set(TRUE);
-      } 
+      }
       /* P&R level */
       found = training_set_type.find(GTS_PNR_LEVEL_TAG);
       gts_opts.enable_pnr_level_training_set(FALSE);
       if (found != std::string::npos) {
         gts_opts.enable_pnr_level_training_set(TRUE);
-      } 
+      }
       /* Start the top-level program */
       /* gts::run_gts(gts_opts); */
     }
@@ -185,7 +211,5 @@ namespace alice {
   };
 
   /* Add the command to ALICE interface*/
-  ALICE_ADD_COMMAND(gts, "Training Set Generation"); 
+  ALICE_ADD_COMMAND(gts, "Training Set Generation");
 }
-
-

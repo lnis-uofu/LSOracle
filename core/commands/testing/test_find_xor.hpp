@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,8 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 #pragma once
 
 #include <algorithm>
@@ -71,7 +71,7 @@ namespace oracle
         std::vector<node> reverse_top = top.get_node_vec();
         std::reverse(reverse_top.begin(), reverse_top.end());
 
-        
+
         for(int i = 0; i < xor_patterns.size(); i++){
           Ntk curr_pattern = xor_patterns.at(i);
           int patt_idx = 0;
@@ -97,7 +97,7 @@ namespace oracle
 
         std::cout << "xors found = " << xor_groups.size() << "\n";
         for(int i = 0; i < xor_groups.size(); i++){
-          std::cout << "XOR group " << i + 1 << " = {"; 
+          std::cout << "XOR group " << i + 1 << " = {";
           typename std::set<node>::iterator it;
           for(it = xor_groups.at(i).begin(); it != xor_groups.at(i).end(); ++it){
             std::cout << *it << " ";
@@ -118,9 +118,9 @@ namespace oracle
       xor_patt_1.create_po(n3);
 
       xor_patterns.push_back(xor_patt_1);
-      
+
     }
-    
+
     std::vector<Ntk> xor_patterns;
     std::vector<std::set<node>> xor_groups;
     };
