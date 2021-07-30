@@ -97,5 +97,5 @@ dtype=[('circuit', '<U128'),
        ]
 
 outfile, *files = sys.argv[1:]
-d = np.hstack([np.genfromtxt(f, delimiter='\t', names=True, dtype=dtype, encoding="UTF-8") for f in files])
+d = np.hstack([np.genfromtxt(f, delimiter='\t', names=None, dtype=dtype, encoding="UTF-8") for f in files])
 np.savetxt("everything.tsv", d, delimiter='\t', comments="", header='\t'.join(d.dtype.names), fmt="%s", encoding='utf-8')
