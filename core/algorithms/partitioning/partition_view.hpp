@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,13 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/*!
-  \file window_view.hpp
-  \brief Implements an isolated view on a window in a network
-  \author Heinz Riener
-*/
-
 #pragma once
 
 #include <algorithm>
@@ -144,15 +139,15 @@ namespace oracle
       inline auto num_pos() const { return _roots.size(); }
       inline auto num_latches() const { return _num_regs; }
 
-      
-      inline auto num_gates() const { 
+
+      inline auto num_gates() const {
         return _nodes.size() - _num_leaves - _num_constants - _num_regs;
       }
 
       inline auto node_to_index( const node& n ) const { return _node_to_index.at( n ); }
       inline auto index_to_node( uint32_t index ) const { return _nodes[index]; }
 
-      inline bool is_pi( node const& pi ) const 
+      inline bool is_pi( node const& pi ) const
       {
         std::vector<signal> children;
         this->foreach_fanin( pi, [&]( const auto& f ) {
@@ -168,7 +163,7 @@ namespace oracle
         return std::find( beg, _latches.end(), ro ) != _latches.end();
       }
 
-      inline bool is_ci( node const& pi ) const 
+      inline bool is_ci( node const& pi ) const
       {
         std::vector<signal> children;
         this->foreach_fanin( pi, [&]( const auto& f ) {

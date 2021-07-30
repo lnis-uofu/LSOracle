@@ -1,5 +1,8 @@
- /* LSOracle
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
  * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without
@@ -25,7 +28,7 @@
 /*
 example verilog file
 
-module ex ( 
+module ex (
 a, b, c, d,
 F  );
 input  a, b, c, d;
@@ -64,7 +67,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
     std::string output_list;
     std::string wire_list;
     std::string po_assignments;
-    auto first = true; 
+    auto first = true;
     ntk.foreach_pi( [&]( auto const& n ) {
             if (first)
                 first = false;
@@ -87,7 +90,7 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                 po_assignments += fmt::format("\tassign po{} = n{};\n", i, n);
             }
     });
-    
+
     first = true;
     ntk.foreach_node ( [&](auto const& n){
         if (ntk.is_pi(n) || ntk.is_constant( n)){
@@ -155,8 +158,8 @@ void write_techmapped_verilog( Ntk const& ntk, std::ostream& os, std::unordered_
                     children.push_back(fmt::format( "n{}",fanin ));
                 }
             } );
-            os << "\t" << cell_names.at(n) << " "; 
-                if(children.size() > 0){       
+            os << "\t" << cell_names.at(n) << " ";
+                if(children.size() > 0){
                     os << fmt::format("g{}", n) << "(." << port_names.at(0) << "(" << children.at(0) << ")";
                 }
                 if (children.size() > 1){

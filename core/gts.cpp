@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 /******************************************
  *  Source file: gts.cpp                  *
  *  Description: Functions for gts class  *
@@ -20,14 +46,14 @@ std::vector<string> read_benchmark_list(std::string list_name) {
   std::ifstream ifs;
   std::string line;
   std::string content;
-  vector<string> file_names; 
+  vector<string> file_names;
   /* Open file */
   ifs.open(list_name, std::ifstream::in);
-  /* Get lines and tokenize */ 
+  /* Get lines and tokenize */
   while (std::getline(ifs, line, '#')) {
     /* Get rid of comments */
-    std::getline(line, content, ',');  
-    /* Check each token */   
+    std::getline(line, content, ',');
+    /* Check each token */
     for (std::string::iterator it = content.begin();
          it != content.end();
          it++) {
@@ -49,7 +75,7 @@ bool file_exist (const std::string& name) {
 /* A generic file reader for network files
  * The file type will be recognized by the postfix
  * .v, .blif, .aig, etc.
- * Depending on the identifed file type, different file reader will be launched 
+ * Depending on the identifed file type, different file reader will be launched
  */
 void read_network_file (std::string input_file) {
   /* Check existence */
@@ -90,15 +116,15 @@ void read_network_file (std::string input_file) {
 /* Main function */
 void run_gts (x_gts_opts gts_opts) {
   /* Read the benchmark file list*/
-  std::vector<string> filenames = read_benchmark_list(gts_opts.get_benchmark_list()); 
+  std::vector<string> filenames = read_benchmark_list(gts_opts.get_benchmark_list());
   /* For each benchmark file:
    * 1. Check existence
-   * 2. Identify the file type 
+   * 2. Identify the file type
    * 3. Read into associated store of logic networks
-   * 4. Partition with a given input_size  
+   * 4. Partition with a given input_size
    */
   for (int ifile = 0; ifile < filenames.size(); ifile++) {
-    /* Check existence */  
+    /* Check existence */
     if (FALSE == file_exist(filenames[ifile])) {
       /* error out */
       std::cout << "Error: File (" << filenames[ifile] << ") does not exist!\n";
@@ -117,11 +143,11 @@ void run_gts (x_gts_opts gts_opts) {
     oracle::partition_manager<mockturtle::mig_network> partitions_aig(ntk, num_parts);
     /* For each paritition:
      * 1. Run optimizations - according to label_[aig|mig]
-     * 2. Create labels if logic-level option is enabled 
-     * 3. Output into Verilog format 
-     * 4. Generate scripts to run tech-mapping  
-     * 5. Generate scripts to run P&R flow 
-     * 6. Output kaunaurghn-map images 
+     * 2. Create labels if logic-level option is enabled
+     * 3. Output into Verilog format
+     * 4. Generate scripts to run tech-mapping
+     * 5. Generate scripts to run P&R flow
+     * 6. Output kaunaurghn-map images
      */
     for (int ipart = 0; ipart < num_parts; ipart++) {
       oracle::partition_view<mockturtle::mig_network> part_mig = partitions_aig.create_part(ntk, part_mig_opt.at(ipart));
@@ -138,14 +164,12 @@ void run_gts (x_gts_opts gts_opts) {
       /* Compare the depth and output labels */
       if ( opt_mig_depth.depth() > opt_aig_depth.depth() ) {
         /* Output a label */
-      } else { 
+      } else {
         /* Output a label */
       }
       /* Get the logic cones */
-    } 
-  }  
+    }
+  }
 
   return;
 }
-
-

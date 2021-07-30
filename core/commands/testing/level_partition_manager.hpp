@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,13 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/*!
-  \file window_view.hpp
-  \brief Implements an isolated view on a window in a network
-  \author Heinz Riener
-*/
-
 #pragma once
 
 #include <algorithm>
@@ -69,7 +64,7 @@ namespace oracle
 
       oracle::partition_manager<Ntk> partitions(ntk, 2);
       std::set<node> shared_io = partitions.get_shared_io(0, 1);
-      
+
       levels.clear();
       level_idx = 1;
       std::unordered_map<node, bool> visited;
@@ -137,11 +132,11 @@ namespace oracle
   private:
     std::map<int, std::set<node>> levels;
     int level_idx = 1;
-    
+
     void compute_level_nodes(Ntk const& ntk, std::set<node> prev_level, std::unordered_map<node, bool> visited){
       mockturtle::fanout_view<Ntk> fanout_ntk{ntk};
       std::set<node> curr_level;
-      
+
       typename std::set<node>::iterator it;
       for(it = prev_level.begin(); it != prev_level.end(); ++it){
         // std::cout << "Current node = " << *it << "\n";
@@ -168,7 +163,7 @@ namespace oracle
         level_idx++;
         compute_level_nodes(ntk, curr_level, visited);
       }
-        
+
     }
 
   };
