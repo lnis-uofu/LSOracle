@@ -25,77 +25,15 @@
 import sys
 import numpy as np
 
-dtype=[('circuit', '<U128'),
-       ('inputs', '<i8'),
-       ('outputs', '<i8'),
-       ('unoptimized_nodes', '<i8'),
-       ('unoptimized_level', '<i8'),
-       ('lsoracle_partitions', '<i8'),
-       ('lsoracle_aigs', '<i8'),
-       ('lsoracle_migs', '<i8'),
-       ('lsoracle_nodes', '<i8'),
-       ('lsoracle_level', '<i8'),
-       ('lsoracle_runtime', '<i8'),
-       ('inputs_1', '<i8'),
-       ('outputs_1', '<i8'),
-       ('lsoracle_critical_maj', '<i8'),
-       ('lsoracle_critical_and', '<i8'),
-       ('lsoracle_maj_nodes_internal', '<i8'),
-       ('lsoracle_and_nodes_internal', '<i8'),
-       ('lsoracle_internal_power', '<f8'),
-       ('lsoracle_switching_power', '<f8'),
-       ('lsoracle_leakage_power', '<f8'),
-       ('lsoracle_total_power', '<f8'),
-       ('lsoracle_percent_power', '<f8'),
-       ('lsoracle_arrival', '<f8'),
-       ('lsoracle_worst_slack', '<f8'),
-       ('lsoracle_area', '<f8'),
-       ('abc_nodes', '<i8'),
-       ('abc_level', '<i8'),
-       ('abc_internal_power', '<f8'),
-       ('abc_switching_power', '<f8'),
-       ('abc_leakage_power', '<f8'),
-       ('abc_total_power', '<f8'),
-       ('abc_percent_power', '<f8'),
-       ('abc_arrival', '<f8'),
-       ('abc_worst_slack', '<f8'),
-       ('abc_area', '<f8'),
-       ('unoptimized_internal_power', '<f8'),
-       ('unoptimized_switching_power', '<f8'),
-       ('unoptimized_leakage_power', '<f8'),
-       ('unoptimized_total_power', '<f8'),
-       ('unoptimized_percent_power', '<f8'),
-       ('unoptimized_arrival', '<f8'),
-       ('unoptimized_worst_slack', '<f8'),
-       ('unoptimized_area', '<f8'),
-       ('migscript_nodes', '<i8'),
-       ('migscript_level', '<i8'),
-       ('migscript_runtime', '<i8'),
-       ('migscript_critical_maj', '<i8'),
-       ('migscript_critical_and', '<i8'),
-       ('migscript_maj_nodes_internal', '<i8'),
-       ('migscript_and_nodes_internal', '<i8'),
-       ('migscript_internal_power', '<f8'),
-       ('migscript_switching_power', '<f8'),
-       ('migscript_leakage_power', '<f8'),
-       ('migscript_total_power', '<f8'),
-       ('migscript_percent_power', '<f8'),
-       ('migscript_arrival', '<f8'),
-       ('migscript_worst_slack', '<f8'),
-       ('migscript_area', '<f8'),
-       ('aigscript_nodes', '<i8'),
-       ('aigscript_level', '<i8'),
-       ('aigscript_runtime', '<i8'),
-       ('aigscript_internal_power', '<f8'),
-       ('aigscript_switching_power', '<f8'),
-       ('aigscript_leakage_power', '<f8'),
-       ('aigscript_total_power', '<f8'),
-       ('aigscript_percent_power', '<f8'),
-       ('aigscript_arrival', '<f8'),
-       ('aigscript_worst_slack', '<f8'),
-       ('aigscript_area', '<f8')
-       ]
-
-outfile, *files = sys.argv[1:]
-d = np.hstack([np.genfromtxt(f, delimiter='\t', names=None, dtype=dtype, encoding="UTF-8") for f in files])
-np.savetxt("everything.tsv", d, delimiter='\t', comments="", header='\t'.join(d.dtype.names), fmt="%s", encoding='utf-8')
+header_string = "circuit    inputs outputs	unoptimized_nodes	unoptimized_level	lsoracle_partitions	lsoracle_aigs	lsoracle_migs	lsoracle_nodes	lsoracle_level	lsoracle_runtime	inputs_1	outputs_1	lsoracle_critical_maj	lsoracle_critical_and	lsoracle_maj_nodes_internal	lsoracle_and_nodes_internal	lsoracle_internal_power	lsoracle_switching_power	lsoracle_leakage_power	lsoracle_total_power	lsoracle_percent_power	lsoracle_arrival	lsoracle_worst_slack	lsoracle_area	abc_nodes	abc_level	abc_internal_power	abc_switching_power	abc_leakage_power	abc_total_power	abc_percent_power	abc_arrival	abc_worst_slack	abc_area	unoptimized_internal_power	unoptimized_switching_power	unoptimized_leakage_power	unoptimized_total_power	unoptimized_percent_power	unoptimized_arrival	unoptimized_worst_slack	unoptimized_area	migscript_nodes	migscript_level	migscript_runtime	migscript_critical_maj	migscript_critical_and	migscript_maj_nodes_internal	migscript_and_nodes_internal	migscript_internal_power	migscript_switching_power	migscript_leakage_power	migscript_total_power	migscript_percent_power	migscript_arrival	migscript_worst_slack	migscript_area	aigscript_nodes	aigscript_level	aigscript_runtime	aigscript_internal_power	aigscript_switching_power	aigscript_leakage_power	aigscript_total_power	aigscript_percent_power	aigscript_arrival	aigscript_worst_slack	aigscript_area"
+files = sys.argv[1:]
+print(files)
+everything = np.zeros(shape=(0, 68))
+for f in files:
+       print(f)
+       line = np.genfromtxt(f, delimiter=None, names=None, dtype=None, encoding="UTF-8", usecols=1)
+       everything = np.vstack((everything, line))
+       print(everything)
+#d = np.hstack([np.genfromtxt(f, delimiter=None, names=None, dtype=None, encoding="UTF-8").T for f in files])
+#print(d)
+np.savetxt("everything.tsv", everything, delimiter='\t', comments="", header=header_string, fmt="%s", encoding='utf-8')
