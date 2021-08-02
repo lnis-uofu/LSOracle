@@ -45,7 +45,7 @@ namespace alice
 	    mig = is_set("mig");
 	    combine = is_set("combine");	    
 	
-	    //neural network with or without combine
+	    //depricated neural network with or without combine
 	    //aig only
 	    //mig only
 	    //high effort with or without combine, (includes strategy)
@@ -85,7 +85,8 @@ namespace alice
 	    }
 	    //Neural network model
 	    else if(!mig && !aig && !nn_model.empty()){
-	      ntk_mig = oracle::optimization_nn(ntk_aig, partitions_aig, nn_model, combine);
+	      throw std::runtime_error( "Neural network driven classification has been disabled during refactoring; please check back soon");
+	      //ntk_mig = oracle::optimization_nn(ntk_aig, partitions_aig, nn_model, combine);
 	    }
 	    //Invalid combo
 	    else{
