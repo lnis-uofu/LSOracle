@@ -177,8 +177,8 @@ namespace alice
           if (output_file != "") {
             std::ofstream out;
             out.open(output_file);
-
-            for (auto i = partitions.get_partitions().begin(); i != partitions.get_partitions().end(); i++) {
+            auto parts = partitions.get_partitions();
+            for (auto i = parts.begin(); i != parts.end(); i++) {
               out << *i << std::endl;
             }
             out.close();
@@ -187,8 +187,8 @@ namespace alice
           if (initial_file != "") {
             std::ofstream out;
             out.open(initial_file);
-
-            for (auto i = partitions.get_initial_partitions().begin(); i != partitions.get_initial_partitions().end(); i++) {
+            auto init = partitions.get_initial_partitions();
+            for (auto i = init.begin(); i != init.end(); i++) {
               out << *i << std::endl;
             }
             out.close();
