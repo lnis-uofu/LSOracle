@@ -18,6 +18,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 endif()
 
 option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
+option(LOCAL_PYBIND "use pybind11 from submodule" ON)
+option(LOCAL_BOOST "use boost from submodules" ON)
+option(LOCAL_GTEST "use googletest from submodules" ON)
 option(ENABLE_GALOIS
   "Enable Galois library for hypergraph partitioning." OFF)
 
