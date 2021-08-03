@@ -61,7 +61,7 @@ namespace alice
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -72,7 +72,7 @@ namespace alice
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
-            std::cout << "XAG network stored\n";
+            env->out() << "XAG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -83,7 +83,7 @@ namespace alice
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
-            std::cout << "AIG network stored\n";
+            env->out() << "AIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -91,7 +91,7 @@ namespace alice
 
         }
         else{
-            std::cout << filename << " is not a valid aig file\n";
+            env->err() << filename << " is not a valid aig file\n";
         }
       }
     private:

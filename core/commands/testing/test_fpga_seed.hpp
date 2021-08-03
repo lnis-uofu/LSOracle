@@ -62,7 +62,7 @@ class fpga_seed_partitioning_command : public alice::command{
 
         }
         else{
-          std::cout << "MIG network not stored\n";
+          env->err() << "MIG network not stored\n";
         }
       }
       else{
@@ -72,13 +72,13 @@ class fpga_seed_partitioning_command : public alice::command{
           oracle::fpga_seed_partitioner<mockturtle::aig_network> partitioner(ntk, net_delay, max_net, num_pis, num_int);
           auto stop = std::chrono::high_resolution_clock::now();
           auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-          std::cout << "Partitioning time: " << duration.count() << "ms\n";
+          env->out() << "Partitioning time: " << duration.count() << "ms\n";
           oracle::partition_manager<mockturtle::aig_network> part_man = partitioner.create_part_man(ntk);
           store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
 
         }
         else{
-          std::cout << "AIG network not stored\n";
+          env->err() << "AIG network not stored\n";
         }
       }
     }

@@ -89,7 +89,7 @@ namespace alice
         return output;
       }
       else{
-        std::cout << "Unable to open partition data file\n";
+        env->err() << "Unable to open partition data file\n";
         throw exception();
       }
     }
@@ -98,11 +98,11 @@ namespace alice
     void process_network(string type_name) {
       auto ntk = *store<gen_ntk>().current();
       if(part_file != ""){
-        std::cout << "Partitioning stored " << type_name << " network using external file\n";
+        env->out() << "Partitioning stored " << type_name << " network using external file\n";
         std::map<node_type, int> part_data;
         std::vector<int> parts = read_file(part_file);
         if(parts.size() != ntk.size()){
-          std::cout << "Partition file contains the incorrect number of nodes\n";
+          env->out() << "Partition file contains the incorrect number of nodes\n";
           exit(1);
         }
         for (int i = 0; i < parts.size(); i++) {
@@ -114,7 +114,7 @@ namespace alice
       else{
 #ifdef ENABLE_GALOIS
         if(is_set("bipart")){
-          std::cout << "Partitioning stored " << type_name << " network using Galois BiPart\n";
+          env->out() << "Partitioning stored " << type_name << " network using Galois BiPart\n";
           oracle::hypergraph<gen_names> t(ntk);
           uint32_t num_vertices = 0;
 
@@ -136,20 +136,20 @@ namespace alice
         else
 #endif
         {
-          std::cout << "Partitioning stored " << type_name << " network using KaHyPar\n";
+          env->out() << "Partitioning stored " << type_name << " network using KaHyPar\n";
 
           int *node_weights = nullptr;
           int *edge_weights = nullptr;
           if (edge_weight_file != "") {
-            std::cout << "Reading edge weights from " << edge_weight_file << std::endl;
+            env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
             std::vector<int> data = read_file(edge_weight_file);
             edge_weights = &data[0];
           }
           if (node_weight_file != "") {
-            std::cout << "Reading node weights from " << node_weight_file << std::endl;
+            env->out() << "Reading node weights from " << node_weight_file << std::endl;
             std::vector<int> data = read_file(node_weight_file);
             if(data.size() != ntk.size()){
-              std::cout << "Node weight file contains the incorrect number of nodes: got " << data.size() << " expected " << ntk.size() << std::endl;
+              env->out() << "Node weight file contains the incorrect number of nodes: got " << data.size() << " expected " << ntk.size() << std::endl;
               exit(1);
             }
             else {
@@ -160,15 +160,15 @@ namespace alice
           if (num_partitions == 0) {
             num_partitions = std::max(ntk.size() / size_partitions, 1u);
           }
-          std::cout << "Using " << num_partitions << " partitions" << std::endl;
+          env->out() << "Using " << num_partitions << " partitions" << std::endl;
 
           if(config_direc == ""){
             config_direc = make_temp_config();
           }
-          std::cout << "Using KaHyPar configuration " << config_direc << std::endl;
+          env->out() << "Using KaHyPar configuration " << config_direc << std::endl;
 
           if (is_set("sap")) {
-            std::cout << "Using structure aware partitioning" << std::endl;
+            env->out() << "Using structure aware partitioning" << std::endl;
           }
 
           oracle::partition_manager<gen_names> partitions(ntk, num_partitions, config_direc, node_weights, edge_weights, is_set("sap"), imbalance);
@@ -205,7 +205,7 @@ namespace alice
           process_network<mig_ntk, mig_names, part_man_mig, part_man_mig_ntk, mockturtle::mig_network::node>("MIG");
         }
         else{
-          std::cout << "MIG network not stored\n";
+          env->err() << "MIG network not stored\n";
         }
       }
       else{
@@ -213,7 +213,7 @@ namespace alice
           process_network<aig_ntk, aig_names, part_man_aig, part_man_aig_ntk, mockturtle::aig_network::node>("AIG");
         }
         else{
-          std::cout << "AIG network not stored\n";
+          env->err() << "AIG network not stored\n";
         }
       }
     }

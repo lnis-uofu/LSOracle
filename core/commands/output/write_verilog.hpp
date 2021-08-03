@@ -61,7 +61,7 @@ namespace alice
               mockturtle::write_verilog(mig, filename, ps);
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              env->err() << "There is not an MIG network stored.\n";
             }
           }
           else if(is_set("xag")){
@@ -70,7 +70,7 @@ namespace alice
               mockturtle::write_verilog(xag, filename, ps);
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              env->err() << "There is not an MIG network stored.\n";
             }
           }
           else{
@@ -79,12 +79,12 @@ namespace alice
               mockturtle::write_verilog(aig, filename, ps);
             }
             else{
-              std::cout << "There is not an AIG network stored.\n";
+              env->err() << "There is not an AIG network stored.\n";
             }
           }
         }
         else{
-            std::cout << filename << " is not a valid verilog file\n";
+            env->err() << filename << " is not a valid verilog file\n";
         }
       }
     private:

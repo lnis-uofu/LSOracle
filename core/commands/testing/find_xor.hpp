@@ -42,32 +42,32 @@ namespace alice
     // mockturtle::write_dot(ntk, "aig_test.dot");
     mockturtle::direct_resynthesis<mockturtle::xag_network> resyn_xag;
     auto xag = mockturtle::node_resynthesis<mockturtle::xag_network>(ntk, resyn_xag);
-    std::cout << "size = " << xag.num_gates() << "\n";
+    env->out() << "size = " << xag.num_gates() << "\n";
     xag.foreach_node( [&]( auto node ) {
-      std::cout << "Node = " << node << "\n";
+      env->out() << "Node = " << node << "\n";
       if(xag.is_xor(node)){
-        std::cout << "XOR\n";
+        env->out() << "XOR\n";
       }
     });
     mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
     mockturtle::cut_rewriting(xag, resyn);
     xag = mockturtle::cleanup_dangling(xag);
-    std::cout << "size = " << xag.num_gates() << "\n";
+    env->out() << "size = " << xag.num_gates() << "\n";
     xag.foreach_node( [&]( auto node ) {
-      std::cout << "Node = " << node << "\n";
+      env->out() << "Node = " << node << "\n";
       if(xag.is_xor(node)){
-        std::cout << "XOR\n";
+        env->out() << "XOR\n";
       }
     });
     mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
     auto aig2 = mockturtle::node_resynthesis<mockturtle::aig_network>(xag, resyn_aig);
     // mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_to_aig;
     // mockturtle::cut_rewriting(aig2, resyn_to_aig);
-    std::cout << "size = " << aig2.num_gates() << "\n";
+    env->out() << "size = " << aig2.num_gates() << "\n";
     aig2.foreach_node( [&]( auto node ) {
-      std::cout << "Node = " << node << "\n";
+      env->out() << "Node = " << node << "\n";
       if(aig2.is_xor(node)){
-        std::cout << "XOR\n";
+        env->out() << "XOR\n";
       }
     });
     // mockturtle::write_dot(xag, "xag_test.dot");
@@ -80,9 +80,9 @@ namespace alice
     // aig.create_po(e);
 
     // aig.foreach_node([&](auto node){
-    //   std::cout << "Node = " << node << "\n";
+    //   env->out() << "Node = " << node << "\n";
     //   if(aig.is_xor(node)){
-    //     std::cout << "XOR\n";
+    //     env->out() << "XOR\n";
     //   }
     // });
   }

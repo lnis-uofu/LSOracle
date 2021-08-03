@@ -66,29 +66,29 @@ namespace alice
                 oracle::partition_view<mig_names> part = partitions.create_part(ntk, i);
                 auto nodes = part.get_node_list();
                 if(std::find(nodes.begin(), nodes.end(), node_to_find) != nodes.end()){
-                  std::cout << "Found in partition " << i << " ";
+                  env->out() << "Found in partition " << i << " ";
                   if(part.is_pi(node_to_find)){
-                    std::cout << "Input\n";
+                    env->out() << "Input\n";
                   }
                   else if(is_po(part, node_to_find)){
-                    std::cout << "Output\n";
+                    env->out() << "Output\n";
                   }
                   else if(part.is_pi(node_to_find) && is_po(part, node_to_find)){
-                    std::cout << "Input and Output\n";
+                    env->out() << "Input and Output\n";
                   }
                   else{
-                    std::cout << "\n";
+                    env->out() << "\n";
                   }
                 }
               }
 
             }
             else{
-                std::cout << "MIG not partitioned yet\n";
+                env->err() << "MIG not partitioned yet\n";
             }
           }
           else{
-            std::cout << "No MIG stored\n";
+            env->err() << "No MIG stored\n";
           }
         }
         else{
@@ -106,29 +106,29 @@ namespace alice
                 oracle::partition_view<aig_names> part = partitions.create_part(ntk, i);
                 auto nodes = part.get_node_list();
                 if(std::find(nodes.begin(), nodes.end(), node_to_find) != nodes.end()){
-                  std::cout << "Found in partition " << i << " ";
+                  env->out() << "Found in partition " << i << " ";
                   if(part.is_pi(node_to_find)){
-                    std::cout << "Input\n";
+                    env->out() << "Input\n";
                   }
                   else if(is_po(part, node_to_find)){
-                    std::cout << "Output\n";
+                    env->out() << "Output\n";
                   }
                   else if(part.is_pi(node_to_find) && is_po(part, node_to_find)){
-                    std::cout << "Input and Output\n";
+                    env->out() << "Input and Output\n";
                   }
                   else{
-                    std::cout << "\n";
+                    env->out() << "\n";
                   }
                 }
               }
 
             }
             else{
-                std::cout << "AIG not partitioned yet\n";
+                env->err() << "AIG not partitioned yet\n";
             }
           }
           else{
-            std::cout << "No AIG stored\n";
+            env->err() << "No AIG stored\n";
           }
         }
 

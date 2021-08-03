@@ -50,7 +50,7 @@ namespace alice
       mig = mockturtle::cleanup_dangling( mig );
     }
     else{
-      std::cout << "There is not an MIG network stored.\n";
+      env->err() << "There is not an MIG network stored.\n";
     }
 
   }

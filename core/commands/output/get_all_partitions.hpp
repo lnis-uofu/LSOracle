@@ -56,7 +56,7 @@ namespace alice
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
             auto ntk = *store<mig_ntk>().current();
-            std::cout << "\n";
+            env->out() << "\n";
             if(!store<part_man_mig_ntk>().empty()){
               auto partitions = *store<part_man_mig_ntk>().current();
               for(int i = 0; i < partitions.get_part_num(); i++){
@@ -64,8 +64,8 @@ namespace alice
                 std::vector<std::string> filenames;
                 int partition = i;
                 auto part_outputs = partitions.get_part_outputs(i);
-                std::cout << "Partition " << i << ":\n";
-                std::cout << "Number of Logic Cones = " << part_outputs.size() << "\n";
+                env->out() << "Partition " << i << ":\n";
+                env->out() << "Number of Logic Cones = " << part_outputs.size() << "\n";
                 mkdir(dir.c_str(), 0777);
 
                 oracle::partition_view<mig_names> part = partitions.create_part(ntk, partition);
@@ -79,21 +79,21 @@ namespace alice
                 for(int j = 0; j < parts.size(); j++){
                   mockturtle::write_verilog(parts.at(j), filenames.at(j));
                 }
-                std::cout << "\n";
+                env->out() << "\n";
               }
             }
             else{
-              std::cout << "Partitions have not been mapped\n";
+              env->err() << "Partitions have not been mapped\n";
             }
           }
           else{
-            std::cout << "There is no MIG network stored\n";
+            env->err() << "There is no MIG network stored\n";
           }
         }
         else{
           if(!store<aig_ntk>().empty()){
             auto ntk = *store<aig_ntk>().current();
-            std::cout << "\n";
+            env->out() << "\n";
             if(!store<part_man_aig_ntk>().empty()){
               mockturtle::write_verilog_params ps;
               auto partitions = *store<part_man_aig_ntk>().current();
@@ -106,8 +106,8 @@ namespace alice
                 std::vector<std::string> filenames;
                 int partition = i;
                 auto part_outputs = partitions.get_part_outputs(i);
-                std::cout << "Partition " << i << ":\n";
-                std::cout << "Number of Logic Cones = " << part_outputs.size() << "\n";
+                env->out() << "Partition " << i << ":\n";
+                env->out() << "Number of Logic Cones = " << part_outputs.size() << "\n";
                 mkdir(dir.c_str(), 0777);
 
                 oracle::partition_view<aig_names> part = partitions.create_part(ntk, partition);
@@ -135,7 +135,7 @@ namespace alice
                 //to do: see above, but for call_submodule
                 oracle::call_submodule( ntk, part_ntk, toplevel_file, modulename, i, part, node_names, input_names);
 
-                std::cout << "\n";
+                env->out() << "\n";
               }
               std::ofstream os( toplevel_file.c_str(), std::ofstream::app);
               os << "endmodule\n"
@@ -144,11 +144,11 @@ namespace alice
               os.close();
             }
             else{
-              std::cout << "Partitions have not been mapped\n";
+              env->err() << "Partitions have not been mapped\n";
             }
           }
           else{
-            std::cout << "There is no AIG network stored\n";
+            env->err() << "There is no AIG network stored\n";
           }
         }
       }

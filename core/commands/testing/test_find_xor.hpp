@@ -95,14 +95,14 @@ namespace oracle
           }
         }
 
-        std::cout << "xors found = " << xor_groups.size() << "\n";
+        env->out() << "xors found = " << xor_groups.size() << "\n";
         for(int i = 0; i < xor_groups.size(); i++){
-          std::cout << "XOR group " << i + 1 << " = {";
+          env->out() << "XOR group " << i + 1 << " = {";
           typename std::set<node>::iterator it;
           for(it = xor_groups.at(i).begin(); it != xor_groups.at(i).end(); ++it){
-            std::cout << *it << " ";
+            env->out() << *it << " ";
           }
-          std::cout << "}\n";
+          env->out() << "}\n";
         }
       }
 

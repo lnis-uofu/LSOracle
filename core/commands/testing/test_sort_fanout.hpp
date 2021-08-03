@@ -57,18 +57,18 @@ class test_sort_fanout_command : public alice::command{
             // std::vector<mockturtle::mig_network::node> nodes = ntk._storage->nodes;
 
             ntk.foreach_node( [&]( auto node ) {
-              std::cout << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(node).size() << "\n";
+              env->out() << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(node).size() << "\n";
             } );
 
             // std::sort(ntk._storage->nodes.begin(), ntk._storage->nodes.end(), less_than_fanout());
 
             // for(int i = 0; i < ntk._storage->nodes.size(); i++){
-            //   std::cout << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
+            //   env->out() << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
             // }
 
           }
           else{
-            std::cout << "MIG network not stored\n";
+            env->err() << "MIG network not stored\n";
           }
         }
         else{
@@ -79,17 +79,17 @@ class test_sort_fanout_command : public alice::command{
             // std::vector<mockturtle::mig_network::node> nodes = ntk._storage->nodes;
 
             ntk.foreach_node( [&]( auto node ) {
-              std::cout << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(node).size() << "\n";
+              env->out() << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(node).size() << "\n";
             } );
 
             // std::sort(ntk._storage->nodes.begin(), ntk._storage->nodes.end(), less_than_fanout());
 
             // for(int i = 0; i < ntk._storage->nodes.size(); i++){
-            //   std::cout << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
+            //   env->out() << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
             // }
           }
           else{
-            std::cout << "AIG network not stored\n";
+            env->err() << "AIG network not stored\n";
           }
         }
       }

@@ -71,23 +71,23 @@ namespace oracle
       ntk.foreach_node([&](auto node){
         visited[node] = false;
       });
-      std::cout << "Cutset Variables = {";
+      env->out() << "Cutset Variables = {";
       typename std::set<node>::iterator it;
       for(it = shared_io.begin(); it != shared_io.end(); ++it){
-        std::cout << *it << " ";
+        env->out() << *it << " ";
         visited[*it] = true;
       }
-      std::cout << "}\n";
+      env->out() << "}\n";
       levels[0] = shared_io;
       compute_level_nodes(ntk, shared_io, visited);
-      std::cout << "Number of levels = " << levels.size() << "\n";
+      env->out() << "Number of levels = " << levels.size() << "\n";
       for(auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it){
         std::set<node> curr_level = level_it->second;
-        std::cout << "\nLevel " << level_it->first << " = {";
+        env->out() << "\nLevel " << level_it->first << " = {";
         for(it = curr_level.begin(); it != curr_level.end(); ++it){
-          std::cout << *it << " ";
+          env->out() << *it << " ";
         }
-        std::cout << "}\n";
+        env->out() << "}\n";
       }
     }
 
@@ -139,10 +139,10 @@ namespace oracle
 
       typename std::set<node>::iterator it;
       for(it = prev_level.begin(); it != prev_level.end(); ++it){
-        // std::cout << "Current node = " << *it << "\n";
+        // env->out() << "Current node = " << *it << "\n";
         fanout_ntk.foreach_fanout(*it, [&](const auto& p){
           if(curr_level.find(p) == curr_level.end() && prev_level.find(p) == prev_level.end() && !visited[p]){
-            // std::cout << "Adding fanout " << p << " to current level set\n";
+            // env->out() << "Adding fanout " << p << " to current level set\n";
             curr_level.insert(p);
             visited[p] = true;
           }
@@ -151,7 +151,7 @@ namespace oracle
         ntk.foreach_fanin(*it, [&](const auto& fanin){
           auto node = ntk.get_node(fanin);
           if(curr_level.find(node) == curr_level.end() && prev_level.find(node) == prev_level.end() && !visited[node]){
-            // std::cout << "Adding fanin " << node << " to current level set\n";
+            // env->out() << "Adding fanin " << node << " to current level set\n";
             curr_level.insert(node);
             visited[node] = true;
           }

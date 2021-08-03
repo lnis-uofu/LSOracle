@@ -56,14 +56,14 @@ namespace alice
 
             auto ntk = *store<mig_ntk>().current();
             mockturtle::fanout_view fanout{ntk};
-            std::cout << "Fanout of " << nodeIdx << " = {";
+            env->out() << "Fanout of " << nodeIdx << " = {";
             fanout.foreach_fanout(ntk.index_to_node(nodeIdx), [&](auto const& p){
-              std::cout << p << " ";
+              env->out() << p << " ";
             });
-            std::cout << "}\n";
+            env->out() << "}\n";
           }
           else{
-            std::cout << "No MIG stored\n";
+            env->err() << "No MIG stored\n";
           }
         }
         else{
@@ -71,14 +71,14 @@ namespace alice
 
             auto ntk = *store<aig_ntk>().current();
             mockturtle::fanout_view fanout{ntk};
-            std::cout << "Fanout of " << nodeIdx << " = {";
+            env->out() << "Fanout of " << nodeIdx << " = {";
             fanout.foreach_fanout(ntk.index_to_node(nodeIdx), [&](auto const& p){
-              std::cout << p << " ";
+              env->out() << p << " ";
             });
-            std::cout << "}\n";
+            env->out() << "}\n";
           }
           else{
-            std::cout << "No AIG stored\n";
+            env->err() << "No AIG stored\n";
           }
         }
 

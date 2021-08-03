@@ -64,22 +64,22 @@ namespace alice
       void execute(){
 
         if(is_set("mig")){
-          std::cout << "MIG networks not supported yet\n";
+          env->err() << "MIG networks not supported yet\n";
         }
         else{
           if(!store<aig_ntk>().empty()){
             auto aig = *store<aig_ntk>().current();
             if(!store<part_man_aig_ntk>().empty()){
-              std::cout << "Writing k-map images for stored AIG network\n";
+              env->out() << "Writing k-map images for stored AIG network\n";
               auto partitions = *store<part_man_aig_ntk>().current();
               partitions.write_karnaugh_maps(aig, directory);
             }
             else{
-              std::cout << "AIG not partitioned yet\n";
+              env->err() << "AIG not partitioned yet\n";
             }
           }
           else{
-            std::cout << "AIG network not stored\n";
+            env->err() << "AIG network not stored\n";
           }
         }
       }

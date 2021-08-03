@@ -43,7 +43,7 @@ namespace alice
   	const mockturtle::network_cuts cuts = cut_enumeration( aig );
   	//store<mockturtle::network_cuts>().extend() = cuts;
   	aig.foreach_node( [&]( auto node ) {
-  			std::cout << cuts.cuts( aig.node_to_index( node ) ) << "\n";
+			env->out() << cuts.cuts( aig.node_to_index( node ) ) << "\n";
   	} );
   }
 }

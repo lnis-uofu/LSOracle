@@ -65,32 +65,32 @@ namespace alice
       void execute(){
 
         if(!store<aig_ntk>().empty()){
-          std::cout << "\n\n\n1\n";
+          env->out() << "\n\n\n1\n";
           auto ntk = *store<aig_ntk>().current();
-          std::cout << "\n\n\n2\n";
+          env->out() << "\n\n\n2\n";
 
           //If number of partitions is not specified
           if(num_partitions == 0){
-            std::cout << "\n\n\nif1\n";
+            env->out() << "\n\n\nif1\n";
 
             double size = ( (double) ntk.size() ) / 300.0;
             num_partitions = ceil(size);
           }
-          std::cout << "\n\n\n3\n";
+          env->out() << "\n\n\n3\n";
 
           mockturtle::depth_view orig_depth{ntk};
           if(config_file == ""){
             config_file = make_temp_config();
           }
-          std::cout << "\n\n\n4\n";
-          std::cout << "constructing partition manager with " << num_partitions << " partitionis and config_file: " <<config_file << "\n";
+          env->out() << "\n\n\n4\n";
+          env->out() << "constructing partition manager with " << num_partitions << " partitionis and config_file: " <<config_file << "\n";
 
           oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
-          std::cout << "\n\n\n5\n";
+          env->out() << "\n\n\n5\n";
 
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
-          std::cout << ntk.get_network_name() << " partitioned " << num_partitions << " times\n";
+          env->out() << ntk.get_network_name() << " partitioned " << num_partitions << " times\n";
           if(!nn_model.empty())
             high = false;
           else
@@ -111,14 +111,14 @@ namespace alice
 
           mockturtle::depth_view new_depth{ntk_mig};
           if (ntk_mig.size() != ntk.size() || orig_depth.depth() != new_depth.depth()){
-            std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
-            std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-            // std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+            env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
+            env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
+            // env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-            std::cout << "Full Optimization: " << duration.count() << "ms\n";
-            // std::cout << "Finished optimization\n";
+            env->out() << "Full Optimization: " << duration.count() << "ms\n";
+            // env->out() << "Finished optimization\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             if(out_file != ""){
               if(oracle::checkExt(out_file, "v")){
@@ -128,7 +128,7 @@ namespace alice
                   //ps.skip_feedthrough = 1u;
 
                 mockturtle::write_verilog(ntk_mig, out_file, ps);
-                std::cout << "Resulting network written to " << out_file << "\n";
+                env->out() << "Resulting network written to " << out_file << "\n";
               }
               else if(oracle::checkExt(out_file, "blif")){
                 mockturtle::write_blif_params ps;
@@ -136,21 +136,21 @@ namespace alice
                   //ps.skip_feedthrough = 1u;
 
                 mockturtle::write_blif(ntk_mig, out_file, ps);
-                std::cout << "Resulting network written to " << out_file << "\n";
+                env->out() << "Resulting network written to " << out_file << "\n";
               }
               else{
-                std::cout << out_file << " is not an accepted output file {.v, .blif}\n";
+                env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
               }
             }
           }
           else{
-            std::cout << "No change made to network\n";
+            env->out() << "No change made to network\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
           }
         }
         else{
-          std::cout << "AIG network not stored\n";
+          env->err() << "AIG network not stored\n";
         }
       }
     private:
