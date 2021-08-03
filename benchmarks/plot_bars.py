@@ -36,11 +36,11 @@ plt.rcParams['font.family'] = 'serif'
 
 input_file, prev_file, output_file = sys.argv[1:] if len(sys.argv) > 1 else ['everything.tsv', 'previous/everything.tsv', 'everything.png']
 
-n = np.genfromtxt(input_file, delimiter='\t', names=True, dtype=None, encoding="UTF-8")
+n = np.genfromtxt(input_file, delimiter=None, names=True, dtype=None, encoding="UTF-8")
 
 prev_exists = os.path.isfile(prev_file)
 if prev_exists:
-    p = np.genfromtxt(prev_file, delimiter='\t', names=True, dtype=n.dtype, encoding="UTF-8")
+    p = np.genfromtxt(prev_file, delimiter=None , names=True, dtype=n.dtype, encoding="UTF-8")
 else:
     p = np.asarray([], dtype=n.dtype)
 

@@ -70,7 +70,7 @@ TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
 TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
 TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
-EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
+#EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
 REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
@@ -240,16 +240,19 @@ previous/%_lsoracle.everything: | previous
 	@ echo "circuit\t$*" > $@
 	cat $^ >> $@
 
-%.everything: %.report
-	@ echo generating report $@
-	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
-	@ echo >> $@
-	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
-	@ echo >> $@
-
-everything.tsv: ${EVERYTHING_REPORTS}
+#%.everything: %.report
+#	@ echo generating report $@
+#	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
+#	@ echo >> $@
+#	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
+#	@ echo >> $@
+everything.tsv: ${REPORTS}
 	@ echo generating report $@
 	python3 combine_report.py $< $^
+	
+#everything.tsv: ${EVERYTHING_REPORTS}
+#	@ echo generating report $@
+#	python3 combine_report.py $< $^
 
 everything.png everything.pdf: everything.tsv
 	python3 plot_bars.py everything.tsv previous/everything.tsv $@
