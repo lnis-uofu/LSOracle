@@ -46,7 +46,7 @@ namespace oracle{
     for(int i = 0; i < num_parts; i++){
       aig_parts.push_back(i);
     }
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+    std::cout << aig_parts.size() << " AIGs./n";
 
     for(int i = 0; i < aig_parts.size(); i++){
 
@@ -65,23 +65,6 @@ namespace oracle{
       mockturtle::depth_view part_opt_depth{opt_mig};
 
       partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-    }
-
-    for(int i = 0; i < mig_parts.size(); i++){
-
-      oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
-      mockturtle::depth_view part_depth{part};
-
-      auto opt = *part_to_mig(part, 0);
-
-      mockturtle::depth_view opt_part_depth{opt};
-
-      oracle::mig_script migopt;
-      opt = migopt.run(opt);
-
-      mockturtle::depth_view part_opt_depth{opt};
-
-      partitions_mig.synchronize_part(part, opt, ntk_mig);
     }
 
     partitions_mig.connect_outputs(ntk_mig);
@@ -119,27 +102,7 @@ namespace oracle{
       mig_parts.push_back(i);
     }
     
-    //Change to "# Migs\n"?
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
-
-    for(int i = 0; i < aig_parts.size(); i++){
-
-      oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
-      mockturtle::depth_view part_depth{part};
-
-      auto opt_part = *part_to_mig(part, 1);
-      auto opt = *mig_to_aig(opt_part);
-
-      mockturtle::depth_view opt_part_depth{opt};
-
-      oracle::aig_script aigopt;
-      opt = aigopt.run(opt);
-
-      auto opt_mig = *aig_to_mig(opt, 0);
-      mockturtle::depth_view part_opt_depth{opt_mig};
-
-      partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-    }
+    std::cout <<  mig_parts.size() << " MIGs.\n";
 
     for(int i = 0; i < mig_parts.size(); i++){
 
