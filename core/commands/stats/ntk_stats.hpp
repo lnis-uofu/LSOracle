@@ -79,12 +79,12 @@ namespace alice
               }
             });
 
-            std::cout << "MAJ nodes internally = " << maj_num << "\n";
-            std::cout << "AND nodes internally = " << and_num << "\n";
+            env->out() << "MAJ nodes internally = " << maj_num << "\n";
+            env->out() << "AND nodes internally = " << and_num << "\n";
 
           }
           else{
-            std::cout << "MIG network not stored\n";
+            env->err() << "MIG network not stored\n";
           }
 
       }

@@ -64,7 +64,7 @@ namespace alice
 
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped, ps );
 
-                std::cout << "number of cells = " << mapped.num_cells() << "\n";
+                env->out() << "number of cells = " << mapped.num_cells() << "\n";
 
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
                 // auto const& klut = *klut_opt;
@@ -80,11 +80,11 @@ namespace alice
                 });
 
                 mockturtle::depth_view klut_depth{names_view};
-                std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-                std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
-                std::cout << "Finshed LUT mapping\n";
+                env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+                env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
+                env->out() << "Finshed LUT mapping\n";
                 if(out_file != ""){
-                  std::cout << "filename = " << out_file << "\n";
+                  env->out() << "filename = " << out_file << "\n";
                   if(oracle::checkExt(out_file, "bench")){
                     mockturtle::write_bench(names_view, out_file);
                   }
@@ -92,12 +92,12 @@ namespace alice
                     mockturtle::write_blif(names_view, out_file);
                   }
                   else{
-                    std::cout << "Not valid output file\n";
+                    env->err() << "Not valid output file\n";
                   }
                 }
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              env->err() << "There is not an MIG network stored.\n";
             }
           }
           else{
@@ -112,7 +112,7 @@ namespace alice
 
               mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped, ps );
 
-              std::cout << "number of cells = " << mapped.num_cells() << "\n";
+              env->out() << "number of cells = " << mapped.num_cells() << "\n";
 
               const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
               // auto const& klut = *klut_opt;
@@ -128,18 +128,18 @@ namespace alice
               });
 
               mockturtle::depth_view klut_depth{names_view};
-              // std::cout << "klut size = " << klut.size() << "\n";
+              // env->out() << "klut size = " << klut.size() << "\n";
               // klut.foreach_node([&](auto node){
-              //   std::cout << "Node = " << node << "\n";
+              //   env->out() << "Node = " << node << "\n";
               //   klut.foreach_fanin(node, [&](auto const &conn, auto i){
-              //     std::cout << "child[" << i << "] = " << conn << "\n";
+              //     env->out() << "child[" << i << "] = " << conn << "\n";
               //   });
               // });
-              std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-              std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
-              std::cout << "Finshed LUT mapping\n";
+              env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+              env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
+              env->out() << "Finshed LUT mapping\n";
               if(out_file != ""){
-                std::cout << "filename = " << out_file << "\n";
+                env->out() << "filename = " << out_file << "\n";
                 if(oracle::checkExt(out_file, "bench")){
                   mockturtle::write_bench(names_view, out_file);
                 }
@@ -147,12 +147,12 @@ namespace alice
                   mockturtle::write_blif(names_view, out_file);
                 }
                 else{
-                  std::cout << "Not valid output file\n";
+                  env->err() << "Not valid output file\n";
                 }
               }
             }
             else{
-              std::cout << "There is not an AIG network stored.\n";
+              env->err() << "There is not an AIG network stored.\n";
             }
           }
         }

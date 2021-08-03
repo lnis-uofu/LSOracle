@@ -69,7 +69,7 @@ namespace alice
             int and_num = 0;
             int input_num = 0;
 
-            std::cout << "Critical path size = " << critical_path.size() << "\n";
+            env->out() << "Critical path size = " << critical_path.size() << "\n";
             for( auto curr_node : critical_path ){
               if(ntk.is_pi(curr_node)){
                 input_num++;
@@ -80,19 +80,19 @@ namespace alice
               else{
                 maj_num++;
               }
-              // std::cout << "Node = " << curr_node << "\n";
+              // env->out() << "Node = " << curr_node << "\n";
               // ntk.foreach_fanin(curr_node, [&](auto child, auto i){
-              //   std::cout << "child[" << i << "] = " << child.index << "\n";
+              //   env->out() << "child[" << i << "] = " << child.index << "\n";
               // });
             }
 
-            std::cout << "MAJ nodes on critical path = " << maj_num << "\n";
-            std::cout << "AND nodes on critical path = " << and_num << "\n";
-            std::cout << "INPUTS on critical path = " << input_num << "\n";
+            env->out() << "MAJ nodes on critical path = " << maj_num << "\n";
+            env->out() << "AND nodes on critical path = " << and_num << "\n";
+            env->out() << "INPUTS on critical path = " << input_num << "\n";
 
           }
           else{
-            std::cout << "MIG network not stored\n";
+            env->err() << "MIG network not stored\n";
           }
 
       }

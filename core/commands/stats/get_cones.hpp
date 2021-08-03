@@ -49,7 +49,7 @@ namespace alice
     	//number of inputs for each cone
     	std::unordered_map<int, int> po_ins;
     	std::unordered_map<int, int> ri_ins;
-	std::cout << "Name Index Nodes Level Inputs\n";
+	env->out() << "Name Index Nodes Level Inputs\n";
     	//first processing logical cones for POs
     	for(int outIndex=0; outIndex<aig.num_pos()- aig.num_latches(); outIndex++) {
 
@@ -96,7 +96,7 @@ namespace alice
     		if (it != po_nodes.end())
     			inputs = init->second;
 
-    		std::cout << "Output " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
+    		env->out() << "Output " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
 
     	}
 
@@ -147,11 +147,11 @@ namespace alice
     		if(it != po_nodes.end())
     			inputs = init->second;
 
-    		std::cout << "Register " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
+    		env->out() << "Register " << outIndex << " " << nodes << " " << level << " " << inputs << std::endl;
     	});
     }
     else{
-      std::cout << "There is not an AIG network stored.\n";
+      env->err() << "There is not an AIG network stored.\n";
     }
   }
 }

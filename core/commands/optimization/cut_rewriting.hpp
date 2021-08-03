@@ -64,7 +64,7 @@ namespace alice
             ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
           }
           else{
-            std::cout << "No MIG stored\n";
+            env->err() << "No MIG stored\n";
           }
         }
         else{
@@ -76,23 +76,23 @@ namespace alice
 
             mockturtle::cut_rewriting(ntk_aig, resyn, ps);
             // ntk_aig.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << "\n";
+            //   env->out() << "PI: " << pi << "\n";
             // });
             // ntk_aig.foreach_gate([&](auto gate){
-            //   std::cout << "Gate: " << gate << "\n";
+            //   env->out() << "Gate: " << gate << "\n";
             //   if(ntk_aig.is_po(gate))
-            //     std::cout << "IS PO\n";
+            //     env->out() << "IS PO\n";
             //   ntk_aig.foreach_fanin(gate, [&](auto conn, auto i){
-            //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+            //     env->out() << "child[" << i << "] = " << conn.index << "\n";
             //   });
             // });
             ntk_aig = mockturtle::cleanup_dangling(ntk_aig);
 
             mockturtle::depth_view depth{ntk_aig};
-            std::cout << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " << depth.depth() << "\n";
+            env->out() << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " << depth.depth() << "\n";
           }
           else{
-            std::cout << "No AIG stored\n";
+            env->err() << "No AIG stored\n";
           }
         }
 

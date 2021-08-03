@@ -56,7 +56,7 @@ namespace alice
 
         }
         else{
-          std::cout << "No AIG stored\n";
+          env->err() << "No AIG stored\n";
         }
 
       }

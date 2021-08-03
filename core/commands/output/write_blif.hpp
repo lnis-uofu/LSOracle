@@ -60,7 +60,7 @@ namespace alice
               mockturtle::write_blif(mig, filename, ps);
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              env->err() << "There is not an MIG network stored.\n";
             }
           }
           else{
@@ -69,12 +69,12 @@ namespace alice
               mockturtle::write_blif(aig, filename, ps);
             }
             else{
-              std::cout << "There is not an AIG network stored.\n";
+              env->err() << "There is not an AIG network stored.\n";
             }
           }
         }
         else{
-            std::cout << filename << " is not a valid BLIF file\n";
+            env->err() << filename << " is not a valid BLIF file\n";
         }
       }
     private:

@@ -62,11 +62,11 @@ namespace alice
             t.dump(filename);
           }
           else{
-            std::cout << filename << " is not a valid hpg file\n";
+            env->err() << filename << " is not a valid hpg file\n";
           }
         }
         else{
-          std::cout << "There is no MIG network stored\n";
+          env->err() << "There is no MIG network stored\n";
         }
       }
       else{
@@ -82,11 +82,11 @@ namespace alice
 
           }
           else{
-            std::cout << filename << " is not a valid hpg file\n";
+            env->err() << filename << " is not a valid hpg file\n";
           }
         }
         else{
-          std::cout << "There is no AIG network stored\n";
+          env->err() << "There is no AIG network stored\n";
         }
       }
     }

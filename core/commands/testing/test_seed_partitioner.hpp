@@ -59,19 +59,19 @@ class seed_partitioning_command : public alice::command{
           store<oracle::partition_manager<mockturtle::mig_network>>().extend() = part_man;
         }
         else{
-          std::cout << "MIG network not stored\n";
+          env->err() << "MIG network not stored\n";
         }
       }
       else{
         if(!store<mockturtle::aig_network>().empty()){
           auto ntk = store<mockturtle::aig_network>().current();
           oracle::seed_partitioner<mockturtle::aig_network> seed_parts(ntk, num_pis, num_int);
-          std::cout << "network partitioned\n";
+          env->out() << "network partitioned\n";
           oracle::partition_manager<mockturtle::aig_network> part_man = seed_parts.create_part_man(ntk);
           store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
         }
         else{
-          std::cout << "AIG network not stored\n";
+          env->err() << "AIG network not stored\n";
         }
       }
     }

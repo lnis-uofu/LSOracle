@@ -57,10 +57,10 @@ namespace alice
             auto& mig = *store<mig_ntk>().current();
             mockturtle::depth_view mig_depth{mig};
 
-            std::cout << "MIG level " << mig_depth.depth()  << std::endl;
+            env->out() << "MIG level " << mig_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an MIG network stored.\n";
+            env->err() << "There is not an MIG network stored.\n";
           }
         }
         else if(is_set("xag")){
@@ -68,10 +68,10 @@ namespace alice
             auto& xag = *store<xag_ntk>().current();
             mockturtle::depth_view xag_depth{xag};
 
-            std::cout << "XAG level " << xag_depth.depth()  << std::endl;
+            env->out() << "XAG level " << xag_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an XAG network stored.\n";
+            env->err() << "There is not an XAG network stored.\n";
           }
         }
         else{
@@ -79,10 +79,10 @@ namespace alice
             auto& aig = *store<aig_ntk>().current();
             mockturtle::depth_view aig_depth{aig};
 
-            std::cout << "AIG level " << aig_depth.depth()  << std::endl;
+            env->out() << "AIG level " << aig_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an AIG network stored.\n";
+            env->err() << "There is not an AIG network stored.\n";
           }
         }
       }

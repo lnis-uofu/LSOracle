@@ -122,12 +122,12 @@ namespace alice
             dset << element.second << std::endl;
           }
 
-          std::cout << "Number of disjoint graphs: " << uf.getNumbOfSets() << std::endl;
+          env->out() << "Number of disjoint graphs: " << uf.getNumbOfSets() << std::endl;
 
           dset.close();
         }
         else{
-          std::cout << "There is not an AIG network stored.\n";
+          env->err() << "There is not an AIG network stored.\n";
         }
       }
     private:

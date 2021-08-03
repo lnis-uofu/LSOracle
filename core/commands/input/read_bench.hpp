@@ -60,7 +60,7 @@ namespace alice
             auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             mockturtle::mig_npn_resynthesis resyn;
 
@@ -70,7 +70,7 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( named_dest );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
             named_dest.set_network_name(filename);
@@ -81,7 +81,7 @@ namespace alice
             auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
 
@@ -91,7 +91,7 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( named_dest );
-            std::cout << "XAG network stored\n";
+            env->out() << "XAG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
             named_dest.set_network_name(filename);
@@ -103,7 +103,7 @@ namespace alice
             auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::aig_network aig;
@@ -112,7 +112,7 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, names_view, resyn );
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
-            std::cout << "AIG network stored\n";
+            env->out() << "AIG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
             named_dest.set_network_name(filename);
@@ -123,17 +123,17 @@ namespace alice
             auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
-            std::cout << "KLUT network stored\n";
+            env->out() << "KLUT network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
             names_view.set_network_name(filename);
           }
         }
         else{
-            std::cout << filename << " is not a valid bench file\n";
+            env->err() << filename << " is not a valid bench file\n";
         }
 
       }
