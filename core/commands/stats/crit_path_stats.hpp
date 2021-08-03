@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #pragma once
 
 #include <alice/alice.hpp>
@@ -33,7 +59,7 @@ namespace alice
 
     protected:
       void execute(){
-        
+
           if(!store<mig_ntk>().empty()){
             auto ntk = *store<mig_ntk>().current();
 
@@ -43,7 +69,7 @@ namespace alice
             int and_num = 0;
             int input_num = 0;
 
-            std::cout << "Critical path size = " << critical_path.size() << "\n";
+            env->out() << "Critical path size = " << critical_path.size() << "\n";
             for( auto curr_node : critical_path ){
               if(ntk.is_pi(curr_node)){
                 input_num++;
@@ -54,21 +80,21 @@ namespace alice
               else{
                 maj_num++;
               }
-              // std::cout << "Node = " << curr_node << "\n";
+              // env->out() << "Node = " << curr_node << "\n";
               // ntk.foreach_fanin(curr_node, [&](auto child, auto i){
-              //   std::cout << "child[" << i << "] = " << child.index << "\n";
+              //   env->out() << "child[" << i << "] = " << child.index << "\n";
               // });
             }
 
-            std::cout << "MAJ nodes on critical path = " << maj_num << "\n";
-            std::cout << "AND nodes on critical path = " << and_num << "\n";
-            std::cout << "INPUTS on critical path = " << input_num << "\n";
-            
+            env->out() << "MAJ nodes on critical path = " << maj_num << "\n";
+            env->out() << "AND nodes on critical path = " << and_num << "\n";
+            env->out() << "INPUTS on critical path = " << input_num << "\n";
+
           }
           else{
-            std::cout << "MIG network not stored\n";
+            env->err() << "MIG network not stored\n";
           }
-        
+
       }
     private:
   };

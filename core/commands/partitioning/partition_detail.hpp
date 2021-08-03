@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -33,45 +59,45 @@ namespace alice
             double node_num = 0.0;
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
-              std::cout << "\n\nPartition " << i << "\n";
-              std::cout << "Number of PI = " << part.num_pis() << "\n";
-              std::cout << "Number of PO = " << part.num_pos() << "\n";
-              std::cout << "Number of latches = " << part.num_latches() << "\n";
-              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              env->out() << "\n\nPartition " << i << "\n";
+              env->out() << "Number of PI = " << part.num_pis() << "\n";
+              env->out() << "Number of PO = " << part.num_pos() << "\n";
+              env->out() << "Number of latches = " << part.num_latches() << "\n";
+              env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
+              env->out() << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
               node_num += double(part.num_gates()) / double(part.num_pis());
-              // std::cout << "Inputs = {";
+              // env->out() << "Inputs = {";
               // part.foreach_pi([&](auto pi){
-              //   std::cout << pi << " ";
+              //   env->out() << pi << " ";
               // });
-              // std::cout << "}\n";
-              // std::cout << "Outputs = {";
+              // env->out() << "}\n";
+              // env->out() << "Outputs = {";
               // part.foreach_po([&](auto conn, auto i){
-              //   std::cout << conn.index << " ";
+              //   env->out() << conn.index << " ";
               // });
-              // std::cout << "}\n";
-              // std::cout << "Nodes = {";
+              // env->out() << "}\n";
+              // env->out() << "Nodes = {";
               // part.foreach_gate([&](auto node){
-              //   std::cout << node << " ";
+              //   env->out() << node << " ";
               // });
-              // std::cout << "}\n";
+              // env->out() << "}\n";
               std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
               std::set<int>::iterator it;
-              std::cout << "connected partitions = {";
+              env->out() << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-                std::cout << *it << " ";
-              } 
-              std::cout << "}\n";
+                env->out() << *it << " ";
+              }
+              env->out() << "}\n";
             }
             node_num = node_num / (double)num_part;
-            std::cout << "Average nodes per partition: " << node_num << "\n";
+            env->out() << "Average nodes per partition: " << node_num << "\n";
           }
           else{
-            std::cout << "MIG not partitioned yet\n";
+            env->err() << "MIG not partitioned yet\n";
           }
         }
         else{
-          std::cout << "There is no MIG network stored\n";
+          env->err() << "There is no MIG network stored\n";
         }
       }
       else{
@@ -83,46 +109,46 @@ namespace alice
             double node_num = 0.0;
             for(int i = 0; i < num_part; i++){
               oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
-              std::cout << "\n\nPartition " << i << "\n";
-              std::cout << "Number of PI = " << part.num_pis() << "\n";
-              std::cout << "Number of PO = " << part.num_pos() << "\n";
-              std::cout << "Number of latches = " << part.num_latches() << "\n";
-              std::cout << "Number of internal nodes = " << part.num_gates() << "\n";
-              
-              std::cout << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
+              env->out() << "\n\nPartition " << i << "\n";
+              env->out() << "Number of PI = " << part.num_pis() << "\n";
+              env->out() << "Number of PO = " << part.num_pos() << "\n";
+              env->out() << "Number of latches = " << part.num_latches() << "\n";
+              env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
+
+              env->out() << "Partition volume = " << double(part.num_gates()) / double(part.num_pis()) << "\n";
               node_num += double(part.num_gates()) / double(part.num_pis());
-              std::cout << "Inputs = {";
+              env->out() << "Inputs = {";
               part.foreach_pi([&](auto pi){
-                std::cout << pi << " ";
+                env->out() << pi << " ";
               });
-              std::cout << "}\n";
-              std::cout << "Outputs = {";
+              env->out() << "}\n";
+              env->out() << "Outputs = {";
               part.foreach_po([&](auto conn, auto i){
-                std::cout << conn.index << " ";
+                env->out() << conn.index << " ";
               });
-              std::cout << "}\n";
-              std::cout << "Nodes = {";
+              env->out() << "}\n";
+              env->out() << "Nodes = {";
               part.foreach_gate([&](auto node){
-                std::cout << node << " ";
+                env->out() << node << " ";
               });
-              std::cout << "}\n";
+              env->out() << "}\n";
               std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
               std::set<int>::iterator it;
-              std::cout << "connected partitions = {";
+              env->out() << "connected partitions = {";
               for(it = connected_parts.begin(); it != connected_parts.end(); ++it){
-                std::cout << *it << " ";
-              } 
-              std::cout << "}\n";
+                env->out() << *it << " ";
+              }
+              env->out() << "}\n";
             }
             node_num = node_num / (double)num_part;
-            std::cout << "Average partition volume: " << node_num << "\n";
+            env->out() << "Average partition volume: " << node_num << "\n";
           }
           else{
-            std::cout << "AIG not partitioned yet\n";
+            env->err() << "AIG not partitioned yet\n";
           }
         }
         else{
-          std::cout << "There is no AIG network stored\n";
+          env->err() << "There is no AIG network stored\n";
         }
       }
     }

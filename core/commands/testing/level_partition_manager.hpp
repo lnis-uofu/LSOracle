@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,13 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/*!
-  \file window_view.hpp
-  \brief Implements an isolated view on a window in a network
-  \author Heinz Riener
-*/
-
 #pragma once
 
 #include <algorithm>
@@ -69,30 +64,30 @@ namespace oracle
 
       oracle::partition_manager<Ntk> partitions(ntk, 2);
       std::set<node> shared_io = partitions.get_shared_io(0, 1);
-      
+
       levels.clear();
       level_idx = 1;
       std::unordered_map<node, bool> visited;
       ntk.foreach_node([&](auto node){
         visited[node] = false;
       });
-      std::cout << "Cutset Variables = {";
+      env->out() << "Cutset Variables = {";
       typename std::set<node>::iterator it;
       for(it = shared_io.begin(); it != shared_io.end(); ++it){
-        std::cout << *it << " ";
+        env->out() << *it << " ";
         visited[*it] = true;
       }
-      std::cout << "}\n";
+      env->out() << "}\n";
       levels[0] = shared_io;
       compute_level_nodes(ntk, shared_io, visited);
-      std::cout << "Number of levels = " << levels.size() << "\n";
+      env->out() << "Number of levels = " << levels.size() << "\n";
       for(auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it){
         std::set<node> curr_level = level_it->second;
-        std::cout << "\nLevel " << level_it->first << " = {";
+        env->out() << "\nLevel " << level_it->first << " = {";
         for(it = curr_level.begin(); it != curr_level.end(); ++it){
-          std::cout << *it << " ";
+          env->out() << *it << " ";
         }
-        std::cout << "}\n";
+        env->out() << "}\n";
       }
     }
 
@@ -137,17 +132,17 @@ namespace oracle
   private:
     std::map<int, std::set<node>> levels;
     int level_idx = 1;
-    
+
     void compute_level_nodes(Ntk const& ntk, std::set<node> prev_level, std::unordered_map<node, bool> visited){
       mockturtle::fanout_view<Ntk> fanout_ntk{ntk};
       std::set<node> curr_level;
-      
+
       typename std::set<node>::iterator it;
       for(it = prev_level.begin(); it != prev_level.end(); ++it){
-        // std::cout << "Current node = " << *it << "\n";
+        // env->out() << "Current node = " << *it << "\n";
         fanout_ntk.foreach_fanout(*it, [&](const auto& p){
           if(curr_level.find(p) == curr_level.end() && prev_level.find(p) == prev_level.end() && !visited[p]){
-            // std::cout << "Adding fanout " << p << " to current level set\n";
+            // env->out() << "Adding fanout " << p << " to current level set\n";
             curr_level.insert(p);
             visited[p] = true;
           }
@@ -156,7 +151,7 @@ namespace oracle
         ntk.foreach_fanin(*it, [&](const auto& fanin){
           auto node = ntk.get_node(fanin);
           if(curr_level.find(node) == curr_level.end() && prev_level.find(node) == prev_level.end() && !visited[node]){
-            // std::cout << "Adding fanin " << node << " to current level set\n";
+            // env->out() << "Adding fanin " << node << " to current level set\n";
             curr_level.insert(node);
             visited[node] = true;
           }
@@ -168,7 +163,7 @@ namespace oracle
         level_idx++;
         compute_level_nodes(ntk, curr_level, visited);
       }
-        
+
     }
 
   };

@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,8 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 #pragma once
 
 #include <algorithm>
@@ -68,17 +68,17 @@ namespace oracle
           in_pattern[node] = false;
         });
 
-        
+
         mockturtle::topo_view top{ntk};
         std::vector<node> reverse_top = top.get_node_vec();
         std::reverse(reverse_top.begin(), reverse_top.end());
 
-        
+
         for(int i = 0; i < xor_patterns.size(); i++){
           Ntk curr_pattern = xor_patterns.at(i);
-          
-          std::vector<node> xor_nodes;       
-          
+
+          std::vector<node> xor_nodes;
+
           for(int j = 0; j < reverse_top.size() - ntk.num_pis(); j++){
             node ntk_node = reverse_top.at(j);
             if(!considered[ntk_node]){
@@ -138,35 +138,35 @@ namespace oracle
         while(true){
 
           if(nodes2part.size() == 0)
-            break; 
+            break;
 
           cluster<Ntk> curr_cluster(ntk);
           std::vector<node> seed = find_seed(ntk);
           curr_cluster.add_to_cluster(ntk, seed);
-          
-          std::cout << "Seed = {";
+
+          env->out() << "Seed = {";
           for(int i = 0; i < seed.size(); i++){
-            std::cout << seed.at(i) << " ";
+            env->out() << seed.at(i) << " ";
           }
-          std::cout << "}\n";
+          env->out() << "}\n";
 
           while(true){
             if((curr_cluster.num_pis() >= pi_const && curr_cluster.size() >= node_count_const) || nodes2part.size() == 0)
               break;
 
             std::set<node> connected_nodes = curr_cluster.get_conn_nodes(ntk, nodes2part);
-            std::cout << "number of connected_nodes = " << connected_nodes.size() << "\n";
+            env->out() << "number of connected_nodes = " << connected_nodes.size() << "\n";
             for(auto node : connected_nodes){
-              std::cout << node << " ";
+              env->out() << node << " ";
             }
-            std::cout << "\n";
+            env->out() << "\n";
             if(connected_nodes.size() == 0)
               break;
 
             double best_attr = -1.0;
             std::vector<node> best_node;
             for( node curr_node : connected_nodes ){
-              std::cout << "curr_node = " << curr_node << " in pattern = " << in_pattern[curr_node] << "\n";
+              env->out() << "curr_node = " << curr_node << " in pattern = " << in_pattern[curr_node] << "\n";
               if(in_pattern[curr_node]){
                 std::vector<node> pattern;
                 int pattern_num = 0;
@@ -189,8 +189,8 @@ namespace oracle
                 double curr_attr = attraction(ntk, curr_node, curr_cluster);
                 // stop = std::chrono::high_resolution_clock::now();
                 // duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-                // std::cout << "Determining attraction: " << duration.count() << "us\n";
-                // std::cout << "curr_node = " << curr_node << " with attraction = " << curr_attr << "\n";
+                // env->out() << "Determining attraction: " << duration.count() << "us\n";
+                // env->out() << "curr_node = " << curr_node << " with attraction = " << curr_attr << "\n";
                 if( curr_attr > best_attr ){
                   best_attr = curr_attr;
                   best_node = {curr_node};
@@ -208,28 +208,28 @@ namespace oracle
           std::set<node> curr_cluster_nodes = curr_cluster.get_cluster();
           // std::set<node> curr_cluster_outputs = curr_cluster.get_outputs();
           std::set<node> curr_cluster_inputs = curr_cluster.get_inputs();
-          std::cout << "Partition " << num_partitions << " = {";
+          env->out() << "Partition " << num_partitions << " = {";
           for(node curr_node : curr_cluster_nodes ){
-            std::cout << curr_node << " ";
+            env->out() << curr_node << " ";
             mapped_part[curr_node] = num_partitions;
           }
-          std::cout << "}\n";
-          // std::cout << "Inputs = {";
+          env->out() << "}\n";
+          // env->out() << "Inputs = {";
           for(node curr_input : curr_cluster_inputs){
-            // std::cout << curr_input << " ";
+            // env->out() << curr_input << " ";
             if(ntk.is_pi(curr_input))
               mapped_part[curr_input] = num_partitions;
-          } 
-          // std::cout << "}\n";
-          // std::cout << "Outputs = {";
+          }
+          // env->out() << "}\n";
+          // env->out() << "Outputs = {";
           // for(node curr_output : curr_cluster_outputs){
-          //   std::cout << curr_output << " ";
+          //   env->out() << curr_output << " ";
           //   // mapped_part[curr_output] = num_partitions;
-          // } 
-          // std::cout << "}\n";
+          // }
+          // env->out() << "}\n";
           num_partitions++;
         }
-        std::cout << "Number of partitions = " << num_partitions << "\n";
+        env->out() << "Number of partitions = " << num_partitions << "\n";
       }
 
   private:
@@ -297,7 +297,7 @@ namespace oracle
       // xor_patt_5.create_po(xor_patt_5.create_not(n3));
 
       // xor_patterns.push_back(xor_patt_5);
-      
+
     }
 
     bool node_equivalence(Ntk ntk, Ntk curr_pattern, node ntk_node, node patt_node){
@@ -375,11 +375,11 @@ namespace oracle
             }
           });
         }
-        
+
       }
-      
+
       return inputs;
-      
+
     }
 
     double attraction( Ntk const& ntk, node curr_node, cluster<Ntk> curr_cluster ){
@@ -408,20 +408,20 @@ namespace oracle
       std::vector<node> xor_nodes;
       mockturtle::fanout_view fanout{ntk};
 
-      std::map<node, bool> visited; 
+      std::map<node, bool> visited;
       ntk.foreach_node([&](auto node){
         visited[ntk.node_to_index(node)] = false;
       });
-      // Create a queue for BFS 
-      std::queue<node> net_queue; 
-    
-      // Mark the current node as visited and enqueue it 
-      visited[root_node] = true; 
-      net_queue.push(root_node); 
-     
+      // Create a queue for BFS
+      std::queue<node> net_queue;
+
+      // Mark the current node as visited and enqueue it
+      visited[root_node] = true;
+      net_queue.push(root_node);
+
       while(!net_queue.empty()){
         node curr_node = net_queue.front();
-        net_queue.pop();  
+        net_queue.pop();
         xor_nodes.push_back(curr_node);
 
         if(xor_nodes.size() > 1 && xor_nodes.size() < (curr_pattern.size() - curr_pattern.num_pos() - curr_pattern.num_pis() + 1)
@@ -440,19 +440,19 @@ namespace oracle
               net_queue.push(curr_child);
               visited[curr_child] = true;
             }
-          });   
-        }   
-      } 
+          });
+        }
+      }
 
       // Ensure xor_nodes is in topological order
       std::sort(xor_nodes.begin(), xor_nodes.end());
-      // Separating inputs from xor_nodes 
+      // Separating inputs from xor_nodes
       if(xor_nodes.size() > 2){
 
         xor_nodes.erase(xor_nodes.begin());
         xor_nodes.erase(xor_nodes.begin());
       }
-      
+
       std::vector<node> inputs = xor_inputs(ntk, xor_nodes);
       std::vector<node> output = {xor_nodes.back()};
       std::sort(xor_nodes.begin(), xor_nodes.end());
@@ -485,14 +485,14 @@ namespace oracle
 
       }
       else{
-        std::cout << "circuit too small\n";
+        env->err() << "circuit too small\n";
       }
 
       return xor_nodes;
     }
 
     double connection_crit(oracle::slack_view<Ntk> slack_view, mockturtle::fanout_view<Ntk> fanout, node curr_node){
-      std::cout << "slack = " << slack_view.slack(curr_node) << " and fanout size of " << fanout.fanout(curr_node).size() << "\n";
+      env->out() << "slack = " << slack_view.slack(curr_node) << " and fanout size of " << fanout.fanout(curr_node).size() << "\n";
       return (1.0 - (slack_view.slack(curr_node) / slack_view.get_max_slack())) + fanout.fanout(curr_node).size();
     }
 
@@ -507,14 +507,14 @@ namespace oracle
             std::sort(xor_groups.at(i).begin(), xor_groups.at(i).end());
             node output = xor_groups.at(i).back();
             double conn_crit = connection_crit(slack_view, fanout, output);
-            std::cout << "Node = " << output << " with conn crit = " << conn_crit << "\n";
+            env->out() << "Node = " << output << " with conn crit = " << conn_crit << "\n";
             if(conn_crit > max_crit){
               max_crit = conn_crit;
               seed = xor_groups.at(i);
             }
           }
         }
-        std::cout << "Pattern seed added\n";
+        env->out() << "Pattern seed added\n";
         patt2part.erase(seed);
         for(int i = 0; i < seed.size(); i++){
           nodes2part.erase(seed.at(i));
@@ -524,7 +524,7 @@ namespace oracle
         ntk.foreach_gate([&]( auto curr_node ){
           if(nodes2part.find(curr_node) != nodes2part.end()){
             double conn_crit = connection_crit(slack_view, fanout, curr_node);
-            std::cout << "Node = " << curr_node << " with conn crit = " << conn_crit << "\n";
+            env->out() << "Node = " << curr_node << " with conn crit = " << conn_crit << "\n";
             if(conn_crit > max_crit){
               max_crit = conn_crit;
               seed = {curr_node};
@@ -532,13 +532,13 @@ namespace oracle
           }
         });
 
-        std::cout << "node seed added = " << seed.at(0) << "\n";
+        env->out() << "node seed added = " << seed.at(0) << "\n";
         nodes2part.erase(seed.at(0));
       }
-      
+
       return seed;
     }
-    
+
     int num_partitions = 0;
     double max_net = 0.0;
     double net_delay = 0.0;

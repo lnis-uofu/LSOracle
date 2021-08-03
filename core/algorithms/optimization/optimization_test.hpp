@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -19,8 +45,8 @@ namespace oracle{
   using mig_ntk = std::shared_ptr<mig_names>;
   using part_man_mig = oracle::partition_manager<mig_names>;
   using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
-    
-  mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model, 
+
+  mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy,std::string nn_model,
     bool high, bool aig, bool mig, bool combine){
 
     std::vector<int> aig_parts;
@@ -30,7 +56,7 @@ namespace oracle{
     int num_parts = partitions_aig.get_part_num();
 
     auto ntk_mig = *aig_to_mig(ntk_aig, 1);
-    oracle::partition_manager<mig_names> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(), 
+    oracle::partition_manager<mig_names> partitions_mig(ntk_mig, partitions_aig.get_all_part_connections(),
             partitions_aig.get_all_partition_inputs(), partitions_aig.get_all_partition_outputs(),
             partitions_aig.get_all_partition_regs(), partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
@@ -125,7 +151,7 @@ namespace oracle{
           }
           break;
         }
-        
+
       }
     }
 
@@ -137,7 +163,7 @@ namespace oracle{
       for(int i = 0; i < num_parts; i++){
         if(std::find(visited.begin(), visited.end(), i) == visited.end()){
           std::vector<int> parts_to_combine;
-          
+
           std::set<int>::iterator conn_it;
           std::set<int> conn_parts;
           conn_parts = partitions_aig.get_connected_parts(ntk_aig, i);
@@ -192,9 +218,9 @@ namespace oracle{
               std::set<int> connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
               std::set<int> connected_parts2 = partitions_aig.get_connected_parts(ntk_aig, part_2);
               std::set<int>::iterator conn_it;
-              
+
               std::vector<std::set<mockturtle::aig_network::node>> combined_io = partitions_aig.combine_partitions(ntk_aig, part_1, part_2);
-              
+
               auto new_inputs = combined_io.at(0);
               auto new_outputs = combined_io.at(1);
               comb_part[part_2] = part_1;
@@ -213,12 +239,12 @@ namespace oracle{
                 }
               }
 
-              visited.push_back(part_2); 
+              visited.push_back(part_2);
 
               connected_parts1 = partitions_aig.get_connected_parts(ntk_aig, part_1);
               for(conn_it = connected_parts1.begin(); conn_it != connected_parts1.end(); ++conn_it){
                 if(std::find(aig_parts.begin(), aig_parts.end(), i) != aig_parts.end()){
-                  if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                  if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() &&
                     std::find(aig_parts.begin(), aig_parts.end(), *conn_it) != aig_parts.end() &&
                     std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
 
@@ -226,14 +252,14 @@ namespace oracle{
                   }
                 }
                 else{
-                  if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() && 
+                  if(std::find(parts_to_combine.begin(), parts_to_combine.end(), *conn_it) == parts_to_combine.end() &&
                     std::find(mig_parts.begin(), mig_parts.end(), *conn_it) != mig_parts.end() &&
                     std::find(visited.begin(), visited.end(), *conn_it) == visited.end()){
 
                     parts_to_combine.push_back(*conn_it);
                   }
                 }
-              } 
+              }
             }
             visited.push_back(i);
           }
@@ -247,7 +273,7 @@ namespace oracle{
 
     if(!high){
       for(int i = 0; i < aig_parts.size(); i++){
-      
+
         oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, aig_parts.at(i));
         mockturtle::depth_view part_depth{part};
 
@@ -263,27 +289,27 @@ namespace oracle{
 
         partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
       }
-      
+
       for(int i = 0; i < mig_parts.size(); i++){
-        
+
         oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, mig_parts.at(i));
         mockturtle::depth_view part_depth{part};
 
         auto opt = *part_to_mig(part, 0);
 
         mockturtle::depth_view opt_part_depth{opt};
-        
+
         oracle::mig_script migopt;
         opt = migopt.run(opt);
-        
+
         mockturtle::depth_view part_opt_depth{opt};
 
         partitions_mig.synchronize_part(part, opt, ntk_mig);
       }
     }
-    
+
     partitions_mig.connect_outputs(ntk_mig);
-    
+
     ntk_mig = mockturtle::cleanup_dangling( ntk_mig );
 
     return ntk_mig;

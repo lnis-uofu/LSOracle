@@ -70,9 +70,12 @@
 #  include <dirent.h>
 #endif
 
-#include "frontends/blif/blifparse.h"
+//#include "frontends/blif/blifparse.h"
 //#include "frontends/verilog/verilog_frontend.h"
-
+namespace Yosys {
+extern void parse_blif(RTLIL::Design *design, std::istream &f, IdString dff_name,
+                bool run_clean = false, bool sop_mode = false, bool wideports = false);
+}
 #ifdef YOSYS_LINK_ABC
 extern "C" int Abc_RealMain(int argc, char *argv[]);
 #endif

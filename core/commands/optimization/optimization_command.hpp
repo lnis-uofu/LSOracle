@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -59,7 +85,7 @@ namespace alice
               threshold = calculate_depth_percentile(ntk_aig);
             }
             if (strategy == 3) {
-              std::cout << "Using threshold " << threshold << " max depth for optimization." << std::endl;
+              env->out() << "Using threshold " << threshold << " max depth for optimization." << std::endl;
             }
 
             std::copy(aig_parts.begin(), aig_parts.end(), std::inserter(aig_always_partitions, aig_always_partitions.end()));
@@ -98,49 +124,49 @@ namespace alice
 
             mockturtle::depth_view new_depth{ntk_mig};
             if (ntk_mig.size() != ntk_aig.size() || orig_depth.depth() != new_depth.depth()){
-              std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
-              std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-              std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+              env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
+              env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
+              env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
               auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-              std::cout << "Full Optimization: " << duration.count() << "ms\n";
-              std::cout << "Finished optimization\n";
+              env->out() << "Full Optimization: " << duration.count() << "ms\n";
+              env->out() << "Finished optimization\n";
               store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
 
               if(out_file != ""){
                 if(oracle::checkExt(out_file, "v")){
                   mockturtle::write_verilog_params ps;
-                  
+
                   //removing to use stock mockturtle I/O.  May be nice to have in the future
                   //if(is_set("skip-feedthrough"))
                   //  ps.skip_feedthrough = 1u;
-                  
+
                   mockturtle::write_verilog(ntk_mig, out_file, ps);
-                  std::cout << "Resulting network written to " << out_file << "\n";
+                  env->out() << "Resulting network written to " << out_file << "\n";
                 }
                 else if(oracle::checkExt(out_file, "blif")){
                   mockturtle::write_blif_params ps;
                   //if(is_set("skip-feedthrough"))
                   //  ps.skip_feedthrough = 1u;
-                  
+
                   mockturtle::write_blif(ntk_mig, out_file, ps);
-                  std::cout << "Resulting network written to " << out_file << "\n";
+                  env->out() << "Resulting network written to " << out_file << "\n";
                 }
                 else{
-                  std::cout << out_file << " is not an accepted output file {.v, .blif}\n";
+                  env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
                 }
               }
             }
             else{
-              std::cout << "No change made to network\n";
+              env->out() << "No change made to network\n";
             }
-            
+
           }
           else{
-            std::cout << "AIG not partitioned yet\n";
+            env->err() << "AIG not partitioned yet\n";
           }
         }
         else{
-          std::cout << "No AIG stored\n";
+          env->err() << "No AIG stored\n";
         }
       }
     private:

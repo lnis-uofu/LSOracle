@@ -1,3 +1,28 @@
+# LSOracle: A learning based Oracle for Logic Synthesis
+# MIT License
+# Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights to use,
+# copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following
+# conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
@@ -45,7 +70,7 @@ TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
 TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
 TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
-EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
+#EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
 REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
@@ -215,16 +240,19 @@ previous/%_lsoracle.everything: | previous
 	@ echo "circuit\t$*" > $@
 	cat $^ >> $@
 
-%.everything: %.report
-	@ echo generating report $@
-	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
-	@ echo >> $@
-	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
-	@ echo >> $@
-
-everything.tsv: ${EVERYTHING_REPORTS}
+#%.everything: %.report
+#	@ echo generating report $@
+#	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
+#	@ echo >> $@
+#	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
+#	@ echo >> $@
+everything.tsv: ${REPORTS}
 	@ echo generating report $@
 	python3 combine_report.py $< $^
+	
+#everything.tsv: ${EVERYTHING_REPORTS}
+#	@ echo generating report $@
+#	python3 combine_report.py $< $^
 
 everything.png everything.pdf: everything.tsv
 	python3 plot_bars.py everything.tsv previous/everything.tsv $@

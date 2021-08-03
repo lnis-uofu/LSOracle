@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #pragma once
 
 #include <alice/alice.hpp>
@@ -25,16 +51,16 @@ namespace alice
 
     protected:
       void execute(){
-      
+
         if(is_set("mig")){
           if(!store<mig_ntk>().empty()){
             auto& mig = *store<mig_ntk>().current();
             mockturtle::depth_view mig_depth{mig};
 
-            std::cout << "MIG level " << mig_depth.depth()  << std::endl;
+            env->out() << "MIG level " << mig_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an MIG network stored.\n";
+            env->err() << "There is not an MIG network stored.\n";
           }
         }
         else if(is_set("xag")){
@@ -42,10 +68,10 @@ namespace alice
             auto& xag = *store<xag_ntk>().current();
             mockturtle::depth_view xag_depth{xag};
 
-            std::cout << "XAG level " << xag_depth.depth()  << std::endl;
+            env->out() << "XAG level " << xag_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an XAG network stored.\n";
+            env->err() << "There is not an XAG network stored.\n";
           }
         }
         else{
@@ -53,10 +79,10 @@ namespace alice
             auto& aig = *store<aig_ntk>().current();
             mockturtle::depth_view aig_depth{aig};
 
-            std::cout << "AIG level " << aig_depth.depth()  << std::endl;
+            env->out() << "AIG level " << aig_depth.depth()  << std::endl;
           }
           else{
-            std::cout << "There is not an AIG network stored.\n";
+            env->err() << "There is not an AIG network stored.\n";
           }
         }
       }

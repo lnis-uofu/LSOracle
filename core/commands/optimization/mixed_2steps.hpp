@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -38,9 +64,9 @@ namespace alice
         //read AIG to generate hypergraph
         if(!store<aig_ntk>().empty()) {
           auto ntk = *store<aig_ntk>().current();
-          std::cout << "AIG initial size = " << ntk.num_gates() << std::endl;
+          env->out() << "AIG initial size = " << ntk.num_gates() << std::endl;
           mockturtle::depth_view depth{ntk};
-          std::cout << "AIG initial size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
+          env->out() << "AIG initial size = " << ntk.num_gates() << " and depth = " << depth.depth() << "\n";
 
           mockturtle::mig_npn_resynthesis resyn_mig;
           mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
@@ -57,30 +83,30 @@ namespace alice
 
               auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
               mockturtle::depth_view part_aig_depth{opt_aig};
-              std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+              env->out() << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
               mockturtle::aig_script aigopt;
               opt_aig = aigopt.run(opt_aig);
               mockturtle::depth_view part_aig_opt_depth{opt_aig};
               int aig_opt_size = opt_aig.num_gates();
               int aig_opt_depth = part_aig_opt_depth.depth();
-              std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
+              env->out() << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
 
               auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
               mockturtle::depth_view part_mig_depth{opt_mig};
-              std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+              env->out() << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
               mockturtle::mig_script migopt;
               opt_mig = migopt.run(opt_mig);
               mockturtle::depth_view part_mig_opt_depth{opt_mig};
               int mig_opt_size = opt_mig.num_gates();
               int mig_opt_depth = part_mig_opt_depth.depth();
-              std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
+              env->out() << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
 
               if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                std::cout << "AIG wins\n";
+                env->out() << "AIG wins\n";
                 aig_parts1.push_back(i);
               }
               else{
-                std::cout << "MIG wins\n";
+                env->out() << "MIG wins\n";
                 mig_parts1.push_back(i);
               }
             }
@@ -93,19 +119,19 @@ namespace alice
               mig_parts1 = partitions_aig.get_mig_parts();
             }
             else{
-              std::cout << "Must include CNN model json file\n";
+              env->err() << "Must include CNN model json file\n";
             }
           }
           //Deal with AIG partitions
-          std::cout << "Total number of partitions for AIG 1 " << aig_parts1.size() << std::endl;
-          std::cout << "Total number of partitions for MIG 1 " << mig_parts1.size() << std::endl;
+          env->out() << "Total number of partitions for AIG 1 " << aig_parts1.size() << std::endl;
+          env->out() << "Total number of partitions for MIG 1 " << mig_parts1.size() << std::endl;
 
           for (int i = 0; i < aig_parts1.size(); i++) {
             oracle::partition_view<aig_names> part_aig = partitions_aig.create_part(ntk, aig_parts1.at(i));
 
-            std::cout << "\nPartition " << i << "\n";
+            env->out() << "\nPartition " << i << "\n";
             mockturtle::depth_view part_depth{part_aig};
-            std::cout << "Partition size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
+            env->out() << "Partition size = " << part_aig.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
             auto aig_opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
 
@@ -113,7 +139,7 @@ namespace alice
             auto aig = aigopt.run(aig_opt);
 
             mockturtle::depth_view part_aig_depth{aig};
-            std::cout << "Post optimization part size = " << aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+            env->out() << "Post optimization part size = " << aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
 
             partitions_aig.synchronize_part(part_aig, aig, ntk);
           }
@@ -123,7 +149,7 @@ namespace alice
 
           mockturtle::depth_view depth_final{ntk_final};
 
-          std::cout << "Final AIG size = " << ntk_final.num_gates() << " and depth = " << depth_final.depth() << "\n";
+          env->out() << "Final AIG size = " << ntk_final.num_gates() << " and depth = " << depth_final.depth() << "\n";
 
           oracle::partition_manager<aig_names> tmp(ntk_final, num_parts);
 
@@ -136,30 +162,30 @@ namespace alice
 
               auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>( part_aig, resyn_aig );
               mockturtle::depth_view part_aig_depth{opt_aig};
-              std::cout << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+              env->out() << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
               mockturtle::aig_script aigopt;
               opt_aig = aigopt.run(opt_aig);
               mockturtle::depth_view part_aig_opt_depth{opt_aig};
               int aig_opt_size = opt_aig.num_gates();
               int aig_opt_depth = part_aig_opt_depth.depth();
-              std::cout << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
+              env->out() << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
 
               auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>( part_aig, resyn_mig );
               mockturtle::depth_view part_mig_depth{opt_mig};
-              std::cout << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+              env->out() << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
               mockturtle::mig_script migopt;
               opt_mig = migopt.run(opt_mig);
               mockturtle::depth_view part_mig_opt_depth{opt_mig};
               int mig_opt_size = opt_mig.num_gates();
               int mig_opt_depth = part_mig_opt_depth.depth();
-              std::cout << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
+              env->out() << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
 
               if((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)){
-                std::cout << "AIG wins\n";
+                env->out() << "AIG wins\n";
                 aig_parts2.push_back(i);
               }
               else{
-                std::cout << "MIG wins\n";
+                env->out() << "MIG wins\n";
                 mig_parts2.push_back(i);
               }
             }
@@ -173,7 +199,7 @@ namespace alice
               mig_parts2 = tmp.get_mig_parts();
             }
             else{
-              std::cout << "Must include CNN model json file\n";
+              env->err() << "Must include CNN model json file\n";
             }
 
           }
@@ -181,19 +207,19 @@ namespace alice
           mockturtle::direct_resynthesis<mockturtle::mig_network> convert_mig;
 
           auto mig = mockturtle::node_resynthesis<mockturtle::mig_network>(ntk_final, convert_mig);
-          std::cout << "Initial MIG size = " << mig.num_gates() << "\n";
+          env->out() << "Initial MIG size = " << mig.num_gates() << "\n";
 
           oracle::partition_manager<mig_names> partitions_mig(mig, num_parts);
 
           //Deal with AIG partitions
-          std::cout << "Total number of partitions for AIG 2 " << aig_parts2.size() << std::endl;
-          std::cout << "Total number of partitions for MIG 2 " << mig_parts2.size() << std::endl;
+          env->out() << "Total number of partitions for AIG 2 " << aig_parts2.size() << std::endl;
+          env->out() << "Total number of partitions for MIG 2 " << mig_parts2.size() << std::endl;
           for (int i = 0; i < mig_parts2.size(); i++) {
             oracle::partition_view<mig_names> part_mig = partitions_mig.create_part(mig, mig_parts2.at(i));
 
-            std::cout << "\nPartition " << i << "\n";
+            env->out() << "\nPartition " << i << "\n";
             mockturtle::depth_view part_depth{part_mig};
-            std::cout << "Partition size = " << part_mig.num_gates() << " and depth = " << part_depth.depth() << "\n";
+            env->out() << "Partition size = " << part_mig.num_gates() << " and depth = " << part_depth.depth() << "\n";
 
             auto mig_opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part_mig, resyn_mig);
             mockturtle::mig_script migopt;
@@ -202,7 +228,7 @@ namespace alice
 
             mockturtle::depth_view opt_mig_depth{mig_opt};
 
-            std::cout << "Post optimization part size = " << mig_opt.num_gates() << " and depth = "
+            env->out() << "Post optimization part size = " << mig_opt.num_gates() << " and depth = "
                       << opt_mig_depth.depth()
                       << "\n";
 
@@ -214,13 +240,13 @@ namespace alice
 
           mockturtle::depth_view final_mig{mig};
 
-          std::cout << "new ntk size = " << mig.num_gates() << " and depth = " << final_mig.depth() << "\n";
-          std::cout << "Finished optimization\n";
+          env->out() << "new ntk size = " << mig.num_gates() << " and depth = " << final_mig.depth() << "\n";
+          env->out() << "Finished optimization\n";
 
           mockturtle::write_verilog(mig, out_file);
         }
         else{
-          std::cout << "There is no stored AIG network\n";
+          env->err() << "There is no stored AIG network\n";
         }
       }
 

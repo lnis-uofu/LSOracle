@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -25,7 +51,7 @@ namespace alice
 
     protected:
         void execute(){
-            
+
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
                 auto& mig = *store<mig_ntk>().current();
@@ -38,7 +64,7 @@ namespace alice
 
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>( mapped, ps );
 
-                std::cout << "number of cells = " << mapped.num_cells() << "\n";
+                env->out() << "number of cells = " << mapped.num_cells() << "\n";
 
                 const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
                 // auto const& klut = *klut_opt;
@@ -54,11 +80,11 @@ namespace alice
                 });
 
                 mockturtle::depth_view klut_depth{names_view};
-                std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-                std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
-                std::cout << "Finshed LUT mapping\n";
+                env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+                env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
+                env->out() << "Finshed LUT mapping\n";
                 if(out_file != ""){
-                  std::cout << "filename = " << out_file << "\n";
+                  env->out() << "filename = " << out_file << "\n";
                   if(oracle::checkExt(out_file, "bench")){
                     mockturtle::write_bench(names_view, out_file);
                   }
@@ -66,12 +92,12 @@ namespace alice
                     mockturtle::write_blif(names_view, out_file);
                   }
                   else{
-                    std::cout << "Not valid output file\n";
+                    env->err() << "Not valid output file\n";
                   }
                 }
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              env->err() << "There is not an MIG network stored.\n";
             }
           }
           else{
@@ -86,7 +112,7 @@ namespace alice
 
               mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>( mapped, ps );
 
-              std::cout << "number of cells = " << mapped.num_cells() << "\n";
+              env->out() << "number of cells = " << mapped.num_cells() << "\n";
 
               const auto klut_opt = mockturtle::collapse_mapped_network<mockturtle::klut_network>( mapped );
               // auto const& klut = *klut_opt;
@@ -102,18 +128,18 @@ namespace alice
               });
 
               mockturtle::depth_view klut_depth{names_view};
-              // std::cout << "klut size = " << klut.size() << "\n";
+              // env->out() << "klut size = " << klut.size() << "\n";
               // klut.foreach_node([&](auto node){
-              //   std::cout << "Node = " << node << "\n";
+              //   env->out() << "Node = " << node << "\n";
               //   klut.foreach_fanin(node, [&](auto const &conn, auto i){
-              //     std::cout << "child[" << i << "] = " << conn << "\n";
+              //     env->out() << "child[" << i << "] = " << conn << "\n";
               //   });
               // });
-              std::cout << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
-              std::cout << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
-              std::cout << "Finshed LUT mapping\n";
+              env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth() << "\n";
+              env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth() << "\n";
+              env->out() << "Finshed LUT mapping\n";
               if(out_file != ""){
-                std::cout << "filename = " << out_file << "\n";
+                env->out() << "filename = " << out_file << "\n";
                 if(oracle::checkExt(out_file, "bench")){
                   mockturtle::write_bench(names_view, out_file);
                 }
@@ -121,15 +147,15 @@ namespace alice
                   mockturtle::write_blif(names_view, out_file);
                 }
                 else{
-                  std::cout << "Not valid output file\n";
+                  env->err() << "Not valid output file\n";
                 }
               }
             }
             else{
-              std::cout << "There is not an AIG network stored.\n";
+              env->err() << "There is not an AIG network stored.\n";
             }
           }
-        }    
+        }
     private:
       int lut_size = 6;
       int cut_size = 8;

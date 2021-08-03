@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #pragma once
 
 #include <alice/alice.hpp>
@@ -35,7 +61,7 @@ namespace alice
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -44,9 +70,9 @@ namespace alice
             mockturtle::xag_network ntk;
             mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+
             store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
-            std::cout << "XAG network stored\n";
+            env->out() << "XAG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -55,9 +81,9 @@ namespace alice
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
             lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-                
+
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
-            std::cout << "AIG network stored\n";
+            env->out() << "AIG network stored\n";
 
             filename.erase(filename.end() - 4, filename.end());
             names_view.set_network_name(filename);
@@ -65,7 +91,7 @@ namespace alice
 
         }
         else{
-            std::cout << filename << " is not a valid aig file\n";
+            env->err() << filename << " is not a valid aig file\n";
         }
       }
     private:
