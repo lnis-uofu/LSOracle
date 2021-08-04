@@ -37,7 +37,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Threads)
 link_libraries(Threads::Threads)
-
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 add_subdirectory(lib)
 add_subdirectory(core)
 
