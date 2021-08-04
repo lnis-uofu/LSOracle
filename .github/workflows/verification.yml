@@ -8,7 +8,7 @@ jobs:
     runs-on: self-hosted
     name: verification
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
-     env:
+    env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
       CCACHE_MAXSIZE: "400M"
