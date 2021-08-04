@@ -12,6 +12,12 @@ endif()
 set(LSORACLE_VERSION "2.0.0")
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
+  COMMAND python3 ${PROJECT_SOURCE_DIR}/generate_kahypar.py ${PROJECT_SOURCE_DIR}/test.ini ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
+  MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/test.ini
+)
+
 # "We do not recommend using GLOB to collect a list of source files from your source tree.
 # If no CMakeLists.txt file changes when a source is added or removed then the generated
 # build system cannot know when to ask CMake to regenerate."
