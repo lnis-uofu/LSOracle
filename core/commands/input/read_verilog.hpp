@@ -54,8 +54,11 @@ namespace alice
           if(is_set("mig")){
             mockturtle::mig_network mig;
             mockturtle::names_view<mockturtle::mig_network> names_view{mig};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
-
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file." << std::endl;
+              return;
+            }
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
             env->out() << "MIG network stored" << std::endl;
 
@@ -65,8 +68,11 @@ namespace alice
           else{
             mockturtle::aig_network aig;
             mockturtle::names_view<mockturtle::aig_network> names_view{aig};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
-
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file." << std::endl;
+              return;
+            }
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             env->out() << "AIG network stored" << std::endl;
 
