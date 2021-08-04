@@ -48,7 +48,6 @@ namespace alice
     	env->out() << "Mig level " << mig_depth.depth() << " mig gates " << mig.num_gates() << std::endl;
 
     	mockturtle::mig_algebraic_depth_rewriting_params pm;
-    	pm.aggressive;
     	mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
 
     	mig = mockturtle::cleanup_dangling( mig );

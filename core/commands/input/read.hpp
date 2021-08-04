@@ -57,8 +57,11 @@ namespace alice
           if(is_set("mig")){
             mockturtle::mig_network ntk;
             mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
-            lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-
+            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read aiger file";
+              return;
+            }
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
             env->out() << "MIG network stored\n";
 
@@ -68,7 +71,11 @@ namespace alice
           if(is_set("klut")){
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file";
+              return;
+            }
 
             mockturtle::mapping_view<aig_names, true> mapped_aig{names_view};
             mockturtle::lut_mapping_params ps;
@@ -86,8 +93,11 @@ namespace alice
           else if(is_set("xag")){
             mockturtle::xag_network ntk;
             mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
-            lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-
+            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read aiger file";
+              return;
+            }
             store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
             env->out() << "XAG network stored\n";
 
@@ -97,8 +107,11 @@ namespace alice
           else{
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
-            lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-
+            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read aiger file";
+              return;
+            }
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             env->out() << "AIG network stored\n";
 
@@ -113,9 +126,10 @@ namespace alice
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{klut_ntk};
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
-
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read blif file";
+              return;
+            }
 
             mockturtle::mig_npn_resynthesis resyn;
 
@@ -134,9 +148,10 @@ namespace alice
             mockturtle::klut_network ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
-
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read blif file";
+              return;
+            }
 
             store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
             env->out() << "KLUT network stored\n";
@@ -149,9 +164,10 @@ namespace alice
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{klut_ntk};
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
-
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read blif file";
+              return;
+            }
 
             mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
 
@@ -171,9 +187,10 @@ namespace alice
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{klut_ntk};
             auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
-
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read blif file";
+              return;
+            }
 
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
 
@@ -195,7 +212,11 @@ namespace alice
           if(is_set("mig")){
             mockturtle::mig_network ntk;
             mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file";
+              return;
+            }
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
             env->out() << "MIG network stored" << std::endl;
@@ -206,7 +227,11 @@ namespace alice
           else if(is_set("klut")){
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file";
+              return;
+            }
 
             mockturtle::mapping_view<aig_names, true> mapped_aig{names_view};
             mockturtle::lut_mapping_params ps;
@@ -225,7 +250,11 @@ namespace alice
           else if(is_set("xag")){
             mockturtle::xag_network ntk;
             mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file";
+              return;
+            }
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
             env->out() << "XAG network stored" << std::endl;
@@ -236,8 +265,11 @@ namespace alice
           else{
             mockturtle::aig_network ntk;
             mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
-            lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
-
+            lorina::return_code result = lorina::read_verilog(filename, mockturtle::verilog_reader( names_view ));
+            if (result != lorina::return_code::success) {
+              env->err() << "Unable to read verilog file";
+              return;
+            }
             store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
             env->out() << "AIG network stored" << std::endl;
 
