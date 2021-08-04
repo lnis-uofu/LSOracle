@@ -4,10 +4,64 @@ on:
   - push
 
 jobs:
-  benchmark:
+  build:
     runs-on: self-hosted
     name: verification
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+     env:
+      CCACHE_COMPRESS: "true"
+      CCACHE_COMPRESSLEVEL: "6"
+      CCACHE_MAXSIZE: "400M"
+      CCACHE_LOGFILE: ccache_log
+      CCACHE_DIR: /__w/LSOracle/.ccache
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Load ccache
+        uses: actions/cache@v2
+        with:
+          path: |
+            /__w/LSOracle/.ccache
+          key: cicd_testing_build
+      - name: Build
+        run: |
+          ccache -p
+          ccache -z
+          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake --build build -j$(nproc)
+          ccache -s
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-binary
+          path: build/core/lsoracle
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-tests
+          path: build/core/unit_tests
+  test:
+    runs-on: ubuntu-latest
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    needs: build
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Get binaries
+        uses: actions/download-artifact@v2
+        with:
+          name: lsoracle-tests
+      - name: Unit Tests
+        run: |
+          chmod +x unit_tests
+          ./unit_tests
+  benchmark:
+    runs-on: ubuntu-latest
+    name: Benchmarks
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    needs: build
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v2
