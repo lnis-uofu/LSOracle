@@ -26,11 +26,16 @@
  */
 #include "kahypar_config.hpp"
 #include <fstream>
-
+#include <stdio.h>
+#include <string.h>
 std::string make_temp_config() {
-  std::string config_direct = std::tmpnam(nullptr);
-  std::ofstream temp(config_direct);
+  char *name = strdup("/tmp/lsoracle_XXXXXX");
+  if (mkstemp(name) == -1) {
+    throw std::exception();
+  }
+  std::string filename = std::string(name);
+  std::ofstream temp(filename);
   temp << KAHYPAR_DEFAULT_CONFIG;
   temp.close();
-  return config_direct;
+  return filename;
 }
