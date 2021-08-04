@@ -137,6 +137,9 @@
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
 
+#include "commands/version.hpp"
+
 #include "kahypar_config.hpp"
+#include "config.h"
 
 ALICE_MAIN( lsoracle )

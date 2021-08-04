@@ -136,3 +136,6 @@
 [submodule "lib/boost/exception"]
 	path = lib/boost/exception
 	url = https://github.com/boostorg/exception.git
+[submodule "lib/googletest"]
+	path = lib/googletest
+	url = https://github.com/google/googletest.git
