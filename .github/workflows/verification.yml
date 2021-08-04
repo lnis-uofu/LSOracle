@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: self-hosted
     name: verification
-    container: ghcr.io/lnis-uofu/lsoracle-build:lasest
+    container: ghcr.io/lnis-uofu/lsoracle-build:latest
     env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
