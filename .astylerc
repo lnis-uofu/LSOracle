@@ -1,0 +1,9 @@
+style=kr
+indent=spaces=4
+pad-oper
+max-code-length=80
+lineend=linux
+pad-header
+unpad-paren
+align-reference=name
+attach-return-type
