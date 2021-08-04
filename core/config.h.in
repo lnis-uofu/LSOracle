@@ -1,0 +1,4 @@
+#pragma once
+
+#cmakedefine LSORACLE_GIT_REVISION "@LSORACLE_GIT_REVISION@"
+#cmakedefine LSORACLE_VERSION "@LSORACLE_VERSION@"
