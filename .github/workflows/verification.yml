@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: self-hosted
     name: verification
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    container: ghcr.io/lnis-uofu/lsoracle-build:lasest
     env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
@@ -35,15 +35,15 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: lsoracle-binary
+          name: lsoracle-binary-local
           path: build/core/lsoracle
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: lsoracle-tests
+          name: lsoracle-tests-local
           path: build/core/unit_tests
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
     needs: build
     steps:
@@ -58,7 +58,7 @@ jobs:
           chmod +x unit_tests
           ./unit_tests
   benchmark:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Benchmarks
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
     needs: build
