@@ -1,18 +1,18 @@
-name: Local Runner Test
+#name: Local Runner Test
 
-on:
-  - push
+#on:
+#  - push
 
-jobs:
-  build:
-    runs-on: self-hosted
-    name: verification
-    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
-    steps:
-      - name: Clean runner workspace path
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf "${{ github.workspace }}"
+#jobs:
+#  build:
+#    runs-on: self-hosted
+#    name: verification
+#    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
+#    steps:
+#      - name: Clean runner workspace path
+#        run: |
+#          echo "Cleaning up previous run"
+#          rm -rf "${{ github.workspace }}"
      #     mkdir -p "${{ github.workspace }}"
      # - name: Check out the repo
      #   uses: actions/checkout@v2
