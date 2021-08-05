@@ -8,35 +8,20 @@ jobs:
     runs-on: self-hosted
     name: verification
     container: ghcr.io/lnis-uofu/lsoracle-build:groovy
-    env:
-      CCACHE_COMPRESS: "true"
-      CCACHE_COMPRESSLEVEL: "6"
-      CCACHE_MAXSIZE: "400M"
-      CCACHE_LOGFILE: ccache_log
-      CCACHE_DIR: /__w/LSOracle/.ccache
     steps:
-      - name: Clean runner workspace path
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf "${{ github.workspace }}"
-          mkdir -p "${{ github.workspace }}"
+      #- name: Clean runner workspace path
+      #  run: |
+      #    echo "Cleaning up previous run"
+      #    rm -rf "${{ github.workspace }}"
+      #    mkdir -p "${{ github.workspace }}"
       - name: Check out the repo
         uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Load ccache
-        uses: actions/cache@v2
-        with:
-          path: |
-            /__w/LSOracle/.ccache
-          key: cicd_testing_build
       - name: Build
         run: |
-          ccache -p
-          ccache -z
           cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
-          cmake --build build -j$(nproc)
-          ccache -s
+          cmake --build build -j 4
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
