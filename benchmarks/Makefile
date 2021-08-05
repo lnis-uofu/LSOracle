@@ -248,7 +248,7 @@ previous/%_lsoracle.everything: | previous
 #	@ echo >> $@
 everything.tsv: ${REPORTS}
 	@ echo generating report $@
-	python3 combine_report.py $< $^
+	python3 combine_report.py $^
 
 #everything.tsv: ${EVERYTHING_REPORTS}
 #	@ echo generating report $@
