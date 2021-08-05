@@ -1,3 +1,27 @@
+# LSOracle: A learning based Oracle for Logic Synthesis
+# MIT License
+# Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights to use,
+# copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following
+# conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -9,79 +33,71 @@ import numpy.lib.recfunctions as rcf
 plt.rcParams['font.size'] = '9'
 plt.style.use('tableau-colorblind10')
 plt.rcParams['font.family'] = 'serif'
-input_file, prev_file, output_file = sys.argv[1:] if len(sys.argv) > 1 else ('everything.tsv', 'previous/everything.tsv', 'everything.png')
 
-n = np.genfromtxt(input_file, delimiter='\t', names=True, dtype=None, encoding="UTF-8")
+input_file, prev_file, output_file = sys.argv[1:] if len(sys.argv) > 1 else ['everything.tsv', 'previous/everything.tsv', 'everything.png']
 
-if os.path.isfile(prev_file):
-    p = np.genfromtxt(prev_file, delimiter='\t', names=True, dtype=n.dtype, encoding="UTF-8")
+n = np.genfromtxt(input_file, delimiter=None, names=True, dtype=None, encoding="UTF-8")
+
+prev_exists = os.path.isfile(prev_file)
+if prev_exists:
+    p = np.genfromtxt(prev_file, delimiter=None , names=True, dtype=n.dtype, encoding="UTF-8")
 else:
     p = np.asarray([], dtype=n.dtype)
 
 d = rcf.join_by("circuit", n, p, jointype='leftouter', r1postfix='', r2postfix='_prev')
-np.sort(d, order=["unopt_nodes"])
+np.sort(d, order=["unoptimized_nodes"])
 
 colwidth = 21*400./2409
 textwidth = 43*400./2409
 
-width = 0.20
-prev_exists = 1 if os.path.isfile(prev_file) else np.nan
+width = 0.10
 
 fig, (nodes, depth, ndp, delay, adp, area) = plt.subplots(1,6)
 
-nodes_d = np.dstack((1 - d['final_nodes'] / d['unopt_aig_nodes'],
-                     1 - d['abc_aig_nodes'] / d['unopt_aig_nodes'],
-                     prev_exists * (1 - d['final_nodes_prev'] / d['unopt_aig_nodes'])))[0]
-depth_d = np.dstack((1 - d['final_levels'] / d['unopt_aig_levels'],
-                     1 - d['abc_aig_levels'] / d['unopt_aig_levels'],
-                     prev_exists * (1 - d['final_levels_prev'] / d['unopt_aig_levels'])))[0]
+runs = [("lsoracle", ""), ("abc", ""), ("aigscript", ""), ("migscript", ""), ("lsoracle", "_prev")]
+graph_cols = ['nodes', 'level', 'area', 'arrival']
 
-ndp_u = d['unopt_aig_nodes'] * d['unopt_aig_levels']
-ndp_d = np.dstack((1 - d['final_nodes'] * d['final_levels'] / ndp_u,
-                   1 - d['abc_aig_nodes'] * d['abc_aig_levels'] / ndp_u,
-                   prev_exists * (1 - d['final_nodes_prev'] * d['final_levels'] /ndp_u)))[0]
-area_d = np.dstack((1 - d['area'] / d['unopt_area'],
-                    1 - d['abc_area']/d['unopt_area'],
-                    prev_exists * (1 - d['area_prev']/d['unopt_area'])))[0]
-adp_u = d['unopt_arrival'] * d['unopt_area']
-adp_d = np.dstack((1 - d['area'] * d['arrival'] / adp_u,
-                   1 - d['abc_area'] * d['abc_arrival'] / adp_u,
-                   prev_exists * (1 - d['area_prev'] * d['arrival_prev'] / adp_u)))[0]
+nodes_d, depth_d, area_d, delay_d = np.array([[
+    d[run + '_' + col + suff]
+    for run, suff in runs] for col in graph_cols])
 
-delay_d = np.dstack((1 - d['arrival'] / d['unopt_arrival'],
-                     1 - d['abc_arrival'] / d['unopt_arrival'],
-                     prev_exists * (1 - d['arrival_prev'] / d['unopt_arrival'])))[0]
+ndp_u = d['unoptimized_nodes'] * d['unoptimized_level']
+ndp_d = nodes_d * depth_d / ndp_u
+adp_u = d['unoptimized_arrival'] * d['unoptimized_area']
+adp_d = area_d * delay_d / adp_u
 
 fig, ((nodes, depth, ndp), (area, delay, adp))  = plt.subplots(2,3)
 
-for m, t, ax, da in [
-        ("nodes", "Nodes", nodes, nodes_d),
-        ("depth", "Depth", depth, depth_d),
+for m, t, ax, db in [
+        ("nodes", "Nodes", nodes, nodes_d/d['unoptimized_nodes']),
+        ("depth", "Depth", depth, depth_d/d['unoptimized_level']),
         ("ndp", "Node Depth Product", ndp, ndp_d),
-        ("area", "Area", area, area_d),
-        ("delay", "Delay", delay, delay_d),
+        ("area", "Area", area, area_d/d['unoptimized_area']),
+        ("delay", "Delay", delay, delay_d/d['unoptimized_arrival']),
         ("adp", "Area Delay Product", adp, adp_d),
 ]:
+    da = np.transpose(1 - db) * [1,1,1,1, 1 if prev_exists else 0]
+    print(da)
     ax.margins(x=0.10)
     ax.set(title=t)
     x = np.arange(len(da)+1)
-    u = np.append(da[:,0], np.average(da[:,0]))
-    a = np.append(da[:,1], np.average(da[:,1]))
-    l = np.append(da[:,2], np.average(da[:,2]))
 
     labels = np.append(d["circuit"], "average")
 
-    farm = ax.barh(x+width, u, width, label="Latest LSOracle")
-    lsoracle = ax.barh(x, l, width, label="Previous LSOracle")
-    abc = ax.barh(x-width, a, width, label="ABC")
+    def bar(off, i, label):
+        u = np.append(da[:,i], np.average(da[:,i]))
+        bars = ax.barh(x+off*width, u, width, label=label)
+        ax.bar_label(bars, [f"{f:.0%}" for f in u], padding=3, fontsize='x-small')
+
+    bar(2, 0, "lsoracle")
+    bar(1, 1, "aigscript")
+    bar(0, 2, "migscript")
+    bar(-1, 3, "abc")
+    bar(-2, 4, "previous lsoracle")
 
     ax.set_xlabel("% improvement over original circuit")
     ax.set_yticks(x)
     ax.set_yticklabels(labels)
-
-    ax.bar_label(farm, [f"{f:.0%}" for f in u], padding=3, fontsize='x-small')
-    ax.bar_label(abc, [f"{f:.0%}" for f in a], padding=3, fontsize='x-small')
-    ax.bar_label(lsoracle, [f"{f:.0%}" for f in l], padding=3, fontsize='x-small')
 
     ax.axvline(color="black")
     ax.xaxis.set_major_formatter("{x:.0%}")
