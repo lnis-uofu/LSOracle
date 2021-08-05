@@ -96,7 +96,9 @@
 #include "commands/stats/depth.hpp"
 #include "commands/stats/get_cones.hpp"
 #include "commands/stats/ntk_stats.hpp"
-#include "commands/stats/connectivity.hpp"
+#include "commands/stats/skip_histogram.hpp"
+#include "commands/stats/fanout_histogram.hpp"
+#include "commands/stats/level_size.hpp"
 
 //Partitioning
 #include "commands/partitioning/partitioning.hpp"

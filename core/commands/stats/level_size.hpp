@@ -24,35 +24,52 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
+
 #include <alice/alice.hpp>
-#include <stdio.h>
+
+#include <mockturtle/mockturtle.hpp>
 
 namespace alice
 {
-  class redirect_command : public alice::command{
+  class level_size_command : public alice::command{
 
     public:
-      explicit redirect_command( const environment::ptr& env )
-          : command( env, "Redirect command output to specified file." ){
-        opts.add_option( "--file,-f,file", filename, "File to write output to." );
-        add_flag( "--stdout", "Write output to standard output" );
+      explicit level_size_command( const environment::ptr& env )
+          : command( env, "Displays a histogram of fanout of the stored network" ){
+        add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
+        add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
+        add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
       }
 
+    template <typename ntk> void dump_stats(string name) {
+      if(!store<ntk>().empty()) {
+        auto& dag = *store<ntk>().current();
+        mockturtle::depth_view dag_view{dag};
+        vector<uint32_t> levels(dag_view.depth(), 0);
+        dag_view.foreach_node([&dag_view, &levels](auto n){
+          levels[dag_view.level(n)]++;
+        });
+        env->out() << "Level\tNodes" << std::endl;
+        for (size_t i = 0; i < levels.size(); i++) {
+          env->out() << i << "\t" << levels[i] << std::endl;
+        }
+      } else {
+        env->err() << "There is not an " << name << " network stored.\n";
+      }
+    }
     protected:
       void execute(){
-        // if (env->out() != std::cout) {
-        //   env->out().close();
-        // }
-        if (filename != "") {
-          ofstream output(filename);
-          env->reroute(output, std::cerr);
+        if(is_set("mig")){
+          dump_stats<mig_ntk>("MIG");
+        } else if(is_set("xag")) {
+          dump_stats<xag_ntk>("XAG");
         } else {
-          env->reroute(std::cout, std::cerr);
+          dump_stats<aig_ntk>("AIG");
         }
       }
     private:
-      std::string filename{};
   };
 
-  ALICE_ADD_COMMAND(redirect, "Output");
+  ALICE_ADD_COMMAND(level_size, "Stats");
 }
