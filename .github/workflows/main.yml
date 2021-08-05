@@ -67,9 +67,9 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: lsoracle-binary
-      - name: Prep previous
-        run: |
-          mkdir -p benchmarks/previous
+#      - name: Prep previous
+#        run: |
+#          mkdir -p benchmarks/previous
       - name: Run synthesis
         run: |
           cp lsoracle /usr/local/bin
@@ -90,13 +90,13 @@ jobs:
             benchmarks/*/*.timing
             benchmarks/*/*.report
             benchmarks/*/*.everything
-      - name: Get previous results
-        uses: dsaltares/fetch-gh-release-asset@master
-        with:
-          version: tags/cicd_test
-          file: "everything.tsv"
-          target: "benchmarks/previous/everything.tsv"
-          token: ${{ secrets.GITHUB_TOKEN }}
+      #- name: Get previous results
+      #  uses: dsaltares/fetch-gh-release-asset@master
+      #  with:
+      #    version: tags/cicd_test
+      #    file: "everything.tsv"
+      #    target: "benchmarks/previous/everything.tsv"
+      #    token: ${{ secrets.GITHUB_TOKEN }}
       - name: Render results
         continue-on-error: true
         run: |
