@@ -35,7 +35,7 @@ ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
 EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
-ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EFPL} # ${ISCAS85} ${ISCAS89}
+ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} ${ISCAS89}
 
 ################################################################
 ######################## Targets ###############################
@@ -249,7 +249,7 @@ previous/%_lsoracle.everything: | previous
 everything.tsv: ${REPORTS}
 	@ echo generating report $@
 	python3 combine_report.py $< $^
-	
+
 #everything.tsv: ${EVERYTHING_REPORTS}
 #	@ echo generating report $@
 #	python3 combine_report.py $< $^
