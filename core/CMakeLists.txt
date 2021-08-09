@@ -1,5 +1,17 @@
 project(lsoracle)
 
+find_package(Git)
+if(GIT_FOUND)
+  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --verify --short HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE LSORACLE_GIT_REVISION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+else()
+  set(LSORACLE_GIT_REVISION "UNKNOWN")
+endif()
+set(LSORACLE_VERSION "2.0.0")
+configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   COMMAND python3 ${PROJECT_SOURCE_DIR}/generate_kahypar.py ${PROJECT_SOURCE_DIR}/test.ini ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
@@ -17,6 +29,7 @@ set(LSORACLE_SOURCE
 
 add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})
 target_include_directories(lsoracle PRIVATE .)
+target_include_directories(lsoracle PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(lsoracle alice mockturtle kahypar)

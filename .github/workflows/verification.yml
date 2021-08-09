@@ -1,0 +1,35 @@
+name: Local Runner Test
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: self-hosted
+    name: verification
+    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
+    steps:
+      - name: Clean runner workspace path
+        run: |
+          echo "Hello, world"
+#          echo "Cleaning up previous run"
+#          rm -rf "${{ github.workspace }}"
+     #     mkdir -p "${{ github.workspace }}"
+     # - name: Check out the repo
+     #   uses: actions/checkout@v2
+     #   with:
+     #     submodules: recursive
+     # - name: Build
+     #   run: |
+     #     cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+     #     cmake --build build -j 4
+     # - name: Upload artifacts
+     #   uses: actions/upload-artifact@v2
+     #   with:
+     #     name: lsoracle-binary-local
+     #     path: build/core/lsoracle
+     # - name: Upload artifacts
+     #   uses: actions/upload-artifact@v2
+     #   with:
+     #     name: lsoracle-tests-local
+     #     path: build/core/unit_tests

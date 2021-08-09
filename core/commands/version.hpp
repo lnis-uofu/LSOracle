@@ -24,18 +24,26 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "kahypar_config.hpp"
-#include <fstream>
-#include <stdio.h>
-#include <string.h>
-std::string make_temp_config() {
-  char *name = strdup("/tmp/lsoracle_XXXXXX");
-  if (mkstemp(name) == -1) {
-    throw std::exception();
-  }
-  std::string filename = std::string(name);
-  std::ofstream temp(filename);
-  temp << KAHYPAR_DEFAULT_CONFIG;
-  temp.close();
-  return filename;
+#include <alice/alice.hpp>
+#include "config.h"
+
+namespace alice
+{
+  class version_command : public alice::command{
+
+    public:
+      explicit version_command( const environment::ptr& env )
+          : command( env, "Display version number" ){
+      }
+
+    protected:
+    void execute() {
+      env->out() << "Version " << LSORACLE_VERSION << " Revision " << LSORACLE_GIT_REVISION << std::endl;
+    }
+
+    private:
+
+    };
+
+  ALICE_ADD_COMMAND(version, "Output");
 }
