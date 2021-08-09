@@ -59,6 +59,7 @@ namespace alice
             fanout_histogram[fanout]++;
           }
         });
+        env->out() << "Node counts by number of fanouts" << std::endl;;
         env->out() << "Fanout\tNodes" << std::endl;
         for (size_t i = 0; i < fanout_histogram.size() - 1; i++) {
           env->out() << i << "\t" << fanout_histogram[i] << std::endl;

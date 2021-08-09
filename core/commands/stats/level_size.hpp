@@ -50,6 +50,7 @@ namespace alice
         dag_view.foreach_node([&dag_view, &levels](auto n){
           levels[dag_view.level(n)]++;
         });
+        env->out() << "Nodes per level" << std::endl;
         env->out() << "Level\tNodes" << std::endl;
         for (size_t i = 0; i < levels.size(); i++) {
           env->out() << i << "\t" << levels[i] << std::endl;

@@ -44,8 +44,9 @@ namespace alice
         //   env->out().close();
         // }
         if (filename != "") {
-          ofstream output(filename);
-          env->reroute(output, std::cerr);
+          std::ofstream *output = new std::ofstream(filename);
+          *output << "Redirected output" << std::endl;
+          env->reroute(*output, std::cerr);
         } else {
           env->reroute(std::cout, std::cerr);
         }

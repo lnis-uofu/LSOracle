@@ -32,11 +32,11 @@
 
 namespace alice
 {
-  class skip_histogram_command : public alice::command{
+  class fanin_histogram_command : public alice::command{
 
     public:
-      explicit skip_histogram_command( const environment::ptr& env )
-          : command( env, "Displays a histogram of the number of levels in the DAG each fanout skips." ){
+      explicit fanin_histogram_command( const environment::ptr& env )
+          : command( env, "Displays a histogram of nodes by MFFC size on the stored network" ){
         add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
@@ -47,29 +47,24 @@ namespace alice
         auto& dag = *store<ntk>().current();
         mockturtle::depth_view dag_depth{dag};
         mockturtle::fanout_view dag_fanout{dag};
-        vector<uint32_t> skip_histogram(dag_depth.depth(), 0);
-        uint32_t mismatch_levels = 0;
 
-        dag_fanout.foreach_node([this, &dag_depth, &dag_fanout, &skip_histogram, &mismatch_levels](auto n){
-          uint32_t last_level = 0;
-          bool mismatched = false;
-          dag_fanout.foreach_fanout(n, [&dag_depth, &dag_fanout, &skip_histogram, &mismatched, &last_level, n](auto f) {
-            if (last_level != 0 && last_level != dag_depth.level(f)) {
-              mismatched = true;
-            }
-            last_level = dag_depth.level(f);
-            uint32_t skip = dag_depth.level(f) - dag_depth.level(n);
-            skip_histogram[skip]++;
+        uint32_t count = 0;
+
+        dag_fanout.foreach_node([this, &dag_depth, &dag_fanout, &count](auto n){
+          bool pure = true;
+          dag_fanout.foreach_fanin(n, [&dag_depth, &dag_fanout, &pure, n](auto f) {
+            uint32_t fanout = 0;
+            auto node = dag_fanout.get_node(f);
+            dag_fanout.foreach_fanout(node, [&fanout](auto g) {
+              fanout++;
+            });
+
+            bool isolated_fanin = fanout == 1 && (dag_depth.level(n) - dag_depth.level(node) == 1) == 1;
+            pure = pure && (dag_fanout.is_constant(node) || isolated_fanin);
           });
-          if (mismatched) {
-            mismatch_levels++;
-          }
+          if (!pure) count++;
         });
-        env->out() << "Nodes whose fanout skip levels\t" << mismatch_levels << std::endl;
-        env->out() << "Skip Levels\tNodes" << std::endl;
-        for (size_t i = 0; i < skip_histogram.size(); i++) {
-          env->out() << i << "\t" << skip_histogram[i] << std::endl;
-        }
+        env->out() << "Pure nodes\t" << count << std::endl;
       } else {
         env->err() << "There is not an " << name << " network stored.\n";
       }
@@ -87,5 +82,5 @@ namespace alice
     private:
   };
 
-  ALICE_ADD_COMMAND(skip_histogram, "Stats");
+  ALICE_ADD_COMMAND(fanin_histogram, "Stats");
 }
