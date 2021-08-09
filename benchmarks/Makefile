@@ -75,7 +75,7 @@ REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
 ################################################################
-all: everything.png
+5Ball: everything.png
 
 .PHONY: extract synth reports techmap reports timing everything_reports clean all reset
 
@@ -98,6 +98,9 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 reset:
 	rm -f ${LSORACLE_OUTPUTS} ${LSORACLE_SYNTH_LOG} ${LSORACLE_TECHMAP_OUTPUTS} ${LSORACLE_SYNTH_REPORTS} ${LSORACLE_TECHMAP_LOGS} ${LSORACLE_TIMING_REPORT} ${LSORACLE_TIMING_LOG} ${REPORTS}
 
+clean_synth:
+	rm -f ${LSORACLE_OUTPUTS}
+
 clean: clean_reports
 	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS}
 
@@ -117,7 +120,7 @@ clean_reports:
 
 %_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed &: %.rtl
 	$(eval TEMP=$(shell mktemp))
-	echo "ps -a; partitioning -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization ; ps -m; crit_path_stats; ntk_stats " > ${TEMP}
+	echo "ps -a; partitioning --epsilon 0.2 -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization; ps -m; crit_path_stats; ntk_stats; level_size -m; fanin_histogram -m; skip_histogram -m;  fanout_histogram -m" > ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 	rm ${TEMP}
 
@@ -249,7 +252,7 @@ previous/%_lsoracle.everything: | previous
 everything.tsv: ${REPORTS}
 	@ echo generating report $@
 	python3 combine_report.py $< $^
-	
+
 #everything.tsv: ${EVERYTHING_REPORTS}
 #	@ echo generating report $@
 #	python3 combine_report.py $< $^
