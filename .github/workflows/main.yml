@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Benchmarks
     env:
-      TEE=tee
+      TEE: tee
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
     needs: build
     steps:
