@@ -3,5 +3,5 @@ Optimization
 
 .. toctree::
 
-    dnn_opt
+    opt
     mixed
