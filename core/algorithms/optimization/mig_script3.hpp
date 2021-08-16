@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
@@ -12,18 +38,20 @@ namespace oracle{
     class mig_script3{
     public:
         mockturtle::mig_network run(mockturtle::mig_network& mig){
-            
+
+            mockturtle::sop_rebalancing<mockturtle::mig_network> balfn;
             mockturtle::mig_npn_resynthesis resyn;
             mockturtle::cut_rewriting_params ps;
             mockturtle::mig_algebraic_depth_rewriting_params pm;
-            pm.selective;
+            mockturtle::balancing_params bs;
 
-            ps.cut_enumeration_ps.cut_size = 4;
+            bs.cut_enumeration_ps.cut_size = 4u;
+            //pm.selective; //this line does nothing after mockturtle upgrade.  Revisit.
 
-            mockturtle::depth_view mig_depth{mig};
-            
+            ps.cut_enumeration_ps.cut_size = 4u;
+
             //b
-            mockturtle::balancing(mig_depth);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -38,10 +66,8 @@ namespace oracle{
             mockturtle::mig_algebraic_depth_rewriting(mig_ref_depth1, pm);
             mig = mockturtle::cleanup_dangling( mig );
 
-            mockturtle::depth_view mig_depth1{mig};
-
             //b
-            mockturtle::balancing(mig_depth1);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rw
@@ -56,10 +82,8 @@ namespace oracle{
             mig = mockturtle::cleanup_dangling(mig);
             // std::cout << "6\n";
 
-            mockturtle::depth_view mig_depth2{mig};
-            
             //b
-            mockturtle::balancing(mig_depth2);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             //rfz
@@ -75,10 +99,8 @@ namespace oracle{
             mig = mockturtle::cleanup_dangling(mig);
             // std::cout << "9\n";
 
-            mockturtle::depth_view mig_depth3{mig};
-            
             //b
-            mockturtle::balancing(mig_depth3);
+            mig = mockturtle::balancing(mig, {balfn}, bs);
             mig = mockturtle::cleanup_dangling(mig);
 
             return mig;

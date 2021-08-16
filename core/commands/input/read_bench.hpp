@@ -1,13 +1,31 @@
-#include <alice/alice.hpp>
+/* LSOracle: A learning based Oracle for Logic Synthesis
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+#include <alice/alice.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <stdio.h>
 #include <fstream>
@@ -35,16 +53,15 @@ namespace alice
       void execute(){
 
         if(oracle::checkExt(filename, "bench")){
-          
+
            if(is_set("mig")){
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ), &diag);
+            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
-            
+              env->err() << "parsing failed\n";
+
             mockturtle::mig_npn_resynthesis resyn;
 
             mockturtle::mig_network ntk;
@@ -53,19 +70,18 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
 
             store<mig_ntk>().extend() = std::make_shared<mig_names>( named_dest );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else if(is_set("xag")){
             mockturtle::klut_network klut_ntk;
             mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ), &diag);
+            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( klut_name_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
 
@@ -75,20 +91,19 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
 
             store<xag_ntk>().extend() = std::make_shared<xag_names>( named_dest );
-            std::cout << "XAG network stored\n";
+            env->out() << "XAG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else if(is_set("aig")){
 
             mockturtle::klut_network ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ), &diag);
+            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::aig_network aig;
@@ -97,31 +112,30 @@ namespace alice
             mockturtle::node_resynthesis( named_dest, names_view, resyn );
 
             store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
-            std::cout << "AIG network stored\n";
+            env->out() << "AIG network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
-            named_dest._storage->net_name = filename;
+            named_dest.set_network_name(filename);
           }
           else{
             mockturtle::klut_network ntk;
             mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            lorina::diagnostic_engine diag;
-            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ), &diag);
+            auto const result = lorina::read_bench(filename, mockturtle::bench_reader( names_view ));
 
             if(result != lorina::return_code::success)
-              std::cout << "parsing failed\n";
+              env->err() << "parsing failed\n";
 
             store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
-            std::cout << "KLUT network stored\n";
+            env->out() << "KLUT network stored\n";
 
             filename.erase(filename.end() - 6, filename.end());
-            names_view._storage->net_name = filename;
+            names_view.set_network_name(filename);
           }
         }
         else{
-            std::cout << filename << " is not a valid bench file\n";
+            env->err() << filename << " is not a valid bench file\n";
         }
-        
+
       }
     private:
       std::string filename{};

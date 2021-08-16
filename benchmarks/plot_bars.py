@@ -90,9 +90,9 @@ for m, t, ax, db in [
         ax.bar_label(bars, [f"{f:.0%}" for f in u], padding=3, fontsize='x-small')
 
     bar(2, 0, "lsoracle")
-    bar(1, 1, "aigscript")
-    bar(0, 2, "migscript")
-    bar(-1, 3, "abc")
+    bar(1, 1, "abc")
+    bar(0, 2, "aigscript")
+    bar(-1, 3, "migscript")
     bar(-2, 4, "previous lsoracle")
 
     ax.set_xlabel("% improvement over original circuit")

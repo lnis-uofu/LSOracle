@@ -1,13 +1,34 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+#pragma once
+
 #include <alice/alice.hpp>
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <stdio.h>
 #include <fstream>
@@ -30,10 +51,11 @@ namespace alice
                 opts.add_option( "--out,-o", out_file, "output file to write resulting network to [.v, .blif]" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]" );
 		opts.add_option("--config,-f", config_file, "Config file", true);
+                // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
                 add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
                 add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
                 add_flag("--combine,-c", "Combine adjacent partitions that have been classified for the same optimization");
-                add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
+                //add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
 #ifdef ENABLE_GALOIS
                 add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
 #endif
@@ -43,22 +65,32 @@ namespace alice
       void execute(){
 
         if(!store<aig_ntk>().empty()){
+          env->out() << "\n\n\n1\n";
           auto ntk = *store<aig_ntk>().current();
+          env->out() << "\n\n\n2\n";
+
           //If number of partitions is not specified
           if(num_partitions == 0){
+            env->out() << "\n\n\nif1\n";
+
             double size = ( (double) ntk.size() ) / 300.0;
             num_partitions = ceil(size);
           }
+          env->out() << "\n\n\n3\n";
 
           mockturtle::depth_view orig_depth{ntk};
           if(config_file == ""){
             config_file = make_temp_config();
           }
+          env->out() << "\n\n\n4\n";
+          env->out() << "constructing partition manager with " << num_partitions << " partitionis and config_file: " <<config_file << "\n";
 
           oracle::partition_manager<aig_names> partitions(ntk, num_partitions, config_file);
+          env->out() << "\n\n\n5\n";
+
           store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>( partitions );
 
-          std::cout << ntk._storage->net_name << " partitioned " << num_partitions << " times\n";
+          env->out() << ntk.get_network_name() << " partitioned " << num_partitions << " times\n";
           if(!nn_model.empty())
             high = false;
           else
@@ -79,45 +111,46 @@ namespace alice
 
           mockturtle::depth_view new_depth{ntk_mig};
           if (ntk_mig.size() != ntk.size() || orig_depth.depth() != new_depth.depth()){
-            std::cout << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
-            std::cout << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-            // std::cout << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+            env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " << new_depth.depth() << "\n";
+            env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
+            // env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-            std::cout << "Full Optimization: " << duration.count() << "ms\n";
-            // std::cout << "Finished optimization\n";
+            env->out() << "Full Optimization: " << duration.count() << "ms\n";
+            // env->out() << "Finished optimization\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
 
             if(out_file != ""){
               if(oracle::checkExt(out_file, "v")){
                 mockturtle::write_verilog_params ps;
-                if(is_set("skip-feedthrough"))
-                  ps.skip_feedthrough = 1u;
+                //might be nice to have again, but for now commenting this out to allow us to use stock mockturtle I/O
+                //if(is_set("skip-feedthrough"))
+                  //ps.skip_feedthrough = 1u;
 
                 mockturtle::write_verilog(ntk_mig, out_file, ps);
-                std::cout << "Resulting network written to " << out_file << "\n";
+                env->out() << "Resulting network written to " << out_file << "\n";
               }
               else if(oracle::checkExt(out_file, "blif")){
                 mockturtle::write_blif_params ps;
-                if(is_set("skip-feedthrough"))
-                  ps.skip_feedthrough = 1u;
+                //if(is_set("skip-feedthrough"))
+                  //ps.skip_feedthrough = 1u;
 
                 mockturtle::write_blif(ntk_mig, out_file, ps);
-                std::cout << "Resulting network written to " << out_file << "\n";
+                env->out() << "Resulting network written to " << out_file << "\n";
               }
               else{
-                std::cout << out_file << " is not an accepted output file {.v, .blif}\n";
+                env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
               }
             }
           }
           else{
-            std::cout << "No change made to network\n";
+            env->out() << "No change made to network\n";
             store<mig_ntk>().extend() = std::make_shared<mig_names>( ntk_mig );
-            std::cout << "MIG network stored\n";
+            env->out() << "MIG network stored\n";
           }
         }
         else{
-          std::cout << "AIG network not stored\n";
+          env->err() << "AIG network not stored\n";
         }
       }
     private:

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
+project(lsoracle_app LANGUAGES CXX)
 cmake_policy(SET CMP0079 NEW)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE STREQUAL "None")
@@ -17,6 +18,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
 endif()
 
 option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
+option(LOCAL_PYBIND "use pybind11 from submodule" ON)
+option(LOCAL_BOOST "use boost from submodules" ON)
+option(LOCAL_GTEST "use googletest from submodules" ON)
 option(ENABLE_GALOIS
   "Enable Galois library for hypergraph partitioning." OFF)
 
@@ -28,45 +32,15 @@ if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
-project(alice LANGUAGES CXX)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# some specific compiler definitions
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-fcolor-diagnostics" HAS_FCOLOR_DIAGNOSTICS)
-if (HAS_FCOLOR_DIAGNOSTICS)
-  add_compile_options(-fcolor-diagnostics)
-endif()
-
+find_package(Threads)
+link_libraries(Threads::Threads)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 add_subdirectory(lib)
-
-find_package(Threads REQUIRED)                        # thread library (pthread)
 add_subdirectory(core)
 
-# Link against LibRT on older Linux distros
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-    AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  find_library(LIBRT rt)
-  target_link_libraries(lsoracle ${LIBRT})
-endif()
-
-install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES core/test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
-
 if (${YOSYS_PLUGIN})
-  if (NOT DEFINED YOSYS_INCLUDE_DIR)
-    message(FATAL_ERROR "YOSYS_INCLUDE_DIR was not set, but plugin build was requested. If using a system installed yosys, this is typically located in /usr/local/share/yosys/include. In the yosys repository, the directory is ./share/include, or can also be specified as the root of the repository.")
-  endif()
   add_subdirectory(yosys-plugin)
-  if (DEFINED YOSYS_SHARE_DIR)
-    install(TARGETS yosys-plugin CONFIGURATIONS RELEASE DESTINATION ${YOSYS_SHARE_DIR}/plugin)
-  endif()
 endif()
-
-enable_testing()
-add_executable(unit_tests tests/basic.cpp)
-target_link_libraries(unit_tests gtest_main)
-include(GoogleTest)
-gtest_discover_tests(unit_tests)

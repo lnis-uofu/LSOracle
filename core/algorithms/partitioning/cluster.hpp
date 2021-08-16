@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -37,12 +39,10 @@
 #include <vector>
 #include <set>
 #include <cassert>
+#include <mockturtle/mockturtle.hpp>
 
-#include <mockturtle/traits.hpp>
 #include "partition_view.hpp"
 #include "hyperg.hpp"
-#include <mockturtle/networks/detail/foreach.hpp>
-#include <mockturtle/views/fanout_view.hpp>
 #include <libkahypar.h>
 
 namespace oracle
@@ -94,7 +94,7 @@ namespace oracle
       for(int i = 0; i < nodes2add.size(); i++){
         node node2add = nodes2add.at(i);
         nodes.insert(node2add);
-      
+
         auto start = std::chrono::high_resolution_clock::now();
         if(outputs.find(node2add) != outputs.end()){
           outputs.erase(node2add);
@@ -118,7 +118,7 @@ namespace oracle
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         // std::cout << "Updating IO: " << duration.count() << "us\n";
       }
-      
+
     }
 
     int num_intersec( Ntk const& ntk, node node2add ){
@@ -156,7 +156,7 @@ namespace oracle
           }
         });
       }
-      
+
       return num_intersec_nets;
     }
 
@@ -184,9 +184,9 @@ namespace oracle
 
       return connected_nodes;
     }
-    
+
   private:
-    
+
     std::set<node> nodes{};
     std::set<node> inputs{};
     std::set<node> outputs{};

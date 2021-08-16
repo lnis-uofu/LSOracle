@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
@@ -12,18 +38,21 @@ namespace oracle{
     class aig_script5{
     public:
         mockturtle::aig_network run(mockturtle::aig_network& aig){
-            
+
+            mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::refactoring_params rp;
+            mockturtle::balancing_params bs;
+
+            bs.cut_enumeration_ps.cut_size = 4u;
 
             oracle::rw_script rw_opt;
 
             rp.allow_zero_gain = false;
             rp.max_pis = 4;
-            
+
             //b
-            mockturtle::depth_view aig_depth{aig};
-            mockturtle::balancing(aig_depth);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth1{aig};
@@ -40,8 +69,7 @@ namespace oracle{
             mockturtle::depth_view rf_depth1{aig};
 
             //b
-            mockturtle::depth_view aig_depth1{aig};
-            mockturtle::balancing(aig_depth1);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth2{aig};
@@ -55,10 +83,9 @@ namespace oracle{
             aig = rw_opt.run(aig, true);
 
             mockturtle::depth_view rwz_depth1{aig};
-            
+
             //b
-            mockturtle::depth_view aig_depth2{aig};
-            mockturtle::balancing(aig_depth2);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth3{aig};
@@ -76,12 +103,11 @@ namespace oracle{
             mockturtle::depth_view rwz_depth2{aig};
 
             //b
-            mockturtle::depth_view aig_depth3{aig};
-            mockturtle::balancing(aig_depth3);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             mockturtle::depth_view b_depth4{aig};
-            
+
             return aig;
         }
     };

@@ -1,4 +1,6 @@
 /* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
  * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
@@ -64,7 +66,7 @@ public:
     mockturtle::node_map<mockturtle::signal<NtkDest>, NtkSource> node_to_signal( ntk ); //i/o for original klut network
     int netlistcount = 0; //node count.  Used as index in cell_names
     int new_count = 0;
-    std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle    
+    std::unordered_map <int, std::string> cell_names; //which network node is which standard cell.  Returned in tuple for printing.  Doing it this way to avoid changing mockturtle
     std::regex gate_inputs("\\.([ABCDY123]+)\\((.+?)\\)");  //regex to handle signals
     std::ifstream library("../../NPN_complete_noZero.json"); //make this generic once it's working
     library >> json_library; //this will be huge if we go above LUT4.  May need to memoize.
@@ -184,7 +186,7 @@ public:
 
                       //outputs and populating network
                       } else if (arg_match[1] == "Y"){
-                        if (arg_match[2] == "F"){ 
+                        if (arg_match[2] == "F"){
                           //the output of the last standard cell becomes the node_to_signal of the parent LUT so that the fanin of the next LUT is correct
                           //need to check if original function in LUT before NPN canonization had a negated output and if so add a NOT node.
                           int before = dest.size();
@@ -253,14 +255,14 @@ public:
             } catch (const std::exception& ex){
               // std::cout << "caught other exception: "<< ex.what() << "\n";
             }
-           
+
       } ); //foreach node
 
     ntk.foreach_po( [&]( auto const& f ) {
         dest.create_po( node_to_signal[f] );
     } );
-    
-    // std::cout << "###################\nLOOPING THROUGH DEST NTK (DEBUG)\n\n"; 
+
+    // std::cout << "###################\nLOOPING THROUGH DEST NTK (DEBUG)\n\n";
     // dest.foreach_node( [&]( auto const& n ) {
     //   if (cell_names.find(n) != cell_names.end()){
     //     std::cout << "\t" << n << "\t" << cell_names.at(n) << " \n";
@@ -279,7 +281,7 @@ public:
       auto func = dest.node_function( n );
       std::vector<mockturtle::signal<NtkDest>> check_node_children;
       std::vector<mockturtle::signal<NtkDest>> check_node_grandchildren;
-        
+
       if (kitty::to_hex(func) == "1"){
         dest.foreach_fanin( n, [&]( auto fanin ) {
           check_node_children.push_back(fanin);
@@ -431,7 +433,7 @@ private:
 template<class NtkDest, class NtkSource>
 std::tuple<NtkDest, std::unordered_map<int, std::string>> techmap_mapped_network( NtkSource const& ntk )
 {
-  
+
   static_assert( mockturtle::is_network_type_v<NtkSource>, "NtkSource is not a network type" );
   static_assert( mockturtle::is_network_type_v<NtkDest>, "NtkDest is not a network type" );
   static_assert( mockturtle::has_get_constant_v<NtkSource>, "NtkSource does not implement the get_constant method" );

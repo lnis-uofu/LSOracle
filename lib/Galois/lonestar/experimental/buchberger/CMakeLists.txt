@@ -1,7 +1,0 @@
-find_package(GMP)
-include_directories(${GMP_INCLUDE_DIRS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-find_package(Boost 1.43)
-if(Boost_FOUND)
-  app(buchberger REQUIRES GMP_FOUND EXTLIBS ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
-endif()
