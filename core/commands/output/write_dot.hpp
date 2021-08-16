@@ -37,47 +37,48 @@
 
 namespace alice
 {
-  class write_dot_command : public alice::command{
+class write_dot_command : public alice::command
+{
 
-    public:
-      explicit write_dot_command( const environment::ptr& env )
-          : command( env, "Writes the Boolean network into structural verilog" ){
+public:
+    explicit write_dot_command(const environment::ptr &env)
+        : command(env, "Writes the Boolean network into structural verilog")
+    {
 
-        opts.add_option( "--filename,filename", filename, "Verilog file to write out to" )->required();
-        add_flag("--mig,-m", "Read from the MIG network and MIG partition manager for truth table generation");
-      }
+        opts.add_option("--filename,filename", filename,
+                        "Verilog file to write out to")->required();
+        add_flag("--mig,-m",
+                 "Read from the MIG network and MIG partition manager for truth table generation");
+    }
 
-    protected:
-      void execute(){
-        if(oracle::checkExt(filename, "dot")){
-          if(is_set("mig")){
-            if(!store<mig_ntk>().empty()){
-              auto& mig = *store<mig_ntk>().current();
-              mockturtle::write_dot(mig, filename);
+protected:
+    void execute()
+    {
+        if (oracle::checkExt(filename, "dot")) {
+            if (is_set("mig")) {
+                if (!store<mig_ntk>().empty()) {
+                    auto &mig = *store<mig_ntk>().current();
+                    mockturtle::write_dot(mig, filename);
+                } else {
+                    env->err() << "There is not an MIG network stored.\n";
+                }
+            } else {
+                if (!store<aig_ntk>().empty()) {
+                    auto &aig = *store<aig_ntk>().current();
+                    mockturtle::write_dot(aig, filename);
+                } else {
+                    env->err() << "There is not an AIG network stored.\n";
+                }
             }
-            else{
-              env->err() << "There is not an MIG network stored.\n";
-            }
-          }
-          else{
-            if(!store<aig_ntk>().empty()){
-              auto& aig = *store<aig_ntk>().current();
-              mockturtle::write_dot(aig, filename);
-            }
-            else{
-              env->err() << "There is not an AIG network stored.\n";
-            }
-          }
 
-        }
-        else{
+        } else {
             env->err() << filename << " is not a valid dot file\n";
         }
-      }
+    }
 
-    private:
-      std::string filename{};
-    };
+private:
+    std::string filename{};
+};
 
-  ALICE_ADD_COMMAND(write_dot, "Output");
+ALICE_ADD_COMMAND(write_dot, "Output");
 }

@@ -38,50 +38,58 @@
 namespace alice
 {
 
-class seed_partitioning_command : public alice::command{
+class seed_partitioning_command : public alice::command
+{
 
-  public:
-    explicit seed_partitioning_command( const environment::ptr& env )
-            : command( env, "Runs AIG optimization on entire circuit before partitioning and determining best MIG partitions" ){
+public:
+    explicit seed_partitioning_command(const environment::ptr &env)
+        : command(env,
+                  "Runs AIG optimization on entire circuit before partitioning and determining best MIG partitions")
+    {
 
-            opts.add_option( "--num_pis,-p", num_pis, "Number of PIs constraint" )->required();
-            opts.add_option( "--num_int,-i", num_int, "Number of internal nodes constraint" )->required();
-            add_flag("--mig,-m", "Use seed partitioning on stored MIG network (AIG is default)");
+        opts.add_option("--num_pis,-p", num_pis,
+                        "Number of PIs constraint")->required();
+        opts.add_option("--num_int,-i", num_int,
+                        "Number of internal nodes constraint")->required();
+        add_flag("--mig,-m",
+                 "Use seed partitioning on stored MIG network (AIG is default)");
     }
 
-  protected:
-    void execute(){
-      if(is_set("mig")){
-        if(!store<mockturtle::mig_network>().empty()){
-          auto ntk = store<mockturtle::mig_network>().current();
-          oracle::seed_partitioner<mockturtle::mig_network> seed_parts(ntk, num_pis, num_int);
-          oracle::partition_manager<mockturtle::mig_network> part_man = seed_parts.create_part_man(ntk);
-          store<oracle::partition_manager<mockturtle::mig_network>>().extend() = part_man;
+protected:
+    void execute()
+    {
+        if (is_set("mig")) {
+            if (!store<mockturtle::mig_network>().empty()) {
+                auto ntk = store<mockturtle::mig_network>().current();
+                oracle::seed_partitioner<mockturtle::mig_network> seed_parts(ntk, num_pis,
+                        num_int);
+                oracle::partition_manager<mockturtle::mig_network> part_man =
+                    seed_parts.create_part_man(ntk);
+                store<oracle::partition_manager<mockturtle::mig_network>>().extend() = part_man;
+            } else {
+                env->err() << "MIG network not stored\n";
+            }
+        } else {
+            if (!store<mockturtle::aig_network>().empty()) {
+                auto ntk = store<mockturtle::aig_network>().current();
+                oracle::seed_partitioner<mockturtle::aig_network> seed_parts(ntk, num_pis,
+                        num_int);
+                env->out() << "network partitioned\n";
+                oracle::partition_manager<mockturtle::aig_network> part_man =
+                    seed_parts.create_part_man(ntk);
+                store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
+            } else {
+                env->err() << "AIG network not stored\n";
+            }
         }
-        else{
-          env->err() << "MIG network not stored\n";
-        }
-      }
-      else{
-        if(!store<mockturtle::aig_network>().empty()){
-          auto ntk = store<mockturtle::aig_network>().current();
-          oracle::seed_partitioner<mockturtle::aig_network> seed_parts(ntk, num_pis, num_int);
-          env->out() << "network partitioned\n";
-          oracle::partition_manager<mockturtle::aig_network> part_man = seed_parts.create_part_man(ntk);
-          store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
-        }
-        else{
-          env->err() << "AIG network not stored\n";
-        }
-      }
     }
 
-  private:
+private:
     int num_pis = 0;
     int num_int = 0;
-  };
+};
 
-  ALICE_ADD_COMMAND(seed_partitioning, "Testing");
+ALICE_ADD_COMMAND(seed_partitioning, "Testing");
 
 
 }

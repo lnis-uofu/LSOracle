@@ -37,109 +37,116 @@
 
 namespace alice
 {
-  /*Reads a blif file and stores the network in a store*/
-  class read_blif_command : public alice::command{
+/*Reads a blif file and stores the network in a store*/
+class read_blif_command : public alice::command
+{
 
-    public:
-      explicit read_blif_command( const environment::ptr& env )
-          : command( env, "Uses the lorina library to read in an blif file" ){
+public:
+    explicit read_blif_command(const environment::ptr &env)
+        : command(env, "Uses the lorina library to read in an blif file")
+    {
 
-        opts.add_option( "--filename,filename", filename, "BLIF file to read in" )->required();
-        add_flag("--aig,-a", "Store BLIF file as AIG network (KLUT network is default)");
-        add_flag("--mig,-m", "Store BLIF file as MIG network (KLUT network is default)");
-        add_flag("--xag,-x", "Store BLIF file as XAG network (KLUT network is default)");
-      }
+        opts.add_option("--filename,filename", filename,
+                        "BLIF file to read in")->required();
+        add_flag("--aig,-a",
+                 "Store BLIF file as AIG network (KLUT network is default)");
+        add_flag("--mig,-m",
+                 "Store BLIF file as MIG network (KLUT network is default)");
+        add_flag("--xag,-x",
+                 "Store BLIF file as XAG network (KLUT network is default)");
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
 
-        if(oracle::checkExt(filename, "blif")){
-          if(is_set("mig")){
-            mockturtle::klut_network klut_ntk;
-            mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ));
+        if (oracle::checkExt(filename, "blif")) {
+            if (is_set("mig")) {
+                mockturtle::klut_network klut_ntk;
+                mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
+                auto const result = lorina::read_blif(filename,
+                                                      mockturtle::blif_reader(klut_name_view));
 
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+                if (result != lorina::return_code::success)
+                    env->err() << "parsing failed\n";
 
-            mockturtle::mig_npn_resynthesis resyn;
+                mockturtle::mig_npn_resynthesis resyn;
 
-            mockturtle::mig_network ntk;
-            mockturtle::names_view<mockturtle::mig_network>named_dest ( ntk );
+                mockturtle::mig_network ntk;
+                mockturtle::names_view<mockturtle::mig_network>named_dest(ntk);
 
-            mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
+                mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
 
-            store<mig_ntk>().extend() = std::make_shared<mig_names>( named_dest );
-            env->out() << "MIG network stored\n";
+                store<mig_ntk>().extend() = std::make_shared<mig_names>(named_dest);
+                env->out() << "MIG network stored\n";
 
-            filename.erase(filename.end() - 5, filename.end());
-            named_dest.set_network_name(filename);
-          }
-          else if(is_set("xag")){
-            mockturtle::klut_network klut_ntk;
-            mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( klut_name_view ));
+                filename.erase(filename.end() - 5, filename.end());
+                named_dest.set_network_name(filename);
+            } else if (is_set("xag")) {
+                mockturtle::klut_network klut_ntk;
+                mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
+                auto const result = lorina::read_blif(filename,
+                                                      mockturtle::blif_reader(klut_name_view));
 
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+                if (result != lorina::return_code::success)
+                    env->err() << "parsing failed\n";
 
-            mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+                mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
 
-            mockturtle::xag_network ntk;
-            mockturtle::names_view<mockturtle::xag_network>named_dest ( ntk );
+                mockturtle::xag_network ntk;
+                mockturtle::names_view<mockturtle::xag_network>named_dest(ntk);
 
-            mockturtle::node_resynthesis( named_dest, klut_name_view, resyn );
+                mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
 
-            store<xag_ntk>().extend() = std::make_shared<xag_names>( named_dest );
-            env->out() << "XAG network stored\n";
+                store<xag_ntk>().extend() = std::make_shared<xag_names>(named_dest);
+                env->out() << "XAG network stored\n";
 
-            filename.erase(filename.end() - 5, filename.end());
-            named_dest.set_network_name(filename);
-          }
-          else if(is_set("aig")){
+                filename.erase(filename.end() - 5, filename.end());
+                named_dest.set_network_name(filename);
+            } else if (is_set("aig")) {
 
-            mockturtle::klut_network ntk;
-            mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
+                mockturtle::klut_network ntk;
+                mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
+                auto const result = lorina::read_blif(filename,
+                                                      mockturtle::blif_reader(names_view));
 
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+                if (result != lorina::return_code::success)
+                    env->err() << "parsing failed\n";
 
-            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-            mockturtle::aig_network aig;
-            mockturtle::names_view<mockturtle::aig_network>named_dest ( aig );
+                mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+                mockturtle::aig_network aig;
+                mockturtle::names_view<mockturtle::aig_network>named_dest(aig);
 
-            mockturtle::node_resynthesis( named_dest, names_view, resyn );
+                mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
-            store<aig_ntk>().extend() = std::make_shared<aig_names>( named_dest );
-            env->out() << "AIG network stored\n";
+                store<aig_ntk>().extend() = std::make_shared<aig_names>(named_dest);
+                env->out() << "AIG network stored\n";
 
-            filename.erase(filename.end() - 5, filename.end());
-            named_dest.set_network_name(filename);
-          }
-          else{
-            mockturtle::klut_network ntk;
-            mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
-            auto const result = lorina::read_blif(filename, mockturtle::blif_reader( names_view ));
+                filename.erase(filename.end() - 5, filename.end());
+                named_dest.set_network_name(filename);
+            } else {
+                mockturtle::klut_network ntk;
+                mockturtle::names_view<mockturtle::klut_network> names_view{ntk};
+                auto const result = lorina::read_blif(filename,
+                                                      mockturtle::blif_reader(names_view));
 
-            if(result != lorina::return_code::success)
-              env->err() << "parsing failed\n";
+                if (result != lorina::return_code::success)
+                    env->err() << "parsing failed\n";
 
-            store<klut_ntk>().extend() = std::make_shared<klut_names>( names_view );
-            env->out() << "KLUT network stored\n";
+                store<klut_ntk>().extend() = std::make_shared<klut_names>(names_view);
+                env->out() << "KLUT network stored\n";
 
-            filename.erase(filename.end() - 5, filename.end());
-            names_view.set_network_name(filename);
-          }
-        }
-        else{
+                filename.erase(filename.end() - 5, filename.end());
+                names_view.set_network_name(filename);
+            }
+        } else {
             env->err() << filename << " is not a valid blif file\n";
         }
 
-      }
-    private:
-      std::string filename{};
-    };
+    }
+private:
+    std::string filename{};
+};
 
-  ALICE_ADD_COMMAND(read_blif, "Input");
+ALICE_ADD_COMMAND(read_blif, "Input");
 }

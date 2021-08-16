@@ -39,73 +39,77 @@
 
 namespace alice
 {
-  /*Reads an aig file and stores the AIG network in a store*/
-  class read_aig_command : public alice::command{
+/*Reads an aig file and stores the AIG network in a store*/
+class read_aig_command : public alice::command
+{
 
-    public:
-      explicit read_aig_command( const environment::ptr& env )
-          : command( env, "Uses the lorina library to read in an aig file" ){
+public:
+    explicit read_aig_command(const environment::ptr &env)
+        : command(env, "Uses the lorina library to read in an aig file")
+    {
 
-        opts.add_option( "--filename,filename", filename, "AIG file to read in" )->required();
+        opts.add_option("--filename,filename", filename,
+                        "AIG file to read in")->required();
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
         add_flag("--xag,-x", "Store AIG file as XAG network (AIG network is default)");
-      }
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
 
-        if(oracle::checkExt(filename, "aig")){
-          if(is_set("mig")){
-            mockturtle::mig_network ntk;
-            mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
-            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-            if (result != lorina::return_code::success) {
-              env->err() << "Unable to read aiger file." << std::endl;
-              return;
+        if (oracle::checkExt(filename, "aig")) {
+            if (is_set("mig")) {
+                mockturtle::mig_network ntk;
+                mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
+                lorina::return_code result = lorina::read_aiger(filename,
+                                             mockturtle::aiger_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read aiger file." << std::endl;
+                    return;
+                }
+                store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
+                env->out() << "MIG network stored\n";
+
+                filename.erase(filename.end() - 4, filename.end());
+                names_view.set_network_name(filename);
+            } else if (is_set("xag")) {
+                mockturtle::xag_network ntk;
+                mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
+                lorina::return_code result = lorina::read_aiger(filename,
+                                             mockturtle::aiger_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read aiger file." << std::endl;
+                    return;
+                }
+                store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
+                env->out() << "XAG network stored\n";
+
+                filename.erase(filename.end() - 4, filename.end());
+                names_view.set_network_name(filename);
+            } else {
+                mockturtle::aig_network ntk;
+                mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
+                lorina::return_code result = lorina::read_aiger(filename,
+                                             mockturtle::aiger_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read aiger file." << std::endl;
+                    return;
+                }
+                store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);
+                env->out() << "AIG network stored\n";
+
+                filename.erase(filename.end() - 4, filename.end());
+                names_view.set_network_name(filename);
             }
-            store<mig_ntk>().extend() = std::make_shared<mig_names>( names_view );
-            env->out() << "MIG network stored\n";
 
-            filename.erase(filename.end() - 4, filename.end());
-            names_view.set_network_name(filename);
-          }
-          else if(is_set("xag")){
-            mockturtle::xag_network ntk;
-            mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
-            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-            if (result != lorina::return_code::success) {
-              env->err() << "Unable to read aiger file." << std::endl;
-              return;
-            }
-            store<xag_ntk>().extend() = std::make_shared<xag_names>( names_view );
-            env->out() << "XAG network stored\n";
-
-            filename.erase(filename.end() - 4, filename.end());
-            names_view.set_network_name(filename);
-          }
-          else{
-            mockturtle::aig_network ntk;
-            mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
-            lorina::return_code result = lorina::read_aiger(filename, mockturtle::aiger_reader( names_view ));
-            if (result != lorina::return_code::success) {
-              env->err() << "Unable to read aiger file." << std::endl;
-              return;
-            }
-            store<aig_ntk>().extend() = std::make_shared<aig_names>( names_view );
-            env->out() << "AIG network stored\n";
-
-            filename.erase(filename.end() - 4, filename.end());
-            names_view.set_network_name(filename);
-          }
-
-        }
-        else{
+        } else {
             env->err() << filename << " is not a valid aig file\n";
         }
-      }
-    private:
-      std::string filename{};
-    };
+    }
+private:
+    std::string filename{};
+};
 
-  ALICE_ADD_COMMAND(read_aig, "Input");
+ALICE_ADD_COMMAND(read_aig, "Input");
 }

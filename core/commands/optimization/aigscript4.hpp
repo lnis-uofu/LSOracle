@@ -36,33 +36,39 @@
 
 namespace alice
 {
-  ALICE_COMMAND(aigscript4, "Optimization", "Based on ABC resyn2 script without AIG balancing") {
-    if(!store<aig_ntk>().empty()){
-      auto& opt = *store<aig_ntk>().current();
+ALICE_COMMAND(aigscript4, "Optimization",
+              "Based on ABC resyn2 script without AIG balancing")
+{
+    if (!store<aig_ntk>().empty()) {
+        auto &opt = *store<aig_ntk>().current();
 
-      auto start = std::chrono::high_resolution_clock::now();
-      mockturtle::depth_view aig_depth{opt};
+        auto start = std::chrono::high_resolution_clock::now();
+        mockturtle::depth_view aig_depth{opt};
 
-      //DEPTH REWRITING
-      env->out() << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+        //DEPTH REWRITING
+        env->out() << "AIG logic depth " << aig_depth.depth() << " nodes " <<
+                   opt.num_gates() << std::endl;
 
-      oracle::aig_script4 aigopt;
-      opt = aigopt.run(opt);
+        oracle::aig_script4 aigopt;
+        opt = aigopt.run(opt);
 
-      mockturtle::depth_view new_aig_depth{opt};
-      env->out() << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+        mockturtle::depth_view new_aig_depth{opt};
+        env->out() << "AIG logic depth " << new_aig_depth.depth() << " nodes " <<
+                   opt.num_gates() << std::endl;
 
-      env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " << new_aig_depth.depth() << "\n";
-      env->out() << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth() << "\n";
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-      env->out() << "Full Optimization: " << duration.count() << "ms\n";
-      env->out() << "Finished optimization\n";
+        env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " <<
+                   new_aig_depth.depth() << "\n";
+        env->out() << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth()
+                   << "\n";
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
+                        (stop - start);
+        env->out() << "Full Optimization: " << duration.count() << "ms\n";
+        env->out() << "Finished optimization\n";
 
+    } else {
+        env->err() << "There is not an AIG network stored.\n";
     }
-    else{
-      env->err() << "There is not an AIG network stored.\n";
-    }
 
-  }
+}
 }

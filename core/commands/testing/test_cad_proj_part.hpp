@@ -38,148 +38,158 @@
 namespace alice
 {
 
-  class create_level_part_command : public alice::command{
+class create_level_part_command : public alice::command
+{
 
-    public:
-      explicit create_level_part_command( const environment::ptr& env )
-          : command( env, "Test Partition technique proposed in '04 ICCAD Paper" ){
+public:
+    explicit create_level_part_command(const environment::ptr &env)
+        : command(env, "Test Partition technique proposed in '04 ICCAD Paper")
+    {
 
         add_flag("--mig,-m", "Use stored MIG (AIG network is default)");
-      }
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
 
         mockturtle::mig_npn_resynthesis resyn_mig;
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-        if(is_set("mig")){
-          if(!store<mockturtle::mig_network>().empty()){
-            auto ntk = store<mockturtle::mig_network>().current();
-            oracle::level_partition_manager<mockturtle::mig_network> level_parts(ntk);
-            store<oracle::level_partition_manager<mockturtle::mig_network>>().extend() = level_parts;
-          }
-          else{
-            env->err() << "MIG network not stored\n";
-          }
+        if (is_set("mig")) {
+            if (!store<mockturtle::mig_network>().empty()) {
+                auto ntk = store<mockturtle::mig_network>().current();
+                oracle::level_partition_manager<mockturtle::mig_network> level_parts(ntk);
+                store<oracle::level_partition_manager<mockturtle::mig_network>>().extend() =
+                            level_parts;
+            } else {
+                env->err() << "MIG network not stored\n";
+            }
+        } else {
+            if (!store<mockturtle::aig_network>().empty()) {
+                auto ntk = store<mockturtle::aig_network>().current();
+                oracle::level_partition_manager<mockturtle::aig_network> level_parts(ntk);
+                store<oracle::level_partition_manager<mockturtle::aig_network>>().extend() =
+                            level_parts;
+            } else {
+                env->err() << "AIG network not stored\n";
+            }
         }
-        else{
-          if(!store<mockturtle::aig_network>().empty()){
-            auto ntk = store<mockturtle::aig_network>().current();
-            oracle::level_partition_manager<mockturtle::aig_network> level_parts(ntk);
-            store<oracle::level_partition_manager<mockturtle::aig_network>>().extend() = level_parts;
-          }
-          else{
-            env->err() << "AIG network not stored\n";
-          }
-        }
-      }
+    }
 
-    private:
+private:
 
-    };
+};
 
-  ALICE_ADD_COMMAND(create_level_part, "CAD_proj");
+ALICE_ADD_COMMAND(create_level_part, "CAD_proj");
 
-  class gen_part_man_command : public alice::command{
+class gen_part_man_command : public alice::command
+{
 
-    public:
-      explicit gen_part_man_command( const environment::ptr& env )
-          : command( env, "Test Partition technique proposed in '04 ICCAD Paper" ){
+public:
+    explicit gen_part_man_command(const environment::ptr &env)
+        : command(env, "Test Partition technique proposed in '04 ICCAD Paper")
+    {
 
-        opts.add_option( "--coarse,coarse", coarse, "Number of level partitions to combine into partition for optimization" )->required();
+        opts.add_option("--coarse,coarse", coarse,
+                        "Number of level partitions to combine into partition for optimization")->required();
         add_flag("--mig,-m", "Use cad_proj with type MIG (AIG network is default)");
-      }
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
 
         mockturtle::mig_npn_resynthesis resyn_mig;
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_aig;
-        if(is_set("mig")){
-          if(!store<mockturtle::mig_network>().empty()){
-            auto ntk = store<mockturtle::mig_network>().current();
-            if(!store<oracle::level_partition_manager<mockturtle::mig_network>>().empty()){
-              auto level_parts = store<oracle::level_partition_manager<mockturtle::mig_network>>().current();
-              oracle::partition_manager<mockturtle::mig_network> partitions = level_parts.generate_partitions(ntk, coarse);
+        if (is_set("mig")) {
+            if (!store<mockturtle::mig_network>().empty()) {
+                auto ntk = store<mockturtle::mig_network>().current();
+                if (!store<oracle::level_partition_manager<mockturtle::mig_network>>().empty()) {
+                    auto level_parts =
+                        store<oracle::level_partition_manager<mockturtle::mig_network>>().current();
+                    oracle::partition_manager<mockturtle::mig_network> partitions =
+                        level_parts.generate_partitions(ntk, coarse);
 
-              store<oracle::partition_manager<mockturtle::mig_network>>().extend() = partitions;
+                    store<oracle::partition_manager<mockturtle::mig_network>>().extend() =
+                                partitions;
 
-              int num_partitions = partitions.get_part_num();
-              for(int i = 0; i < num_partitions; i++){
-                env->out() << "Partition " << i << "\n";
-                oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(ntk, i);
+                    int num_partitions = partitions.get_part_num();
+                    for (int i = 0; i < num_partitions; i++) {
+                        env->out() << "Partition " << i << "\n";
+                        oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(
+                                    ntk, i);
 
-                auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>( part, resyn_mig );
-                env->out() << "size = " << opt.size() << "\n";
-                std::set<mockturtle::mig_network::node> inputs = partitions.get_part_inputs(i);
-                typename std::set<mockturtle::mig_network::node>::iterator it;
-                env->out() << "Inputs = ";
-                for(it = inputs.begin(); it != inputs.end(); ++it){
-                  env->out() << *it << " ";
+                        auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part,
+                                   resyn_mig);
+                        env->out() << "size = " << opt.size() << "\n";
+                        std::set<mockturtle::mig_network::node> inputs = partitions.get_part_inputs(i);
+                        typename std::set<mockturtle::mig_network::node>::iterator it;
+                        env->out() << "Inputs = ";
+                        for (it = inputs.begin(); it != inputs.end(); ++it) {
+                            env->out() << *it << " ";
+                        }
+                        env->out() << "\n";
+
+                        std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(
+                                    i);
+                        env->out() << "Outputs = ";
+                        for (it = outputs.begin(); it != outputs.end(); ++it) {
+                            env->out() << *it << " ";
+                        }
+                        env->out() << "\n";
+                    }
+                } else {
+                    env->err() << "Level parts not created for MIG\n";
                 }
-                env->out() << "\n";
+            } else {
+                env->err() << "MIG network not stored\n";
+            }
+        } else {
+            if (!store<mockturtle::aig_network>().empty()) {
+                auto ntk = store<mockturtle::aig_network>().current();
+                if (!store<oracle::level_partition_manager<mockturtle::aig_network>>().empty()) {
+                    auto level_parts =
+                        store<oracle::level_partition_manager<mockturtle::aig_network>>().current();
+                    oracle::partition_manager<mockturtle::aig_network> partitions =
+                        level_parts.generate_partitions(ntk, coarse);
 
-                std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(i);
-                env->out() << "Outputs = ";
-                for(it = outputs.begin(); it != outputs.end(); ++it){
-                  env->out() << *it << " ";
+                    store<oracle::partition_manager<mockturtle::aig_network>>().extend() =
+                                partitions;
+
+                    // int num_partitions = partitions.get_part_num();
+                    // for(int i = 0; i < num_partitions; i++){
+                    //   // env->out() << "Partition " << i << "\n";
+                    //   oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
+
+                    //   auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
+                    //   // env->out() << "size = " << opt.size() << "\n";
+                    //   std::set<mockturtle::aig_network::node> inputs = partitions.get_part_inputs(i);
+                    //   typename std::set<mockturtle::aig_network::node>::iterator it;
+                    //   env->out() << "Inputs = ";
+                    //   for(it = inputs.begin(); it != inputs.end(); ++it){
+                    //     env->out() << *it << " ";
+                    //   }
+                    //   env->out() << "\n";
+
+                    //   std::set<mockturtle::aig_network::node> outputs = partitions.get_part_outputs(i);
+                    //   env->out() << "Outputs = ";
+                    //   for(it = outputs.begin(); it != outputs.end(); ++it){
+                    //     env->out() << *it << " ";
+                    //   }
+                    //   env->out() << "\n";
+                    // }
+                } else {
+                    env->err() << "Level parts not created for AIG\n";
                 }
-                env->out() << "\n";
-              }
+            } else {
+                env->err() << "AIG network not stored\n";
             }
-            else{
-              env->err() << "Level parts not created for MIG\n";
-            }
-          }
-          else{
-            env->err() << "MIG network not stored\n";
-          }
         }
-        else{
-          if(!store<mockturtle::aig_network>().empty()){
-            auto ntk = store<mockturtle::aig_network>().current();
-            if(!store<oracle::level_partition_manager<mockturtle::aig_network>>().empty()){
-              auto level_parts = store<oracle::level_partition_manager<mockturtle::aig_network>>().current();
-              oracle::partition_manager<mockturtle::aig_network> partitions = level_parts.generate_partitions(ntk, coarse);
+    }
 
-              store<oracle::partition_manager<mockturtle::aig_network>>().extend() = partitions;
+private:
+    int coarse{};
+};
 
-              // int num_partitions = partitions.get_part_num();
-              // for(int i = 0; i < num_partitions; i++){
-              //   // env->out() << "Partition " << i << "\n";
-              //   oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
-
-              //   auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-              //   // env->out() << "size = " << opt.size() << "\n";
-              //   std::set<mockturtle::aig_network::node> inputs = partitions.get_part_inputs(i);
-              //   typename std::set<mockturtle::aig_network::node>::iterator it;
-              //   env->out() << "Inputs = ";
-              //   for(it = inputs.begin(); it != inputs.end(); ++it){
-              //     env->out() << *it << " ";
-              //   }
-              //   env->out() << "\n";
-
-              //   std::set<mockturtle::aig_network::node> outputs = partitions.get_part_outputs(i);
-              //   env->out() << "Outputs = ";
-              //   for(it = outputs.begin(); it != outputs.end(); ++it){
-              //     env->out() << *it << " ";
-              //   }
-              //   env->out() << "\n";
-              // }
-            }
-            else{
-              env->err() << "Level parts not created for AIG\n";
-            }
-          }
-          else{
-            env->err() << "AIG network not stored\n";
-          }
-        }
-      }
-
-    private:
-      int coarse{};
-    };
-
-  ALICE_ADD_COMMAND(gen_part_man, "CAD_proj");
+ALICE_ADD_COMMAND(gen_part_man, "CAD_proj");
 }

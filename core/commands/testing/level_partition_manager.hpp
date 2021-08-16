@@ -39,132 +39,144 @@
 namespace oracle
 {
 
-  template<typename Ntk>
-  class level_partition_manager : public Ntk
-  {
-  public:
+template<typename Ntk>
+class level_partition_manager : public Ntk
+{
+public:
     using storage = typename Ntk::storage;
     using node = typename Ntk::node;
     using signal = typename Ntk::signal;
 
-  public:
+public:
 
-    level_partition_manager(){}
+    level_partition_manager() {}
 
-    level_partition_manager( Ntk const& ntk ) : Ntk( ntk )
+    level_partition_manager(Ntk const &ntk) : Ntk(ntk)
     {
 
-      static_assert( mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type" );
-      static_assert( mockturtle::has_set_visited_v<Ntk>, "Ntk does not implement the set_visited method" );
-      static_assert( mockturtle::has_visited_v<Ntk>, "Ntk does not implement the visited method" );
-      static_assert( mockturtle::has_get_node_v<Ntk>, "Ntk does not implement the get_node method" );
-      static_assert( mockturtle::has_get_constant_v<Ntk>, "Ntk does not implement the get_constant method" );
-      static_assert( mockturtle::has_is_constant_v<Ntk>, "Ntk does not implement the is_constant method" );
-      static_assert( mockturtle::has_make_signal_v<Ntk>, "Ntk does not implement the make_signal method" );
+        static_assert(mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type");
+        static_assert(mockturtle::has_set_visited_v<Ntk>,
+                      "Ntk does not implement the set_visited method");
+        static_assert(mockturtle::has_visited_v<Ntk>,
+                      "Ntk does not implement the visited method");
+        static_assert(mockturtle::has_get_node_v<Ntk>,
+                      "Ntk does not implement the get_node method");
+        static_assert(mockturtle::has_get_constant_v<Ntk>,
+                      "Ntk does not implement the get_constant method");
+        static_assert(mockturtle::has_is_constant_v<Ntk>,
+                      "Ntk does not implement the is_constant method");
+        static_assert(mockturtle::has_make_signal_v<Ntk>,
+                      "Ntk does not implement the make_signal method");
 
-      oracle::partition_manager<Ntk> partitions(ntk, 2);
-      std::set<node> shared_io = partitions.get_shared_io(0, 1);
+        oracle::partition_manager<Ntk> partitions(ntk, 2);
+        std::set<node> shared_io = partitions.get_shared_io(0, 1);
 
-      levels.clear();
-      level_idx = 1;
-      std::unordered_map<node, bool> visited;
-      ntk.foreach_node([&](auto node){
-        visited[node] = false;
-      });
-      env->out() << "Cutset Variables = {";
-      typename std::set<node>::iterator it;
-      for(it = shared_io.begin(); it != shared_io.end(); ++it){
-        env->out() << *it << " ";
-        visited[*it] = true;
-      }
-      env->out() << "}\n";
-      levels[0] = shared_io;
-      compute_level_nodes(ntk, shared_io, visited);
-      env->out() << "Number of levels = " << levels.size() << "\n";
-      for(auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it){
-        std::set<node> curr_level = level_it->second;
-        env->out() << "\nLevel " << level_it->first << " = {";
-        for(it = curr_level.begin(); it != curr_level.end(); ++it){
-          env->out() << *it << " ";
+        levels.clear();
+        level_idx = 1;
+        std::unordered_map<node, bool> visited;
+        ntk.foreach_node([&](auto node) {
+            visited[node] = false;
+        });
+        env->out() << "Cutset Variables = {";
+        typename std::set<node>::iterator it;
+        for (it = shared_io.begin(); it != shared_io.end(); ++it) {
+            env->out() << *it << " ";
+            visited[*it] = true;
         }
         env->out() << "}\n";
-      }
-    }
-
-    oracle::partition_manager<Ntk> generate_partitions(Ntk const& ntk, int coarse){
-      int idx = 0;
-      int part_idx = 0;
-      std::map<node, int> new_partitions;
-      for(auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it){
-        std::set<node> curr_level = level_it->second;
-        if(idx != coarse - 1){
-          for(auto it = curr_level.begin(); it != curr_level.end(); ++it){
-            new_partitions[*it] = part_idx;
-          }
-          idx++;
+        levels[0] = shared_io;
+        compute_level_nodes(ntk, shared_io, visited);
+        env->out() << "Number of levels = " << levels.size() << "\n";
+        for (auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it) {
+            std::set<node> curr_level = level_it->second;
+            env->out() << "\nLevel " << level_it->first << " = {";
+            for (it = curr_level.begin(); it != curr_level.end(); ++it) {
+                env->out() << *it << " ";
+            }
+            env->out() << "}\n";
         }
-        else{
-          for(auto it = curr_level.begin(); it != curr_level.end(); ++it){
-            new_partitions[*it] = part_idx;
-          }
-          idx = 0;
-          part_idx++;
+    }
+
+    oracle::partition_manager<Ntk> generate_partitions(Ntk const &ntk, int coarse)
+    {
+        int idx = 0;
+        int part_idx = 0;
+        std::map<node, int> new_partitions;
+        for (auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it) {
+            std::set<node> curr_level = level_it->second;
+            if (idx != coarse - 1) {
+                for (auto it = curr_level.begin(); it != curr_level.end(); ++it) {
+                    new_partitions[*it] = part_idx;
+                }
+                idx++;
+            } else {
+                for (auto it = curr_level.begin(); it != curr_level.end(); ++it) {
+                    new_partitions[*it] = part_idx;
+                }
+                idx = 0;
+                part_idx++;
+            }
         }
-      }
 
-      int num_partitions = levels.size() / coarse;
-      if(levels.size() % coarse != 0){
-        num_partitions++;
-      }
+        int num_partitions = levels.size() / coarse;
+        if (levels.size() % coarse != 0) {
+            num_partitions++;
+        }
 
-      oracle::partition_manager<Ntk> partitions(ntk, new_partitions, num_partitions);
-      return partitions;
+        oracle::partition_manager<Ntk> partitions(ntk, new_partitions, num_partitions);
+        return partitions;
     }
 
-    int get_levels(){
-      return levels.size();
+    int get_levels()
+    {
+        return levels.size();
     }
 
-    std::set<node> get_level(int lev_idx){
-      return levels[lev_idx];
+    std::set<node> get_level(int lev_idx)
+    {
+        return levels[lev_idx];
     }
 
-  private:
+private:
     std::map<int, std::set<node>> levels;
     int level_idx = 1;
 
-    void compute_level_nodes(Ntk const& ntk, std::set<node> prev_level, std::unordered_map<node, bool> visited){
-      mockturtle::fanout_view<Ntk> fanout_ntk{ntk};
-      std::set<node> curr_level;
+    void compute_level_nodes(Ntk const &ntk, std::set<node> prev_level,
+                             std::unordered_map<node, bool> visited)
+    {
+        mockturtle::fanout_view<Ntk> fanout_ntk{ntk};
+        std::set<node> curr_level;
 
-      typename std::set<node>::iterator it;
-      for(it = prev_level.begin(); it != prev_level.end(); ++it){
-        // env->out() << "Current node = " << *it << "\n";
-        fanout_ntk.foreach_fanout(*it, [&](const auto& p){
-          if(curr_level.find(p) == curr_level.end() && prev_level.find(p) == prev_level.end() && !visited[p]){
-            // env->out() << "Adding fanout " << p << " to current level set\n";
-            curr_level.insert(p);
-            visited[p] = true;
-          }
-        });
+        typename std::set<node>::iterator it;
+        for (it = prev_level.begin(); it != prev_level.end(); ++it) {
+            // env->out() << "Current node = " << *it << "\n";
+            fanout_ntk.foreach_fanout(*it, [&](const auto & p) {
+                if (curr_level.find(p) == curr_level.end()
+                        && prev_level.find(p) == prev_level.end() && !visited[p]) {
+                    // env->out() << "Adding fanout " << p << " to current level set\n";
+                    curr_level.insert(p);
+                    visited[p] = true;
+                }
+            });
 
-        ntk.foreach_fanin(*it, [&](const auto& fanin){
-          auto node = ntk.get_node(fanin);
-          if(curr_level.find(node) == curr_level.end() && prev_level.find(node) == prev_level.end() && !visited[node]){
-            // env->out() << "Adding fanin " << node << " to current level set\n";
-            curr_level.insert(node);
-            visited[node] = true;
-          }
-        });
-      }
+            ntk.foreach_fanin(*it, [&](const auto & fanin) {
+                auto node = ntk.get_node(fanin);
+                if (curr_level.find(node) == curr_level.end()
+                        && prev_level.find(node) == prev_level.end() && !visited[node]) {
+                    // env->out() << "Adding fanin " << node << " to current level set\n";
+                    curr_level.insert(node);
+                    visited[node] = true;
+                }
+            });
+        }
 
-      if (!curr_level.empty()){
-        levels[level_idx] = curr_level;
-        level_idx++;
-        compute_level_nodes(ntk, curr_level, visited);
-      }
+        if (!curr_level.empty()) {
+            levels[level_idx] = curr_level;
+            level_idx++;
+            compute_level_nodes(ntk, curr_level, visited);
+        }
 
     }
 
-  };
+};
 } /* namespace oracle */

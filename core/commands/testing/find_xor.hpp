@@ -37,38 +37,41 @@
 
 namespace alice
 {
-  ALICE_COMMAND( find_xor, "Testing", "Convert AIG to XAG and find XOR gates"){
+ALICE_COMMAND(find_xor, "Testing", "Convert AIG to XAG and find XOR gates")
+{
     auto ntk = *store<aig_ntk>().current();
     // mockturtle::write_dot(ntk, "aig_test.dot");
     mockturtle::direct_resynthesis<mockturtle::xag_network> resyn_xag;
-    auto xag = mockturtle::node_resynthesis<mockturtle::xag_network>(ntk, resyn_xag);
+    auto xag = mockturtle::node_resynthesis<mockturtle::xag_network>(ntk,
+               resyn_xag);
     env->out() << "size = " << xag.num_gates() << "\n";
-    xag.foreach_node( [&]( auto node ) {
-      env->out() << "Node = " << node << "\n";
-      if(xag.is_xor(node)){
-        env->out() << "XOR\n";
-      }
+    xag.foreach_node([&](auto node) {
+        env->out() << "Node = " << node << "\n";
+        if (xag.is_xor(node)) {
+            env->out() << "XOR\n";
+        }
     });
     mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
     mockturtle::cut_rewriting(xag, resyn);
     xag = mockturtle::cleanup_dangling(xag);
     env->out() << "size = " << xag.num_gates() << "\n";
-    xag.foreach_node( [&]( auto node ) {
-      env->out() << "Node = " << node << "\n";
-      if(xag.is_xor(node)){
-        env->out() << "XOR\n";
-      }
+    xag.foreach_node([&](auto node) {
+        env->out() << "Node = " << node << "\n";
+        if (xag.is_xor(node)) {
+            env->out() << "XOR\n";
+        }
     });
     mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-    auto aig2 = mockturtle::node_resynthesis<mockturtle::aig_network>(xag, resyn_aig);
+    auto aig2 = mockturtle::node_resynthesis<mockturtle::aig_network>(xag,
+                resyn_aig);
     // mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_to_aig;
     // mockturtle::cut_rewriting(aig2, resyn_to_aig);
     env->out() << "size = " << aig2.num_gates() << "\n";
-    aig2.foreach_node( [&]( auto node ) {
-      env->out() << "Node = " << node << "\n";
-      if(aig2.is_xor(node)){
-        env->out() << "XOR\n";
-      }
+    aig2.foreach_node([&](auto node) {
+        env->out() << "Node = " << node << "\n";
+        if (aig2.is_xor(node)) {
+            env->out() << "XOR\n";
+        }
     });
     // mockturtle::write_dot(xag, "xag_test.dot");
     // mockturtle::aig_network aig;
@@ -85,5 +88,5 @@ namespace alice
     //     env->out() << "XOR\n";
     //   }
     // });
-  }
+}
 }

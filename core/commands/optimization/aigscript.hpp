@@ -36,80 +36,82 @@
 
 namespace alice
 {
-  class aigscript_command : public alice::command{
+class aigscript_command : public alice::command
+{
 
-    public:
-        explicit aigscript_command( const environment::ptr& env )
-                : command( env, "Perform AIG based optimization script" ){
+public:
+    explicit aigscript_command(const environment::ptr &env)
+        : command(env, "Perform AIG based optimization script")
+    {
 
-                opts.add_option( "--strategy", strategy, "Optimization strategy [0-4]" );
-        }
+        opts.add_option("--strategy", strategy, "Optimization strategy [0-4]");
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
 
-        if(!store<aig_ntk>().empty()){
-          auto& opt = *store<aig_ntk>().current();
+        if (!store<aig_ntk>().empty()) {
+            auto &opt = *store<aig_ntk>().current();
 
-          auto start = std::chrono::high_resolution_clock::now();
-          mockturtle::depth_view aig_depth{opt};
+            auto start = std::chrono::high_resolution_clock::now();
+            mockturtle::depth_view aig_depth{opt};
 
-          //DEPTH REWRITING
-          env->out() << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+            //DEPTH REWRITING
+            env->out() << "AIG logic depth " << aig_depth.depth() << " nodes " <<
+                       opt.num_gates() << std::endl;
 
-          switch(strategy){
+            switch (strategy) {
             default:
-            case 0:
-            {
-              oracle::aig_script aigopt;
-              opt = aigopt.run(opt);
+            case 0: {
+                oracle::aig_script aigopt;
+                opt = aigopt.run(opt);
             }
             break;
-            case 1:
-            {
-              oracle::aig_script2 aigopt;
-              opt = aigopt.run(opt);
+            case 1: {
+                oracle::aig_script2 aigopt;
+                opt = aigopt.run(opt);
             }
             break;
-            case 2:
-            {
-              oracle::aig_script3 aigopt;
-              opt = aigopt.run(opt);
+            case 2: {
+                oracle::aig_script3 aigopt;
+                opt = aigopt.run(opt);
             }
             break;
-            case 3:
-            {
-              oracle::aig_script4 aigopt;
-              opt = aigopt.run(opt);
+            case 3: {
+                oracle::aig_script4 aigopt;
+                opt = aigopt.run(opt);
             }
             break;
-            case 4:
-            {
-              oracle::aig_script5 aigopt;
-              opt = aigopt.run(opt);
+            case 4: {
+                oracle::aig_script5 aigopt;
+                opt = aigopt.run(opt);
             }
             break;
-          }
+            }
 
-          mockturtle::depth_view new_aig_depth{opt};
-          env->out() << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+            mockturtle::depth_view new_aig_depth{opt};
+            env->out() << "AIG logic depth " << new_aig_depth.depth() << " nodes " <<
+                       opt.num_gates() << std::endl;
 
-          env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " << new_aig_depth.depth() << "\n";
-          env->out() << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth() << "\n";
-          auto stop = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-          env->out() << "Full Optimization: " << duration.count() << "ms\n";
-          env->out() << "Finished optimization\n";
+            env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " <<
+                       new_aig_depth.depth() << "\n";
+            env->out() << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth()
+                       << "\n";
+            auto stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
+                            (stop - start);
+            env->out() << "Full Optimization: " << duration.count() << "ms\n";
+            env->out() << "Finished optimization\n";
 
-        }
-        else{
-          env->err() << "There is not an AIG network stored.\n";
+        } else {
+            env->err() << "There is not an AIG network stored.\n";
         }
 
-      }
-    private:
-        unsigned strategy{0u};
-    };
+    }
+private:
+    unsigned strategy{0u};
+};
 
-  ALICE_ADD_COMMAND(aigscript, "Optimization");
+ALICE_ADD_COMMAND(aigscript, "Optimization");
 }

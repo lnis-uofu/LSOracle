@@ -28,14 +28,15 @@
 #include <fstream>
 #include <stdio.h>
 #include <string.h>
-std::string make_temp_config() {
-  char *name = strdup("/tmp/lsoracle_XXXXXX");
-  if (mkstemp(name) == -1) {
-    throw std::exception();
-  }
-  std::string filename = std::string(name);
-  std::ofstream temp(filename);
-  temp << KAHYPAR_DEFAULT_CONFIG;
-  temp.close();
-  return filename;
+std::string make_temp_config()
+{
+    char *name = strdup("/tmp/lsoracle_XXXXXX");
+    if (mkstemp(name) == -1) {
+        throw std::exception();
+    }
+    std::string filename = std::string(name);
+    std::ofstream temp(filename);
+    temp << KAHYPAR_DEFAULT_CONFIG;
+    temp.close();
+    return filename;
 }

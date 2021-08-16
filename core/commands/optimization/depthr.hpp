@@ -37,24 +37,26 @@
 
 namespace alice
 {
-  ALICE_COMMAND(depthr, "Optimization", "Logic depth oriented MIG rewriting"){
-    if(!store<mig_ntk>().empty()){
-      auto& mig = *store<mig_ntk>().current();
-    	env->out() << "Mig gates " << mig.num_gates() << std::endl;
+ALICE_COMMAND(depthr, "Optimization", "Logic depth oriented MIG rewriting")
+{
+    if (!store<mig_ntk>().empty()) {
+        auto &mig = *store<mig_ntk>().current();
+        env->out() << "Mig gates " << mig.num_gates() << std::endl;
 
-    	//to compute at level
-    	mockturtle::depth_view mig_depth{mig};
+        //to compute at level
+        mockturtle::depth_view mig_depth{mig};
 
-    	env->out() << "Mig level " << mig_depth.depth() << " mig gates " << mig.num_gates() << std::endl;
+        env->out() << "Mig level " << mig_depth.depth() << " mig gates " <<
+                   mig.num_gates() << std::endl;
 
-    	mockturtle::mig_algebraic_depth_rewriting_params pm;
-    	mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
+        mockturtle::mig_algebraic_depth_rewriting_params pm;
+        mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
 
-    	mig = mockturtle::cleanup_dangling( mig );
-    	env->out() << "Mig level after algebraic rewriting " << mig_depth.depth() << " Mig gates " << mig.num_gates() << std::endl;
+        mig = mockturtle::cleanup_dangling(mig);
+        env->out() << "Mig level after algebraic rewriting " << mig_depth.depth() <<
+                   " Mig gates " << mig.num_gates() << std::endl;
+    } else {
+        env->err() << "There is not an MIG network stored.\n";
     }
-    else{
-      env->err() << "There is not an MIG network stored.\n";
-    }
-  }
+}
 }
