@@ -1,13 +1,32 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 #include <stdio.h>
 #include <fstream>
@@ -45,7 +64,7 @@ namespace alice
             ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
           }
           else{
-            std::cout << "No MIG stored\n";
+            env->err() << "No MIG stored\n";
           }
         }
         else{
@@ -57,26 +76,26 @@ namespace alice
 
             mockturtle::cut_rewriting(ntk_aig, resyn, ps);
             // ntk_aig.foreach_pi([&](auto pi){
-            //   std::cout << "PI: " << pi << "\n";
+            //   env->out() << "PI: " << pi << "\n";
             // });
             // ntk_aig.foreach_gate([&](auto gate){
-            //   std::cout << "Gate: " << gate << "\n";
+            //   env->out() << "Gate: " << gate << "\n";
             //   if(ntk_aig.is_po(gate))
-            //     std::cout << "IS PO\n";
+            //     env->out() << "IS PO\n";
             //   ntk_aig.foreach_fanin(gate, [&](auto conn, auto i){
-            //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+            //     env->out() << "child[" << i << "] = " << conn.index << "\n";
             //   });
             // });
             ntk_aig = mockturtle::cleanup_dangling(ntk_aig);
 
             mockturtle::depth_view depth{ntk_aig};
-            std::cout << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " << depth.depth() << "\n";
+            env->out() << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " << depth.depth() << "\n";
           }
           else{
-            std::cout << "No AIG stored\n";
+            env->err() << "No AIG stored\n";
           }
         }
-        
+
       }
     private:
         int cut_size = 4;

@@ -1,5 +1,7 @@
-/* mockturtle: C++ logic network library
- * Copyright (C) 2018  EPFL
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -22,8 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 #pragma once
 
 #include <algorithm>
@@ -35,9 +35,7 @@
 #include <cassert>
 #include <limits>
 
-#include <mockturtle/traits.hpp>
-#include <mockturtle/networks/detail/foreach.hpp>
-#include <mockturtle/views/fanout_view.hpp>
+#include <mockturtle/mockturtle.hpp>
 
 namespace oracle
 {
@@ -68,11 +66,11 @@ namespace oracle
         mockturtle::depth_view ntk_depth{ntk};
         ntk.foreach_node([&](auto node){
           _arr[node] = ntk_depth.level(node);
-          if(ntk.is_po(node)){
+          if(is_po(ntk, node)){
             if(_arr[node] > dmax){
               dmax = _arr[node];
               rmax = _arr[node];
-            } 
+            }
           }
         });
 
@@ -113,7 +111,7 @@ namespace oracle
 
   private:
 
-    
+
 
     void get_required_arrival( Ntk const& ntk ){
 
@@ -123,7 +121,12 @@ namespace oracle
       });
       mockturtle::topo_view top_view{ntk};
       mockturtle::fanout_view fanout{ntk};
-      std::vector<node> top_nodes = top_view.get_node_vec();
+      std::vector<node> top_nodes; //this is a bit of a kludge, but the actual vector is now private and we aren't modifying mockturtle
+      //std::vector<node> top_nodes = top_view.get_node_vec();
+      //std::reverse(top_nodes.begin(), top_nodes.end());
+      top_view.foreach_node([&] (auto node){
+        top_nodes.push_back(node);
+      });
       std::reverse(top_nodes.begin(), top_nodes.end());
       for(int i = 0; i < top_nodes.size(); i++){
         node curr_node = top_nodes.at(i);
@@ -134,7 +137,7 @@ namespace oracle
         _req_arr[curr_node] = dmax - level[curr_node];
       }
     }
-    
+
     mockturtle::node_map<uint32_t, Ntk> _req_arr;
     mockturtle::node_map<uint32_t, Ntk> _arr;
     int dmax = 0;

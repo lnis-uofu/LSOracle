@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
@@ -37,6 +39,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Build
         run: |
           source ${{ matrix.config.scl }}
@@ -82,6 +86,8 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Load ccache
         uses: actions/cache@v2
         if: ${{ matrix.config.ccache }}

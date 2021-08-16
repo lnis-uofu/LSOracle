@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-tests
-          path: build/unit_tests
+          path: build/core/unit_tests
   test:
     runs-on: ubuntu-latest
     container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy

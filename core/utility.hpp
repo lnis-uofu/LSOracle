@@ -1,13 +1,35 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <alice/alice.hpp>
 
-#include <mockturtle/algorithms/cleanup.hpp>
-#include <mockturtle/algorithms/cut_rewriting.hpp>
-#include <mockturtle/algorithms/node_resynthesis.hpp>
-#include <mockturtle/algorithms/node_resynthesis/akers.hpp>
-#include <mockturtle/algorithms/node_resynthesis/direct.hpp>
-#include <mockturtle/algorithms/node_resynthesis/mig_npn.hpp>
-#include <mockturtle/algorithms/node_resynthesis/xag_npn.hpp>
-#include <mockturtle/algorithms/mig_algebraic_rewriting.hpp>
+#include <mockturtle/mockturtle.hpp>
+#include "algorithms/partitioning/partition_view.hpp"
+
+#include "union_find.hpp"
 
 #include <stdio.h>
 #include <fstream>
@@ -16,7 +38,7 @@
 #include <stdlib.h>
 
 namespace oracle
-{   
+{
   using aig_names = mockturtle::names_view<mockturtle::aig_network>;
   using aig_ntk = std::shared_ptr<aig_names>;
 
@@ -54,7 +76,7 @@ namespace oracle
 
       int level = 1 + std::max(levelNode0, levelNode1);
       return level;
-    } 
+    }
     return 0;
   }
 
@@ -70,7 +92,7 @@ namespace oracle
       }
 
       auto inIdx2 = ntk._storage->nodes[curr_node].children[1].data;
-  
+
       if (inIdx2 & 1)
         inIdx2 = inIdx2 - 1;
 
@@ -199,7 +221,7 @@ namespace oracle
   		}
   	}
   }
-  
+
   /***************************************************
     Truth Table
   ***************************************************/
@@ -289,7 +311,7 @@ namespace oracle
           mig.set_name( node2new[n], aig.get_name( aig.make_signal( n ) ) );
       }
     } );
-        
+
     aig.foreach_node( [&]( auto n ) {
       if ( aig.is_constant( n ) || aig.is_pi( n ) || aig.is_ci( n ) || aig.is_ro( n ))
         return;
@@ -299,19 +321,15 @@ namespace oracle
         children.push_back( aig.is_complemented( f ) ? mig.create_not( node2new[f] ) : node2new[f] );
       } );
 
-      if(skip_edge_min == 1){
-        node2new[n] = mig.create_maj_part(mig.get_constant( false ), children.at(0), children.at(1));
-      }
-      else{
-        node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
-      }
-      
+      //removed create_maj_part() call; it just aliased create_maj
+      node2new[n] = mig.create_maj(mig.get_constant( false ), children.at(0), children.at(1));
+
       if constexpr ( mockturtle::has_has_name_v<NtkSource> && mockturtle::has_get_name_v<NtkSource> && mockturtle::has_set_name_v<NtkDest> )
       {
         if ( aig.has_name( aig.make_signal( n ) ) )
           mig.set_name( node2new[n], aig.get_name( aig.make_signal( n ) ) );
       }
-          
+
     } );
 
     /* map primary outputs */
@@ -344,7 +362,7 @@ namespace oracle
     part.foreach_pi( [&]( auto n ) {
       node2new[n] = mig.create_pi();
     } );
-        
+
     part.foreach_node( [&]( auto n ) {
       if ( part.is_constant( n ) || part.is_pi( n ) || part.is_ci( n ) || part.is_ro( n ))
         return;
@@ -354,12 +372,7 @@ namespace oracle
         children.push_back( part.is_complemented( f ) ? mig.create_not( node2new[part.get_node(f)] ) : node2new[part.get_node(f)] );
       } );
 
-      if(skip_edge_min == 1){
-        node2new[n] = mig.create_maj_part(children.at(0), children.at(1), children.at(2));
-      }
-      else{
-        node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2));
-      }
+      node2new[n] = mig.create_maj(children.at(0), children.at(1), children.at(2)); //see above re: create_maj_part()
     } );
 
     /* map primary outputs */
@@ -393,8 +406,8 @@ namespace oracle
           aig.set_name( node2new[n], mig.get_name( mig.make_signal( n ) ) );
       }
     } );
-    
-    std::set<mockturtle::mig_network::node> nodes_to_change;    
+
+    std::set<mockturtle::mig_network::node> nodes_to_change;
     mig.foreach_node( [&]( auto n ) {
 
       if ( mig.is_constant( n ) || mig.is_pi( n ) || mig.is_ci( n ) || mig.is_ro( n ))
@@ -414,11 +427,11 @@ namespace oracle
           auto node = mig.get_node(mig._storage->nodes[n].children[i]);
           mockturtle::mig_network::signal child = mig._storage->nodes[n].children[i];
           if(nodes_to_change.find(node) != nodes_to_change.end()){
-            
+
             children.push_back(mig.is_complemented( child ) ? node2new[child] : aig.create_not( node2new[child] ));
           }
           else{
-            
+
             children.push_back(mig.is_complemented( child ) ? aig.create_not( node2new[child] ): node2new[child] );
           }
         }
@@ -430,7 +443,7 @@ namespace oracle
         if ( mig.has_name( mig.make_signal( n ) ) )
           aig.set_name( node2new[n], mig.get_name( mig.make_signal( n ) ) );
       }
-          
+
     } );
 
     /* map primary outputs */
@@ -454,6 +467,16 @@ namespace oracle
   /***************************************************
     Network helpers
   ***************************************************/
+  template <typename Ntk>
+  bool is_po( Ntk const& ntk, typename Ntk::node const& n ) {
+    int nodeIdx = ntk.node_to_index(n);
+    bool result = false;
+    for(int i = 0; i < ntk._storage->outputs.size(); i++){
+      if(ntk._storage->outputs.at(i).index == nodeIdx)
+        result = true;
+    }
+    return result;
+  }
 
   bool is_in_vector(std::vector<int> vec, int nodeIdx){
 
@@ -495,10 +518,10 @@ namespace oracle
 
     std::vector<int>::iterator it = find(index.begin(), index.end(), nodeIdx);
     return std::distance(index.begin(), it);
-  }   
+  }
 
   /* Checks to see if a file has a specified extension
-   * 
+   *
    * params:
    * filename: The name of the file to check the extension of
    * ext: The extension that you are checking that filename has

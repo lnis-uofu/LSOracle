@@ -1,3 +1,29 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
@@ -12,20 +38,22 @@ namespace oracle{
     class test_script{
     public:
         mockturtle::aig_network run(mockturtle::aig_network& aig){
-            
+
+            mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
             mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
             mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> fallback;
             mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype( fallback )> rf_resyn( fallback );
             mockturtle::cut_rewriting_params ps;
             mockturtle::refactoring_params rp;
+            mockturtle::balancing_params bs;
 
-            ps.cut_enumeration_ps.cut_size = 4;
+            bs.cut_enumeration_ps.cut_size = 4u;
+            ps.cut_enumeration_ps.cut_size = 4u;
             rp.allow_zero_gain = false;
-            
+
             //b
             std::cout << "b\n";
-            mockturtle::depth_view aig_depth{aig};
-            mockturtle::balancing(aig_depth);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rw
@@ -40,8 +68,7 @@ namespace oracle{
 
             //b
             std::cout << "b\n";
-            mockturtle::depth_view aig_depth1{aig};
-            mockturtle::balancing(aig_depth1);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rw
@@ -51,11 +78,10 @@ namespace oracle{
             //rwz
             std::cout << "rw\n";
             aig = aigopt.run(aig);
-            
+
             //b
             std::cout << "b\n";
-            mockturtle::depth_view aig_depth2{aig};
-            mockturtle::balancing(aig_depth2);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rfz
@@ -68,13 +94,12 @@ namespace oracle{
             //rwz
             std::cout << "rwz\n";
             aig = aigopt.run(aig);
-            
+
             //b
             std::cout << "b\n";
-            mockturtle::depth_view aig_depth3{aig};
-            mockturtle::balancing(aig_depth3);
+            aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             return aig;
         }
     };

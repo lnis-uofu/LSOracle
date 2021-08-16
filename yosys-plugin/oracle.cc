@@ -43,7 +43,7 @@
 #define ABC_FAST_COMMAND_DFL "strash; dretime; retime {D}; map"
 
 #define LSO_COMMAND_MIG "ps -m; migscript; ps -m; crit_path_stats; ntk_stats "
-#define LSO_COMMAND_AIG "ps -a; aigscript; ps -a "
+#define LSO_COMMAND_AIG "ps -a; aigscript --strategy 4; ps -a "
 #define LSO_COMMAND_PART_EXCLU_AIG "ps -a; partitioning {P}; optimization -a; ps -a "
 #define LSO_COMMAND_PART_EXCLU_MIG "ps -a; partitioning {P}; optimization -m; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_DEEP "ps -a; partitioning {P}; optimization -i {D}; ps -m; crit_path_stats; ntk_stats "
@@ -70,9 +70,12 @@
 #  include <dirent.h>
 #endif
 
-#include "frontends/blif/blifparse.h"
+//#include "frontends/blif/blifparse.h"
 //#include "frontends/verilog/verilog_frontend.h"
-
+namespace Yosys {
+extern void parse_blif(RTLIL::Design *design, std::istream &f, IdString dff_name,
+                bool run_clean = false, bool sop_mode = false, bool wideports = false);
+}
 #ifdef YOSYS_LINK_ABC
 extern "C" int Abc_RealMain(int argc, char *argv[]);
 #endif

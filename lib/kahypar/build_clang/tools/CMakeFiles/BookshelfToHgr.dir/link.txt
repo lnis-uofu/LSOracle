@@ -1,1 +1,0 @@
-/usr/bin/clang++   -std=c++1y -O3 -DNDEBUG -O3 -mtune=native -march=native CMakeFiles/BookshelfToHgr.dir/bookshelf_to_hgr_converter.cc.o -o BookshelfToHgr 

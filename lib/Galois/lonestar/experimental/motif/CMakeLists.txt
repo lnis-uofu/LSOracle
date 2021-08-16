@@ -1,1 +1,0 @@
-app(motif motif.cpp)

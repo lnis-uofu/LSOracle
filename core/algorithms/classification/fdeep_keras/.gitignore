@@ -1,8 +1,0 @@
-/.vs
-.vscode
-*build*
-*~
-_*
-.mypy_cache
-/experiments
-.idea

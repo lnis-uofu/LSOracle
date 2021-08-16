@@ -1,3 +1,30 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 /*!
   \file hyperg.hpp
   \brief Converts the current network into an hypergraph
@@ -28,7 +55,6 @@ namespace oracle {
 
       //fanout view to iterate over fanouts and generate hyper edges
       mockturtle::fanout_view fanout{ntk};
-
       //Remove all children indeces from nodes so that the only connections remaining are outputs
       ntk.foreach_node([&](auto node) {
         nodes.clear();
@@ -38,7 +64,7 @@ namespace oracle {
 
         int nodeNdx = ntk.node_to_index(node);
 
-        if(!ntk.is_po(node)) {
+        if(!is_po(ntk, node)) {
           fanout.foreach_fanout(node, [&](const auto &p) {
             nodes.insert(p);
           });
@@ -48,7 +74,7 @@ namespace oracle {
           }
         }
 
-        else if (ntk.is_po(node) && !ntk.is_ro(node)) {
+        else if (is_po(ntk, node) && !ntk.is_ro(node)) {
           ntk.foreach_fanin(node, [&](auto const &conn, auto i) {
             connections.push_back(ntk._storage->nodes[node].children[i].index);
           });
