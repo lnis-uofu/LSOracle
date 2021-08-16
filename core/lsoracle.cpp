@@ -140,4 +140,4 @@
 #include "kahypar_config.hpp"
 #include "config.h"
 
-ALICE_MAIN( lsoracle )
+ALICE_MAIN(lsoracle)

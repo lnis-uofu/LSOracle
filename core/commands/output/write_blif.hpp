@@ -37,49 +37,50 @@
 
 namespace alice
 {
-  class write_blif_command : public alice::command{
+class write_blif_command : public alice::command
+{
 
-    public:
-      explicit write_blif_command( const environment::ptr& env )
-          : command( env, "Writes the Boolean network into BLIF format" ){
+public:
+    explicit write_blif_command(const environment::ptr &env)
+        : command(env, "Writes the Boolean network into BLIF format")
+    {
 
-        opts.add_option( "--filename,filename", filename, "BLIF file to write out to" )->required();
+        opts.add_option("--filename,filename", filename,
+                        "BLIF file to write out to")->required();
         add_flag("--mig,-m", "Read from the MIG network");
-        add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
-      }
+        add_flag("--skip-feedthrough",
+                 "Do not include feedthrough nets when writing out the file");
+    }
 
-    protected:
-      void execute(){
-        if(oracle::checkExt(filename, "blif")){
-          mockturtle::write_blif_params ps;
-          if(is_set("skip-feedthrough"))
-            ps.skip_feedthrough = 1u;
-          if(is_set("mig")){
-            if(!store<mig_ntk>().empty()){
-              auto& mig = *store<mig_ntk>().current();
-              mockturtle::write_blif(mig, filename, ps);
+protected:
+    void execute()
+    {
+        if (oracle::checkExt(filename, "blif")) {
+            mockturtle::write_blif_params ps;
+            if (is_set("skip-feedthrough"))
+                ps.skip_feedthrough = 1u;
+            if (is_set("mig")) {
+                if (!store<mig_ntk>().empty()) {
+                    auto &mig = *store<mig_ntk>().current();
+                    mockturtle::write_blif(mig, filename, ps);
+                } else {
+                    env->err() << "There is not an MIG network stored.\n";
+                }
+            } else {
+                if (!store<aig_ntk>().empty()) {
+                    auto &aig = *store<aig_ntk>().current();
+                    mockturtle::write_blif(aig, filename, ps);
+                } else {
+                    env->err() << "There is not an AIG network stored.\n";
+                }
             }
-            else{
-              env->err() << "There is not an MIG network stored.\n";
-            }
-          }
-          else{
-            if(!store<aig_ntk>().empty()){
-              auto& aig = *store<aig_ntk>().current();
-              mockturtle::write_blif(aig, filename, ps);
-            }
-            else{
-              env->err() << "There is not an AIG network stored.\n";
-            }
-          }
-        }
-        else{
+        } else {
             env->err() << filename << " is not a valid BLIF file\n";
         }
-      }
-    private:
-      std::string filename{};
-  };
+    }
+private:
+    std::string filename{};
+};
 
-  ALICE_ADD_COMMAND(write_blif, "Output");
+ALICE_ADD_COMMAND(write_blif, "Output");
 }
