@@ -67,6 +67,8 @@
 #include "store/mig.hpp"
 #include "store/xag.hpp"
 #include "store/klut.hpp"
+#include "store/xmg.hpp"
+
 
 /*** Commands ***/
 //Input
