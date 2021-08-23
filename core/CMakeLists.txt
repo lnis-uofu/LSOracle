@@ -59,3 +59,11 @@ gtest_discover_tests(unit_tests)
 configure_file(test.ini test.ini COPYONLY)
 install(TARGETS lsoracle CONFIGURATIONS RELEASE RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES test.ini CONFIGURATIONS RELEASE DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/lsoracle)
+
+if (${ENABLE_ABC})
+add_definitions(-DABC_ENABLE)
+endif()
+
+if (${ENABLE_OPENSTA})
+add_definitions(-DSTA_ENABLE)
+endif()

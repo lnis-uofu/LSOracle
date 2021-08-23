@@ -87,6 +87,7 @@
 #include "commands/output/write_hypergraph.hpp"
 #include "commands/output/show_ntk.hpp"
 #include "commands/output/disjoint_clouds.hpp"
+#include "commands/output/write_partition.hpp"
 #include "commands/output/redirect.hpp"
 //#include "commands/output/get_all_partitions.hpp" //need to add a write_toplevel_verilog method to recover this feature
 //#include "commands/output/print_karnaugh_map.hpp" //removed because of frugally deep dependence; will get back to it

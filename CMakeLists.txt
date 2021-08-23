@@ -26,6 +26,10 @@ option(ENABLE_GALOIS
 
 option(ENABLE_LIBABC
   "Enable libabc library." OFF)
+
+option(ENABLE_OPENSTA
+  "Enable OpenSTA library." OFF)
+
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
         set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
