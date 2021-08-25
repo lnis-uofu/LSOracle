@@ -25,7 +25,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#ifdef ENABLE_STA
+#ifdef ENABLE_OPENSTA
 #ifdef ENABLE_ABC
 
 #include <alice/alice.hpp>
@@ -45,10 +45,8 @@ public:
         opts.add_option("--output,-o", output_file,
                         "Verilog output file.")->required();
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
-        // opts.add_option("--abc-exec", abc_exec,
-        //                 "ABC executable, defaults to using path.");
-        // opts.add_option("--sta-exec", sta_exec,
-        //                 "OpenSTA executable, defaults to using path.");
+        opts.add_option("--abc-exec", abc_exec,
+                        "ABC executable, defaults to using path.");
     }
 protected:
     void execute()
@@ -66,8 +64,9 @@ protected:
         mockturtle::depth_view orig_depth{ntk_aig};
         auto partitions_aig = *store<part_man_aig_ntk>().current();
         auto start = std::chrono::high_resolution_clock::now();
-        auto ntk_mig = oracle::budget_optimization(ntk_aig, partitions_aig,
-                       liberty_file);
+        auto ntk_mig = oracle::budget_optimization<mockturtle::aig_network>(
+                           ntk_aig, partitions_aig,
+                           liberty_file, output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();
 
         mockturtle::depth_view new_depth{ntk_mig};
@@ -89,11 +88,11 @@ protected:
         store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
     }
     string liberty_file;
-    // string abc_exec;
-    // string sta_exec;
+    string output_file;
+    string abc_exec{"abc"};
     ALICE_ADD_COMMAND(budget_script, "Optimization");
 };
 }
 
-#endif ENABLE_ABC
-#endif ENABLE_STA
+#endif
+#endif

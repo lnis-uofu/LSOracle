@@ -1,3 +1,4 @@
+
 #Set up google test so kahypar doesn't complain
 if (LOCAL_GTEST)
   set(BUILD_GTEST ON)
@@ -39,4 +40,12 @@ add_subdirectory(alice)
 
 if (${ENABLE_GALOIS})
   add_subdirectory(Galois EXCLUDE_FROM_ALL)
+endif()
+
+if (${ENABLE_ABC})
+
+endif()
+
+if (${ENABLE_OPENSTA})
+
 endif()

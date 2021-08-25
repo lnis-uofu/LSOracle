@@ -1,4 +1,4 @@
-#ifdef ENABLE_STA
+#ifdef ENABLE_OPENSTA
 #ifdef ENABLE_ABC
 
 #include "budget.hpp"
@@ -109,5 +109,5 @@ mig_names budget_optimization(aig_names ntk_aig, part_man_aig partitions_aig)
 }
 }
 
-#endif ENABLE_ABC
-#endif ENABLE_STA
+#endif
+#endif

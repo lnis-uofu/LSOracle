@@ -118,6 +118,7 @@
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
+#include "commands/optimization/budget_script.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
@@ -146,4 +147,18 @@
 #include "kahypar_config.hpp"
 #include "config.h"
 
-ALICE_MAIN(lsoracle)
+#ifdef ENABLE_OPENSTA
+#include <sta/Sta.hh>
+#endif
+
+int main(int argc, char ** argv)
+{
+#ifdef ENABLE_OPENSTA
+    sta::Sta *test = new sta::Sta;
+    sta::Sta::setSta(test);
+    sta::initSta();
+    sta::Sta::sta()->makeComponents();
+#endif
+    _ALICE_MAIN_BODY(lsoracle)
+    return cli.run(argc, argv);
+}

@@ -25,6 +25,7 @@ add_custom_command(
 set(LSORACLE_SOURCE
   ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   kahypar_temp_config.cpp
+  algorithms/optimization/budget.cpp
 )
 
 add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})
@@ -38,6 +39,21 @@ if (${ENABLE_GALOIS})
   add_definitions(-DENABLE_GALOIS)
   target_include_directories(lsoracle PRIVATE ../lib/Galois/lonestar)
   target_link_libraries(lsoracle galois_utah)
+endif()
+
+if (${ENABLE_ABC})
+  add_definitions(-DENABLE_ABC)
+  target_include_directories(lsoracle PRIVATE ${ABC_INCLUDE_DIR})
+  # target_link_libraries(lsoracle libabc)
+endif()
+
+if (${ENABLE_OPENSTA})
+  add_definitions(-DENABLE_OPENSTA)
+  find_package(TCL)
+  include(FindZLIB)
+  include_directories (${TCL_INCLUDE_PATH})
+  add_definitions (-DUSE_TCL_STUBS)
+  target_link_libraries(lsoracle OpenSTA ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
 endif()
 
 set(LSORACLE_TESTS
