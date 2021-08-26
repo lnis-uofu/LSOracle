@@ -61,6 +61,7 @@
 #include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xag_script.hpp"
+//#include "algorithms/optimization/four_way_optimization.hpp"
 
 //#include "algorithms/asic_mapping/techmapping.hpp"
 //#include "algorithms/output/mapped_verilog.hpp"
