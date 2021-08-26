@@ -60,6 +60,8 @@
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
+#include "algorithms/optimization/xag_script.hpp"
+
 //#include "algorithms/asic_mapping/techmapping.hpp"
 //#include "algorithms/output/mapped_verilog.hpp"
 
@@ -120,6 +122,8 @@
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
 #include "commands/optimization/xmgscript.hpp"
+#include "commands/optimization/xagscript.hpp"
+
 
 /* these were commented out in previous master */
 // #include "commands/optimization/depth_partition.hpp"
