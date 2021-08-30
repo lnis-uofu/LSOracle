@@ -43,7 +43,7 @@ namespace alice
         explicit optimization_command( const environment::ptr& env )
                 : command( env, "Perform Mixed Synthesis on Network after Partitioning" ){
 
-                opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
+	  opts.add_option( "--nn_model,-n", nn_model, "Trained neural network model for classification" );
                 opts.add_option( "--out,-o", out_file, "Verilog output" );
                 opts.add_option( "--strategy,-s", strategy, "classification strategy [area delay product=0, area=1, delay=2, delay_threshold=3]" );
                 opts.add_option( "--threshold", threshold, "maximum delay threshold for strategy 3" );
@@ -107,7 +107,7 @@ namespace alice
 	    }
 	    //High effort classification
 	    else if(!aig && !mig && nn_model.empty()){
-   	      ntk_mig = oracle::optimization_high(ntk_aig, partitions_aig, strategy, combine);
+   	      ntk_mig = oracle::optimization_high(ntk_aig, partitions_aig, strategy, combine, threshold, aig_parts, mig_parts, depth_parts, area_parts, skip_parts);
 	    }
 	    //Neural network model
 	    else if(!mig && !aig && !nn_model.empty()){

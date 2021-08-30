@@ -156,19 +156,30 @@ namespace oracle{
     return ntk_mig;  
   }
 
-  mig_names optimization_high(aig_names ntk_aig, part_man_aig partitions_aig, unsigned strategy, bool combine){
+  mig_names optimization_high(
+			      aig_names ntk_aig, 
+			      part_man_aig partitions_aig, 
+			      unsigned strategy, 
+			      bool combine, 
+			      unsigned delay_threshold, 
+			      std::vector<int32_t> aig_always_partitions_vector,
+			      std::vector<int32_t> mig_always_partitions_vector,
+			      std::vector<int32_t> depth_always_partitions_vector,
+			      std::vector<int32_t> area_always_partitions_vector,
+			      std::vector<int32_t> skip_partitions_vector
+){
     //return optimization(ntk_aig, partitions_aig, strategy, "", true, false, false, combine);
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
     std::vector<int> skip_parts;
     std::vector<int> comb_aig_parts;
     std::vector<int> comb_mig_parts;
-    std::set<int32_t> aig_always_partitions;
-    std::set<int32_t> mig_always_partitions;
-    std::set<int32_t> depth_always_partitions;
-    std::set<int32_t> area_always_partitions;
-    std::set<int32_t> skip_partitions;
-    unsigned delay_threshold = 0;
+    //Converting to a set here rather than at user input because alice doesn't seem to like set inputs.
+    std::set<int32_t> aig_always_partitions(aig_always_partitions_vector.begin(), aig_always_partitions_vector.end());
+      std::set<int32_t> mig_always_partitions(mig_always_partitions_vector.begin(),  mig_always_partitions_vector.end());
+      std::set<int32_t> depth_always_partitions(depth_always_partitions_vector.begin(),  depth_always_partitions_vector.end());
+      std::set<int32_t> area_always_partitions(area_always_partitions_vector.begin(), area_always_partitions_vector.end());
+      std::set<int32_t> skip_partitions(skip_partitions_vector.begin(), skip_partitions_vector.end());
 
     int num_parts = partitions_aig.get_part_num();
 
