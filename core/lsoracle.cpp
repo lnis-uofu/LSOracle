@@ -40,7 +40,6 @@
 
 /*** Algorithms ***/
 #include "algorithms/partitioning/partition_view.hpp"
-#include "utility.hpp"
 #include "algorithms/partitioning/hyperg.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 //#include "algorithms/partitioning/cluster.hpp"

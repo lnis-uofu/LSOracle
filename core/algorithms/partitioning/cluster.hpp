@@ -41,8 +41,8 @@
 #include <cassert>
 #include <mockturtle/mockturtle.hpp>
 
-#include "partition_view.hpp"
-#include "hyperg.hpp"
+#include "algorithms/partitioning/partition_view.hpp"
+#include "algorithms/partitioning/hyperg.hpp"
 #include <libkahypar.h>
 
 namespace oracle

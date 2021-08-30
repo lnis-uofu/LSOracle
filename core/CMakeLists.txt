@@ -26,6 +26,7 @@ set(LSORACLE_SOURCE
   ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   kahypar_temp_config.cpp
   algorithms/optimization/budget.cpp
+  utility.cpp
 )
 
 add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})

@@ -34,13 +34,13 @@
 #include <set>
 #include <cassert>
 #include <queue>
-
-#include <kitty/kitty.hpp>
-#include "partition_view.hpp"
-#include "structure_partition.hpp"
-#include "hyperg.hpp"
 #include <mockturtle/mockturtle.hpp>
+#include <kitty/kitty.hpp>
 #include <libkahypar.h>
+
+#include "algorithms/partitioning/partition_view.hpp"
+#include "algorithms/partitioning/structure_partition.hpp"
+#include "algorithms/partitioning/hyperg.hpp"
 #include "kahypar_config.hpp"
 #include "utility.hpp"
 //#include <fdeep/fdeep.hpp>
