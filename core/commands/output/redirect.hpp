@@ -24,36 +24,40 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
 #include <alice/alice.hpp>
 #include <stdio.h>
 
 namespace alice
 {
-  class redirect_command : public alice::command{
+class redirect_command : public alice::command
+{
 
-    public:
-      explicit redirect_command( const environment::ptr& env )
-          : command( env, "Redirect command output to specified file." ){
-        opts.add_option( "--file,-f,file", filename, "File to write output to." );
-        add_flag( "--stdout", "Write output to standard output" );
-      }
+public:
+    explicit redirect_command(const environment::ptr &env)
+        : command(env, "Redirect command output to specified file.")
+    {
+        opts.add_option("--file,-f,file", filename, "File to write output to.");
+        add_flag("--stdout", "Write output to standard output");
+    }
 
-    protected:
-      void execute(){
+protected:
+    void execute()
+    {
         // if (env->out() != std::cout) {
         //   env->out().close();
         // }
         if (filename != "") {
-          std::ofstream *output = new std::ofstream(filename);
-          *output << "Redirected output" << std::endl;
-          env->reroute(*output, std::cerr);
+            std::ofstream *output = new std::ofstream(filename);
+            *output << "Redirected output" << std::endl;
+            env->reroute(*output, std::cerr);
         } else {
-          env->reroute(std::cout, std::cerr);
+            env->reroute(std::cout, std::cerr);
         }
-      }
-    private:
-      std::string filename{};
-  };
+    }
+private:
+    std::string filename{};
+};
 
-  ALICE_ADD_COMMAND(redirect, "Output");
+ALICE_ADD_COMMAND(redirect, "Output");
 }
