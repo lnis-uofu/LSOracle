@@ -531,6 +531,14 @@ using topo_mig =
     mockturtle::topo_view<mockturtle::names_view<mockturtle::mig_network>>;
 template bool is_po<topo_mig>(topo_mig const &, topo_mig::node const &);
 
+using topo_aig =
+    mockturtle::topo_view<mockturtle::aig_network>;
+template bool is_po<topo_aig>(topo_aig const &, topo_aig::node const &);
+using topo_names_aig =
+    mockturtle::topo_view<mockturtle::names_view<mockturtle::aig_network>>;
+template bool is_po<topo_names_aig>(topo_names_aig const &,
+                                    topo_names_aig::node const &);
+
 bool is_in_vector(std::vector<int> vec, int nodeIdx)
 {
 

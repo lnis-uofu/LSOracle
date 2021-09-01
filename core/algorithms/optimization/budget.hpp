@@ -36,10 +36,37 @@ namespace oracle
 {
 
 template <typename network>
-mockturtle::names_view<mockturtle::mig_network> budget_optimization(
+mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
     std::string liberty_file, std::string output_file, std::string abc_exec);
+
+struct node_depth {
+    int nodes;
+    int depth;
+};
+
+enum optimization_strategy { area, balanced, depth };
+
+template<typename network>
+class optimizer
+{
+public:
+    virtual partition_view<mockturtle::names_view<network>> partition() = 0;
+    virtual std::string module_name() = 0;
+    virtual void convert() = 0;
+    /**
+     * Perform optimization
+     */
+    virtual void optimize() = 0;
+    virtual node_depth independent_metric() = 0;
+    virtual mockturtle::names_view<network> reconvert() = 0;
+    virtual optimization_strategy target() = 0;
+    /**
+     * Return a path to a file containing the techmapped verilog.
+     */
+    virtual std::string techmap(std::string liberty_file) = 0;
+};
 }
 
 #endif

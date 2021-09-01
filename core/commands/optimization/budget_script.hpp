@@ -64,34 +64,37 @@ protected:
         mockturtle::depth_view orig_depth{ntk_aig};
         auto partitions_aig = *store<part_man_aig_ntk>().current();
         auto start = std::chrono::high_resolution_clock::now();
-        auto ntk_mig = oracle::budget_optimization<mockturtle::aig_network>(
-                           ntk_aig, partitions_aig,
-                           liberty_file, output_file, abc_exec);
+        mockturtle::names_view<mockturtle::aig_network> ntk_result =
+            oracle::budget_optimization<mockturtle::aig_network>(
+                ntk_aig, partitions_aig,
+                liberty_file, output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();
 
-        mockturtle::depth_view new_depth{ntk_mig};
-        if (ntk_mig.size() == ntk_aig.size()
+        mockturtle::depth_view new_depth{ntk_result};
+        if (ntk_result.size() == ntk_aig.size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
             return;
         }
 
-        env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " <<
+        env->out() << "Final ntk size = " << ntk_result.num_gates() << " and depth = "
+                   <<
                    new_depth.depth() << "\n";
-        env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-        env->out() << "Node Depth Product = " << ntk_mig.num_gates() * new_depth.depth()
+        env->out() << "Final number of latches = " << ntk_result.num_latches() << "\n";
+        env->out() << "Node Depth Product = " << ntk_result.num_gates() *
+                   new_depth.depth()
                    << "\n";
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);
         env->out() << "Full Optimization: " << duration.count() << "ms\n";
         env->out() << "Finished optimization\n";
-        store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
+        //store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_result);
     }
     string liberty_file;
     string output_file;
     string abc_exec{"abc"};
-    ALICE_ADD_COMMAND(budget_script, "Optimization");
 };
+ALICE_ADD_COMMAND(budget_script, "Optimization");
 }
 
 #endif

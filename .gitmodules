@@ -139,3 +139,6 @@
 [submodule "lib/googletest"]
 	path = lib/googletest
 	url = https://github.com/google/googletest.git
+[submodule "lib/OpenSTA"]
+	path = lib/OpenSTA
+	url = https://github.com/The-OpenROAD-Project/OpenSTA.git

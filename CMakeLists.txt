@@ -48,8 +48,3 @@ add_subdirectory(core)
 if (${YOSYS_PLUGIN})
   add_subdirectory(yosys-plugin)
 endif()
-
-if (${ENABLE_OPENSTA})
-  #  target_include_directories(lsoracle PRIVATE ${OPENSTA_INCLUDE_DIR})
-  add_subdirectory(OpenSTA)
-endif()

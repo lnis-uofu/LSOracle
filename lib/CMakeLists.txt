@@ -47,5 +47,5 @@ if (${ENABLE_ABC})
 endif()
 
 if (${ENABLE_OPENSTA})
-
+  add_subdirectory(OpenSTA)
 endif()

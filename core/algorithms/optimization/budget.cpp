@@ -53,69 +53,48 @@ using mig_ntk = std::shared_ptr<mig_names>;
 using part_man_mig = oracle::partition_manager<mig_names>;
 using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 
-
-struct node_depth {
-    int nodes;
-    int depth;
-};
-
-enum optimization_strategy { area, balanced, depth };
-
-template<typename network>
-class optimizer
+template<typename T>
+std::string basic_techmap(string tech_script, T optimal)
 {
-public:
-    optimizer(partition_view<network> p);
-    partition_view<network> partition();
-    std::string module_name();
-    void convert();
-    /**
-     * Perform optimization
-     */
-    void optimize();
-    node_depth independent_metric();
-    double slack();
-    network reconvert();
-    optimization_strategy target();
-    /**
-     * Return a path to a file containing the techmapped verilog.
-     */
-    template<typename T>
-    std::string basic_techmap(string tech_script, T optimal)
-    {
-        char *blif = strdup("/tmp/lsoracle_XXXXXX");
-        assert(mkstemp(blif) != -1);
-        std::string input_blif = std::string(blif);
+    char *blif = strdup("/tmp/lsoracle_XXXXXX");
+    assert(mkstemp(blif) != -1);
+    std::string input_blif = std::string(blif);
 
-        char *verilog = strdup("/tmp/lsoracle_XXXXXX");
-        assert(mkstemp(verilog) != -1);
-        std::string output_verilog = std::string(verilog);
+    char *verilog = strdup("/tmp/lsoracle_XXXXXX");
+    assert(mkstemp(verilog) != -1);
+    std::string output_verilog = std::string(verilog);
 
-        char *abc = strdup("/tmp/lsoracle_XXXXXX");
-        assert(mkstemp(abc) != -1);
-        std::string abc_script = std::string(abc);
+    char *abc = strdup("/tmp/lsoracle_XXXXXX");
+    assert(mkstemp(abc) != -1);
+    std::string abc_script = std::string(abc);
 
-        std::ofstream script(abc_script);
-        script << tech_script << std::endl;
-        script.close();
+    std::ofstream script(abc_script);
+    script << tech_script << std::endl;
+    script.close();
 
-        mockturtle::write_blif_params ps;
-        mockturtle::write_blif(optimal, output_verilog, ps);
-        system(("abc -F " + abc_script + " -o " + output_verilog + " " +
-                input_blif).c_str());
-        return output_verilog;
-    };
+    mockturtle::write_blif_params ps;
+    mockturtle::write_blif(optimal, output_verilog, ps);
+    system(("abc -F " + abc_script + " -o " + output_verilog + " " +
+            input_blif).c_str());
+    return output_verilog;
 };
+using foo = partition_view<mockturtle::names_view<mockturtle::aig_network>>;
+using bar = mockturtle::names_view<mockturtle::mig_network >;
+template std::string basic_techmap<foo> (std::string, foo);
+template std::string basic_techmap <bar> (std::string, bar);
+
+
+template class optimizer<mockturtle::aig_network>;
 
 template <typename Ntk>
 class noop: public optimizer<Ntk>
 {
 public:
-    noop(mockturtle::names_view<Ntk> ntk): original(ntk)
+    noop(partition_view<mockturtle::names_view<Ntk>> ntk): original(ntk)
     {
     }
 
-    mockturtle::names_view<Ntk> partition()
+    partition_view<mockturtle::names_view<Ntk>> partition()
     {
         return original;
     }
@@ -165,19 +144,18 @@ public:
         metric = node_depth{opt_size, opt_depth};
         return metric;
     }
-
-
 private:
-    mockturtle::names_view<Ntk> original;
+    partition_view<mockturtle::names_view<Ntk>> original;
     node_depth metric;
     string techmapped;
 };
+template class noop<mockturtle::aig_network>;
 
 template <typename Ntk>
-class test: public optimizer<Ntk>
+class mig_optimizer: public optimizer<Ntk>
 {
 public:
-    test(mockturtle::names_view<Ntk> ntk): original(ntk)
+    mig_optimizer(partition_view<mockturtle::names_view<Ntk>> ntk): original(ntk)
     {
     }
 
@@ -195,10 +173,24 @@ public:
 
     mockturtle::names_view<Ntk> reconvert()
     {
-        return optimal;
+        /* LUT mapping */
+        mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
+        mapped{optimal};
+        mockturtle::lut_mapping_params ps;
+        ps.cut_enumeration_ps.cut_size = 4;
+        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>, true>
+        (mapped, ps);
+
+        /* collapse into k-LUT network */
+        const auto klut =
+            *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
+
+        /* node resynthesis */
+        mockturtle::exact_aig_resynthesis resyn;
+        return mockturtle::node_resynthesis<mockturtle::aig_network>(klut, resyn);
     }
 
-    mockturtle::names_view<Ntk> partition()
+    partition_view<mockturtle::names_view<Ntk>> partition()
     {
         return original;
     }
@@ -221,7 +213,7 @@ public:
         converted = mockturtle::node_resynthesis<mockturtle::mig_network>(klut, resyn);
     }
 
-    mockturtle::mig_network optimized()
+    mockturtle::names_view<mockturtle::mig_network> optimized()
     {
         return optimal;
     }
@@ -246,17 +238,20 @@ public:
         string script =
             "read_lib " + liberty_file +
             "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = this->basic_techmap(script, optimal);
+        techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (
+                         script, optimal);
         return techmapped;
     }
 
 private:
-    mockturtle::names_view<Ntk> original;
+    partition_view<mockturtle::names_view<Ntk>> original;
     mockturtle::names_view<mockturtle::mig_network> optimal;
     mockturtle::names_view<mockturtle::mig_network> converted;
     node_depth metric;
     string techmapped;
 };
+template class mig_optimizer<mockturtle::aig_network>;
+
 /*
 class ndp_aig_optimizer: optimizer<mockturtle::mig_network, node_depth>
 {
@@ -302,47 +297,58 @@ std::tuple<mockturtle::mig_network, node_depth> optimize()
 */
 
 template <typename network, typename F>
-optimizer<network> optimize_by(partition_view<network> part,
-                               std::vector<optimizer<network>> optimizers, F better)
+optimizer<network> *optimize_by(partition_view<mockturtle::names_view<network>>
+                                part,
+                                std::vector<optimizer<network>*> optimizers, F better)
 {
-    optimizer<network> best = noop<network>(part);
-    for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
-        opt.convert();
-        opt.optimize();
-        if (better(best.independent_metric(), opt.indepent_metric())) {
-            best = opt;
+}
+
+template <typename network>
+optimizer<network> *optimize_depth(
+    partition_view<mockturtle::names_view<network>> part)
+{
+    // todo this is gonna leak memory.
+    std::vector<optimizer<network>*> optimizers;
+    optimizers.emplace_back(new noop<network>(part));
+    optimizers.emplace_back(new mig_optimizer<network>(part));
+    optimizer<network> *best = *optimizers.begin();
+    for (auto opt = optimizers.begin() + 1; opt != optimizers.end(); opt++) {
+        (*opt)->convert();
+        (*opt)->optimize();
+        if ((*opt)->independent_metric().depth < best->independent_metric().depth) {
+            best = *opt;
         }
     }
     return best;
 }
 
 template <typename network>
-optimizer<network> optimize_depth(partition_view<network> part)
+optimizer<network> *optimize_area(
+    partition_view<mockturtle::names_view<network>> part)
 {
-    std::vector<optimizer<network>> optimizers;
-    optimizers.append(test<network>(part));
-    return optimize_by(part, optimizers, [](node_depth prev, node_depth next) {
-        return next.depth < prev.depth;
-    });
-}
-
-template <typename network>
-optimizer<network> optimize_area(partition_view<network> part)
-{
-    std::vector<optimizer<network>> optimizers;
-    optimizers.append(test<network>(part));
-    return optimize_by(part, optimizers, [](node_depth prev, node_depth next) {
-        return next.nodes < prev.nodes;
-    });
+    // todo this is gonna leak memory.
+    std::vector<optimizer<network>*> optimizers;
+    optimizers.emplace_back(new noop<network>(part));
+    optimizers.emplace_back(new mig_optimizer<network>(part));
+    optimizer<network> *best = *optimizers.begin();
+    for (auto opt = optimizers.begin() + 1; opt != optimizers.end(); opt++) {
+        (*opt)->convert();
+        (*opt)->optimize();
+        if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
+            best = *opt;
+        }
+    }
+    return best;
 }
 
 template <typename network>
 string techmap(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
-    std::vector<optimizer<network>> optimized,
+    std::vector<optimizer<network>*> optimized,
     string liberty_file)
 {
+    // Write out verilog
     char *output = strdup("/tmp/lsoracle_XXXXXX");
     assert(mkstemp(output) != -1);
     std::string output_file = std::string(output);
@@ -353,29 +359,27 @@ string techmap(
     // add all partition modules to verilog file.
     int num_parts = partitions.get_part_num();
     for (int i = 0; i < num_parts; i++) {
-        std::string module_file = optimized[i].techmap(liberty_file);
+        std::string module_file = optimized[i]->techmap(liberty_file);
         std::ifstream module(module_file);
         verilog << module.rdbuf();
         verilog << std::endl;
         module.close();
     }
-    // TODO what about registers?
-    verilog << "module " << ntk.get_network_name() << "(";
-    ntk.foreach_pi([&verilog, &ntk](typename network::signal n) {
-        verilog << ntk.get_name(n) << ",\n";
-    });
-    ntk.foreach_po([&verilog, &ntk](typename network::node n) {
-        verilog << ntk.get_output_name(n) << ",\n";
-    });
-    verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
-    verilog << "\n);\n" << std::endl;
-    // generate list of inputs/outputs/wires
-    std::set<std::string> inputs(ntk.num_pis());
-    std::set<std::string> outputs(ntk.num_pos());
-    std::set<std::string> partition_edges;
 
-    ntk.foreach_pi([&inputs, &ntk](typename network::signal n) {
-        inputs.insert(ntk.get_name(n));
+    // TODO what about registers?
+    // generate list of inputs/outputs/wires
+    std::set<std::string> inputs;
+    std::set<std::string> outputs;
+    std::set<std::string> partition_edges;
+    mockturtle::fanout_view<mockturtle::names_view<network>> fanouts(ntk);
+    ntk.foreach_pi([&inputs, &ntk, &fanouts](typename network::node n) {
+        fanouts.foreach_fanout(n, [&n, &inputs, &fanouts](typename network::node f) {
+            fanouts.foreach_fanin(f, [&n, &inputs, &fanouts](typename network::signal s) {
+                if (fanouts.get_node(s) == n) {
+                    inputs.insert(fanouts.get_name(s));
+                }
+            });
+        });
     });
     ntk.foreach_po([&outputs, &ntk](typename network::signal n) {
         outputs.insert(ntk.get_name(n));
@@ -383,11 +387,22 @@ string techmap(
     for (int i = 0; i < num_parts; i++) {
         oracle::partition_view<mockturtle::names_view<network>> part =
                     partitions.create_part(ntk, i);
-        part.foreach_pi([&partition_edges, &part](typename network::signal n) {
-            partition_edges.insert(part.get_name(n));
+        mockturtle::fanout_view<oracle::partition_view<mockturtle::names_view<network>>>
+        part_fanouts(part);
+        part.foreach_pi([&partition_edges, &part,
+                          &part_fanouts](typename network::node n) {
+            part_fanouts.foreach_fanout(n, [&n, &partition_edges,
+                &part_fanouts](typename network::node f) {
+                part_fanouts.foreach_fanin(f, [&n, &partition_edges,
+                    &part_fanouts](typename network::signal s) {
+                    if (part_fanouts.get_node(s) == n) {
+                        partition_edges.insert(part_fanouts.get_name(s));
+                    }
+                });
+            });
         });
-        part.foreach_po([&partition_edges, &part](typename network::node n) {
-            partition_edges.insert(part.get_name(n));
+        part.foreach_po([&partition_edges, &part](typename network::signal n) {
+            partition_edges.insert(part.get_output_name(part.po_index(n)));
         });
     }
 
@@ -404,13 +419,25 @@ string techmap(
                              io.begin(), io.end(), wires.begin());
     wires.resize(it - wires.begin());
 
-    // write out connections
+
+    // write out module definition
+    verilog << "module " << ntk.get_network_name() << "(";
+    std::for_each(outputs.begin(), outputs.end(), [&verilog](std::string output) {
+        verilog << "output " << output << ";\n";
+    });
     std::for_each(inputs.begin(), inputs.end(), [&verilog](std::string input) {
         verilog << "input " << input << ";\n";
     });
     verilog << std::endl;
+    verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
+    verilog << "\n);\n" << std::endl;
+    // write out connections
     std::for_each(outputs.begin(), outputs.end(), [&verilog](std::string output) {
         verilog << "output " << output << ";\n";
+    });
+    verilog << std::endl;
+    std::for_each(inputs.begin(), inputs.end(), [&verilog](std::string input) {
+        verilog << "input " << input << ";\n";
     });
     verilog << std::endl;
     std::for_each(wires.begin(), wires.end(), [&verilog](std::string wire) {
@@ -420,16 +447,27 @@ string techmap(
 
     // write instances.
     for (int i = 0; i < num_parts; i++) {
-        optimizer<network> optimize = optimized[i];
-        verilog << optimize.module_name() << " partition_" << i << "_inst (\n";
+        optimizer<network> *optimize = optimized[i];
+        verilog << optimize->module_name() << " partition_" << i << "_inst (\n";
         oracle::partition_view<mockturtle::names_view<network>> part =
-                    optimized.partition();
-        part.foreach_pi([&verilog, &ntk](typename network::signal n) {
-            std::string name = part.get_name(n);
-            verilog << "." << name << "(" << name << "),\n";
+                    optimize->partition();
+        mockturtle::fanout_view<oracle::partition_view<mockturtle::names_view<network>>>
+        part_fanouts(part);
+        part_fanouts.foreach_pi([&inputs, &verilog,
+                 &part_fanouts](typename network::node n) {
+            part_fanouts.foreach_fanout(n, [&n, &verilog,
+                &part_fanouts](typename network::node f) {
+                part_fanouts.foreach_fanin(f, [&n, &verilog,
+                    &part_fanouts](typename network::signal s) {
+                    if (part_fanouts.get_node(s) == n) {
+                        std::string name = part_fanouts.get_name(s);
+                        verilog << "." << name << "(" << name << "),\n";
+                    }
+                });
+            });
         });
-        part.foreach_po([&verilog, &ntk](typename network::node n) {
-            std::string name = part.get_name(n);
+        part.foreach_po([&verilog, &ntk, &part](typename network::signal s) {
+            std::string name = part.get_name(s);
             verilog << "." << name << "(" << name << "),\n";
         });
         verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
@@ -437,6 +475,8 @@ string techmap(
     }
     verilog << "endmodule;" << std::endl;
     verilog.close();
+
+    return output;
 }
 
 template<typename network>
@@ -444,7 +484,7 @@ size_t run_timing(std::string liberty_file,
                   std::string verilog_file,
                   mockturtle::names_view<network> ntk,
                   oracle::partition_manager<mockturtle::names_view<network>> partitions,
-                  std::vector<optimizer<network>> optimized)
+                  std::vector<optimizer<network>*> optimized)
 {
     const char *design = "top";
 
@@ -473,15 +513,16 @@ size_t run_timing(std::string liberty_file,
     // otherwise find partition with most nodes on path
 }
 
-template <typename network> mig_names optimize(
+template <typename network> mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
-    string liberty_file, string output_file)
+    string liberty_file, string output_file, string abc_exec) // too use abc_exec
 {
     int num_parts = partitions.get_part_num();
-    std::vector<optimizer<network>> optimized(num_parts);
+    std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
-        partition_view<network> part = partitions.create_part(ntk, i);
+        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+                    ntk, i);
         optimized[i] = optimize_area(part);
     }
     string verilog;
@@ -491,16 +532,18 @@ template <typename network> mig_names optimize(
         size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
                                        optimized);
         if (worst_part == -1
-                || optimized[worst_part].target() == optimization_strategy::depth) {
+                || optimized[worst_part]->target() == optimization_strategy::depth) {
             break; // met timing, or it's the best we can do.
         }
-        partition_view<network> part = partitions.create_part(ntk, worst_part);
+        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+                    ntk, worst_part);
         optimized[worst_part] = optimize_depth(part);
     }
     // TODO area recovery.
     for (int i = 0; i < num_parts; i++) {
-        partition_view<network> part = partitions.create_part(ntk, i);
-        network opt = optimized[i].reconvert();
+        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+                    ntk, i);
+        network opt = optimized[i]->reconvert();
         partitions.synchronize_part(part, opt, ntk);
     }
     // TODO copy verilog to output_file.
@@ -508,6 +551,14 @@ template <typename network> mig_names optimize(
     ntk = mockturtle::cleanup_dangling(ntk);
     return ntk;
 }
+
+template mockturtle::names_view<mockturtle::aig_network>
+budget_optimization<mockturtle::aig_network>
+(
+    mockturtle::names_view<mockturtle::aig_network>,
+    oracle::partition_manager<mockturtle::names_view<mockturtle::aig_network>>,
+    std::string, std::string, std::string);
+
 }
 
 #endif
