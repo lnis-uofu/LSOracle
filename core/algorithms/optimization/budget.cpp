@@ -57,16 +57,17 @@ using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 template<typename T>
 std::string basic_techmap(string tech_script, T optimal)
 {
-    char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
+    char *blif = strdup("/tmp/lsoracle_XXXXXX");
     assert(mkstemp(blif) != -1);
     std::string input_blif = std::string(blif);
     std::cout << "generated blif " << input_blif << std::endl;
-    char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
+
+    char *verilog = strdup("/tmp/lsoracle_XXXXXX");
     assert(mkstemp(verilog) != -1);
     std::string output_verilog = std::string(verilog);
     std::cout << "writing output to " << verilog << std::endl;
 
-    char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
+    char *abc = strdup("/tmp/lsoracle_XXXXXX");
     assert(mkstemp(abc) != -1);
     std::string abc_script = std::string(abc);
     std::cout << "generated ABC script " << abc_script << std::endl;
@@ -76,7 +77,7 @@ std::string basic_techmap(string tech_script, T optimal)
     script.close();
     std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
-    mockturtle::write_blif(optimal, output_verilog, ps);
+    mockturtle::write_blif(optimal, input_blif, ps);
     system(("abc -F " + abc_script + " -o " + output_verilog + " " +
             input_blif).c_str());
     std::cout << "done techmapping" << std::endl;
@@ -118,12 +119,15 @@ public:
         return original;
     }
 
+    /*
+     * Do direct resynthesis to create a copy.
+     */
     void convert()
     {
         /* LUT mapping */
         mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
         mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 4;
+        ps.cut_enumeration_ps.cut_size = 2;
         mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
         (mapped, ps);
 
@@ -133,13 +137,13 @@ public:
 
         /* node resynthesis */
         mockturtle::direct_resynthesis<Ntk> resyn;
-        converted = mockturtle::node_resynthesis<Ntk>(klut, resyn);
+        copy = mockturtle::node_resynthesis<Ntk>(klut, resyn);
     }
 
 
     mockturtle::names_view<Ntk> optimized()
     {
-        return original;
+        return copy;
     }
 
     void optimize()
@@ -157,7 +161,7 @@ public:
 
     node_depth independent_metric()
     {
-        mockturtle::depth_view part_depth(converted);
+        mockturtle::depth_view part_depth(copy);
         std::cout << "calculated depth" << std::endl;
         int opt_size = original.num_gates();
         int opt_depth = part_depth.depth();
@@ -166,7 +170,7 @@ public:
     }
 private:
     partition_view<mockturtle::names_view<Ntk>> original;
-    mockturtle::names_view<Ntk> converted;
+    mockturtle::names_view<Ntk> copy;
     node_depth metric;
     string techmapped;
 };
@@ -202,7 +206,7 @@ public:
         mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
         mapped{optimal};
         mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 4;
+        ps.cut_enumeration_ps.cut_size = 3;
         mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>, true>
         (mapped, ps);
 
@@ -347,7 +351,7 @@ optimizer<network> *optimize_depth(
         (*opt)->optimize();
         std::cout << "checking tech independent metrics." << std::endl;
         node_depth result = (*opt)->independent_metric();
-        std::cout << "result depth" << result.depth
+        std::cout << "result depth " << result.depth
                   << " size " << result.nodes << std::endl;
 
         if (best == nullptr) {
