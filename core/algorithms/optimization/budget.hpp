@@ -53,17 +53,36 @@ class optimizer
 {
 public:
     virtual partition_view<mockturtle::names_view<network>> partition() = 0;
+    /**
+     * module name for the generated verilog.
+     */
     virtual std::string module_name() = 0;
+    /**
+     * human readable name
+     */
+    virtual std::string optimizer_name() = 0;
+    /**
+     * Do any conversion necessary from original network type to the internal network type.
+     */
     virtual void convert() = 0;
     /**
      * Perform optimization
      */
     virtual void optimize() = 0;
+    /**
+     * Calculate tech independent depth and nodes metrics.
+     */
     virtual node_depth independent_metric() = 0;
+    /**
+     * Convert the optimized network back to the original network type.
+     */
     virtual mockturtle::names_view<network> reconvert() = 0;
+    /**
+     * List the type of optimization: area, delay, or balanced.
+     */
     virtual optimization_strategy target() = 0;
     /**
-     * Return a path to a file containing the techmapped verilog.
+     * Techmap, then return a path to a file containing the techmapped verilog.
      */
     virtual std::string techmap(std::string liberty_file) = 0;
 };

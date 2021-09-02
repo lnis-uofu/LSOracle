@@ -47,7 +47,8 @@ using aig_names = mockturtle::names_view<mockturtle::aig_network>;
 using aig_ntk = std::shared_ptr<aig_names>;
 using part_man_aig = oracle::partition_manager<aig_names>;
 using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
-
+using part_view_aig =
+    partition_view<mockturtle::names_view<mockturtle::aig_network>>;
 using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using mig_ntk = std::shared_ptr<mig_names>;
 using part_man_mig = oracle::partition_manager<mig_names>;
@@ -56,35 +57,33 @@ using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 template<typename T>
 std::string basic_techmap(string tech_script, T optimal)
 {
-    char *blif = strdup("/tmp/lsoracle_XXXXXX");
+    char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
     assert(mkstemp(blif) != -1);
     std::string input_blif = std::string(blif);
-
-    char *verilog = strdup("/tmp/lsoracle_XXXXXX");
+    std::cout << "generated blif " << input_blif << std::endl;
+    char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
     assert(mkstemp(verilog) != -1);
     std::string output_verilog = std::string(verilog);
+    std::cout << "writing output to " << verilog << std::endl;
 
-    char *abc = strdup("/tmp/lsoracle_XXXXXX");
+    char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
     assert(mkstemp(abc) != -1);
     std::string abc_script = std::string(abc);
+    std::cout << "generated ABC script " << abc_script << std::endl;
 
     std::ofstream script(abc_script);
     script << tech_script << std::endl;
     script.close();
-
+    std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
     mockturtle::write_blif(optimal, output_verilog, ps);
     system(("abc -F " + abc_script + " -o " + output_verilog + " " +
             input_blif).c_str());
+    std::cout << "done techmapping" << std::endl;
     return output_verilog;
 };
-using foo = partition_view<mockturtle::names_view<mockturtle::aig_network>>;
-using bar = mockturtle::names_view<mockturtle::mig_network >;
-template std::string basic_techmap<foo> (std::string, foo);
-template std::string basic_techmap <bar> (std::string, bar);
-
-
-template class optimizer<mockturtle::aig_network>;
+template std::string basic_techmap<part_view_aig> (std::string, part_view_aig);
+template std::string basic_techmap <mig_names>(std::string, mig_names);
 
 template <typename Ntk>
 class noop: public optimizer<Ntk>
@@ -92,6 +91,11 @@ class noop: public optimizer<Ntk>
 public:
     noop(partition_view<mockturtle::names_view<Ntk>> ntk): original(ntk)
     {
+    }
+
+    std::string optimizer_name()
+    {
+        return "noop";
     }
 
     partition_view<mockturtle::names_view<Ntk>> partition()
@@ -116,7 +120,22 @@ public:
 
     void convert()
     {
+        /* LUT mapping */
+        mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
+        mockturtle::lut_mapping_params ps;
+        ps.cut_enumeration_ps.cut_size = 4;
+        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
+        (mapped, ps);
+
+        /* collapse into k-LUT network */
+        const auto klut =
+            *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
+
+        /* node resynthesis */
+        mockturtle::direct_resynthesis<Ntk> resyn;
+        converted = mockturtle::node_resynthesis<Ntk>(klut, resyn);
     }
+
 
     mockturtle::names_view<Ntk> optimized()
     {
@@ -138,7 +157,8 @@ public:
 
     node_depth independent_metric()
     {
-        mockturtle::depth_view part_depth{original};
+        mockturtle::depth_view part_depth(converted);
+        std::cout << "calculated depth" << std::endl;
         int opt_size = original.num_gates();
         int opt_depth = part_depth.depth();
         metric = node_depth{opt_size, opt_depth};
@@ -146,9 +166,11 @@ public:
     }
 private:
     partition_view<mockturtle::names_view<Ntk>> original;
+    mockturtle::names_view<Ntk> converted;
     node_depth metric;
     string techmapped;
 };
+
 template class noop<mockturtle::aig_network>;
 
 template <typename Ntk>
@@ -159,12 +181,15 @@ public:
     {
     }
 
+    std::string optimizer_name()
+    {
+        return "basic migscript optimizer";
+    }
 
     std::string module_name()
     {
         return original.get_network_name();
     }
-
 
     optimization_strategy target()
     {
@@ -186,8 +211,8 @@ public:
             *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
 
         /* node resynthesis */
-        mockturtle::exact_aig_resynthesis resyn;
-        return mockturtle::node_resynthesis<mockturtle::aig_network>(klut, resyn);
+        mockturtle::direct_resynthesis<Ntk> resyn;
+        return mockturtle::node_resynthesis<Ntk>(klut, resyn);
     }
 
     partition_view<mockturtle::names_view<Ntk>> partition()
@@ -227,6 +252,7 @@ public:
     node_depth independent_metric()
     {
         mockturtle::depth_view part_mig_opt_depth{optimal};
+        std::cout << "calculated depth" << std::endl;
         int mig_opt_size = optimal.num_gates();
         int mig_opt_depth = part_mig_opt_depth.depth();
         metric = node_depth{mig_opt_size, mig_opt_depth};
@@ -307,16 +333,32 @@ template <typename network>
 optimizer<network> *optimize_depth(
     partition_view<mockturtle::names_view<network>> part)
 {
+    std::cout << "Optimizing for depth" << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(part));
     optimizers.emplace_back(new mig_optimizer<network>(part));
-    optimizer<network> *best = *optimizers.begin();
-    for (auto opt = optimizers.begin() + 1; opt != optimizers.end(); opt++) {
+    optimizer<network> *best = nullptr;
+    for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+        std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
+        std::cout << "converting network" << std::endl;
         (*opt)->convert();
+        std::cout << "trying to optimize" << std::endl;
         (*opt)->optimize();
+        std::cout << "checking tech independent metrics." << std::endl;
+        node_depth result = (*opt)->independent_metric();
+        std::cout << "result depth" << result.depth
+                  << " size " << result.nodes << std::endl;
+
+        if (best == nullptr) {
+            best = *opt;
+            continue;
+        }
+
         if ((*opt)->independent_metric().depth < best->independent_metric().depth) {
             best = *opt;
+            std::cout << "found a better result" << std::endl;
+            continue;
         }
     }
     return best;
@@ -326,16 +368,32 @@ template <typename network>
 optimizer<network> *optimize_area(
     partition_view<mockturtle::names_view<network>> part)
 {
+    std::cout << "Optimizing for area" << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(part));
     optimizers.emplace_back(new mig_optimizer<network>(part));
-    optimizer<network> *best = *optimizers.begin();
-    for (auto opt = optimizers.begin() + 1; opt != optimizers.end(); opt++) {
+    optimizer<network> *best = nullptr;
+    for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+        std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
+        std::cout << "converting network" << std::endl;
         (*opt)->convert();
+        std::cout << "trying to optimize" << std::endl;
         (*opt)->optimize();
+        std::cout << "checking tech independent metrics." << std::endl;
+        node_depth result = (*opt)->independent_metric();
+        std::cout << "result depth" << result.depth
+                  << " size " << result.nodes << std::endl;
+
+        if (best == nullptr) {
+            best = *opt;
+            continue;
+        }
+
         if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
             best = *opt;
+            std::cout << "found a better result" << std::endl;
+            continue;
         }
     }
     return best;
@@ -348,18 +406,21 @@ string techmap(
     std::vector<optimizer<network>*> optimized,
     string liberty_file)
 {
+    std::cout << "Starting techmapping." << std::endl;
     // Write out verilog
     char *output = strdup("/tmp/lsoracle_XXXXXX");
     assert(mkstemp(output) != -1);
     std::string output_file = std::string(output);
-
-    std::ofstream verilog(output);
+    std::cout << "Writing out to " << output_file << std::endl;
+    std::ofstream verilog(output_file);
     verilog << "# Generated by LSOracle" << std::endl;
 
     // add all partition modules to verilog file.
     int num_parts = partitions.get_part_num();
     for (int i = 0; i < num_parts; i++) {
+        std::cout << "techmapping partition " << i << std::endl;
         std::string module_file = optimized[i]->techmap(liberty_file);
+        std::cout << "writing results" << std::endl;
         std::ifstream module(module_file);
         verilog << module.rdbuf();
         verilog << std::endl;
@@ -372,6 +433,8 @@ string techmap(
     std::set<std::string> outputs;
     std::set<std::string> partition_edges;
     mockturtle::fanout_view<mockturtle::names_view<network>> fanouts(ntk);
+    std::cout << "gathering inputs" << std::endl;
+
     ntk.foreach_pi([&inputs, &ntk, &fanouts](typename network::node n) {
         fanouts.foreach_fanout(n, [&n, &inputs, &fanouts](typename network::node f) {
             fanouts.foreach_fanin(f, [&n, &inputs, &fanouts](typename network::signal s) {
@@ -381,10 +444,14 @@ string techmap(
             });
         });
     });
+    std::cout << "gathering outputs" << std::endl;
+
     ntk.foreach_po([&outputs, &ntk](typename network::signal n) {
         outputs.insert(ntk.get_name(n));
     });
     for (int i = 0; i < num_parts; i++) {
+        std::cout << "gathering wires for partition " << i << std::endl;
+
         oracle::partition_view<mockturtle::names_view<network>> part =
                     partitions.create_part(ntk, i);
         mockturtle::fanout_view<oracle::partition_view<mockturtle::names_view<network>>>
@@ -421,6 +488,7 @@ string techmap(
 
 
     // write out module definition
+    std::cout << "writing out top module" << std::endl;
     verilog << "module " << ntk.get_network_name() << "(";
     std::for_each(outputs.begin(), outputs.end(), [&verilog](std::string output) {
         verilog << "output " << output << ";\n";
@@ -447,6 +515,8 @@ string techmap(
 
     // write instances.
     for (int i = 0; i < num_parts; i++) {
+        std::cout << "writing out instance for partition " << i << std::endl;
+
         optimizer<network> *optimize = optimized[i];
         verilog << optimize->module_name() << " partition_" << i << "_inst (\n";
         oracle::partition_view<mockturtle::names_view<network>> part =
@@ -475,7 +545,7 @@ string techmap(
     }
     verilog << "endmodule;" << std::endl;
     verilog.close();
-
+    std::cout << "finished writing verilog" << std::endl;
     return output;
 }
 
@@ -516,11 +586,13 @@ size_t run_timing(std::string liberty_file,
 template <typename network> mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
-    string liberty_file, string output_file, string abc_exec) // too use abc_exec
+    string liberty_file, string output_file, string abc_exec)   // too use abc_exec
 {
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
+    std::cout << "Finding optimizers." << std::endl;
     for (int i = 0; i < num_parts; i++) {
+        std::cout << "partition " << i << std::endl;
         partition_view<mockturtle::names_view<network>> part = partitions.create_part(
                     ntk, i);
         optimized[i] = optimize_area(part);
@@ -533,6 +605,7 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
                                        optimized);
         if (worst_part == -1
                 || optimized[worst_part]->target() == optimization_strategy::depth) {
+            std::cout << "met timing, or it's the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
         }
         partition_view<mockturtle::names_view<network>> part = partitions.create_part(
