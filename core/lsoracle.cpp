@@ -65,6 +65,7 @@
 #include "store/aig.hpp"
 #include "store/mig.hpp"
 #include "store/xag.hpp"
+#include "store/xmg.hpp"
 #include "store/klut.hpp"
 
 /*** Commands ***/
@@ -100,6 +101,7 @@
 #include "commands/stats/fanout_histogram.hpp"
 #include "commands/stats/level_size.hpp"
 #include "commands/stats/fanin_histogram.hpp"
+#include "commands/stats/function_stats.hpp"
 
 //Partitioning
 #include "commands/partitioning/partitioning.hpp"

@@ -32,45 +32,52 @@
 
 namespace alice
 {
-  class level_size_command : public alice::command{
+class level_size_command : public alice::command
+{
 
-    public:
-      explicit level_size_command( const environment::ptr& env )
-          : command( env, "Displays a histogram of fanout of the stored network" ){
+public:
+    explicit level_size_command(const environment::ptr &env)
+        : command(env, "Displays a histogram of fanout of the stored network")
+    {
         add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
-      }
-
-    template <typename ntk> void dump_stats(string name) {
-      if(!store<ntk>().empty()) {
-        auto& dag = *store<ntk>().current();
-        mockturtle::depth_view dag_view{dag};
-        vector<uint32_t> levels(dag_view.depth(), 0);
-        dag_view.foreach_node([&dag_view, &levels](auto n){
-          levels[dag_view.level(n)]++;
-        });
-        env->out() << "Nodes per level" << std::endl;
-        env->out() << "Level\tNodes" << std::endl;
-        for (size_t i = 0; i < levels.size(); i++) {
-          env->out() << i << "\t" << levels[i] << std::endl;
-        }
-      } else {
-        env->err() << "There is not an " << name << " network stored.\n";
-      }
+        add_flag("--xmg,-n", "Display stats for stored XMG (AIG is default)");
     }
-    protected:
-      void execute(){
-        if(is_set("mig")){
-          dump_stats<mig_ntk>("MIG");
-        } else if(is_set("xag")) {
-          dump_stats<xag_ntk>("XAG");
-        } else {
-          dump_stats<aig_ntk>("AIG");
-        }
-      }
-    private:
-  };
 
-  ALICE_ADD_COMMAND(level_size, "Stats");
+    template <typename ntk> void dump_stats(string name)
+    {
+        if (!store<ntk>().empty()) {
+            auto &dag = *store<ntk>().current();
+            mockturtle::depth_view dag_view{dag};
+            vector<uint32_t> levels(dag_view.depth(), 0);
+            dag_view.foreach_node([&dag_view, &levels](auto n) {
+                levels[dag_view.level(n)]++;
+            });
+            env->out() << "Nodes per level" << std::endl;
+            env->out() << "Level\tNodes" << std::endl;
+            for (size_t i = 0; i < levels.size(); i++) {
+                env->out() << i << "\t" << levels[i] << std::endl;
+            }
+        } else {
+            env->err() << "There is not an " << name << " network stored.\n";
+        }
+    }
+protected:
+    void execute()
+    {
+        if (is_set("mig")) {
+            dump_stats<mig_ntk>("MIG");
+        } else if (is_set("xag")) {
+            dump_stats<xag_ntk>("XAG");
+        } else if (is_set("xmg")) {
+            dump_stats<xag_ntk>("XMG");
+        } else {
+            dump_stats<aig_ntk>("AIG");
+        }
+    }
+private:
+};
+
+ALICE_ADD_COMMAND(level_size, "Stats");
 }

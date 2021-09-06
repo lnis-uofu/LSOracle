@@ -32,55 +32,64 @@
 
 namespace alice
 {
-  class fanin_histogram_command : public alice::command{
+class fanin_histogram_command : public alice::command
+{
 
-    public:
-      explicit fanin_histogram_command( const environment::ptr& env )
-          : command( env, "Displays a histogram of nodes by MFFC size on the stored network" ){
+public:
+    explicit fanin_histogram_command(const environment::ptr &env)
+        : command(env,
+                  "Displays a histogram of nodes by MFFC size on the stored network")
+    {
         add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
-      }
-
-    template <typename ntk> void dump_stats(string name) {
-      if(!store<ntk>().empty()) {
-        auto& dag = *store<ntk>().current();
-        mockturtle::depth_view dag_depth{dag};
-        mockturtle::fanout_view dag_fanout{dag};
-
-        uint32_t count = 0;
-
-        dag_fanout.foreach_node([this, &dag_depth, &dag_fanout, &count](auto n){
-          bool pure = true;
-          dag_fanout.foreach_fanin(n, [&dag_depth, &dag_fanout, &pure, n](auto f) {
-            uint32_t fanout = 0;
-            auto node = dag_fanout.get_node(f);
-            dag_fanout.foreach_fanout(node, [&fanout](auto g) {
-              fanout++;
-            });
-
-            bool isolated_fanin = fanout == 1 && (dag_depth.level(n) - dag_depth.level(node) == 1) == 1;
-            pure = pure && (dag_fanout.is_constant(node) || isolated_fanin);
-          });
-          if (!pure) count++;
-        });
-        env->out() << "Pure nodes\t" << count << std::endl;
-      } else {
-        env->err() << "There is not an " << name << " network stored.\n";
-      }
+        add_flag("--xmg,-n", "Display stats for stored XMG (AIG is default)");
     }
-    protected:
-      void execute(){
-        if(is_set("mig")){
-          dump_stats<mig_ntk>("MIG");
-        } else if(is_set("xag")) {
-          dump_stats<xag_ntk>("XAG");
-        } else {
-          dump_stats<aig_ntk>("AIG");
-        }
-      }
-    private:
-  };
 
-  ALICE_ADD_COMMAND(fanin_histogram, "Stats");
+    template <typename ntk> void dump_stats(string name)
+    {
+        if (!store<ntk>().empty()) {
+            auto &dag = *store<ntk>().current();
+            mockturtle::depth_view dag_depth{dag};
+            mockturtle::fanout_view dag_fanout{dag};
+
+            uint32_t count = 0;
+
+            dag_fanout.foreach_node([this, &dag_depth, &dag_fanout, &count](auto n) {
+                bool pure = true;
+                dag_fanout.foreach_fanin(n, [&dag_depth, &dag_fanout, &pure, n](auto f) {
+                    uint32_t fanout = 0;
+                    auto node = dag_fanout.get_node(f);
+                    dag_fanout.foreach_fanout(node, [&fanout](auto g) {
+                        fanout++;
+                    });
+
+                    bool isolated_fanin = fanout == 1
+                                          && (dag_depth.level(n) - dag_depth.level(node) == 1) == 1;
+                    pure = pure && (dag_fanout.is_constant(node) || isolated_fanin);
+                });
+                if (!pure) count++;
+            });
+            env->out() << "Pure nodes\t" << count << std::endl;
+        } else {
+            env->err() << "There is not an " << name << " network stored.\n";
+        }
+    }
+protected:
+    void execute()
+    {
+        if (is_set("mig")) {
+            dump_stats<mig_ntk>("MIG");
+        } else if (is_set("xag")) {
+            dump_stats<xag_ntk>("XAG");
+        } else if (is_set("xmg")) {
+            dump_stats<xmg_ntk>("XMG");
+        } else {
+            dump_stats<aig_ntk>("AIG");
+        }
+    }
+private:
+};
+
+ALICE_ADD_COMMAND(fanin_histogram, "Stats");
 }
