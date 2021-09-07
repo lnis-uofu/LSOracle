@@ -137,6 +137,10 @@ public:
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
+        //fraig
+        std::cout << "fraig\n";
+        mockturtle::functional_reduction(aig);
+
         return aig;
     }
 };
