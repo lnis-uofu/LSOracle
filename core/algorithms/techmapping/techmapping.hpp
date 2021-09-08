@@ -45,12 +45,12 @@ namespace techmap
 {
 
 struct cut {
-    cut(size_t node) :
+    explicit cut(size_t node) :
         inputs{std::vector<size_t>{node}}, output{node}
     {
     }
 
-    cut(std::vector<size_t> _inputs, size_t _output, kitty::dynamic_truth_table _truth_table) :
+    explicit cut(std::vector<size_t> _inputs, size_t _output, kitty::dynamic_truth_table _truth_table) :
         inputs{std::move(_inputs)}, output{_output}, truth_table{std::move(_truth_table)}
     {
         std::sort(inputs.begin(), inputs.end());
@@ -59,7 +59,24 @@ struct cut {
     cut merge(cut const& rhs, size_t new_output) const
     {
         std::vector<size_t> new_inputs;
+
+        /*std::cout << "Merging [";
+        for (size_t input : inputs) {
+            std::cout << input << ", ";
+        }
+        std::cout << "] with [";
+        for (size_t input : rhs.inputs) {
+            std::cout << input << ", ";
+        }
+        std::cout << "] => [";*/
+
         std::set_union(inputs.begin(), inputs.end(), rhs.inputs.begin(), rhs.inputs.end(), std::back_inserter(new_inputs));
+
+        /*for (size_t input : new_inputs) {
+            std::cout << input << ", ";
+        }
+        std::cout << "]\n";*/
+
         return cut(std::move(new_inputs), new_output, kitty::dynamic_truth_table{});
     }
 
@@ -80,12 +97,12 @@ struct cut {
 
 
 struct cell {
-    cell(size_t _index, std::vector<kitty::dynamic_truth_table> _truth_table) :
+    explicit cell(size_t _index, std::vector<kitty::dynamic_truth_table> _truth_table) :
         index{_index}, truth_table{std::move(_truth_table)}
     {
     }
 
-    cell(std::vector<kitty::dynamic_truth_table> _truth_table) :
+    explicit cell(std::vector<kitty::dynamic_truth_table> _truth_table) :
         index{}, truth_table{std::move(_truth_table)}
     {
     }
@@ -96,7 +113,7 @@ struct cell {
 
 
 struct lut {
-    lut(kitty::dynamic_truth_table _truth_table) :
+    explicit lut(kitty::dynamic_truth_table _truth_table) :
         truth_table{std::move(_truth_table)}
     {
     }
@@ -106,7 +123,7 @@ struct lut {
 
 
 struct primary_input {
-    primary_input(size_t index) :
+    explicit primary_input(size_t index) :
         index{index}
     {
     }
@@ -116,7 +133,7 @@ struct primary_input {
 
 
 struct primary_output {
-    primary_output(size_t index) :
+    explicit primary_output(size_t index) :
         index{index}
     {
     }
@@ -126,7 +143,7 @@ struct primary_output {
 
 
 struct connection {
-    connection(size_t from, size_t to, size_t index) :
+    explicit connection(size_t from, size_t to, size_t index) :
         from{from}, to{to}, index{index}
     {
     }
@@ -429,12 +446,12 @@ struct mapping_info {
 
 
 struct frontier_info {
-    frontier_info(size_t node) :
+    explicit frontier_info(size_t node) :
         cuts{std::vector<cut>{cut{node}}}
     {
     }
 
-    frontier_info(std::vector<cut> _cuts) :
+    explicit frontier_info(std::vector<cut> _cuts) :
         cuts{std::move(_cuts)}
     {
     }
@@ -445,7 +462,7 @@ struct frontier_info {
 
 class mapper {
 public:
-    mapper(graph<cell> _g, mapping_settings _settings) :
+    explicit mapper(graph<cell> _g, mapping_settings _settings) :
         g{std::move(_g)}, info{g.nodes.size()}, settings{_settings}
     {
         assert(settings.cut_input_limit >= 2 && "invalid argument: mapping for less than 2 inputs is impossible");
@@ -709,12 +726,42 @@ private:
         // Start with the cut set of input zero.
         std::vector<std::tuple<cut, std::vector<int>>> cut_set{};
 
+        std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << ":\n";
+
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
+            for (cut child_cut : frontier.at(node_inputs[0]).cuts) {
+                std::cout << "  [";
+                for (int child_cut_input : child_cut.inputs) {
+                    std::cout << child_cut_input << ", ";
+                }
+                std::cout << "]\n";
+            }
             cut_set.push_back({frontier.at(node_inputs[0]).cuts[index], std::vector{index}});
         }
 
+        std::cout << "[" << node << "] Cut set of node w/o trivial cut:\n";
+        for (auto& [child_cut, _] : cut_set) {
+            std::cout << "  [";
+            for (int child_cut_input : child_cut.inputs) {
+                std::cout << child_cut_input << ", ";
+            }
+            std::cout << "]\n";
+        }
+
+        // TODO: there is something quite wrong here; we're generating phantom cuts for the wrong node.
+
         // For each other input:
         std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
+            std::cout << "[" << node << "] Cut set of input " << node_input << ":\n";
+
+            for (cut child_cut : frontier.at(node_input).cuts) {
+                std::cout << "  [";
+                for (int child_cut_input : child_cut.inputs) {
+                    std::cout << child_cut_input << ", ";
+                }
+                std::cout << "]\n";
+            }
+
             std::vector<std::tuple<cut, std::vector<int>>> new_cuts;
 
             // Merge the present cut set with the cuts of this input.
@@ -722,7 +769,7 @@ private:
                 for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
                     std::vector<int> new_children{children};
                     new_children.push_back(input_cut);
-                    new_cuts.push_back({c.merge(input_cut, node), new_children});
+                    new_cuts.push_back({c.merge(frontier.at(node_input).cuts[input_cut], node), new_children});
                 }
             }
 
@@ -737,6 +784,15 @@ private:
             // Replace the present cut set with the new one.
             cut_set = std::move(new_cuts);
         });
+
+        std::cout << "[" << node << "] Cut set of node w/o trivial cut:\n";
+        for (auto& [child_cut, _] : cut_set) {
+            std::cout << "  [";
+            for (int child_cut_input : child_cut.inputs) {
+                std::cout << child_cut_input << ", ";
+            }
+            std::cout << "]\n";
+        }
 
         // Now calculate the LUT masks.
         std::vector<cut> new_cut_set;
@@ -769,6 +825,15 @@ private:
         if (info[node].selected_cut.has_value()) {
             new_cut_set.push_back(*info[node].selected_cut);
         }
+
+        /*std::cout << "[" << node << "] Cut set of node:\n";
+        for (cut child_cut : new_cut_set) {
+            std::cout << "  [";
+            for (int child_cut_input : child_cut.inputs) {
+                std::cout << child_cut_input << ", ";
+            }
+            std::cout << "]\n";
+        }*/
 
         return new_cut_set;
     }
@@ -848,10 +913,13 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
     graph<cell> g;
     std::unordered_map<typename Ntk::node, size_t> mockturtle_to_node;
 
+    // TODO: constant driver needs special handling.
+
     topo.foreach_pi([&](typename Ntk::node const& node, uint32_t index) -> void {
         mockturtle_to_node.insert({node, g.add_primary_input()});
     });
 
+    // TODO: This is not enough; we need to make a node attached to the output of this node.
     topo.foreach_po([&](typename Ntk::signal const& signal, uint32_t index) -> void {
         mockturtle_to_node.insert({ntk.get_node(signal), g.add_primary_output()});
     });
