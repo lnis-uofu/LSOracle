@@ -603,8 +603,8 @@ private:
         // The mapping frontier is the list of all nodes which do not have selected cuts.
         // We start with the primary outputs and work downwards.
         std::vector<size_t> frontier;
-        std::transform(g.primary_outputs.begin(), g.primary_outputs.end(), std::back_inserter(frontier), [](primary_output const& po) {
-            return po.index;
+        std::transform(g.primary_outputs.begin(), g.primary_outputs.end(), std::back_inserter(frontier), [](size_t po) {
+            return po;
         });
 
         std::unordered_map<size_t, size_t> gate_graph_to_lut_graph;
@@ -665,8 +665,8 @@ private:
         }
 
         // Walk the frontier again, but this time populating the graph with connections.
-        std::transform(g.primary_outputs.begin(), g.primary_outputs.end(), std::back_inserter(frontier), [](primary_output const& po) {
-            return po.index;
+        std::transform(g.primary_outputs.begin(), g.primary_outputs.end(), std::back_inserter(frontier), [](size_t po) {
+            return po;
         });
 
         std::unordered_set<size_t> visited;
@@ -775,6 +775,7 @@ private:
 
             // Filter out cuts which exceed the cut input limit.
             new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
+                std::cout << std::get<0>(candidate).input_count() << " > " << settings.cut_input_limit << "? " << (std::get<0>(candidate).input_count() > settings.cut_input_limit) << '\n';
                 return std::get<0>(candidate).input_count() > settings.cut_input_limit;
             }), new_cuts.end());
 
