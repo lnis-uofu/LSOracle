@@ -38,12 +38,14 @@
 
 namespace alice
 {
-  ALICE_COMMAND( cut_e, "Optimization", "Performs Cut Enumeration on a stored AIG network"){
-  	auto aig = *store<aig_ntk>().current();
-  	const mockturtle::network_cuts cuts = cut_enumeration( aig );
-  	//store<mockturtle::network_cuts>().extend() = cuts;
-  	aig.foreach_node( [&]( auto node ) {
-			env->out() << cuts.cuts( aig.node_to_index( node ) ) << "\n";
-  	} );
-  }
+ALICE_COMMAND(cut_e, "Optimization",
+              "Performs Cut Enumeration on a stored AIG network")
+{
+    auto aig = *store<aig_ntk>().current();
+    const mockturtle::network_cuts cuts = cut_enumeration(aig);
+    //store<mockturtle::network_cuts>().extend() = cuts;
+    aig.foreach_node([&](auto node) {
+        env->out() << cuts.cuts(aig.node_to_index(node)) << "\n";
+    });
+}
 }

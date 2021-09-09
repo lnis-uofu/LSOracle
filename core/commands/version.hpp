@@ -29,21 +29,25 @@
 
 namespace alice
 {
-  class version_command : public alice::command{
+class version_command : public alice::command
+{
 
-    public:
-      explicit version_command( const environment::ptr& env )
-          : command( env, "Display version number" ){
-      }
-
-    protected:
-    void execute() {
-      env->out() << "Version " << LSORACLE_VERSION << " Revision " << LSORACLE_GIT_REVISION << std::endl;
+public:
+    explicit version_command(const environment::ptr &env)
+        : command(env, "Display version number")
+    {
     }
 
-    private:
+protected:
+    void execute()
+    {
+        env->out() << "Version " << LSORACLE_VERSION << " Revision " <<
+                   LSORACLE_GIT_REVISION << std::endl;
+    }
 
-    };
+private:
 
-  ALICE_ADD_COMMAND(version, "Output");
+};
+
+ALICE_ADD_COMMAND(version, "Output");
 }
