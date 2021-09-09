@@ -49,8 +49,6 @@ using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 
 mig_names optimization_aig(aig_names ntk_aig, part_man_aig partitions_aig)
 {
-    //return optimization(ntk_aig, partitions_aig, strategy, nn_model, false, true, false, false);
-    //return optimization(ntk_aig, partitions_aig, 0, "", false, true, false, false);
 
     std::vector<int> aig_parts;
     std::vector<int> mig_parts;
@@ -74,9 +72,9 @@ mig_names optimization_aig(aig_names ntk_aig, part_man_aig partitions_aig)
             partitions_aig.get_all_partition_regs(),
             partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
-    for (int i = 0; i < num_parts; i++) {
-        aig_parts.push_back(i);
-    }
+        for (int i = 0; i < num_parts; i++) {
+            aig_parts.push_back(i);
+        }
     std::cout << aig_parts.size() << " AIGs./n";
 
     for (int i = 0; i < aig_parts.size(); i++) {
@@ -134,9 +132,9 @@ mig_names optimization_mig(aig_names ntk_aig, part_man_aig partitions_aig)
             partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
 
-    for (int i = 0; i < num_parts; i++) {
-        mig_parts.push_back(i);
-    }
+        for (int i = 0; i < num_parts; i++) {
+            mig_parts.push_back(i);
+        }
 
     std::cout <<  mig_parts.size() << " MIGs.\n";
 
@@ -208,121 +206,49 @@ mig_names optimization_high(
             partitions_aig.get_all_partition_regs(),
             partitions_aig.get_all_partition_regin(), partitions_aig.get_part_num());
 
-    for (int i = 0; i < num_parts; i++) {
-        if (mig_always_partitions.find(i) != mig_always_partitions.end()) {
-            mig_parts.push_back(i);
-            continue;
-        }
-        if (aig_always_partitions.find(i) != aig_always_partitions.end()) {
-            aig_parts.push_back(i);
-            continue;
-        }
-        if (skip_partitions.find(i) != skip_partitions.end()) {
-            continue;
-        }
-
-        oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
-
-        auto opt_part_aig = *part_to_mig(part, 1);
-        auto opt_aig = *mig_to_aig(opt_part_aig);
-
-        oracle::aig_script aigopt;
-        opt_aig = aigopt.run(opt_aig);
-        mockturtle::depth_view part_aig_opt_depth{opt_aig};
-        int aig_opt_size = opt_aig.num_gates();
-        int aig_opt_depth = part_aig_opt_depth.depth();
-
-        auto opt_mig = *part_to_mig(part, 0);
-        oracle::mig_script migopt;
-        opt_mig = migopt.run(opt_mig);
-        mockturtle::depth_view part_mig_opt_depth{opt_mig};
-        int mig_opt_size = opt_mig.num_gates();
-        int mig_opt_depth = part_mig_opt_depth.depth();
-
-        unsigned local_strategy;
-        if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
-            local_strategy = 2;
-        } else if (area_always_partitions.find(i) != area_always_partitions.end()) {
-            local_strategy = 1;
-        } else {
-            local_strategy = strategy;
-        }
-        switch (local_strategy) {
-        default:
-        case 0: {
-            if ((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)) {
-                aig_parts.push_back(i);
-                if (!combine) {
-                    auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-                    partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
-                }
-            } else {
+        for (int i = 0; i < num_parts; i++) {
+            if (mig_always_partitions.find(i) != mig_always_partitions.end()) {
                 mig_parts.push_back(i);
-                if (!combine) {
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
+                continue;
             }
-        }
-        break;
-        case 1: {
-            if ((aig_opt_size) <= (mig_opt_size)) {
+            if (aig_always_partitions.find(i) != aig_always_partitions.end()) {
                 aig_parts.push_back(i);
-                if (!combine) {
-                    auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-                    partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
-                }
-            } else {
-                mig_parts.push_back(i);
-                if (!combine) {
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
+                continue;
             }
-        }
-        break;
-        case 2: {
-            if ((aig_opt_depth) <= (mig_opt_depth)) {
-                aig_parts.push_back(i);
-                if (!combine) {
-                    auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-                    partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
-                }
-            } else {
-                mig_parts.push_back(i);
-                if (!combine) {
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
+            if (skip_partitions.find(i) != skip_partitions.end()) {
+                continue;
             }
-        }
-        break;
-        case 3: {
-            if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
-                if (aig_opt_size < mig_opt_size) {
-                    aig_parts.push_back(i);
-                    if (!combine) {
-                        auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-                        partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
-                    }
-                } else {
-                    mig_parts.push_back(i);
-                    if (!combine) {
-                        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                    }
-                }
-            } else if (aig_opt_depth <= delay_threshold
-                       && mig_opt_depth > delay_threshold) {
-                aig_parts.push_back(i);
-                if (!combine) {
-                    auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-                    partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
-                }
-            } else if (aig_opt_depth > delay_threshold
-                       && mig_opt_depth <= delay_threshold) {
-                mig_parts.push_back(i);
-                if (!combine) {
-                    partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
-                }
+
+            oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
+
+            auto opt_part_aig = *part_to_mig(part, 1);
+            auto opt_aig = *mig_to_aig(opt_part_aig);
+
+            oracle::aig_script aigopt;
+            opt_aig = aigopt.run(opt_aig);
+            mockturtle::depth_view part_aig_opt_depth{opt_aig};
+            int aig_opt_size = opt_aig.num_gates();
+            int aig_opt_depth = part_aig_opt_depth.depth();
+
+            auto opt_mig = *part_to_mig(part, 0);
+            oracle::mig_script migopt;
+            opt_mig = migopt.run(opt_mig);
+            mockturtle::depth_view part_mig_opt_depth{opt_mig};
+            int mig_opt_size = opt_mig.num_gates();
+            int mig_opt_depth = part_mig_opt_depth.depth();
+
+            unsigned local_strategy;
+            if (depth_always_partitions.find(i) != depth_always_partitions.end()) {
+                local_strategy = 2;
+            } else if (area_always_partitions.find(i) != area_always_partitions.end()) {
+                local_strategy = 1;
             } else {
-                if (aig_opt_depth <= mig_opt_depth) {
+                local_strategy = strategy;
+            }
+            switch (local_strategy) {
+            default:
+            case 0: {
+                if ((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)) {
                     aig_parts.push_back(i);
                     if (!combine) {
                         auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
@@ -335,9 +261,81 @@ mig_names optimization_high(
                     }
                 }
             }
-        }
-        break;
-        }
+            break;
+            case 1: {
+                if ((aig_opt_size) <= (mig_opt_size)) {
+                    aig_parts.push_back(i);
+                    if (!combine) {
+                        auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                        partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                    }
+                } else {
+                    mig_parts.push_back(i);
+                    if (!combine) {
+                        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                    }
+                }
+            }
+            break;
+            case 2: {
+                if ((aig_opt_depth) <= (mig_opt_depth)) {
+                    aig_parts.push_back(i);
+                    if (!combine) {
+                        auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                        partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                    }
+                } else {
+                    mig_parts.push_back(i);
+                    if (!combine) {
+                        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                    }
+                }
+            }
+            break;
+            case 3: {
+                if (aig_opt_depth <= delay_threshold && mig_opt_depth <= delay_threshold) {
+                    if (aig_opt_size < mig_opt_size) {
+                        aig_parts.push_back(i);
+                        if (!combine) {
+                            auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                            partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                        }
+                    } else {
+                        mig_parts.push_back(i);
+                        if (!combine) {
+                            partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                        }
+                    }
+                } else if (aig_opt_depth <= delay_threshold
+                           && mig_opt_depth > delay_threshold) {
+                    aig_parts.push_back(i);
+                    if (!combine) {
+                        auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                        partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                    }
+                } else if (aig_opt_depth > delay_threshold
+                           && mig_opt_depth <= delay_threshold) {
+                    mig_parts.push_back(i);
+                    if (!combine) {
+                        partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                    }
+                } else {
+                    if (aig_opt_depth <= mig_opt_depth) {
+                        aig_parts.push_back(i);
+                        if (!combine) {
+                            auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
+                            partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                        }
+                    } else {
+                        mig_parts.push_back(i);
+                        if (!combine) {
+                            partitions_mig.synchronize_part(part, opt_mig, ntk_mig);
+                        }
+                    }
+                }
+            }
+            break;
+            }
     }
 
     std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
