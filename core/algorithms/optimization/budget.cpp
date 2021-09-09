@@ -57,18 +57,24 @@ using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 template<typename T>
 std::string basic_techmap(string tech_script, T optimal)
 {
-    char *blif = strdup("/tmp/lsoracle_XXXXXX");
-    assert(mkstemp(blif) != -1);
+    char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
+    if (mkstemps(blif, 5) == -1) {
+        throw std::exception();
+    }
     std::string input_blif = std::string(blif);
     std::cout << "generated blif " << input_blif << std::endl;
 
-    char *verilog = strdup("/tmp/lsoracle_XXXXXX");
-    assert(mkstemp(verilog) != -1);
+    char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
+    if (mkstemps(verilog, 2) == -1) {
+        throw std::exception();
+    }
     std::string output_verilog = std::string(verilog);
-    std::cout << "writing output to " << verilog << std::endl;
+    std::cout << "writing output to " << output_verilog << std::endl;
 
-    char *abc = strdup("/tmp/lsoracle_XXXXXX");
-    assert(mkstemp(abc) != -1);
+    char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
+    if (mkstemps(abc, 4) == -1) {
+        throw std::exception();
+    }
     std::string abc_script = std::string(abc);
     std::cout << "generated ABC script " << abc_script << std::endl;
 
@@ -77,14 +83,17 @@ std::string basic_techmap(string tech_script, T optimal)
     script.close();
     std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
+//     ps.module_name = optimal.get_network_name();
     mockturtle::write_blif(optimal, input_blif, ps);
-    system(("abc -F " + abc_script + " -o " + output_verilog + " " +
-            input_blif).c_str());
+    int code = system(("abc -F " + abc_script +
+                       " -o " + output_verilog +
+                       " " + input_blif).c_str());
+    assert(code == 0);
     std::cout << "done techmapping" << std::endl;
     return output_verilog;
 };
-template std::string basic_techmap<part_view_aig> (std::string, part_view_aig);
-template std::string basic_techmap <mig_names>(std::string, mig_names);
+template std::string basic_techmap<aig_names> (std::string, aig_names);
+template std::string basic_techmap<mig_names>(std::string, mig_names);
 
 template <typename Ntk>
 class noop: public optimizer<Ntk>
@@ -124,20 +133,27 @@ public:
      */
     void convert()
     {
-        /* LUT mapping */
-        mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
-        mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 2;
-        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
-        (mapped, ps);
-
-        /* collapse into k-LUT network */
-        const auto klut =
-            *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
-
-        /* node resynthesis */
-        mockturtle::direct_resynthesis<Ntk> resyn;
-        copy = mockturtle::node_resynthesis<Ntk>(klut, resyn);
+        std::cout << "((((((((((((((((((((((((((((((((" << std::endl;
+        std::cout << "original names size " << original._signal_names.size() <<
+                  std::endl;
+        mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
+        copy = mockturtle::node_resynthesis<mockturtle::names_view<Ntk>, mockturtle::names_view<Ntk>>
+               (original, resyn);
+        std::cout << "copy name count " << copy._signal_names.size() << std::endl;
+        std::cout << "copy address " << &copy << std::endl;
+        mockturtle::topo_view<mockturtle::names_view<Ntk>> topo(copy);
+        std::cout << "topo name count " << copy._signal_names.size() << std::endl;
+        // topo.foreach_node([&](auto node) {
+        //     auto s = topo.make_signal(topo.node_to_index(node));
+        //     if (topo.has_name(s))
+        //         std::cout << topo.get_name(s) << std::endl;
+        // });
+        std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+        // for (auto it = topo._signal_names.begin(); it != topo._signal_names.end();
+        //         it++) {
+        //     std::cout << it->second << std::endl;
+        // }
+        std::cout << "))))))))))))))))))))))))))))))))" << std::endl;
     }
 
 
@@ -155,14 +171,13 @@ public:
         string script =
             "read_lib " + liberty_file +
             "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap(script, original);
+        techmapped = basic_techmap(script, copy);
         return techmapped;
     }
 
     node_depth independent_metric()
     {
         mockturtle::depth_view part_depth(copy);
-        std::cout << "calculated depth" << std::endl;
         int opt_size = original.num_gates();
         int opt_depth = part_depth.depth();
         metric = node_depth{opt_size, opt_depth};
@@ -212,11 +227,12 @@ public:
 
         /* collapse into k-LUT network */
         const auto klut =
-            *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
+            *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
+            (mapped);
 
         /* node resynthesis */
-        mockturtle::direct_resynthesis<Ntk> resyn;
-        return mockturtle::node_resynthesis<Ntk>(klut, resyn);
+        mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<Ntk>>(klut, resyn);
     }
 
     partition_view<mockturtle::names_view<Ntk>> partition()
@@ -226,20 +242,23 @@ public:
 
     void convert()
     {
-        /* LUT mapping */
-        mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
-        mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 4;
-        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
-        (mapped, ps);
+        // /* LUT mapping */
+        // mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
+        // mockturtle::lut_mapping_params ps;
+        // ps.cut_enumeration_ps.cut_size = 4;
+        // mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
+        // (mapped, ps);
 
-        /* collapse into k-LUT network */
-        const auto klut =
-            *mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
+        // /* collapse into k-LUT network */
+        // const auto klut =
+        //     *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
+        //     (mapped);
 
         /* node resynthesis */
         mockturtle::mig_npn_resynthesis resyn;
-        converted = mockturtle::node_resynthesis<mockturtle::mig_network>(klut, resyn);
+        converted =
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::mig_network>>
+            (original, resyn);
     }
 
     mockturtle::names_view<mockturtle::mig_network> optimized()
@@ -256,7 +275,6 @@ public:
     node_depth independent_metric()
     {
         mockturtle::depth_view part_mig_opt_depth{optimal};
-        std::cout << "calculated depth" << std::endl;
         int mig_opt_size = optimal.num_gates();
         int mig_opt_depth = part_mig_opt_depth.depth();
         metric = node_depth{mig_opt_size, mig_opt_depth};
@@ -341,7 +359,7 @@ optimizer<network> *optimize_depth(
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(part));
-    optimizers.emplace_back(new mig_optimizer<network>(part));
+    // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
@@ -358,7 +376,7 @@ optimizer<network> *optimize_depth(
             best = *opt;
             continue;
         }
-
+        // TODO stash value earlier and don't call this twice
         if ((*opt)->independent_metric().depth < best->independent_metric().depth) {
             best = *opt;
             std::cout << "found a better result" << std::endl;
@@ -376,31 +394,32 @@ optimizer<network> *optimize_area(
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(part));
-    optimizers.emplace_back(new mig_optimizer<network>(part));
+    // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
         std::cout << "converting network" << std::endl;
         (*opt)->convert();
-        std::cout << "trying to optimize" << std::endl;
-        (*opt)->optimize();
-        std::cout << "checking tech independent metrics." << std::endl;
-        node_depth result = (*opt)->independent_metric();
-        std::cout << "result depth" << result.depth
-                  << " size " << result.nodes << std::endl;
+        //     std::cout << "trying to optimize" << std::endl;
+        //     (*opt)->optimize();
+        //     std::cout << "checking tech independent metrics." << std::endl;
+        //     node_depth result = (*opt)->independent_metric();
+        //     std::cout << "result depth " << result.depth
+        //               << " size " << result.nodes << std::endl;
 
-        if (best == nullptr) {
-            best = *opt;
-            continue;
-        }
+        //     if (best == nullptr) {
+        //         best = *opt;
+        //         continue;
+        //     }
 
-        if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
-            best = *opt;
-            std::cout << "found a better result" << std::endl;
-            continue;
-        }
+        //     if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
+        //         best = *opt;
+        //         std::cout << "found a better result" << std::endl;
+        //         continue;
+        //     }
     }
     return best;
+
 }
 
 template <typename network>
@@ -412,10 +431,14 @@ string techmap(
 {
     std::cout << "Starting techmapping." << std::endl;
     // Write out verilog
-    char *output = strdup("/tmp/lsoracle_XXXXXX");
-    assert(mkstemp(output) != -1);
+    char *output = strdup("/tmp/lsoracle_XXXXXX.v");
+    if (mkstemps(output, 2) == -1) {
+        throw std::exception();
+    }
+
     std::string output_file = std::string(output);
     std::cout << "Writing out to " << output_file << std::endl;
+
     std::ofstream verilog(output_file);
     verilog << "# Generated by LSOracle" << std::endl;
 
@@ -430,20 +453,30 @@ string techmap(
         verilog << std::endl;
         module.close();
     }
+    std::cout << "modules written to " << output_file << std::endl;
 
     // TODO what about registers?
     // generate list of inputs/outputs/wires
     std::set<std::string> inputs;
     std::set<std::string> outputs;
     std::set<std::string> partition_edges;
+    std::cout << "calculating fanouts." << std::endl;
     mockturtle::fanout_view<mockturtle::names_view<network>> fanouts(ntk);
     std::cout << "gathering inputs" << std::endl;
-
-    ntk.foreach_pi([&inputs, &ntk, &fanouts](typename network::node n) {
-        fanouts.foreach_fanout(n, [&n, &inputs, &fanouts](typename network::node f) {
-            fanouts.foreach_fanin(f, [&n, &inputs, &fanouts](typename network::signal s) {
+    int i = 0;
+    fanouts.foreach_pi([&i, &inputs, &fanouts](typename network::node n) {
+        fanouts.foreach_fanout(n, [&i, &n, &inputs,
+            &fanouts](typename network::node f) {
+            fanouts.foreach_fanin(f, [&i, &n, &f, &inputs,
+                &fanouts](typename network::signal s) {
+                i++;
                 if (fanouts.get_node(s) == n) {
-                    inputs.insert(fanouts.get_name(s));
+                    if (fanouts.has_name(s)) {
+                        std::cout << "found input " << fanouts.get_name(s) << " " << i << std::endl;
+                        inputs.insert(fanouts.get_name(s));
+                    } else {
+                        std::cout << "no name for pi " << n << std::endl;
+                    }
                 }
             });
         });
@@ -451,13 +484,21 @@ string techmap(
     std::cout << "gathering outputs" << std::endl;
 
     ntk.foreach_po([&outputs, &ntk](typename network::signal n) {
-        outputs.insert(ntk.get_name(n));
+        if (ntk.has_name(n)) {
+            std::cout << "found output " << ntk.get_name(n) << " " << ntk.get_node(
+                          n) << std::endl;
+            outputs.insert(ntk.get_name(n));
+        } else {
+            std::cout << "no name for po " << ntk.get_node(n) << std::endl;
+        }
     });
+
     for (int i = 0; i < num_parts; i++) {
         std::cout << "gathering wires for partition " << i << std::endl;
 
         oracle::partition_view<mockturtle::names_view<network>> part =
                     partitions.create_part(ntk, i);
+        part.set_network_name("partition_" + std::to_string(i));
         mockturtle::fanout_view<oracle::partition_view<mockturtle::names_view<network>>>
         part_fanouts(part);
         part.foreach_pi([&partition_edges, &part,
@@ -467,16 +508,27 @@ string techmap(
                 part_fanouts.foreach_fanin(f, [&n, &partition_edges,
                     &part_fanouts](typename network::signal s) {
                     if (part_fanouts.get_node(s) == n) {
-                        partition_edges.insert(part_fanouts.get_name(s));
+                        if (part_fanouts.has_name(s)) {
+                            std::cout << "found wire " << part_fanouts.get_name(s) << " " << n << std::endl;
+                            partition_edges.insert(part_fanouts.get_name(s));
+                        } else {
+                            std::cout << "no name for wire " << n << std::endl;
+                        }
                     }
                 });
             });
         });
         part.foreach_po([&partition_edges, &part](typename network::signal n) {
-            partition_edges.insert(part.get_output_name(part.po_index(n)));
+            if (part.has_output_name(part.po_index(n))) {
+                std::cout << "found partition po " << part.get_output_name(part.po_index(n))
+                          <<  " " << part.po_index(n) << std::endl;
+                partition_edges.insert(part.get_output_name(part.po_index(n)));
+            } else {
+                std::cout << "no name for partition po " << part.po_index(n) << std::endl;
+            }
         });
     }
-
+    std::cout << "generating connections" << std::endl;
     std::vector<std::string> io(inputs.size() + outputs.size());
     std::vector<std::string>::iterator io_it;
     io_it = std::set_union(inputs.begin(), inputs.end(),
@@ -534,15 +586,24 @@ string techmap(
                 part_fanouts.foreach_fanin(f, [&n, &verilog,
                     &part_fanouts](typename network::signal s) {
                     if (part_fanouts.get_node(s) == n) {
-                        std::string name = part_fanouts.get_name(s);
-                        verilog << "." << name << "(" << name << "),\n";
+                        if (part_fanouts.has_name(s)) {
+                            std::string name = part_fanouts.get_name(s);
+                            verilog << "." << name << "(" << name << "),\n";
+                        } else {
+                            std::cout << "missing name for " << n << std::endl;
+                        }
                     }
                 });
             });
         });
         part.foreach_po([&verilog, &ntk, &part](typename network::signal s) {
-            std::string name = part.get_name(s);
-            verilog << "." << name << "(" << name << "),\n";
+            int index = part.po_index(s);
+            if (part.has_output_name(index)) {
+                std::string name = part.get_output_name(index);
+                verilog << "." << name << "(" << name << "),\n";
+            } else {
+                std::cout << "missing name for po " << index << std::endl;
+            }
         });
         verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
         verilog << "\n);\n" << std::endl;
@@ -599,33 +660,36 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
         std::cout << "partition " << i << std::endl;
         partition_view<mockturtle::names_view<network>> part = partitions.create_part(
                     ntk, i);
+        part.set_network_name("partition_" + std::to_string(i));
         optimized[i] = optimize_area(part);
     }
-    string verilog;
-    while (true) {
-        verilog = techmap(ntk, partitions, optimized, liberty_file);
-        std::cout << "Wrote techmap to " << verilog << std::endl;
-        size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
-                                       optimized);
-        if (worst_part == -1
-                || optimized[worst_part]->target() == optimization_strategy::depth) {
-            std::cout << "met timing, or it's the best we can do." << std::endl;
-            break; // met timing, or it's the best we can do.
-        }
-        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
-                    ntk, worst_part);
-        optimized[worst_part] = optimize_depth(part);
-    }
-    // TODO area recovery.
-    for (int i = 0; i < num_parts; i++) {
-        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
-                    ntk, i);
-        network opt = optimized[i]->reconvert();
-        partitions.synchronize_part(part, opt, ntk);
-    }
-    // TODO copy verilog to output_file.
-    partitions.connect_outputs(ntk);
-    ntk = mockturtle::cleanup_dangling(ntk);
+    // string verilog;
+    // while (true) {
+    //     verilog = techmap(ntk, partitions, optimized, liberty_file);
+    //     std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
+    //     size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
+    //                                    optimized);
+    //     // TODO if this is worse than last result, rollback and finish.
+    //     if (worst_part == -1
+    //             || optimized[worst_part]->target() == optimization_strategy::depth) {
+    //         std::cout << "met timing, or it's the best we can do." << std::endl;
+    //         break; // met timing, or it's the best we can do.
+    //     }
+    //     partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+    //                 ntk, worst_part);
+    //     part.set_network_name("partition_" + std::to_string(worst_part));
+    //     optimized[worst_part] = optimize_depth(part);
+    // }
+    // // TODO area recovery.
+    // for (int i = 0; i < num_parts; i++) {
+    //     partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+    //                 ntk, i);
+    //     network opt = optimized[i]->reconvert();
+    //     partitions.synchronize_part(part, opt, ntk);
+    // }
+    // // TODO copy verilog to output_file.
+    // partitions.connect_outputs(ntk);
+    // ntk = mockturtle::cleanup_dangling(ntk);
     return ntk;
 }
 

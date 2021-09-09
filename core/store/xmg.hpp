@@ -41,7 +41,7 @@ namespace alice
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 using xmg_ntk = std::shared_ptr<xmg_names>;
 
-ALICE_ADD_STORE(xmg_ntk, "xmg", "x", "xmg", "XMGs")
+ALICE_ADD_STORE(xmg_ntk, "xmg", "n", "xmg", "XMGs")
 
 ALICE_DESCRIBE_STORE(xmg_ntk, xmg)
 {

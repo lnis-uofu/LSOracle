@@ -48,30 +48,30 @@ public:
 
     template <typename ntk> void dump_stats(string name)
     {
-        if (!store<ntk>().empty()) {
-            auto &dag = *store<ntk>().current();
-            mockturtle::fanout_view dag_fanout{dag};
-
-            uint32_t count = 0;
-
-            dag_fanout.foreach_node([this, &dag_fanout, &count](auto n) {
-                bool pure = true;
-                dag_fanout.foreach_fanin(n, [&dag_fanout, &pure, n](auto f) {
-                    uint32_t fanout = 0;
-                    auto node = dag_fanout.get_node(f);
-                    dag_fanout.foreach_fanout(node, [&fanout](auto g) {
-                        fanout++;
-                    });
-
-                    bool isolated_fanin = fanout == 1;
-                    pure = pure && (dag_fanout.is_constant(node) || isolated_fanin);
-                });
-                if (!pure) count++;
-            });
-            env->out() << "Pure nodes\t" << count << std::endl;
-        } else {
+        if (store<ntk>().empty()) {
             env->err() << "There is not an " << name << " network stored.\n";
         }
+
+        auto &dag = *store<ntk>().current();
+        mockturtle::fanout_view dag_fanout{dag};
+
+        uint32_t count = 0;
+
+        dag_fanout.foreach_node([this, &dag_fanout, &count](auto n) {
+            bool pure = true;
+            dag_fanout.foreach_fanin(n, [&dag_fanout, &pure, n](auto f) {
+                uint32_t fanout = 0;
+                auto node = dag_fanout.get_node(f);
+                dag_fanout.foreach_fanout(node, [&fanout](auto g) {
+                    fanout++;
+                });
+
+                bool isolated_fanin = fanout == 1;
+                pure = pure && (dag_fanout.is_constant(node) || isolated_fanin);
+            });
+            if (!pure) count++;
+        });
+        env->out() << "Matching nodes\t" << count << std::endl;
     }
 protected:
     void execute()
