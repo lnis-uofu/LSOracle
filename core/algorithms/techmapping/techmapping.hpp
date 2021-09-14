@@ -80,7 +80,7 @@ struct cut {
         return cut(std::move(new_inputs), new_output, kitty::dynamic_truth_table{});
     }
 
-    bool input_count() const
+    int input_count() const
     {
         return inputs.size();
     }
