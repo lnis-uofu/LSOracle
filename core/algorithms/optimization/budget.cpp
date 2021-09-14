@@ -242,19 +242,6 @@ public:
 
     void convert()
     {
-        // /* LUT mapping */
-        // mockturtle::mapping_view<mockturtle::names_view<Ntk>, true> mapped{original};
-        // mockturtle::lut_mapping_params ps;
-        // ps.cut_enumeration_ps.cut_size = 4;
-        // mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<Ntk>, true>, true>
-        // (mapped, ps);
-
-        // /* collapse into k-LUT network */
-        // const auto klut =
-        //     *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
-        //     (mapped);
-
-        /* node resynthesis */
         mockturtle::mig_npn_resynthesis resyn;
         converted =
             mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::mig_network>>
@@ -663,33 +650,33 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
         part.set_network_name("partition_" + std::to_string(i));
         optimized[i] = optimize_area(part);
     }
-    // string verilog;
-    // while (true) {
-    //     verilog = techmap(ntk, partitions, optimized, liberty_file);
-    //     std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
-    //     size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
-    //                                    optimized);
-    //     // TODO if this is worse than last result, rollback and finish.
-    //     if (worst_part == -1
-    //             || optimized[worst_part]->target() == optimization_strategy::depth) {
-    //         std::cout << "met timing, or it's the best we can do." << std::endl;
-    //         break; // met timing, or it's the best we can do.
-    //     }
-    //     partition_view<mockturtle::names_view<network>> part = partitions.create_part(
-    //                 ntk, worst_part);
-    //     part.set_network_name("partition_" + std::to_string(worst_part));
-    //     optimized[worst_part] = optimize_depth(part);
-    // }
-    // // TODO area recovery.
-    // for (int i = 0; i < num_parts; i++) {
-    //     partition_view<mockturtle::names_view<network>> part = partitions.create_part(
-    //                 ntk, i);
-    //     network opt = optimized[i]->reconvert();
-    //     partitions.synchronize_part(part, opt, ntk);
-    // }
-    // // TODO copy verilog to output_file.
-    // partitions.connect_outputs(ntk);
-    // ntk = mockturtle::cleanup_dangling(ntk);
+    string verilog;
+    while (true) {
+        verilog = techmap(ntk, partitions, optimized, liberty_file);
+        std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
+        size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
+                                       optimized);
+        // TODO if this is worse than last result, rollback and finish.
+        if (worst_part == -1
+                || optimized[worst_part]->target() == optimization_strategy::depth) {
+            std::cout << "met timing, or it's the best we can do." << std::endl;
+            break; // met timing, or it's the best we can do.
+        }
+        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+                    ntk, worst_part);
+        part.set_network_name("partition_" + std::to_string(worst_part));
+        optimized[worst_part] = optimize_depth(part);
+    }
+    // TODO area recovery.
+    for (int i = 0; i < num_parts; i++) {
+        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
+                    ntk, i);
+        network opt = optimized[i]->reconvert();
+        partitions.synchronize_part(part, opt, ntk);
+    }
+    // TODO copy verilog to output_file.
+    partitions.connect_outputs(ntk);
+    ntk = mockturtle::cleanup_dangling(ntk);
     return ntk;
 }
 
