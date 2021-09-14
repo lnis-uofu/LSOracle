@@ -223,11 +223,21 @@ struct graph {
     void dump_to_stdout() const
     {
         std::cout << "digraph {\n";
+
+        for (size_t primary_input : primary_inputs) {
+            std::cout << primary_input << " [shape=box label=\"PI " << primary_input << "\"]\n";
+        }
+
+        for (size_t primary_output : primary_outputs) {
+            std::cout << primary_output << " [shape=box label=\"PO " << primary_output << "\"]\n";
+        }
+
         for (std::optional<connection> conn : connections) {
             if (conn.has_value()) {
                 std::cout << conn->from << " -> " << conn->to << '\n';
             }
         }
+
         std::cout << "}\n";
     }
 
