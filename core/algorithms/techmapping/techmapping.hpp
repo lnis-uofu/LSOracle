@@ -740,14 +740,13 @@ private:
         std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << " has " << frontier.at(node_inputs[0]).cuts.size() << " cuts:\n";
 
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
-            for (cut child_cut : frontier.at(node_inputs[0]).cuts) {
-                std::cout << "  [";
-                for (int child_cut_input : child_cut.inputs) {
-                    std::cout << child_cut_input << ", ";
-                }
-                std::cout << "]\n";
+            cut child_cut = frontier.at(node_inputs[0]).cuts[index];
+            std::cout << "  " << child_cut.input_count() << " [";
+            for (int child_cut_input : child_cut.inputs) {
+                std::cout << child_cut_input << ", ";
             }
-            cut_set.push_back({frontier.at(node_inputs[0]).cuts[index], std::vector{index}});
+            std::cout << "]\n";
+            cut_set.push_back({child_cut, std::vector{index}});
         }
 
         std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
