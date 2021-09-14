@@ -516,6 +516,15 @@ private:
             // Find the node cut set.
             std::vector<cut> cut_set = node_cut_set(node, frontier);
 
+            std::cout << "[" << node << "] Cut set of node:\n";
+            for (const cut& child_cut : cut_set) {
+                std::cout << "  " << child_cut.input_count() << " [";
+                for (int child_cut_input : child_cut.inputs) {
+                    std::cout << child_cut_input << ", ";
+                }
+                std::cout << "]\n";
+            }
+
             // Prune cuts which exceed the node slack in area optimisation mode.
             if (area_optimisation) {
                 cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
@@ -726,7 +735,9 @@ private:
         // Start with the cut set of input zero.
         std::vector<std::tuple<cut, std::vector<int>>> cut_set{};
 
-        std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << ":\n";
+        assert(frontier.find(node_inputs[0]) != frontier.end() && "bug: mapping frontier does not contain node");
+
+        std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << " has " << frontier.at(node_inputs[0]).cuts.size() << " cuts:\n";
 
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
             for (cut child_cut : frontier.at(node_inputs[0]).cuts) {
@@ -739,9 +750,9 @@ private:
             cut_set.push_back({frontier.at(node_inputs[0]).cuts[index], std::vector{index}});
         }
 
-        std::cout << "[" << node << "] Cut set of node w/o trivial cut:\n";
+        std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
         for (auto& [child_cut, _] : cut_set) {
-            std::cout << "  [";
+            std::cout << "  " << child_cut.input_count() << " [";
             for (int child_cut_input : child_cut.inputs) {
                 std::cout << child_cut_input << ", ";
             }
@@ -752,10 +763,12 @@ private:
 
         // For each other input:
         std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
-            std::cout << "[" << node << "] Cut set of input " << node_input << ":\n";
+            assert(frontier.find(node_input) != frontier.end() && "bug: mapping frontier does not contain node");
+
+            std::cout << "[" << node << "] Cut set of input " << node_input << " has " << frontier.at(node_input).cuts.size() << " cuts:\n";
 
             for (cut child_cut : frontier.at(node_input).cuts) {
-                std::cout << "  [";
+                std::cout << "  " << child_cut.input_count() << " [";
                 for (int child_cut_input : child_cut.inputs) {
                     std::cout << child_cut_input << ", ";
                 }
@@ -774,10 +787,11 @@ private:
             }
 
             // Filter out cuts which exceed the cut input limit.
-            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
-                std::cout << std::get<0>(candidate).input_count() << " > " << settings.cut_input_limit << "? " << (std::get<0>(candidate).input_count() > settings.cut_input_limit) << '\n';
+            auto start_of_removed_cuts = std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
+                //std::cout << std::get<0>(candidate).input_count() << " > " << settings.cut_input_limit << "? " << (std::get<0>(candidate).input_count() > settings.cut_input_limit) << '\n';
                 return std::get<0>(candidate).input_count() > settings.cut_input_limit;
-            }), new_cuts.end());
+            });
+            new_cuts.erase(start_of_removed_cuts, new_cuts.end());
 
             // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
             // Or does that negatively affect cut quality?
@@ -785,15 +799,6 @@ private:
             // Replace the present cut set with the new one.
             cut_set = std::move(new_cuts);
         });
-
-        std::cout << "[" << node << "] Cut set of node w/o trivial cut:\n";
-        for (auto& [child_cut, _] : cut_set) {
-            std::cout << "  [";
-            for (int child_cut_input : child_cut.inputs) {
-                std::cout << child_cut_input << ", ";
-            }
-            std::cout << "]\n";
-        }
 
         // Now calculate the LUT masks.
         std::vector<cut> new_cut_set;
