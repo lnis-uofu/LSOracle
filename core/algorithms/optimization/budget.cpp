@@ -36,10 +36,12 @@
 #include <sta/Liberty.hh>
 #include <sta/ConcreteNetwork.hh>
 #include <sta/PortDirection.hh>
+#include <fmt/format.h>
 #include "algorithms/optimization/budget.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 #include "algorithms/optimization/mig_script.hpp"
 #include "algorithms/optimization/aig_script.hpp"
+#include "utility.hpp"
 
 namespace oracle
 {
@@ -57,6 +59,7 @@ using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
 template<typename T>
 std::string basic_techmap(string tech_script, T optimal)
 {
+    std::cout << "starting basic techmapping" << std::endl;
     char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
     if (mkstemps(blif, 5) == -1) {
         throw std::exception();
@@ -90,6 +93,7 @@ std::string basic_techmap(string tech_script, T optimal)
                        " " + input_blif).c_str());
     assert(code == 0);
     std::cout << "done techmapping" << std::endl;
+    // TODO close everything
     return output_verilog;
 };
 template std::string basic_techmap<aig_names> (std::string, aig_names);
@@ -133,27 +137,9 @@ public:
      */
     void convert()
     {
-        std::cout << "((((((((((((((((((((((((((((((((" << std::endl;
-        std::cout << "original names size " << original._signal_names.size() <<
-                  std::endl;
         mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
         copy = mockturtle::node_resynthesis<mockturtle::names_view<Ntk>, mockturtle::names_view<Ntk>>
                (original, resyn);
-        std::cout << "copy name count " << copy._signal_names.size() << std::endl;
-        std::cout << "copy address " << &copy << std::endl;
-        mockturtle::topo_view<mockturtle::names_view<Ntk>> topo(copy);
-        std::cout << "topo name count " << copy._signal_names.size() << std::endl;
-        // topo.foreach_node([&](auto node) {
-        //     auto s = topo.make_signal(topo.node_to_index(node));
-        //     if (topo.has_name(s))
-        //         std::cout << topo.get_name(s) << std::endl;
-        // });
-        std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
-        // for (auto it = topo._signal_names.begin(); it != topo._signal_names.end();
-        //         it++) {
-        //     std::cout << it->second << std::endl;
-        // }
-        std::cout << "))))))))))))))))))))))))))))))))" << std::endl;
     }
 
 
@@ -387,26 +373,243 @@ optimizer<network> *optimize_area(
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
         std::cout << "converting network" << std::endl;
         (*opt)->convert();
-        //     std::cout << "trying to optimize" << std::endl;
-        //     (*opt)->optimize();
-        //     std::cout << "checking tech independent metrics." << std::endl;
-        //     node_depth result = (*opt)->independent_metric();
-        //     std::cout << "result depth " << result.depth
-        //               << " size " << result.nodes << std::endl;
+        std::cout << "trying to optimize" << std::endl;
+        (*opt)->optimize();
+        std::cout << "checking tech independent metrics." << std::endl;
+        node_depth result = (*opt)->independent_metric();
+        std::cout << "result depth " << result.depth
+                  << " size " << result.nodes << std::endl;
 
-        //     if (best == nullptr) {
-        //         best = *opt;
-        //         continue;
-        //     }
+        if (best == nullptr) {
+            best = *opt;
+            continue;
+        }
 
-        //     if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
-        //         best = *opt;
-        //         std::cout << "found a better result" << std::endl;
-        //         continue;
-        //     }
+        if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
+            best = *opt;
+            std::cout << "found a better result" << std::endl;
+            continue;
+        }
     }
     return best;
 
+}
+
+string join(std::string delim, std::vector<string> data)
+{
+    std::stringstream ss;
+    for (auto i = data.begin(); i != (data.end() - 1); i++) {
+        std::cout << *i << std::endl;
+        ss << *i << delim;
+    }
+    ss << *(data.end() - 1);
+    return ss.str();
+}
+
+template <typename network>
+std::map<std::string, std::string> get_assigns(
+    mockturtle::names_view<network> ntk)
+{
+    std::map<std::string, std::string> assigns;
+    ntk.foreach_po([&ntk, &assigns](typename network::signal n, int i) {
+        int index = ntk.po_index(n);
+
+        if (ntk.has_output_name(index) && ntk.has_name(n)
+                && ntk.get_output_name(index) != ntk.get_name(n)) {
+            assigns[ntk.get_output_name(index)] = ntk.get_name(n);
+        }
+    });
+    // TODO check for signal complements.
+    return assigns;
+}
+template <typename network>
+std::vector<std::string> get_po_names(
+    mockturtle::names_view<network> ntk, std::string prefix)
+{
+    std::vector<std::string> outputs;
+
+    int digits_out = std::to_string(ntk.num_pos()).length();
+    std::cout << "gathering po names." << std::endl;
+    ntk.foreach_po([&outputs, &ntk, &digits_out,
+                              &prefix](typename network::signal n,
+    int i) {
+        int index = ntk.po_index(n);
+        if (ntk.has_output_name(index)) {
+            std::string name = ntk.get_output_name(index);
+            std::cout << "found po " << name
+                      <<  " " << index << std::endl;
+            outputs.emplace_back(name);
+        } else {
+            std::cout << "no name for po " << ntk.po_index(n) << std::endl;
+            outputs.emplace_back(fmt::format("{0}{1:0{2}}", prefix, i, digits_out));
+        }
+    });
+    return outputs;
+}
+
+template <typename network>
+std::vector<std::string> get_pi_names(mockturtle::names_view<network> ntk,
+                                      std::string prefix)
+{
+    std::vector<std::string> inputs;
+    int digits_in  = std::to_string(ntk.num_pis()).length();
+
+    std::cout << "gathering pi names." << std::endl;
+    ntk.foreach_pi([&inputs, &ntk, &prefix, &digits_in](typename network::node n,
+    int i) {
+        typename network::signal s = ntk.make_signal(n);
+        if (ntk.has_name(s)) {
+            std::string name = ntk.get_name(s);
+            std::cout << "found input " << name
+                      << " for node " << n << std::endl;
+            inputs.emplace_back(name);
+        } else {
+            std::cout << "no name for pi " << n << std::endl;
+            inputs.emplace_back(fmt::format("{0}{1:0{2}}", prefix, i, digits_in));
+        }
+    });
+    return inputs;
+}
+
+template <typename network>
+std::vector<std::string> get_wire_names(
+    oracle::partition_manager<mockturtle::names_view<network>> partitions
+)
+{
+    int digits_in  = std::to_string(partitions.num_pis()).length();
+    int digits_out = std::to_string(partitions.num_pos()).length();
+    // for each po/pi on a partition, if it is not a top po/pi, add to list.
+    std::vector<std::string> wires;
+    for (const auto [part, nodes] : partitions.get_all_partition_inputs()) {
+        for (const auto node : nodes) {
+            if (!partitions.is_pi(node)) {
+                typename network::signal sig = partitions.make_signal(node);
+                if (partitions.has_name(sig)) {
+                    std::string name = partitions.get_name(sig);
+                    std::cout << "found input " << name
+                              << " for node " << node << std::endl;
+                    wires.emplace_back(name);
+                } else {
+                    std::cout << "no name for pi " << node << std::endl;
+                    wires.emplace_back(fmt::format("{0}{1:0{2}}", "ni", node, digits_in));
+                }
+            }
+        }
+    }
+    for (const auto [part, nodes] : partitions.get_all_partition_outputs()) {
+        for (const auto node : nodes) {
+            typename network::signal sig = partitions.make_signal(node);
+            if (!is_po(partitions, node)) {
+                if (partitions.has_name(sig)) {
+                    std::string name = partitions.get_name(sig);
+                    std::cout << "found output wire " << name
+                              << " for node " << node << std::endl;
+                    wires.emplace_back(name);
+                } else {
+                    std::cout << "no name for pi " << node << std::endl;
+                    wires.emplace_back(fmt::format("{0}{1:0{2}}", "ni", node, digits_out));
+                }
+            }
+        }
+    }
+
+    return wires;
+}
+
+template <typename network>
+void write_child(int index, optimizer<network>* optimize,
+                 std::ofstream &verilog)
+{
+    std::cout << "writing out instance for partition " << index << std::endl;
+    verilog << optimize->module_name() << " partition_" << index << "_inst (\n";
+    oracle::partition_view<mockturtle::names_view<network>> part =
+                optimize->partition();
+    std::vector<std::string> inputs = get_pi_names(part, "mpi"); // TODO
+    std::vector<std::string> outputs = get_po_names(part, "mpo");  // TODO
+
+    for (auto output = outputs.begin(); output != outputs.end(); output++) {
+        verilog << "." << *output << "(" << *output << "),\n";
+    }
+    for (auto input = inputs.begin(); input != inputs.end(); input++) {
+        verilog << "." << *input << "(" << *input << "),\n";
+    }
+    verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
+    verilog << "\n);\n" << std::endl;
+}
+
+template <typename network>
+string techmap_again(
+    mockturtle::names_view<network> ntk,
+    oracle::partition_manager<mockturtle::names_view<network>> partitions,
+    std::vector<optimizer<network>*> optimized,
+    string liberty_file)
+{
+    std::cout << "Starting techmap_again." << std::endl;
+    // Write out verilog
+    char *output = strdup("/tmp/lsoracle_XXXXXX.v");
+    if (mkstemps(output, 2) == -1) {
+        throw std::exception();
+    }
+
+    std::string output_file = std::string(output);
+    std::cout << "Writing out to " << output_file << std::endl;
+
+    std::ofstream verilog(output_file);
+    verilog << "# Generated by LSOracle" << std::endl;
+
+    // add all partition modules to verilog file.
+    int num_parts = partitions.get_part_num();
+    std::cout << num_parts << " " << optimized.size() << std::endl;
+    for (int i = 0; i < num_parts; i++) {
+        std::cout << "techmapping partition " << i << std::endl;
+        optimizer<network> *opt = optimized[i];
+        std::cout << "using optimizer " << opt->optimizer_name() << std::endl;
+        std::string module_file = opt->techmap(liberty_file);
+        std::cout << "writing results" << std::endl;
+        std::ifstream module(module_file);
+        verilog << module.rdbuf();
+        verilog << std::endl;
+        module.close();
+    }
+    std::cout << "modules written to " << output_file << std::endl;
+
+    // gather output names
+    std::vector<std::string> outputs = get_po_names(ntk, "pi");
+
+    // gather input names
+    std::vector<std::string> inputs = get_pi_names(ntk, "pi");
+
+    // TODO gather wires
+    std::vector<std::string> wires = get_wire_names(partitions);
+
+    std::string output_names = join(", ", outputs);
+    std::string input_names = join(", ", inputs);
+    std::string wire_names = join(", ", wires);
+
+    std::string name = ntk.get_network_name().size() != 0
+                       ? ntk.get_network_name()
+                       : "top";
+    verilog << fmt::format("module {}({}, {});\n",
+                           name, input_names, output_names)
+            << fmt::format("  input {};\n", input_names)
+            << fmt::format("  output {};\n", output_names);
+    if (wires.size() > 0) {
+        verilog << fmt::format("  wire {};\n", wire_names);
+    }
+
+    // assign po signal names to po output names.
+    std::map<std::string, std::string> assigns = get_assigns(ntk);
+    for (const auto& [left, right] : assigns) {
+        verilog << "assign " << left << " = " << right << ";\n";
+    }
+
+    // write out module instances
+    for (int i = 0; i < partitions.get_part_num(); i++) {
+        write_child(i, optimized[i], verilog);
+    }
+    verilog << "endmodule;" << std::endl;
+    verilog.close();
+    return output_file;
 }
 
 template <typename network>
@@ -638,7 +841,7 @@ size_t run_timing(std::string liberty_file,
 template <typename network> mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
-    string liberty_file, string output_file, string abc_exec)   // too use abc_exec
+    string liberty_file, string output_file, string abc_exec)   // todo use abc_exec
 {
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
@@ -650,9 +853,10 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
         part.set_network_name("partition_" + std::to_string(i));
         optimized[i] = optimize_area(part);
     }
+    assert(num_parts == optimized.size());
     string verilog;
     while (true) {
-        verilog = techmap(ntk, partitions, optimized, liberty_file);
+        verilog = techmap_again(ntk, partitions, optimized, liberty_file);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
         size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
                                        optimized);

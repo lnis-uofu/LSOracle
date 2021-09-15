@@ -28,6 +28,7 @@
 
 #include <mockturtle/mockturtle.hpp>
 #include "algorithms/partitioning/partition_view.hpp"
+#include "algorithms/partitioning/partition_manager.hpp"
 
 #include "union_find.hpp"
 
@@ -525,6 +526,8 @@ bool is_po(Ntk const &ntk, typename Ntk::node const &n)
 }
 
 template bool is_po<aig_names>(aig_names const &, aig_names::node const &);
+template bool is_po<partition_manager<aig_names>>(partition_manager<aig_names>
+        const &, partition_manager<aig_names>::node const &);
 template bool is_po<mig_names>(mig_names const &, mig_names::node const &);
 
 using topo_mig =
