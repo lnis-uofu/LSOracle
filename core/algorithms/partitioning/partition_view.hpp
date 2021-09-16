@@ -127,6 +127,7 @@ public:
                 sig = this->create_not(sig);
             }
             _roots.push_back(sig);
+	    ++_num_pivots;
         }
 
         //registers inputs (pseudo POs)
@@ -136,6 +137,7 @@ public:
                 sig = ntk.create_not(sig);
             }
             _roots.push_back(sig);
+	    ++_num_ris;
         }
 
         /* restore visited */
@@ -178,10 +180,10 @@ public:
 
     inline bool is_pi(node const &pi) const
     {
-        std::vector<signal> children;
-        this->foreach_fanin(pi, [&](const auto & f) {
-            children.push_back(f);
-        });
+        // std::vector<signal> children;
+        // this->foreach_fanin(pi, [&](const auto & f) {
+        //     children.push_back(f);
+        // });
         const auto beg = _nodes.begin() + _num_constants + _num_regs;
         return std::find(beg, beg + _num_leaves,
                          pi) != beg + _num_leaves;  // || children.size() == 0;
@@ -195,25 +197,47 @@ public:
 
     inline bool is_ci(node const &pi) const
     {
-        std::vector<signal> children;
-        this->foreach_fanin(pi, [&](const auto & f) {
-            children.push_back(f);
-        });
+        // std::vector<signal> children;
+        // this->foreach_fanin(pi, [&](const auto & f) {
+        //     children.push_back(f);
+        // });
         const auto beg = _nodes.begin() + _num_constants;
         return std::find(beg, beg + _num_leaves,
                          pi) != beg + _num_leaves;  // || children.size() == 0;
     }
 
+    void num_cis()
+    {
+	return _num_constants + _num_leaves + _num_regs;
+    }
+
+    void num_cos()
+    {
+	return _roots.size();
+    }
 
     template<typename Fn>
-    void foreach_pi(Fn &&fn) const
+    void foreach_ci(Fn &&fn) const
     {
         mockturtle::detail::foreach_element(_nodes.begin() + _num_constants,
                                             _nodes.begin() + _num_constants + _num_leaves + _num_regs, fn);
     }
 
     template<typename Fn>
+    void foreach_pi(Fn &&fn) const
+    {
+        mockturtle::detail::foreach_element(_nodes.begin() + _num_constants + _num_regs,
+                                            _nodes.begin() + _num_constants + _num_leaves + _num_regs, fn);
+    }
+
+    template<typename Fn>
     void foreach_po(Fn &&fn) const
+    {
+        mockturtle::detail::foreach_element(_roots.begin(), _roots.begin() + _num_pivots, fn);
+    }
+
+    template<typename Fn>
+    void foreach_co(Fn &&fn) const
     {
         mockturtle::detail::foreach_element(_roots.begin(), _roots.end(), fn);
     }
@@ -301,6 +325,8 @@ public:
     unsigned _num_constants{1};
     unsigned _num_leaves{0};
     unsigned _num_regs{0};
+    unsigned _num_pivots{0};
+    unsigned _num_ris{0};
 
     std::unordered_set<node> _latches;
 
