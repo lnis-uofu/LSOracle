@@ -934,11 +934,6 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
         mockturtle_to_node.insert({node, g.add_primary_input()});
     });
 
-    // TODO: This is not enough; we need to make a node attached to the output of this node.
-    topo.foreach_po([&](typename Ntk::signal const& signal, uint32_t index) -> void {
-        mockturtle_to_node.insert({ntk.get_node(signal), g.add_primary_output()});
-    });
-
     topo.foreach_node([&](typename Ntk::node const& node) -> void {
         std::vector<kitty::dynamic_truth_table> truth_table{};
         truth_table.push_back(topo.cell_function(node));
@@ -947,6 +942,13 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
         topo.foreach_fanin(node, [&](typename Ntk::signal const& fanin) -> void {
             g.add_connection(mockturtle_to_node.at(ntk.get_node(fanin)), mockturtle_to_node.at(node));
         });
+    });
+
+    // TODO: This is not enough; we need to make a node attached to the output of this node.
+    topo.foreach_po([&](typename Ntk::signal const& signal, uint32_t index) -> void {
+        size_t po = g.add_primary_output();
+        g.add_connection(mockturtle_to_node.at(ntk.get_node(signal)), po);
+        //mockturtle_to_node.insert({ntk.get_node(signal), });
     });
 
     g.dump_to_stdout();
