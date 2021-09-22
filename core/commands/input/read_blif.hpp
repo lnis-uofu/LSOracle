@@ -34,7 +34,7 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
-
+#include "utility.hpp"
 
 namespace alice
 {
@@ -125,6 +125,7 @@ protected:
 
                 filename.erase(filename.end() - 5, filename.end());
                 named_dest.set_network_name(filename);
+		oracle::add_default_names(named_dest);
             } else {
                 mockturtle::klut_network ntk;
                 mockturtle::names_view<mockturtle::klut_network> names_view{ntk};

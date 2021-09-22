@@ -206,12 +206,12 @@ public:
                          pi) != beg + _num_leaves;  // || children.size() == 0;
     }
 
-    void num_cis()
+    uint32_t num_cis()
     {
 	return _num_constants + _num_leaves + _num_regs;
     }
 
-    void num_cos()
+    uint32_t num_cos()
     {
 	return _roots.size();
     }
@@ -252,7 +252,7 @@ public:
     void foreach_gate(Fn &&fn) const
     {
         mockturtle::detail::foreach_element(_nodes.begin() + _num_constants +
-                                            _num_leaves, _nodes.end(), fn);
+                                            _num_leaves + _num_regs, _nodes.end(), fn);
     }
 
     uint32_t fanout_size(node const &n) const

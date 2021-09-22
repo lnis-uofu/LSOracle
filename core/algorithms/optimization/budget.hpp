@@ -37,8 +37,8 @@ namespace oracle
 
 template <typename network>
 mockturtle::names_view<network> budget_optimization(
-    mockturtle::names_view<network> ntk,
-    oracle::partition_manager<mockturtle::names_view<network>> partitions,
+    mockturtle::names_view<network> &ntk,
+    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     std::string liberty_file, std::string output_file, std::string abc_exec);
 
 struct node_depth {
