@@ -692,11 +692,11 @@ void write_top(mockturtle::names_view<network> &ntk,
 template<typename network>
 size_t run_timing(std::string liberty_file,
                   std::string verilog_file,
-                  mockturtle::names_view<network> ntk,
-                  oracle::partition_manager<mockturtle::names_view<network>> partitions,
-                  std::vector<optimizer<network>*> optimized)
+                  mockturtle::names_view<network> &ntk,
+                  oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+                  std::vector<optimizer<network>*> &optimized)
 {
-    const char *design = "top";
+    const std::string design = ntk.get_network_name();
 
     sta::Corner *corner = new sta::Corner("tt", 0);
     sta::MinMaxAll *minmax = sta::MinMaxAll::all();
@@ -709,7 +709,7 @@ size_t run_timing(std::string liberty_file,
                                true);
     assert(lib != nullptr);// << "failed to read liberty library";
 
-    bool linked = sta::Sta::sta()->linkDesign(design);
+    bool linked = sta::Sta::sta()->linkDesign(design.c_str());
     assert(linked); // << "Failed to link";
 
     sta::NetworkReader *net = sta::Sta::sta()->networkReader();
