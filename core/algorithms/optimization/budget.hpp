@@ -39,7 +39,7 @@ template <typename network>
 mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
-    std::string liberty_file, std::string output_file, std::string abc_exec);
+    const std::string &liberty_file, const std::string &output_file, const std::string &abc_exec);
 
 struct node_depth {
     int nodes;
@@ -52,6 +52,7 @@ template<typename network>
 class optimizer
 {
 public:
+    // TODO don't keep the part_view
     virtual partition_view<mockturtle::names_view<network>> partition() = 0;
     /**
      * module name for the generated verilog.
