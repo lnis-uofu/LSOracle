@@ -77,8 +77,6 @@ std::string basic_techmap(const std::string &tech_script, const T &optimal)
     script.close();
     std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
-    ps.module_name = optimal.get_network_name();
-    std::cout << "got module name " << ps.module_name << std::endl;
     mockturtle::write_blif(optimal, input_blif, ps);
     int code = system(("abc -F " + abc_script +
                        " -o " + output_verilog +
@@ -154,11 +152,12 @@ template <typename network> void fix_names(partition_manager<mockturtle::names_v
 				       int index)
 {
     part.foreach_pi([&part, &ntk](typename network::node n) {
-	std::string name = get_node_name_or_default(ntk, n);
+	std::string name = get_node_name_or_default(part, n);
 	part.set_name(part.make_signal(n), name);
     });
     part.foreach_po([&part, &ntk](typename network::signal s, int i) {
-	std::string name = get_po_name_or_default(ntk, s);
+	typename network::node n = part.get_node(s);
+	std::string name = get_node_name_or_default(part, n);
 	part.set_output_name(i, name);
     });
 }
