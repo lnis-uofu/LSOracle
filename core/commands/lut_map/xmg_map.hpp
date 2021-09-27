@@ -34,13 +34,14 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
-
+#include "algorithms/output/xmg_techmap.hpp"
 
 namespace alice
 {
 class xmg_map_command : public alice::command
 {
-    using xmg_ntk = mockturtle::names_view<mockturtle::xmg_network>;
+    using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+    using xmg_ntk = std::shared_ptr<xmg_names>;
 public:
     explicit xmg_map_command(const environment::ptr &env)
         : command(env, "Performs technology mapping of the network")
@@ -50,19 +51,17 @@ public:
 protected:
     void execute()
     {
-	if (store<xmg_ntk>().empty()) {
-	    env->err() << "There is not an XMG network stored.\n";
-	    return;
+        if (store<xmg_ntk>().empty()) {
+            env->err() << "There is not an XMG network stored.\n";
+            return;
         }
 
-	auto &net = *store<xmg_ntk>().current();
-
+        xmg_names &net = *store<xmg_ntk>().current();
+        mockturtle::mapping_view mapping(net);
+        oracle::xmg_techmap(mapping);
     }
 private:
-    int lut_size = 6;
-    int cut_size = 8;
-    std::string out_file = "";
 };
 
-ALICE_ADD_COMMAND(lut_map, "LUT");
+ALICE_ADD_COMMAND(xmg_map, "XMG_MAP");
 }

@@ -81,7 +81,7 @@ protected:
                    << new_depth.depth() << "\n";
         env->out() << "Final number of latches = " << ntk_result.num_latches() << "\n";
         env->out() << "Node Depth Product = "
-		   << ntk_result.num_gates() * new_depth.depth()
+                   << ntk_result.num_gates() * new_depth.depth()
                    << "\n";
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);

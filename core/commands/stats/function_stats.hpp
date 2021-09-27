@@ -98,8 +98,8 @@ protected:
                 } else {
                     xor3_num++;
                 }
-            } else {
-                env->err() << "No idea what this node is.";
+            } else if (!ntk.is_constant(node)) {
+                env->err() << "No idea what this node is." << std::endl;
             }
         });
         env->out() << "MAJ nodes internally = " << maj_num << "\n";

@@ -47,8 +47,7 @@ public:
     {
     }
 private:
-    std::tuple<typename Ntk::signal, std::vector<typename Ntk::node>, int32_t>
-    deepest_po()
+    std::tuple<typename Ntk::signal, std::vector<typename Ntk::node>, int32_t> deepest_po()
     {
         typename Ntk::signal max_po;
         int32_t max_depth = -1;

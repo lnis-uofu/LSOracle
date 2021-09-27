@@ -447,8 +447,8 @@ private:
 
 
 template<class NtkDest, class NtkSource>
-std::tuple<NtkDest, std::unordered_map<int, std::string>>
-        techmap_mapped_network(NtkSource const &ntk)
+std::tuple<NtkDest, std::unordered_map<int, std::string>> techmap_mapped_network(
+            NtkSource const &ntk)
 {
 
     static_assert(mockturtle::is_network_type_v<NtkSource>,

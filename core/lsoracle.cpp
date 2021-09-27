@@ -142,6 +142,7 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
+#include "commands/lut_map/xmg_map.hpp"
 
 #include "commands/version.hpp"
 

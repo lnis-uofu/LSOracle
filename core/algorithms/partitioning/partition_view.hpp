@@ -127,7 +127,7 @@ public:
                 sig = this->create_not(sig);
             }
             _roots.push_back(sig);
-	    ++_num_pivots;
+            ++_num_pivots;
         }
 
         //registers inputs (pseudo POs)
@@ -137,7 +137,7 @@ public:
                 sig = ntk.create_not(sig);
             }
             _roots.push_back(sig);
-	    ++_num_ris;
+            ++_num_ris;
         }
 
         /* restore visited */
@@ -208,12 +208,12 @@ public:
 
     uint32_t num_cis()
     {
-	return _num_constants + _num_leaves + _num_regs;
+        return _num_constants + _num_leaves + _num_regs;
     }
 
     uint32_t num_cos()
     {
-	return _roots.size();
+        return _roots.size();
     }
 
     template<typename Fn>
@@ -233,7 +233,8 @@ public:
     template<typename Fn>
     void foreach_po(Fn &&fn) const
     {
-        mockturtle::detail::foreach_element(_roots.begin(), _roots.begin() + _num_pivots, fn);
+        mockturtle::detail::foreach_element(_roots.begin(),
+                                            _roots.begin() + _num_pivots, fn);
     }
 
     template<typename Fn>

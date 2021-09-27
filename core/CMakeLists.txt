@@ -27,6 +27,7 @@ set(LSORACLE_SOURCE
   kahypar_temp_config.cpp
   algorithms/optimization/budget.cpp
   utility.cpp
+  algorithms/output/xmg_map.cpp
 )
 
 add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})
