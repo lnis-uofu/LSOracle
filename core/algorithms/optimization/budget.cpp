@@ -152,12 +152,12 @@ template <typename network> void fix_names(partition_manager<mockturtle::names_v
 				       int index)
 {
     part.foreach_pi([&part, &ntk](typename network::node n) {
-	std::string name = get_node_name_or_default(part, n);
+	std::string name = get_node_name_or_default(ntk, n);
 	part.set_name(part.make_signal(n), name);
     });
     part.foreach_po([&part, &ntk](typename network::signal s, int i) {
 	typename network::node n = part.get_node(s);
-	std::string name = get_node_name_or_default(part, n);
+	std::string name = get_node_name_or_default(ntk, n);
 	part.set_output_name(i, name);
     });
 }
@@ -201,11 +201,13 @@ public:
     void convert()
     {
 	partition_view<mockturtle::names_view<Ntk>> original = partman.create_part(ntk, index);
-        original.set_network_name("partition_" + std::to_string(index));
+        // original.set_network_name("partition_" + std::to_string(index)); // TODO not working?
 	fix_names(partman, original, ntk, index);
 	mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
         copy = mockturtle::node_resynthesis<mockturtle::names_view<Ntk>, partition_view<mockturtle::names_view<Ntk>>>
                 (original, resyn);
+	copy.set_network_name("partition_" + std::to_string(index));
+
     }
 
     mockturtle::names_view<Ntk> optimized()
@@ -222,8 +224,7 @@ public:
         string script =
             "read_lib " + liberty_file +
             "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap(script, copy);
-        return techmapped;
+        return basic_techmap(script, copy);
     }
 
     node_depth independent_metric()
@@ -695,7 +696,7 @@ size_t run_timing(std::string liberty_file,
                   oracle::partition_manager<mockturtle::names_view<network>> &partitions,
                   std::vector<optimizer<network>*> &optimized)
 {
-    const std::string design = ntk.get_network_name();
+    const std::string design = ntk.get_network_name() != "" ? ntk.get_network_name() : "top";
 
     sta::Corner *corner = new sta::Corner("tt", 0);
     sta::MinMaxAll *minmax = sta::MinMaxAll::all();
@@ -727,6 +728,8 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const string &liberty_file, const string &output_file, const string &abc_exec)   // todo use abc_exec
 {
+    //add_default_names(ntk);
+
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
     std::cout << "Finding optimizers." << std::endl;
