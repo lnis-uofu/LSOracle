@@ -430,15 +430,37 @@ optimizer<network> *optimize_depth(partition_manager<mockturtle::names_view<netw
     return best;
 }
 
+template <typename T>
+class optimization_strategy_comparator {
+public:
+    // Comparator function
+ virtual bool operator()(optimizer<T> &a,
+		  optimizer<T> b) = 0;
+}
+  template <typename T>
+  class ndp_strategy : optimization_strategy_comparator<T>
+    {
+       virtual bool operator()(optimizer<T> &a,
+			       optimizer<T> b)
+      {
+	// Compare on basis of roll number
+        return a.tech_independent().nodes * a.tech_independent().size < b.tech_independent().size * tech_independent().nodes;
+	  
 
+      }
+    
+};
+
+// TODO generic combine this with depth
 template <typename network>
-optimizer<network> *optimize_area(
+optimizer<network> *optimize(
+			     optimization_strategy_comparator comparator,
 				  partition_manager<mockturtle::names_view<network>> partman,
 				  mockturtle::names_view<network> ntk,
 				  int index)
 
 {
-    std::cout << "Optimizing for area" << std::endl;
+    std::cout << "Optimizing based on strategy" << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(partman, ntk, index));
@@ -460,7 +482,7 @@ optimizer<network> *optimize_area(
             continue;
         }
 
-        if ((*opt)->independent_metric().nodes < best->independent_metric().nodes) {
+        if (comparator(*opt,best)) {
             best = *opt;
             std::cout << "found a better result" << std::endl;
             continue;
@@ -642,9 +664,9 @@ void write_top(mockturtle::names_view<network> &ntk,
     }
 
     // TODO assign constant wires.
-    // TODO generate registers.
 
-    // assign PO signal names to driver nodes. if complemented, create an inverter.
+    // generate registers.
+    // TODO pass clock name in
     std::string clock = "clk";
     ntk.foreach_register([&ntk, &clock, &verilog](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
@@ -784,7 +806,7 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
 	}
 	if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
-            break;
+            break; // met timing, or it's the best we can do.
         }
         optimized[worst_part] = optimize_depth(partitions, ntk, worst_part);
     }
