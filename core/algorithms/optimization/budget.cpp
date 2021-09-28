@@ -37,6 +37,7 @@
 #include <sta/ConcreteNetwork.hh>
 #include <sta/PortDirection.hh>
 #include <fmt/format.h>
+#include <tcl.h>
 #include "algorithms/optimization/budget.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 #include "algorithms/optimization/mig_script.hpp"
@@ -692,6 +693,7 @@ void write_top(mockturtle::names_view<network> &ntk,
 template<typename network>
 size_t run_timing(std::string liberty_file,
                   std::string verilog_file,
+		  // TODO sdc file
                   mockturtle::names_view<network> &ntk,
                   oracle::partition_manager<mockturtle::names_view<network>> &partitions,
                   std::vector<optimizer<network>*> &optimized)
@@ -700,7 +702,7 @@ size_t run_timing(std::string liberty_file,
 
     sta::Corner *corner = new sta::Corner("tt", 0);
     sta::MinMaxAll *minmax = sta::MinMaxAll::all();
-    bool read_ver = sta::readVerilogFile(verilog_file.c_str(),
+    bool read_ver = sta::readVerilogFile("/home/snelgrov/code/lsoracle/benchmarks/picorv32/picorv32_lsoracle.mapped.v",// verilog_file.c_str(),
                                          sta::Sta::sta()->networkReader());
     assert(read_ver); // << "failed to read verilog";
     sta::LibertyLibrary *lib = sta::Sta::sta()->readLiberty(liberty_file.c_str(),
@@ -715,8 +717,40 @@ size_t run_timing(std::string liberty_file,
     sta::NetworkReader *net = sta::Sta::sta()->networkReader();
     sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
                                  (net->topInstance());
-    sta::Sta::sta()->minPeriodSlack();
-    sta::Sta::sta()->minPeriodViolations();
+    std::cout << "Attempting to read sdc" << std::endl;
+    // TODO SDC file
+    int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::read_sdc /home/snelgrov/code/lsoracle/dummy.sdc");
+    int b = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::report_checks > /tmp/test.monkey");
+    int d = Tcl_Eval(sta::Sta::sta()->tclInterp(), "puts \"hello world!\"");
+
+    std::cout << "running timing" << std::endl;
+    sta::MinPeriodCheck *min = sta::Sta::sta()->minPeriodSlack();
+    // sta::MinPeriodCheck min{nullptr, nullptr};
+    sta::MinPeriodCheckSeq viol = sta::Sta::sta()->minPeriodViolations();
+    sta::Sta::sta()->reportChecks(&viol, true);
+    //    sta::Sta::sta()->reportCheck(min, true);
+
+    sta::MaxSkewCheck *skew = sta::Sta::sta()->maxSkewSlack();
+    sta::MaxSkewCheckSeq skew_viol = sta::Sta::sta()->maxSkewViolations();
+    // sta::MaxSkewCheck skew;
+
+    sta::Sta::sta()->reportChecks(&skew_viol, true);
+    //sta::Sta::sta()->reportCheck(skew, true);
+    sta::MinMax *min_max = sta::MinMax::max();
+
+    sta::Slack worst_slack = 0;
+    sta::Vertex *vertex;
+
+
+    sta::Sta::sta()->worstSlack(min_max, worst_slack, vertex);
+    /*
+  vertexWorstArrivalPath(Vertex *vertex,
+			 const RiseFall *rf,
+			 const MinMax *min_max,
+			 // Return value.
+			 PathRef &worst_path);
+    */
+
     // get worst path.
     // if meet slack, finish
     return -1;
@@ -727,9 +761,8 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const string &liberty_file, const string &output_file, const string &abc_exec)   // todo use abc_exec
+// todo clock signal name
 {
-    //add_default_names(ntk);
-
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
     std::cout << "Finding optimizers." << std::endl;
@@ -745,14 +778,16 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
         size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
                                        optimized);
         // TODO if this is worse than last result, rollback and finish.
-        if (worst_part == -1
-                || optimized[worst_part]->target() == optimization_strategy::depth) {
-            std::cout << "met timing, or it's the best we can do." << std::endl;
-            break; // met timing, or it's the best we can do.
+        if (worst_part == -1) {
+	    std::cout << "met timing" << std::endl;
+	    break;
+	}
+	if (optimized[worst_part]->target() == optimization_strategy::depth) {
+            std::cout << "previous result was already the best we can do." << std::endl;
+            break;
         }
         optimized[worst_part] = optimize_depth(partitions, ntk, worst_part);
     }
-    // TODO area recovery.
     for (int i = 0; i < num_parts; i++) {
         partition_view<mockturtle::names_view<network>> part = partitions.create_part(
                     ntk, i);

@@ -151,15 +151,31 @@
 
 #ifdef ENABLE_OPENSTA
 #include <sta/Sta.hh>
+#include <tcl.h>
+#include <sta/StaMain.hh>
+namespace sta {
+extern const char *tcl_inits[];
+}
+extern "C" {
+extern int Sta_Init(Tcl_Interp *interp);
+}
 #endif
 
 int main(int argc, char ** argv)
 {
 #ifdef ENABLE_OPENSTA
+
     sta::Sta *test = new sta::Sta;
     sta::Sta::setSta(test);
     sta::initSta();
     sta::Sta::sta()->makeComponents();
+    Tcl_Interp *tcl_interp = Tcl_CreateInterp();
+    test->setTclInterp(tcl_interp);
+    Sta_Init(tcl_interp);
+    sta::evalTclInit(tcl_interp, sta::tcl_inits);
+    Tcl_Eval(tcl_interp, "sta::define_sta_cmds");
+    Tcl_Eval(tcl_interp, "namespace import sta::*");
+
 #endif
     _ALICE_MAIN_BODY(lsoracle)
     return cli.run(argc, argv);
