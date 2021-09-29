@@ -41,11 +41,11 @@ namespace oracle
 class aig_script2
 {
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    mockturtle::names_view<mockturtle::aig_network> run(mockturtle::names_view<mockturtle::aig_network> &aig)
     {
-        mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-        mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> rf_resyn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::aig_network>> balfn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
+        mockturtle::bidecomposition_resynthesis<mockturtle::names_view<mockturtle::aig_network>> rf_resyn;
         mockturtle::cut_rewriting_params ps;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;

@@ -40,13 +40,13 @@ namespace oracle
 class aig_script
 {
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    mockturtle::names_view<mockturtle::aig_network> run(mockturtle::names_view<mockturtle::aig_network> &aig)
     {
 
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = 4;
-        mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> rf_resyn;
+        mockturtle::bidecomposition_resynthesis<mockturtle::names_view<mockturtle::aig_network>> rf_resyn;
         mockturtle::refactoring_params rp;
         rp.allow_zero_gain = false;
 

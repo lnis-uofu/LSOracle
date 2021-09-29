@@ -40,10 +40,10 @@ namespace oracle
 class xag_script
 {
 public:
-    mockturtle::xag_network run(mockturtle::xag_network &xag)
+    mockturtle::names_view<mockturtle::xag_network> run(mockturtle::names_view<mockturtle::xag_network> &xag)
     {
-        mockturtle::sop_rebalancing<mockturtle::xag_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::xag_network>> balfn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::xag_network>> resyn;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;
         mockturtle::cut_rewriting_params ps;
