@@ -30,14 +30,27 @@
 #include <stdlib.h>
 #include <mockturtle/mockturtle.hpp>
 #include <sta/Sta.hh>
-#include <sta/Network.hh>
-#include <sta/Corner.hh>
-#include <sta/VerilogReader.hh>
-#include <sta/Liberty.hh>
 #include <sta/ConcreteNetwork.hh>
+#include <sta/Corner.hh>
+#include <sta/Graph.hh>
+#include <sta/Liberty.hh>
+#include <sta/Network.hh>
+#include <sta/PathRef.hh>
 #include <sta/PortDirection.hh>
+#include <sta/TimingArc.hh>
+#include <sta/VerilogReader.hh>
+#include <sta/StaMain.hh>
+namespace sta {
+extern const char *tcl_inits[];
+}
+extern "C" {
+extern int Sta_Init(Tcl_Interp *interp);
+}
+
+
 #include <fmt/format.h>
 #include <tcl.h>
+#include <regex>
 #include "algorithms/optimization/budget.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 #include "algorithms/optimization/mig_script.hpp"
@@ -434,33 +447,35 @@ template <typename T>
 class optimization_strategy_comparator {
 public:
     // Comparator function
- virtual bool operator()(optimizer<T> &a,
-		  optimizer<T> b) = 0;
-}
-  template <typename T>
-  class ndp_strategy : optimization_strategy_comparator<T>
+    virtual bool operator()(optimizer<T> &a, optimizer<T> &b) = 0;
+    virtual const string name() = 0;
+};
+template <typename T>
+class ndp_strategy : public optimization_strategy_comparator<T>
+{
+    bool operator()(optimizer<T> &a, optimizer<T> &b)
     {
-       virtual bool operator()(optimizer<T> &a,
-			       optimizer<T> b)
-      {
 	// Compare on basis of roll number
-        return a.tech_independent().nodes * a.tech_independent().size < b.tech_independent().size * tech_independent().nodes;
-	  
+	node_depth x = a.independent_metric();
+	node_depth y = b.independent_metric();
 
-      }
-    
+        return x.nodes * x.depth < y.nodes * y.depth;
+    }
+    const string name()
+    {
+	return "node-depth product";
+    }
 };
 
 // TODO generic combine this with depth
 template <typename network>
-optimizer<network> *optimize(
-			     optimization_strategy_comparator comparator,
-				  partition_manager<mockturtle::names_view<network>> partman,
-				  mockturtle::names_view<network> ntk,
-				  int index)
+optimizer<network> *optimize(optimization_strategy_comparator<network> &comparator,
+			     partition_manager<mockturtle::names_view<network>> &partman,
+			     mockturtle::names_view<network> &ntk,
+			     int index)
 
 {
-    std::cout << "Optimizing based on strategy" << std::endl;
+    std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers;
     optimizers.emplace_back(new noop<network>(partman, ntk, index));
@@ -482,7 +497,7 @@ optimizer<network> *optimize(
             continue;
         }
 
-        if (comparator(*opt,best)) {
+        if (comparator(**opt, *best)) {
             best = *opt;
             std::cout << "found a better result" << std::endl;
             continue;
@@ -624,6 +639,29 @@ string techmap(
 
 }
 
+void print_path(sta::ConcreteInstance *i)
+{
+    if (sta::ConcreteInstance *p = i->parent()) {
+	print_path(p);
+    }
+    std::cout << "/" << i->name();
+}
+
+const std::regex inst_reg("partition_([0-9]+)_inst");
+int get_partition_from_inst(sta::ConcreteInstance *i)
+{
+    std::smatch m;
+    std::string name = std::string(i->name());
+    if (std::regex_search(name, m, inst_reg)) {
+ 	return std::stoi(m[1]);
+    } else if (sta::ConcreteInstance *p = i->parent()) {
+	return get_partition_from_inst(p);
+    } else {
+	return -1;
+    }
+}
+
+
 template <typename network>
 void write_top(mockturtle::names_view<network> &ntk,
 	       oracle::partition_manager<mockturtle::names_view<network>> &partitions,
@@ -721,62 +759,114 @@ size_t run_timing(std::string liberty_file,
                   std::vector<optimizer<network>*> &optimized)
 {
     const std::string design = ntk.get_network_name() != "" ? ntk.get_network_name() : "top";
-
     sta::Corner *corner = new sta::Corner("tt", 0);
     sta::MinMaxAll *minmax = sta::MinMaxAll::all();
-    bool read_ver = sta::readVerilogFile("/home/snelgrov/code/lsoracle/benchmarks/picorv32/picorv32_lsoracle.mapped.v",// verilog_file.c_str(),
-                                         sta::Sta::sta()->networkReader());
-    assert(read_ver); // << "failed to read verilog";
+
     sta::LibertyLibrary *lib = sta::Sta::sta()->readLiberty(liberty_file.c_str(),
                                corner,
                                minmax,
                                true);
-    assert(lib != nullptr);// << "failed to read liberty library";
-
+    assert(lib != nullptr);// << "failed to read liberty library"
+    bool read_ver = sta::readVerilogFile(verilog_file.c_str(),
+    // bool read_ver = sta::readVerilogFile("/home/snelgrov/code/lsoracle/benchmarks/picorv32/picorv32_lsoracle.mapped.v",
+                                         sta::Sta::sta()->networkReader());
+    assert(read_ver); // << "failed to read verilog";
     bool linked = sta::Sta::sta()->linkDesign(design.c_str());
     assert(linked); // << "Failed to link";
 
-    sta::NetworkReader *net = sta::Sta::sta()->networkReader();
-    sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
-                                 (net->topInstance());
     std::cout << "Attempting to read sdc" << std::endl;
-    // TODO SDC file
     int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::read_sdc /home/snelgrov/code/lsoracle/dummy.sdc");
+    assert(a == 0);
     int b = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::report_checks > /tmp/test.monkey");
-    int d = Tcl_Eval(sta::Sta::sta()->tclInterp(), "puts \"hello world!\"");
+    assert(b == 0);
+
+    // int d = Tcl_Eval(sta::Sta::sta()->tclInterp(), "puts \"hello world!\"");
 
     std::cout << "running timing" << std::endl;
-    sta::MinPeriodCheck *min = sta::Sta::sta()->minPeriodSlack();
-    // sta::MinPeriodCheck min{nullptr, nullptr};
-    sta::MinPeriodCheckSeq viol = sta::Sta::sta()->minPeriodViolations();
-    sta::Sta::sta()->reportChecks(&viol, true);
-    //    sta::Sta::sta()->reportCheck(min, true);
+    // sta::MinPeriodCheck *min = sta::Sta::sta()->minPeriodSlack();
+    // // sta::MinPeriodCheck min{nullptr, nullptr};
+    // sta::MinPeriodCheckSeq viol = sta::Sta::sta()->minPeriodViolations();
+    // sta::Sta::sta()->reportChecks(&viol, true);
+    // //    sta::Sta::sta()->reportCheck(min, true);
 
-    sta::MaxSkewCheck *skew = sta::Sta::sta()->maxSkewSlack();
-    sta::MaxSkewCheckSeq skew_viol = sta::Sta::sta()->maxSkewViolations();
+    // sta::MaxSkewCheck *skew = sta::Sta::sta()->maxSkewSlack();
+    // sta::MaxSkewCheckSeq skew_viol = sta::Sta::sta()->maxSkewViolations();
     // sta::MaxSkewCheck skew;
 
-    sta::Sta::sta()->reportChecks(&skew_viol, true);
+    // sta::Sta::sta()->reportChecks(&skew_viol, true);
     //sta::Sta::sta()->reportCheck(skew, true);
-    sta::MinMax *min_max = sta::MinMax::max();
-
-    sta::Slack worst_slack = 0;
+    sta::Slack worst_slack;
     sta::Vertex *vertex;
+    sta::Sta::sta()->worstSlack(sta::MinMax::max(), worst_slack, vertex);
+    sta::PathRef worst_path_arrival;
+    sta::PathRef worst_path_slack;
 
+    sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::MinMax::max(), worst_path_arrival);
+    sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::MinMax::max(), worst_path_slack);
 
-    sta::Sta::sta()->worstSlack(min_max, worst_slack, vertex);
-    /*
-  vertexWorstArrivalPath(Vertex *vertex,
-			 const RiseFall *rf,
-			 const MinMax *min_max,
-			 // Return value.
-			 PathRef &worst_path);
-    */
+    if (worst_path_slack.slack(sta::Sta::sta()) >= 0.0) {
+	return -1;
+    }
 
-    // get worst path.
-    // if meet slack, finish
-    return -1;
-    // otherwise find partition with most nodes on path
+    std::vector<float> budget(partitions.get_part_num(), 0.0);
+    sta::PathRef second = worst_path_slack;
+    sta::Arrival arrival = second.arrival(sta::Sta::sta());
+    sta::TimingArc *arc;
+    while(!second.isNull()) {
+	sta::ConcretePin *pin_2 = reinterpret_cast<sta::ConcretePin*>(second.pin(sta::Sta::sta()));
+	std::cout << "found pin " << pin_2->name();
+	std::cout << " slack " << second.slack(sta::Sta::sta());
+	std::cout << " arrival " << second.arrival(sta::Sta::sta());
+	if (sta::ConcreteInstance *inst = pin_2->instance()) {
+	    std::cout << " on instance ";
+	    print_path(inst);
+	}
+	if (pin_2->net()) {
+	    std::cout << " on net " << pin_2->net()->name();
+	}
+	if (pin_2->term()) {
+	    std::cout << " on term " << pin_2->term()->name();
+	}
+	std::cout << std::endl;
+
+	int index = get_partition_from_inst(pin_2->instance());
+	if (index >= 0) {
+	    budget[index] += arrival - second.arrival(sta::Sta::sta());
+	}
+	arrival = second.arrival(sta::Sta::sta());
+	second.prevPath(sta::Sta::sta(), second, arc);
+    }
+    int max = -1;
+    float worst = 0;
+    for (int i = 0; i < partitions.get_part_num(); i++) {
+	if (budget[i] > worst) {
+	    worst = budget[i];
+	    max = i;
+	}
+    }
+    // sta::ConcreteNetwork *net = reinterpret_cast<sta::ConcreteNetwork*>(sta::Sta::sta()->networkReader());
+    // sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
+    //                              (net->topInstance());
+    // net->clear();
+    // net->deleteTopInstance();
+    return max;
+}
+
+void reset_sta()
+{
+    sta::Sta::sta()->clear();
+    //sta::deleteAllMemory();
+
+    sta::Sta *test = new sta::Sta;
+    sta::Sta::setSta(test);
+    //sta::initSta();
+    sta::Sta::sta()->makeComponents();
+    Tcl_Interp *tcl_interp = Tcl_CreateInterp();
+    test->setTclInterp(tcl_interp);
+    Sta_Init(tcl_interp);
+    sta::evalTclInit(tcl_interp, sta::tcl_inits);
+    Tcl_Eval(tcl_interp, "sta::define_sta_cmds");
+    Tcl_Eval(tcl_interp, "namespace import sta::*");
 }
 
 template <typename network> mockturtle::names_view<network> budget_optimization(
@@ -790,11 +880,14 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     std::cout << "Finding optimizers." << std::endl;
     for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
-        optimized[i] = optimize_area(partitions, ntk, i);
+	ndp_strategy<network> strategy;
+        optimized[i] = optimize(strategy, partitions, ntk, i);
     }
     assert(num_parts == optimized.size());
+
     string verilog;
     while (true) {
+	//reset_sta(); // todo not cleaning up
         verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
         size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
@@ -821,6 +914,8 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     ntk = mockturtle::cleanup_dangling(ntk);
     return ntk;
 }
+
+
 
 template mockturtle::names_view<mockturtle::aig_network>
 budget_optimization<mockturtle::aig_network>
