@@ -322,12 +322,6 @@ public:
         return optimal;
     }
 
-    void optimize()
-    {
-        oracle::mig_script migopt;
-        optimal = migopt.run(converted);
-    }
-
     node_depth independent_metric()
     {
         mockturtle::depth_view part_mig_opt_depth{optimal};
@@ -355,6 +349,18 @@ private:
     string techmapped;
 };
 template class mig_optimizer<mockturtle::aig_network>;
+
+template <typename network>
+class migscript_optimizer: public migscript_optimizer<network>
+{
+    void optimize()
+    {
+        oracle::mig_script migopt;
+        optimal = migopt.run(converted);
+    }
+
+}
+
 
 /*
 class ndp_aig_optimizer: optimizer<mockturtle::mig_network, node_depth>

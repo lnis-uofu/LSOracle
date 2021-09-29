@@ -47,7 +47,7 @@ struct node_depth {
     int depth;
 };
 
-enum optimization_strategy { area, balanced, depth };
+enum optimization_strategy { area, area_balance, balanced, depth_balanced, depth };
 
 template<typename network>
 class optimizer

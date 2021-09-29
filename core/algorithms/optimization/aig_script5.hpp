@@ -55,6 +55,8 @@ public:
         rp.allow_zero_gain = false;
         rp.max_pis = 4;
 
+        mockturtle::functional_reduction(aig);
+
         //b
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
@@ -109,7 +111,7 @@ public:
         //b
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
-
+        mockturtle::functional_reduction(aig);
         mockturtle::depth_view b_depth4{aig};
 
         return aig;

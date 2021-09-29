@@ -43,7 +43,7 @@ public:
         add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
-        add_flag("--xmg,-n", "Display stats for stored XMG (AIG is default)");
+        add_flag("--xmg,-g", "Display stats for stored XMG (AIG is default)");
     }
 
     template <typename ntk> void dump_stats(string name)

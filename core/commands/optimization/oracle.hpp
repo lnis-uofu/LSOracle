@@ -46,7 +46,7 @@ class oracle_command : public alice::command
 public:
     explicit oracle_command(const environment::ptr &env)
         : command(env,
-                  "Partitions Stored AIG netowrk, and Performs Mixed Synthesis on Network")
+                  "Partitions Stored AIG network, and Performs Mixed Synthesis on Network")
     {
 
         opts.add_option("--partition,partition", num_partitions,
@@ -65,6 +65,7 @@ public:
                  "Combine adjacent partitions that have been classified for the same optimization");
         //add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
 #ifdef ENABLE_GALOIS
+	// TODO replace this flag with a different letter, g is going to be xmg
         add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
 #endif
     }

@@ -1,7 +1,7 @@
 /* LSOracle: A learning based Oracle for Logic Synthesis
 
  * MIT License
- * Copyright 2021 Laboratory for Nano Integrated Systems (LNIS)
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,51 +24,30 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#pragma once
-
-#include <memory>
-
-#include <alice/alice.hpp>
-#include <lorina/aiger.hpp>
-#include <lorina/blif.hpp>
-#include <lorina/verilog.hpp>
+#include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
+#include <iostream>
+#include <string>
+#include <vector>
 #include <fmt/format.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-namespace alice
-{
-using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
-using xmg_ntk = std::shared_ptr<xmg_names>;
-
-ALICE_ADD_STORE(xmg_ntk, "xmg", "g", "xmg", "XMGs")
-
-ALICE_DESCRIBE_STORE(xmg_ntk, xmg)
+namespace oracle
 {
 
-    return fmt::format("i/o = {}/{} gates = {}", xmg->num_pis(), xmg->num_pos(),
-                       xmg->num_gates());
-}
-
-ALICE_LOG_STORE_STATISTICS(xmg_ntk, xmg)
+class xmg_script
 {
-    mockturtle::depth_view depth{*xmg};
-    return {
-        {"nodes", xmg->size()},
-        {"inputs", xmg->num_pis()},
-        {"outputs", xmg->num_pos()},
-        {"xmg nodes", xmg->num_gates()},
-        {"xmg level", depth.depth()}};
-}
+public:
+    mockturtle::xmg_network run(mockturtle::xmg_network &xmg)
+    {
+        mockturtle::xmg_algebraic_depth_rewriting_params ps;
+        mockturtle::depth_view<mockturtle::xmg_network> xmg_depth{xmg};
+        mockturtle::xmg_algebraic_depth_rewriting(xmg_depth, ps);
+        //xmg = mockturtle::cleanup_dangling(xmg_depth);
 
-ALICE_PRINT_STORE_STATISTICS(xmg_ntk, os, xmg)
-{
-    mockturtle::depth_view depth{*xmg};
-    os << "nodes: " << xmg->size() << std::endl;
-    os << "inputs: " << xmg->num_pis() << std::endl;
-    os << "outputs: " << xmg->num_pos() << std::endl;
-    os << "xmg nodes: " << xmg->num_gates() << std::endl;
-    os << "xmg level: " << depth.depth() << std::endl;
-
-}
+        return xmg;
+    }
+};
 }

@@ -49,7 +49,7 @@ public:
         add_flag("--aig,-a", "Display depth of stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display depth of stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display depth of stored XAG (AIG is default)");
-        add_flag("--xmg,-n", "Display depth of stored XMG (AIG is default)");
+        add_flag("--xmg,-g", "Display depth of stored XMG (AIG is default)");
     }
 
 protected:

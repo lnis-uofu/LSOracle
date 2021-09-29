@@ -49,7 +49,7 @@ public:
     {
         add_flag("--mig,-m", "Display stats for stored MIG (MIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG (MIG is default)");
-        add_flag("--xmg,-n", "Display stats for stored XMG (MIG is default)");
+        add_flag("--xmg,-g", "Display stats for stored XMG (MIG is default)");
     }
 
 protected:
