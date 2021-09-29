@@ -65,6 +65,8 @@
 
 //#include "algorithms/asic_mapping/techmapping.hpp"
 //#include "algorithms/output/mapped_verilog.hpp"
+//#include "algorithms/output/part_verilog.hpp"
+
 
 /*** Stores ***/
 #include "store/aig.hpp"

@@ -58,9 +58,9 @@ public:
 
         //b
         std::cout << "b\n";
-        //mockturtle::depth_view aig_depth{aig};
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::functional_reduction(aig);
 
         //rw
         std::cout << "rw\n";
@@ -74,9 +74,9 @@ public:
 
         //b
         std::cout << "b\n";
-        //mockturtle::depth_view aig_depth1{aig};
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::functional_reduction(aig);
 
         //rw
         std::cout << "rw\n";
@@ -91,9 +91,9 @@ public:
 
         //b
         std::cout << "b\n";
-        //mockturtle::depth_view aig_depth2{aig};
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::functional_reduction(aig);
 
         //rfz
         std::cout << "rfz\n";
@@ -109,9 +109,9 @@ public:
 
         //b
         std::cout << "b\n";
-        //mockturtle::depth_view aig_depth3{aig};
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::functional_reduction(aig);
 
         return aig;
     }

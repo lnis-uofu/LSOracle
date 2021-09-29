@@ -79,7 +79,11 @@ public:
         std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
-                
+        
+        //fraig
+        std::cout << "fraig\n";
+        mockturtle::functional_reduction(aig); 
+        
         //resub
         std::cout << "resub\n";
         mockturtle::aig_resubstitution(aig);
@@ -116,6 +120,10 @@ public:
         std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
+
+        //fraig
+        std::cout << "fraig\n";
+        mockturtle::functional_reduction(aig);
         
         //resub
         std::cout << "resub\n";
