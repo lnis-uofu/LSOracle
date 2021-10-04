@@ -47,22 +47,16 @@ struct node_depth {
     int depth;
 };
 
-enum optimization_strategy { area, area_balance, balanced, depth_balanced, depth };
+enum optimization_strategy { size, balanced, depth };
 
 template<typename network>
 class optimizer
 {
 public:
-    // TODO don't keep the part_view
-    virtual partition_view<mockturtle::names_view<network>> partition() = 0;
-    /**
-     * module name for the generated verilog.
-     */
-    virtual std::string module_name() = 0;
     /**
      * human readable name
      */
-    virtual std::string optimizer_name() = 0;
+    virtual const std::string optimizer_name() = 0;
     /**
      * Do any conversion necessary from original network type to the internal network type.
      */

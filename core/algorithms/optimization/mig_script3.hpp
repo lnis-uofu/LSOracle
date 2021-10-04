@@ -40,10 +40,10 @@ namespace oracle
 class mig_script3
 {
 public:
-    mockturtle::mig_network run(mockturtle::mig_network &mig)
+    mockturtle::names_view<mockturtle::mig_network> run(mockturtle::names_view<mockturtle::mig_network> &mig)
     {
 
-        mockturtle::sop_rebalancing<mockturtle::mig_network> balfn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::mig_network>> balfn;
         mockturtle::mig_npn_resynthesis resyn;
         mockturtle::cut_rewriting_params ps;
         mockturtle::mig_algebraic_depth_rewriting_params pm;
@@ -79,11 +79,11 @@ public:
         //b
         mig = mockturtle::balancing(mig, {balfn}, bs);
         mig = mockturtle::cleanup_dangling(mig);
-*/    
+*/
         //rw
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
-        
+
         //rw
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);

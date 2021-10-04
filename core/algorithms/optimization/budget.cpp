@@ -54,13 +54,24 @@ extern int Sta_Init(Tcl_Interp *interp);
 #include "algorithms/optimization/budget.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 #include "algorithms/optimization/mig_script.hpp"
+#include "algorithms/optimization/mig_script2.hpp"
+#include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/aig_script.hpp"
+#include "algorithms/optimization/aig_script2.hpp"
+#include "algorithms/optimization/aig_script3.hpp"
+#include "algorithms/optimization/aig_script4.hpp"
+#include "algorithms/optimization/aig_script5.hpp"
+#include "algorithms/optimization/xag_script.hpp"
+#include "algorithms/optimization/xmg_script.hpp"
 #include "utility.hpp"
 
 namespace oracle
 {
-    using aig_names = mockturtle::names_view<mockturtle::aig_network>;
-    using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+using xag_names = mockturtle::names_view<mockturtle::xag_network>;
+using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+
 template<typename T>
 std::string basic_techmap(const std::string &tech_script, const T &optimal)
 {
@@ -91,6 +102,7 @@ std::string basic_techmap(const std::string &tech_script, const T &optimal)
     script.close();
     std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
+    ps.skip_feedthrough = 1u;
     mockturtle::write_blif(optimal, input_blif, ps);
     int code = system(("abc -F " + abc_script +
                        " -o " + output_verilog +
@@ -111,7 +123,7 @@ template <typename network> std::string get_po_name_or_default(const network &nt
 	return ntk.get_output_name(index);
     } else {
 	int digits_out = std::to_string(ntk.num_pos()).length();
-	std::cout << "missing output name for index " << index << std::endl;
+	// std::cout << "missing output name for index " << index << std::endl;
 	return fmt::format("po__{0:0{1}}", index, digits_out);
     }
 }
@@ -124,7 +136,7 @@ std::string get_pi_name_or_default(const network &ntk, const typename network::n
     if (ntk.has_name(signal)) {
 	return ntk.get_name(signal);
     } else {
-	std::cout << "missing name for PI node " << node << std::endl;
+	// std::cout << "missing name for PI node " << node << std::endl;
 	int digits_in = std::to_string(ntk.num_pis()).length();
 	return fmt::format("pi__{0:0{1}}", node, digits_in);
     }
@@ -140,7 +152,7 @@ std::string get_node_name_or_default(const network &ntk, const typename network:
 	if (ntk.has_name(signal)) {
 	    return ntk.get_name(signal);
 	} else {
-	    std::cout << "missing name for non-PI node " << node << std::endl;
+	    // std::cout << "missing name for non-PI node " << node << std::endl;
 	    int digits_gate = std::to_string(ntk.num_gates()).length();
 	    return fmt::format("node__{0:0{1}}", node, digits_gate);
 	}
@@ -154,7 +166,7 @@ std::string get_ri_name_or_default(const network &ntk, const typename network::s
 	return ntk.get_name(signal);
     } else {
 	typename network::node node = ntk.get_node(signal);
-	std::cout << "missing name for RI node " << node << std::endl;
+	// std::cout << "missing name for RI node " << node << std::endl;
 	int digits_in = std::to_string(ntk.num_registers()).length();
 	return fmt::format("ri__{0:0{1}}", node, digits_in);
     }
@@ -171,40 +183,39 @@ template <typename network> void fix_names(partition_manager<mockturtle::names_v
     });
     part.foreach_po([&part, &ntk](typename network::signal s, int i) {
 	typename network::node n = part.get_node(s);
+	if (ntk.is_pi(n)) {
+	    std::cout << "################################ PI is partition PO! ################################" << std::endl;
+	    return;
+	}
 	std::string name = get_node_name_or_default(ntk, n);
 	part.set_output_name(i, name);
     });
 }
 
-template <typename Ntk>
-class noop: public optimizer<Ntk>
+template <typename network>
+class noop: public optimizer<network>
 {
 public:
-    noop(partition_manager<mockturtle::names_view<Ntk>> partman, mockturtle::names_view<Ntk> ntk, int index): index(index), partman(partman), ntk(ntk)
+    noop(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
     {
     }
 
-    std::string optimizer_name()
+    const std::string optimizer_name()
     {
         return "noop";
     }
 
-    partition_view<mockturtle::names_view<Ntk>> partition()
-    {
-	return partman.create_part(ntk, index);
-    }
-
-    std::string module_name()
-    {
-        return copy.get_network_name();
-    }
+    // partition_view<mockturtle::names_view<network>> partition()
+    // {
+    // 	return partman.create_part(ntk, index);
+    // }
 
     optimization_strategy target()
     {
-        return optimization_strategy::balanced;
+        return strategy;
     }
 
-    mockturtle::names_view<Ntk> reconvert()
+    mockturtle::names_view<network> reconvert()
     {
         return copy;
     }
@@ -214,17 +225,17 @@ public:
      */
     void convert()
     {
-	partition_view<mockturtle::names_view<Ntk>> original = partman.create_part(ntk, index);
+	partition_view<mockturtle::names_view<network>> original = partman.create_part(ntk, index);
         // original.set_network_name("partition_" + std::to_string(index)); // TODO not working?
 	fix_names(partman, original, ntk, index);
-	mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
-        copy = mockturtle::node_resynthesis<mockturtle::names_view<Ntk>, partition_view<mockturtle::names_view<Ntk>>>
+	mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
+        copy = mockturtle::node_resynthesis<mockturtle::names_view<network>, partition_view<mockturtle::names_view<network>>>
                 (original, resyn);
 	copy.set_network_name("partition_" + std::to_string(index));
-
+	std::cout << copy.num_pis() << " " << original.num_pis() << std::endl;
     }
 
-    mockturtle::names_view<Ntk> optimized()
+    mockturtle::names_view<network> optimized()
     {
         return copy;
     }
@@ -250,40 +261,29 @@ public:
         return metric;
     }
 private:
-    mockturtle::names_view<Ntk> ntk;
+    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager<mockturtle::names_view<Ntk>> partman;
-    mockturtle::names_view<Ntk> copy;
+    partition_manager<mockturtle::names_view<network>> partman;
+    mockturtle::names_view<network> copy;
     node_depth metric;
     string techmapped;
+    optimization_strategy strategy;
 };
 
 template class noop<mockturtle::aig_network>;
+template class noop<mockturtle::mig_network>;
+template class noop<mockturtle::xag_network>;
+template class noop<mockturtle::xmg_network>;
 
-template <typename Ntk>
-class mig_optimizer: public optimizer<Ntk>
+template <typename network>
+class mig_optimizer: public optimizer<network>
 {
 public:
-    mig_optimizer(partition_view<mockturtle::names_view<Ntk>> ntk): original(ntk)
+    mig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
     {
     }
 
-    std::string optimizer_name()
-    {
-        return "basic migscript optimizer";
-    }
-
-    std::string module_name()
-    {
-        return original.get_network_name();
-    }
-
-    optimization_strategy target()
-    {
-        return optimization_strategy::depth;
-    }
-
-    mockturtle::names_view<Ntk> reconvert()
+    mockturtle::names_view<network> reconvert()
     {
         /* LUT mapping */
         mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
@@ -299,22 +299,23 @@ public:
             (mapped);
 
         /* node resynthesis */
-        mockturtle::direct_resynthesis<mockturtle::names_view<Ntk>> resyn;
-	// mockturtle::xag_npn_resynthesis<mockturtle::names_view<Ntk>> resyn;
-        return mockturtle::node_resynthesis<mockturtle::names_view<Ntk>>(klut, resyn);
-    }
-
-    partition_view<mockturtle::names_view<Ntk>> partition()
-    {
-        return original;
+        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
+	// mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(klut, resyn);
     }
 
     void convert()
     {
+	partition_view<mockturtle::names_view<network>> original = partman.create_part(ntk, index);
+	fix_names(partman, original, ntk, index);
+
         mockturtle::mig_npn_resynthesis resyn;
         converted =
-            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::mig_network>>
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::mig_network>, partition_view<mockturtle::names_view<network>>>
             (original, resyn);
+	converted.set_network_name("partition_" + std::to_string(index));
+	std::cout << converted.num_pis() << " " << original.num_pis() << std::endl;
+
     }
 
     mockturtle::names_view<mockturtle::mig_network> optimized()
@@ -341,113 +342,435 @@ public:
         return techmapped;
     }
 
-private:
-    partition_view<mockturtle::names_view<Ntk>> original;
+    optimization_strategy target()
+    {
+        return strategy;
+    }
+protected:
+    mockturtle::names_view<network> ntk;
+    int index;
+    partition_manager<mockturtle::names_view<network>> partman;
     mockturtle::names_view<mockturtle::mig_network> optimal;
     mockturtle::names_view<mockturtle::mig_network> converted;
     node_depth metric;
     string techmapped;
+    string name;
+    optimization_strategy strategy;
 };
 template class mig_optimizer<mockturtle::aig_network>;
 
 template <typename network>
-class migscript_optimizer: public migscript_optimizer<network>
+class aig_optimizer: public optimizer<network>
 {
+public:
+    aig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    {
+    }
+
+    mockturtle::names_view<network> reconvert()
+    {
+        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::names_view<mockturtle::aig_network>>(optimal, resyn);
+    }
+
+    void convert()
+    {
+	partition_view<mockturtle::names_view<network>> original = partman.create_part(ntk, index);
+	fix_names(partman, original, ntk, index);
+
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
+        converted =
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::aig_network>, partition_view<mockturtle::names_view<network>>>
+            (original, resyn);
+	converted.set_network_name("partition_" + std::to_string(index));
+    }
+
+    mockturtle::names_view<mockturtle::aig_network> optimized()
+    {
+        return optimal;
+    }
+
+    node_depth independent_metric()
+    {
+        mockturtle::depth_view part_aig_opt_depth{optimal};
+        int aig_opt_size = optimal.num_gates();
+        int aig_opt_depth = part_aig_opt_depth.depth();
+        metric = node_depth{aig_opt_size, aig_opt_depth};
+        return metric;
+    }
+
+    std::string techmap(std::string liberty_file)
+    {
+        string script =
+            "read_lib " + liberty_file +
+            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+        techmapped = basic_techmap<mockturtle::names_view<mockturtle::aig_network>> (
+                         script, optimal);
+        return techmapped;
+    }
+
+    optimization_strategy target()
+    {
+        return strategy;
+    }
+protected:
+    mockturtle::names_view<network> ntk;
+    int index;
+    partition_manager<mockturtle::names_view<network>> partman;
+    mockturtle::names_view<mockturtle::aig_network> optimal;
+    mockturtle::names_view<mockturtle::aig_network> converted;
+    node_depth metric;
+    string techmapped;
+    optimization_strategy strategy;
+};
+template class aig_optimizer<mockturtle::aig_network>;
+
+template <typename network>
+class xag_optimizer: public optimizer<network>
+{
+public:
+    xag_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    {
+    }
+
+    mockturtle::names_view<network> reconvert()
+    {
+        /* LUT mapping */
+        mockturtle::mapping_view<mockturtle::names_view<mockturtle::xag_network>, true>
+        mapped{optimal};
+        mockturtle::lut_mapping_params ps;
+        ps.cut_enumeration_ps.cut_size = 3;
+        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::xag_network>, true>, true>
+        (mapped, ps);
+
+        /* collapse into k-LUT network */
+        const auto klut =
+            *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
+            (mapped);
+	 mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(klut, resyn);
+    }
+
+    void convert()
+    {
+        partition_view<mockturtle::names_view<network>> original = partman.create_part(ntk, index);
+	fix_names(partman, original, ntk, index);
+
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::xag_network>> resyn;
+        converted =
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xag_network>, partition_view<mockturtle::names_view<network>>>
+            (original, resyn);
+	converted.set_network_name("partition_" + std::to_string(index));
+	assert(converted.get_network_name() == "partition_" + std::to_string(index));
+    }
+
+    mockturtle::names_view<mockturtle::xag_network> optimized()
+    {
+        return optimal;
+    }
+
+    node_depth independent_metric()
+    {
+        mockturtle::depth_view part_xag_opt_depth{optimal};
+        int xag_opt_size = optimal.num_gates();
+        int xag_opt_depth = part_xag_opt_depth.depth();
+        metric = node_depth{xag_opt_size, xag_opt_depth};
+        return metric;
+    }
+
+    std::string techmap(std::string liberty_file)
+    {
+        string script =
+            "read_lib " + liberty_file +
+            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+        techmapped = basic_techmap<mockturtle::names_view<mockturtle::xag_network>> (
+                         script, optimal);
+        return techmapped;
+    }
+
+    const std::string optimizer_name()
+    {
+	return "xagscript";
+    }
+
+    void optimize()
+    {
+        oracle::xag_script opt;
+        this->optimal = opt.run(this->converted);
+	assert(optimal.get_network_name() == converted.get_network_name());
+    }
+
+    optimization_strategy target()
+    {
+        return strategy;
+    }
+
+protected:
+    mockturtle::names_view<network> ntk;
+    int index;
+    partition_manager<mockturtle::names_view<network>> partman;
+    mockturtle::names_view<mockturtle::xag_network> optimal;
+    mockturtle::names_view<mockturtle::xag_network> converted;
+    node_depth metric;
+    string techmapped;
+    optimization_strategy strategy;
+};
+template class xag_optimizer<mockturtle::xag_network>;
+
+template <typename network>
+class xmg_optimizer: public optimizer<network>
+{
+public:
+    xmg_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    {
+    }
+
+    mockturtle::names_view<network> reconvert()
+    {
+        // /* LUT mapping */
+        // mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
+        // mapped{optimal};
+        // mockturtle::lut_mapping_params ps;
+        // ps.cut_enumeration_ps.cut_size = 3;
+        // mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>, true>
+        // (mapped, ps);
+
+        // /* collapse into k-LUT network */
+        // const auto klut =
+        //     *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
+        //     (mapped);
+
+        // /* node resynthesis */
+        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
+	// // mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(optimal, resyn);
+    }
+
+    void convert()
+    {
+	partition_view<mockturtle::names_view<network>> original = partman.create_part(ntk, index);
+	fix_names(partman, original, ntk, index);
+
+        mockturtle::xmg_npn_resynthesis resyn;
+        converted =
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, partition_view<mockturtle::names_view<network>>>
+            (original, resyn);
+	converted.set_network_name("partition_" + std::to_string(index));
+    }
+
+    mockturtle::names_view<mockturtle::xmg_network> optimized()
+    {
+        return optimal;
+    }
+
+    node_depth independent_metric()
+    {
+        mockturtle::depth_view part_xmg_opt_depth{optimal};
+        int xmg_opt_size = optimal.num_gates();
+        int xmg_opt_depth = part_xmg_opt_depth.depth();
+        metric = node_depth{xmg_opt_size, xmg_opt_depth};
+        return metric;
+    }
+
+    std::string techmap(std::string liberty_file)
+    {
+        string script =
+            "read_lib " + liberty_file +
+            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+        techmapped = basic_techmap<mockturtle::names_view<mockturtle::xmg_network>> (
+                         script, optimal);
+        return techmapped;
+    }
+
+    const std::string optimizer_name()
+    {
+	return "xmgscript";
+    }
+
+    void optimize()
+    {
+        oracle::xmg_script opt;
+        this->optimal = opt.run(this->converted);
+	assert(optimal.get_network_name() == converted.get_network_name());
+
+    }
+
+    optimization_strategy target()
+    {
+        return strategy;
+    }
+
+protected:
+    mockturtle::names_view<network> ntk;
+    int index;
+    partition_manager<mockturtle::names_view<network>> partman;
+    mockturtle::names_view<mockturtle::xmg_network> optimal;
+    mockturtle::names_view<mockturtle::xmg_network> converted;
+    node_depth metric;
+    string techmapped;
+    optimization_strategy strategy;
+};
+template class xmg_optimizer<mockturtle::xmg_network>;
+
+template <typename network>
+class migscript_optimizer: public mig_optimizer<network>
+{
+public:
+    migscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "migscript";
+    }
+
     void optimize()
     {
         oracle::mig_script migopt;
-        optimal = migopt.run(converted);
+        this->optimal = migopt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
     }
-
-}
-
-
-/*
-class ndp_aig_optimizer: optimizer<mockturtle::mig_network, node_depth>
-{
-std::tuple<mockturtle::mig_network, node_depth> optimize(
-    partition_view<mockturtle::mig_network> part)
-{
-    oracle::aig_script aigopt;
-    auto opt_aig = *mig_to_aig(part);
-    opt_aig = aigopt.run(opt_aig);
-    mockturtle::depth_view part_aig_opt_depth{opt_aig};
-    int aig_opt_size = opt_aig.num_gates();
-    int aig_opt_depth = part_aig_opt_depth.depth();
-    auto opt_aig_mig = *aig_to_mig(opt_aig, 0);
-    return std::tuple{opt_aig_mig, node_depth{aig_opt_size, aig_opt_depth}};
-}
 };
-
-class ndp_mig_optimizer: optimizer<mockturtle::mig_network, node_depth>
-{
-std::tuple<mockturtle::mig_network, node_depth> optimize()
-{
-    auto opt_mig = *part_to_mig(part, 0);
-    oracle::mig_script migopt;
-    opt_mig = migopt.run(opt_mig);
-    mockturtle::depth_view part_mig_opt_depth{opt_mig};
-    int mig_opt_size = opt_mig.num_gates();
-    int mig_opt_depth = part_mig_opt_depth.depth();
-    return std::tuple{opt_mig, node_depth{mig_opt_size, mig_opt_depth}};
-}
-};
-
-class noop_optimizer: optimizer<mockturtle::mig_network, node_depth>
-{
-std::tuple<mockturtle::mig_network, node_depth> optimize()
-{
-    auto opt_mig = *part_to_mig(part, 0);
-    mockturtle::depth_view part_mig_opt_depth{opt_mig};
-    int mig_opt_size = opt_mig.num_gates();
-    int mig_opt_depth = part_mig_opt_depth.depth();
-    return std::tuple{opt_mig, node_depth{mig_opt_size, mig_opt_depth}};
-}
-};
-*/
-
-template <typename network, typename F>
-optimizer<network> *optimize_by(partition_view<mockturtle::names_view<network>>
-                                part,
-                                std::vector<optimizer<network>*> optimizers, F better)
-{
-}
 
 template <typename network>
-optimizer<network> *optimize_depth(partition_manager<mockturtle::names_view<network>> partman,
-				   mockturtle::names_view<network> ntk,
-				   int index)
+class migscript2_optimizer: public mig_optimizer<network>
 {
-    std::cout << "Optimizing for depth" << std::endl;
-    // todo this is gonna leak memory.
-    std::vector<optimizer<network>*> optimizers;
-    optimizers.emplace_back(new noop<network>(partman, ntk, index));
-    // optimizers.emplace_back(new mig_optimizer<network>(part));
-    optimizer<network> *best = nullptr;
-    for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
-        std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
-        std::cout << "converting network" << std::endl;
-        (*opt)->convert();
-        std::cout << "trying to optimize" << std::endl;
-        (*opt)->optimize();
-        std::cout << "checking tech independent metrics." << std::endl;
-        node_depth result = (*opt)->independent_metric();
-        std::cout << "result depth " << result.depth
-                  << " size " << result.nodes << std::endl;
+public:
+    migscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
 
-        if (best == nullptr) {
-            best = *opt;
-            continue;
-        }
-        // TODO stash value earlier and don't call this twice
-        if ((*opt)->independent_metric().depth < best->independent_metric().depth) {
-            best = *opt;
-            std::cout << "found a better result" << std::endl;
-            continue;
-        }
+    const std::string optimizer_name()
+    {
+	return "migscript2";
     }
-    return best;
-}
+
+    void optimize()
+    {
+        oracle::mig_script2 migopt;
+        this->optimal = migopt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class migscript3_optimizer: public mig_optimizer<network>
+{
+public:
+    migscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "migscript3";
+    }
+
+    void optimize()
+    {
+        oracle::mig_script3 migopt;
+        this->optimal = migopt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class aigscript_optimizer: public aig_optimizer<network>
+{
+public:
+    aigscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "aigscript";
+    }
+
+    void optimize()
+    {
+        oracle::aig_script opt;
+        this->optimal = opt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class aigscript2_optimizer: public aig_optimizer<network>
+{
+public:
+    aigscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "aigscript2";
+    }
+
+    void optimize()
+    {
+        oracle::aig_script2 opt;
+        this->optimal = opt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class aigscript3_optimizer: public aig_optimizer<network>
+{
+public:
+    aigscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "aigscript3";
+    }
+
+    void optimize()
+    {
+        oracle::aig_script3 opt;
+        this->optimal = opt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class aigscript4_optimizer: public aig_optimizer<network>
+{
+public:
+    aigscript4_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "aigscript4";
+    }
+
+    void optimize()
+    {
+        oracle::aig_script4 opt;
+        this->optimal = opt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
+
+template <typename network>
+class aigscript5_optimizer: public aig_optimizer<network>
+{
+public:
+    aigscript5_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+
+    const std::string optimizer_name()
+    {
+	return "aigscript5";
+    }
+
+    void optimize()
+    {
+        oracle::aig_script5 opt;
+        this->optimal = opt.run(this->converted);
+	assert(this->optimal.get_network_name() == this->converted.get_network_name());
+
+    }
+};
 
 template <typename T>
 class optimization_strategy_comparator {
@@ -456,12 +779,12 @@ public:
     virtual bool operator()(optimizer<T> &a, optimizer<T> &b) = 0;
     virtual const string name() = 0;
 };
+
 template <typename T>
 class ndp_strategy : public optimization_strategy_comparator<T>
 {
     bool operator()(optimizer<T> &a, optimizer<T> &b)
     {
-	// Compare on basis of roll number
 	node_depth x = a.independent_metric();
 	node_depth y = b.independent_metric();
 
@@ -473,9 +796,41 @@ class ndp_strategy : public optimization_strategy_comparator<T>
     }
 };
 
-// TODO generic combine this with depth
+template <typename T>
+class d_strategy : public optimization_strategy_comparator<T>
+{
+    bool operator()(optimizer<T> &a, optimizer<T> &b)
+    {
+	node_depth x = a.independent_metric();
+	node_depth y = b.independent_metric();
+
+        return x.depth < y.depth;
+    }
+    const string name()
+    {
+	return "depth";
+    }
+};
+
+ template <typename T>
+ class n_strategy : public optimization_strategy_comparator<T>
+ {
+     bool operator()(optimizer<T> &a, optimizer<T> &b)
+     {
+	 node_depth x = a.independent_metric();
+	 node_depth y = b.independent_metric();
+
+	 return x.nodes < y.nodes;
+     }
+     const string name()
+     {
+	 return "node";
+     }
+};
+
 template <typename network>
 optimizer<network> *optimize(optimization_strategy_comparator<network> &comparator,
+			     optimization_strategy strategy,
 			     partition_manager<mockturtle::names_view<network>> &partman,
 			     mockturtle::names_view<network> &ntk,
 			     int index)
@@ -483,17 +838,28 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 {
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
     // todo this is gonna leak memory.
-    std::vector<optimizer<network>*> optimizers;
-    optimizers.emplace_back(new noop<network>(partman, ntk, index));
+    std::vector<optimizer<network>*> optimizers {
+	new noop<network>(partman, ntk, index, strategy),
+	new migscript_optimizer<network>(partman, ntk, index, strategy),
+	new migscript2_optimizer<network>(partman, ntk, index, strategy),
+	new migscript3_optimizer<network>(partman, ntk, index, strategy),
+	new aigscript_optimizer<network>(partman, ntk, index, strategy),
+	new aigscript2_optimizer<network>(partman, ntk, index, strategy),
+	new aigscript3_optimizer<network>(partman, ntk, index, strategy),
+	new aigscript4_optimizer<network>(partman, ntk, index, strategy),
+	new aigscript5_optimizer<network>(partman, ntk, index, strategy),
+	new xmg_optimizer<network>(partman, ntk, index, strategy),
+	new xag_optimizer<network>(partman, ntk, index, strategy),
+    };
     // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
-        std::cout << "converting network" << std::endl;
+        // std::cout << "converting network" << std::endl;
         (*opt)->convert();
-        std::cout << "trying to optimize" << std::endl;
+        // std::cout << "trying to optimize" << std::endl;
         (*opt)->optimize();
-        std::cout << "checking tech independent metrics." << std::endl;
+        // std::cout << "checking tech independent metrics." << std::endl;
         node_depth result = (*opt)->independent_metric();
         std::cout << "result depth " << result.depth
                   << " size " << result.nodes << std::endl;
@@ -505,16 +871,19 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 
         if (comparator(**opt, *best)) {
             best = *opt;
-            std::cout << "found a better result" << std::endl;
+            //std::cout << "found a better result" << std::endl;
             continue;
         }
     }
+    std::cout << "******************************** using " << best->optimizer_name() << " for " << index << " ********************************" << std::endl;
+
     return best;
 
 }
 
-string join(std::string delim, std::vector<string> data)
+string join(std::string delim, std::set<string> input)
 {
+    std::vector<std::string> data(input.begin(), input.end());
     std::stringstream ss;
     for (auto i = data.begin(); i != (data.end() - 1); i++) {
         ss << *i << delim;
@@ -563,18 +932,15 @@ void write_child(int index,
 		 optimizer<network> *optimizer)
 {
     std::cout << "writing out instance for partition " << index << std::endl;
-    // verilog << optimize->module_name() << " " optimize->module_name() << "_inst (\n";
     verilog << "partition_" << index << " partition_" << index << "_inst (\n";
 
     partition_view<mockturtle::names_view<network>> part = partman.create_part(ntk, index);
 
-    std::cout << "gathering pi names." << std::endl;
     part.foreach_pi([&part, &ntk, &verilog](typename network::node n) {
 	std::string driver = get_node_name_or_default(ntk, n);
 	verilog << "." << driver << "(" << driver << "),\n";
     });
 
-    std::cout << "gathering po names." << std::endl;
     part.foreach_po([&part, &ntk, &verilog](typename network::signal s, auto i) {
 	typename network::node n = ntk.get_node(s);
 	std::string driver = get_node_name_or_default(ntk, n);
@@ -679,24 +1045,23 @@ void write_top(mockturtle::names_view<network> &ntk,
                        : "top";
 
     // gather output names
-    std::vector<std::string> outputs;
-    std::cout << "gathering po names." << std::endl;
+    std::set<std::string> outputs;
+    // std::cout << "gathering po names." << std::endl;
     ntk.foreach_po([&outputs, &ntk](typename network::signal signal) {
-	outputs.emplace_back(get_po_name_or_default(ntk, signal));
+	outputs.insert(get_po_name_or_default(ntk, signal));
     });
     std::string output_names = join(", ", outputs);
 
     // gather input names
-    std::vector<std::string> inputs;
-    std::cout << "gathering pi names." << std::endl;
+    std::set<std::string> inputs;
+    // std::cout << "gathering pi names." << std::endl;
     ntk.foreach_pi([&inputs, &ntk](typename network::node node) {
-	inputs.emplace_back(get_pi_name_or_default(ntk, node));
+	inputs.insert(get_pi_name_or_default(ntk, node));
     });
     std::string input_names = join(", ", inputs);
 
     // gather wires
-    std::set<std::string> wire_set = get_wire_names(partitions, ntk);
-    std::vector<std::string> wires(wire_set.begin(), wire_set.end());
+    std::set<std::string> wires = get_wire_names(partitions, ntk);
     std::string wire_names = join(", ", wires);
 
     verilog << fmt::format("module {}({}, {});\n",
@@ -707,8 +1072,9 @@ void write_top(mockturtle::names_view<network> &ntk,
         verilog << fmt::format("  wire {};\n", wire_names);
     }
 
-    // TODO assign constant wires.
-
+    // assign constant wires.
+    verilog << "wire " << get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false))) << ";\n";
+    verilog << "assign " << get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false))) << " = 1'b0;\n";
     // generate registers.
     // TODO pass clock name in
     std::string clock = "clk";
@@ -722,31 +1088,41 @@ void write_top(mockturtle::names_view<network> &ntk,
     verilog << std::endl;
 
     // assign PO signal names to driver nodes. if complemented, create an inverter.
-    ntk.foreach_po([&ntk, &verilog](typename network::signal signal) {
+    std::set<std::string> assigns;
+    ntk.foreach_po([&ntk, &assigns](typename network::signal signal) {
 	std::string output = get_po_name_or_default(ntk, signal);
 	std::string driver = get_node_name_or_default(ntk, ntk.get_node(signal));
 
         if (output != driver) {
 	    if (ntk.is_complemented(signal)) {
-		verilog << "mapped_inverter " << output << "_inv(.A(" << driver << "), .Y(" << output << "));\n";
+		assigns.insert(fmt::format("mapped_inverter {0}_inv(.A({1}), .Y({0}));", output, driver));
 	    } else {
-		verilog << "assign " << output << " = " << driver << ";\n";
+		assigns.insert(fmt::format("assign {0} = {1};", output, driver));
 	    }
         }
     });
-    ntk.foreach_register([&ntk, &verilog](std::pair<typename network::signal, typename network::node> reg) {
+    for (auto i = assigns.begin(); i != assigns.end(); i++) {
+	verilog << *i << "\n";
+    }
+
+    std::set<std::string> regs;
+    ntk.foreach_register([&ntk, &regs](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
 	std::string output = get_ri_name_or_default(ntk, ri);
 	std::string driver = get_node_name_or_default(ntk, ntk.get_node(ri));
 
         if (output != driver) {
 	    if (ntk.is_complemented(ri)) {
-		verilog << "mapped_inverter " << output << "_inv(.A(" << driver << "), .Y(" << output << "));\n";
+		regs.insert(fmt::format("mapped_inverter {0}_inv(.A({1}), .Y({0}));", output, driver));
+
 	    } else {
-		verilog << "assign " << output << " = " << driver << ";\n";
+		regs.insert(fmt::format("assign {0} = {1};", output, driver));
 	    }
         }
     });
+    for (auto i = regs.begin(); i != regs.end(); i++) {
+	verilog << *i << "\n";
+    }
     verilog << std::endl;
 
     // write out module instances
@@ -845,7 +1221,7 @@ size_t run_timing(std::string liberty_file,
     int max = -1;
     float worst = 0;
     for (int i = 0; i < partitions.get_part_num(); i++) {
-	if (budget[i] > worst) {
+	if (budget[i] > worst && optimized[i]->target() != optimization_strategy::depth) { // if this is already fully optimized, move to next worst.
 	    worst = budget[i];
 	    max = i;
 	}
@@ -886,8 +1262,8 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     std::cout << "Finding optimizers." << std::endl;
     for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
-	ndp_strategy<network> strategy;
-        optimized[i] = optimize(strategy, partitions, ntk, i);
+	n_strategy<network> strategy;
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i);
     }
     assert(num_parts == optimized.size());
 
@@ -903,18 +1279,27 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
 	    std::cout << "met timing" << std::endl;
 	    break;
 	}
-	if (optimized[worst_part]->target() == optimization_strategy::depth) {
+	if (optimized[worst_part]->target() == optimization_strategy::size) {
+	    ndp_strategy<network> strategy;
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, ntk, worst_part);
+	} else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
+	    d_strategy<network> strategy;
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, ntk, worst_part);
+	} else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
-        }
-        optimized[worst_part] = optimize_depth(partitions, ntk, worst_part);
+	} else {
+	    throw "exhausted types";
+	}
     }
+    std::cout << "Final results:" << std::endl;
     for (int i = 0; i < num_parts; i++) {
-        partition_view<mockturtle::names_view<network>> part = partitions.create_part(
-                    ntk, i);
-	mockturtle::names_view<network> opt = optimized[i]->reconvert();
-        partitions.synchronize_part(part, opt, ntk);
+	std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " " << optimized[i]->target() << std::endl;
+        //partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
+	//mockturtle::names_view<network> opt = optimized[i]->reconvert();
+        //partitions.synchronize_part(part, opt, ntk);
     }
+
     // TODO copy verilog to output_file.
     partitions.connect_outputs(ntk);
     ntk = mockturtle::cleanup_dangling(ntk);

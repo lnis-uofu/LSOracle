@@ -41,12 +41,13 @@ namespace oracle
 {
 class aig_script2
 {
+    using network = mockturtle::names_view<mockturtle::aig_network>;
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    network run(network &aig)
     {
-        mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-        mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> rf_resyn;
+        mockturtle::sop_rebalancing<network> balfn;
+        mockturtle::xag_npn_resynthesis<network> resyn;
+        mockturtle::bidecomposition_resynthesis<network> rf_resyn;
         mockturtle::cut_rewriting_params ps;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;
@@ -58,61 +59,69 @@ public:
         rp.allow_zero_gain = false;
 
         //b
-        std::cout << "b\n";
+        // std::cout << "b\n";
         //mockturtle::depth_view aig_depth{aig};
-        aig = mockturtle::balancing(aig, {balfn}, bs);
-        aig = mockturtle::cleanup_dangling(aig);
+	std::cout << "**************************************************************** original " << aig.get_network_name() << std::endl;
 
+        aig = mockturtle::balancing<network>(aig, {balfn}, bs);
+	std::cout << "**************************************************************** balancing " << aig.get_network_name() << std::endl;
+
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
+	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
         //rw
-        std::cout << "rw\n";
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
+        // std::cout << "rw\n";
+        mockturtle::cut_rewriting<network>(aig, resyn, ps);
+	std::cout << "**************************************************************** cut_rewriting " << aig.get_network_name() << std::endl;
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
+	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
 
         //rf
-        std::cout << "rf\n";
+        // std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
-        aig = mockturtle::cleanup_dangling(aig);
+	std::cout << "**************************************************************** refactoring " << aig.get_network_name() << std::endl;
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
+	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
 
         //b
-        std::cout << "b\n";
+        // std::cout << "b\n";
         //mockturtle::depth_view aig_depth1{aig};
-        aig = mockturtle::balancing(aig, {balfn}, bs);
-        aig = mockturtle::cleanup_dangling(aig);
+        aig = mockturtle::balancing<network>(aig, {balfn}, bs);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //rw
-        std::cout << "rw\n";
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
+        // std::cout << "rw\n";
+        mockturtle::cut_rewriting<network>(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //rwz
-        std::cout << "rwz\n";
+        // std::cout << "rwz\n";
         ps.allow_zero_gain = true;
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::cut_rewriting<network>(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //b
-        std::cout << "b\n";
+        // std::cout << "b\n";
         //mockturtle::depth_view aig_depth2{aig};
-        aig = mockturtle::balancing(aig, {balfn}, bs);
-        aig = mockturtle::cleanup_dangling(aig);
+        aig = mockturtle::balancing<network>(aig, {balfn}, bs);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //rfz
-        std::cout << "rfz\n";
+        // std::cout << "rfz\n";
         rp.allow_zero_gain = true;
-        mockturtle::refactoring(aig, rf_resyn, rp);
-        std::cout << "refactored\n";
-        aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::refactoring<network>(aig, rf_resyn, rp);
+        // std::cout << "refactored\n";
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //rwz
-        std::cout << "rwz\n";
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
+        // std::cout << "rwz\n";
+        mockturtle::cut_rewriting<network>(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         //b
-        std::cout << "b\n";
+        // std::cout << "b\n";
         //mockturtle::depth_view aig_depth3{aig};
-        aig = mockturtle::balancing(aig, {balfn}, bs);
-        aig = mockturtle::cleanup_dangling(aig);
+        aig = mockturtle::balancing<network>(aig, {balfn}, bs);
+        aig = mockturtle::cleanup_dangling<network, network>(aig);
 
         return aig;
     }

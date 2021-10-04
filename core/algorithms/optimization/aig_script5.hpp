@@ -34,17 +34,18 @@
 #include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "rw_script.hpp"
 
 namespace oracle
 {
 class aig_script5
 {
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    mockturtle::names_view<mockturtle::aig_network> run(mockturtle::names_view<mockturtle::aig_network> &aig)
     {
 
-        mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::aig_network>> balfn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;
 

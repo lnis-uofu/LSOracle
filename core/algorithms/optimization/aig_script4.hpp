@@ -40,13 +40,13 @@ namespace oracle
 class aig_script4
 {
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    mockturtle::names_view<mockturtle::aig_network> run(mockturtle::names_view<mockturtle::aig_network> &aig)
     {
 
-        mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-        mockturtle::bidecomposition_resynthesis<mockturtle::aig_network> fallback;
-        mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype(fallback)>
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::aig_network>> balfn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
+        mockturtle::bidecomposition_resynthesis<mockturtle::names_view<mockturtle::aig_network>> fallback;
+        mockturtle::dsd_resynthesis<mockturtle::names_view<mockturtle::aig_network>, decltype(fallback)>
         rf_resyn(fallback);
         mockturtle::cut_rewriting_params ps;
         mockturtle::refactoring_params rp;
@@ -57,89 +57,89 @@ public:
         rp.allow_zero_gain = false;
         /*
         //b
-        std::cout << "b\n";
+        // std::cout << "b\n";
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 */
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //resub
-        std::cout << "resub\n";
+        // std::cout << "resub\n";
         mockturtle::aig_resubstitution(aig);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rf
-        std::cout << "rf\n";
+        // std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
-                
+
         //resub
-        std::cout << "resub\n";
+        // std::cout << "resub\n";
         mockturtle::aig_resubstitution(aig);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rf
-        std::cout << "rf\n";
+        // std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //resub
-        std::cout << "resub\n";
+        // std::cout << "resub\n";
         mockturtle::aig_resubstitution(aig);
         aig = mockturtle::cleanup_dangling(aig);
-       
+
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rwz
-        std::cout << "rwz\n";
+        // std::cout << "rwz\n";
         ps.allow_zero_gain = true;
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rfz
-        std::cout << "rfz\n";
+        // std::cout << "rfz\n";
         rp.allow_zero_gain = true;
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //resub
-        std::cout << "resub\n";
+        // std::cout << "resub\n";
         mockturtle::aig_resubstitution(aig);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rwz
-        std::cout << "rwz\n";
+        // std::cout << "rwz\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rw
-        std::cout << "rw\n";
+        // std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         //fraig
-        std::cout << "fraig\n";
+        // std::cout << "fraig\n";
         mockturtle::functional_reduction(aig);
 
         return aig;
