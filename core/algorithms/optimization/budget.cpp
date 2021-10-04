@@ -496,7 +496,13 @@ public:
     void optimize()
     {
         oracle::xag_script opt;
+	std::cout << converted.get_network_name() << std::endl;
+	std::cout << "################################" << std::endl;
         this->optimal = opt.run(this->converted);
+	std::cout << "################################" << std::endl;
+	std::cout << converted.get_network_name() << std::endl;
+	std::cout << optimal.get_network_name() << std::endl;
+
 	assert(optimal.get_network_name() == converted.get_network_name());
     }
 
