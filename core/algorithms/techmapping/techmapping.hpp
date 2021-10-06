@@ -82,6 +82,9 @@ struct cut {
 
     int input_count() const
     {
+        if (!inputs.empty() && inputs[0] == 0) {
+            return inputs.size() - 1;
+        }
         return inputs.size();
     }
 
@@ -122,6 +125,10 @@ struct lut {
 };
 
 
+struct constant_zero {};
+
+struct constant_one {};
+
 struct primary_input {
     explicit primary_input(size_t index) :
         index{index}
@@ -156,12 +163,27 @@ struct connection {
 
 template<class cell_type>
 struct graph {
+    size_t add_constant_zero()
+    {
+        assert(!frozen);
+        size_t index = nodes.size();
+        nodes.push_back(constant_zero{});
+        return index;
+    }
+
+    size_t add_constant_one()
+    {
+        assert(!frozen);
+        size_t index = nodes.size();
+        nodes.push_back(constant_one{});
+        return index;
+    }
+
     size_t add_primary_input()
     {
         assert(!frozen);
         size_t index = nodes.size();
-        primary_input pi{index};
-        nodes.push_back(pi);
+        nodes.push_back(primary_input{index});
         primary_inputs.push_back(index);
         return index;
     }
@@ -175,8 +197,7 @@ struct graph {
     {
         assert(!frozen);
         size_t index = nodes.size();
-        primary_output po{index};
-        nodes.push_back(po);
+        nodes.push_back(primary_output{index});
         primary_outputs.push_back(index);
         return index;
     }
@@ -224,12 +245,18 @@ struct graph {
     {
         std::cout << "digraph {\n";
 
-        for (size_t primary_input : primary_inputs) {
-            std::cout << primary_input << " [shape=box label=\"PI " << primary_input << "\"]\n";
+        // TODO: assuming constant drivers are always first two nodes is probably not smart.
+        assert(std::holds_alternative<constant_zero>(nodes[0]));
+        assert(std::holds_alternative<constant_one>(nodes[1]));
+        std::cout << "0 [shape=box label=\"Zero\"]\n";
+        std::cout << "1 [shape=box label=\"One\"]\n";
+
+        for (size_t pi : primary_inputs) {
+            std::cout << pi << " [shape=box label=\"PI " << std::get<primary_input>(nodes[pi]).index << "\"]\n";
         }
 
-        for (size_t primary_output : primary_outputs) {
-            std::cout << primary_output << " [shape=box label=\"PO " << primary_output << "\"]\n";
+        for (size_t po : primary_outputs) {
+            std::cout << po << " [shape=box label=\"PO " << std::get<primary_output>(nodes[po]).index << "\"]\n";
         }
 
         for (std::optional<connection> conn : connections) {
@@ -428,7 +455,7 @@ struct graph {
 
     std::vector<size_t> primary_inputs;
     std::vector<size_t> primary_outputs;
-    std::vector<std::variant<primary_input, primary_output, cell_type>> nodes;
+    std::vector<std::variant<constant_zero, constant_one, primary_input, primary_output, cell_type>> nodes;
     std::vector<std::optional<connection>> connections;
 
     bool frozen;
@@ -630,6 +657,8 @@ private:
         graph<lut> mapping;
 
         // Populate the LUT graph with the primary inputs and outputs of the gate graph.
+        gate_graph_to_lut_graph.insert({0, mapping.add_constant_zero()});
+
         for (size_t pi : g.primary_inputs) {
             size_t index = mapping.add_primary_input();
             gate_graph_to_lut_graph.insert({pi, index});
@@ -650,6 +679,8 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
+                // TODO: Calculate the truth table by simulation.
+
                 size_t index = mapping.add_cell(lut{info[node].selected_cut->truth_table});
                 gate_graph_to_lut_graph.insert({node, index});
             }
@@ -747,34 +778,31 @@ private:
 
         assert(frontier.find(node_inputs[0]) != frontier.end() && "bug: mapping frontier does not contain node");
 
-        std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << " has " << frontier.at(node_inputs[0]).cuts.size() << " cuts:\n";
-
+        //std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << " has " << frontier.at(node_inputs[0]).cuts.size() << " cuts:\n";
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
             cut child_cut = frontier.at(node_inputs[0]).cuts[index];
-            std::cout << "  " << child_cut.input_count() << " [";
+            /*std::cout << "  " << child_cut.input_count() << " [";
             for (int child_cut_input : child_cut.inputs) {
                 std::cout << child_cut_input << ", ";
             }
-            std::cout << "]\n";
+            std::cout << "]\n";*/
             cut_set.push_back({child_cut, std::vector{index}});
         }
 
-        std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
+        /*std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
         for (auto& [child_cut, _] : cut_set) {
             std::cout << "  " << child_cut.input_count() << " [";
             for (int child_cut_input : child_cut.inputs) {
                 std::cout << child_cut_input << ", ";
             }
             std::cout << "]\n";
-        }
-
-        // TODO: there is something quite wrong here; we're generating phantom cuts for the wrong node.
+        }*/
 
         // For each other input:
         std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
             assert(frontier.find(node_input) != frontier.end() && "bug: mapping frontier does not contain node");
 
-            std::cout << "[" << node << "] Cut set of input " << node_input << " has " << frontier.at(node_input).cuts.size() << " cuts:\n";
+            /*std::cout << "[" << node << "] Cut set of input " << node_input << " has " << frontier.at(node_input).cuts.size() << " cuts:\n";
 
             for (cut child_cut : frontier.at(node_input).cuts) {
                 std::cout << "  " << child_cut.input_count() << " [";
@@ -782,7 +810,7 @@ private:
                     std::cout << child_cut_input << ", ";
                 }
                 std::cout << "]\n";
-            }
+            }*/
 
             std::vector<std::tuple<cut, std::vector<int>>> new_cuts;
 
@@ -796,11 +824,9 @@ private:
             }
 
             // Filter out cuts which exceed the cut input limit.
-            auto start_of_removed_cuts = std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
-                //std::cout << std::get<0>(candidate).input_count() << " > " << settings.cut_input_limit << "? " << (std::get<0>(candidate).input_count() > settings.cut_input_limit) << '\n';
+            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
                 return std::get<0>(candidate).input_count() > settings.cut_input_limit;
-            });
-            new_cuts.erase(start_of_removed_cuts, new_cuts.end());
+            }), new_cuts.end());
 
             // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
             // Or does that negatively affect cut quality?
@@ -814,23 +840,7 @@ private:
 
         for (auto& [c, children] : cut_set) {
             assert(children.size() > 0);
-            /*
-            kitty::dynamic_truth_table result{frontier.at(c.inputs[0]).cuts[children[0]].truth_table.construct()};
-            for (uint32_t bit = 0; bit < result.num_bits(); bit++) {
-                uint32_t pattern = 0u;
-                for (int fanin_index = 0; fanin_index < children.size(); fanin_index++) {
-                    std::cout << "techmapping.hpp:694: bit = " << bit << '\n';
-                    std::cout << "techmapping.hpp:695: frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table.num_bits() = " << frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table.num_bits() << '\n';
-                    pattern |= kitty::get_bit(frontier.at(c.inputs.at(fanin_index)).cuts.at(children.at(fanin_index)).truth_table, bit) << fanin_index;
-                }
-
-                // TODO: the below code is almost certainly wrong, because we need to check which specific child this is.
-                if (kitty::get_bit(std::get<cell>(g.nodes[c.output]).truth_table[0], bit)) {
-                    kitty::set_bit(result, bit);
-                }
-            }*/
             new_cut_set.push_back(std::move(c));
-            //new_cut_set.back().truth_table = std::move(result);
         }
 
         // Include the trivial cut in the cut set.
@@ -916,7 +926,7 @@ private:
 
 
 template<class Ntk>
-graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
+graph<cell> mockturtle_to_lut_graph(Ntk const& input_ntk)
 {
     static_assert(mockturtle::is_network_type_v<Ntk>);
     static_assert(mockturtle::has_foreach_pi_v<Ntk>);
@@ -924,31 +934,33 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& ntk)
     static_assert(mockturtle::has_foreach_node_v<Ntk>);
     static_assert(mockturtle::has_cell_function_v<Ntk>);
 
-    mockturtle::topo_view<Ntk> topo{ntk};
-    graph<cell> g;
-    std::unordered_map<typename Ntk::node, size_t> mockturtle_to_node;
+    mockturtle::klut_network ntk = mockturtle::gates_to_nodes<mockturtle::klut_network, Ntk>(input_ntk);
+    graph<cell> g{};
+    std::unordered_map<mockturtle::klut_network::node, size_t> mockturtle_to_node{};
 
-    // TODO: constant driver needs special handling.
+    mockturtle_to_node.insert({ntk.get_node(ntk.get_constant(false)), g.add_constant_zero()});
+    mockturtle_to_node.insert({ntk.get_node(ntk.get_constant(true)), g.add_constant_one()});
 
-    topo.foreach_pi([&](typename Ntk::node const& node, uint32_t index) -> void {
-        mockturtle_to_node.insert({node, g.add_primary_input()});
+    ntk.foreach_pi([&](mockturtle::klut_network::node const& node, uint32_t index) -> void {
+        size_t pi = g.add_primary_input();
+        mockturtle_to_node.insert({node, pi});
     });
 
-    topo.foreach_node([&](typename Ntk::node const& node) -> void {
-        std::vector<kitty::dynamic_truth_table> truth_table{};
-        truth_table.push_back(topo.cell_function(node));
-        cell c{truth_table};
-        mockturtle_to_node.insert({node, g.add_cell(c)});
-        topo.foreach_fanin(node, [&](typename Ntk::signal const& fanin) -> void {
-            g.add_connection(mockturtle_to_node.at(ntk.get_node(fanin)), mockturtle_to_node.at(node));
-        });
+    ntk.foreach_node([&](mockturtle::klut_network::node const& node) -> void {
+        if (!ntk.is_constant(node)) {
+            std::vector<kitty::dynamic_truth_table> truth_table{};
+            truth_table.push_back(ntk.node_function(node));
+            size_t c = g.add_cell(cell{truth_table});
+            mockturtle_to_node.insert({node, c});
+            ntk.foreach_fanin(node, [&](mockturtle::klut_network::signal const& fanin) -> void {
+                g.add_connection(mockturtle_to_node.at(ntk.get_node(fanin)), mockturtle_to_node.at(node));
+            });
+        }
     });
 
-    // TODO: This is not enough; we need to make a node attached to the output of this node.
-    topo.foreach_po([&](typename Ntk::signal const& signal, uint32_t index) -> void {
+    ntk.foreach_po([&](mockturtle::klut_network::signal const& signal, uint32_t index) -> void {
         size_t po = g.add_primary_output();
         g.add_connection(mockturtle_to_node.at(ntk.get_node(signal)), po);
-        //mockturtle_to_node.insert({ntk.get_node(signal), });
     });
 
     g.dump_to_stdout();
@@ -979,6 +991,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
 
     for (size_t po : g.primary_outputs) {
         for (size_t fanin : g.compute_node_fanin_nodes(po)) {
+            // BUG: importing from MIG breaks here; for later.
             node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
             break;
         }
