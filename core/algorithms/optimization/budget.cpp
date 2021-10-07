@@ -385,6 +385,25 @@ public:
 	converted.set_network_name("partition_" + std::to_string(index));
     }
 
+  void optimize()
+    {
+    char *blif_name_char = strdup("/tmp/lsoracle_XXXXXX.blif");
+    if (mkstemps(blif_name_char, 2) == -1) {
+      throw std::exception();
+    }
+    std::string blif_name = std::string(blif_name_char);
+    std::cout << "writing blif to " << blif_name  << std::endl;
+
+    mockturtle::write_blif_params ps;
+    mockturtle::write_blif(ntk, blif_name, ps);
+    std::string script = "abc -c \"read_blif " + blif_name + "; resyn2; write_blif optimized_" + blif_name + " \"";
+    int code = system((script).c_str());
+    assert(code == 0);
+    std::cout << "optimized with abc" << std::endl;
+    lorina::return_code read_blif_return_code = lorina::read_blif( "optimized_" + blif_name, mockturtle::blif_reader( optimal ));
+    assert(read_blif_return_code == lorina::return_code::success);
+    }
+ 
     mockturtle::names_view<mockturtle::aig_network> optimized()
     {
         return optimal;
