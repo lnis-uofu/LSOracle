@@ -59,10 +59,9 @@
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
-#include "algorithms/output/verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
-#include "algorithms/fpga_mapping/techmapping.hpp"
+#include "algorithms/techmapping/techmapping.hpp"
 #include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/

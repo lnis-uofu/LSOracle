@@ -453,6 +453,93 @@ struct graph {
         return ordering;
     }
 
+    std::vector<size_t> nodes_in_cut(cut const& c) const
+    {
+        // Perform a reverse topological ordering to discover nodes in the cut
+        // and then a forward topological ordering to produce useful output.
+
+        std::vector<size_t> ordering;
+        std::vector<size_t> no_outgoing{c.output};
+        graph g{*this};
+        g.unfreeze();
+
+        while (!no_outgoing.empty()) {
+            size_t node = no_outgoing.back();
+            no_outgoing.pop_back();
+            ordering.push_back(node);
+            if (std::find(c.inputs.begin(), c.inputs.end(), node) == c.inputs.end()) {
+                for (connection conn : g.compute_node_fanin_connections(node)) {
+                    g.remove_connection(conn.index);
+                    no_outgoing.push_back(conn.to);
+                }
+            }
+        }
+
+        // ordering now contains a reverse topological order of the nodes.
+
+        // TODO: does this actually produce a forward topological order?
+        std::reverse(ordering.begin(), ordering.end());
+
+        return ordering;
+    }
+
+    kitty::dynamic_truth_table simulate(cut const& c) const
+    {
+        const std::vector<size_t> cut_nodes{nodes_in_cut(c)};
+        kitty::dynamic_truth_table result{static_cast<uint32_t>(c.inputs.size())};
+
+        std::cout << "cut output: " << c.output << '\n';
+        std::cout << "cut inputs: [";
+        for (size_t node : c.inputs) {
+            std::cout << node << ", ";
+        }
+        std::cout << "]\n";
+
+        std::cout << "nodes contained in cut: [";
+        for (size_t node : cut_nodes) {
+            std::cout << node << ", ";
+        }
+        std::cout << "]\n";
+
+        // TODO: skip constant drivers when found.
+        const int limit = 1 << c.inputs.size();
+
+        for (unsigned int mask = 0; mask < limit; mask++) {
+            std::unordered_map<size_t, bool> values{};
+
+            // Constant drivers.
+            values.insert({0, false});
+            values.insert({1, true});
+
+            for (int input = 0; input < c.inputs.size(); input++) {
+                std::cout << "value of node " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
+                values.insert({c.inputs[input], ((1 << input) & mask) != 0});
+            }
+
+            for (size_t node : cut_nodes) {
+                cell const& n = std::get<cell>(nodes[node]);
+                std::vector<size_t> fanin = compute_node_fanin_nodes(node);
+
+                uint64_t node_mask = 0;
+
+                for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
+                    std::cout << "trying to get value of fanin node " << fanin[fanin_node] << '\n';
+                    node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
+                }
+
+                // TODO: assumes cell has a single output.
+                values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
+                std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
+            }
+
+            if (values.at(c.output)) {
+                kitty::set_bit(result, mask);
+            }
+        }
+
+        return result;
+    }
+
     std::vector<size_t> primary_inputs;
     std::vector<size_t> primary_outputs;
     std::vector<std::variant<constant_zero, constant_one, primary_input, primary_output, cell_type>> nodes;
@@ -679,9 +766,7 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
-                // TODO: Calculate the truth table by simulation.
-
-                size_t index = mapping.add_cell(lut{info[node].selected_cut->truth_table});
+                size_t index = mapping.add_cell(lut{g.simulate(*info[node].selected_cut)});
                 gate_graph_to_lut_graph.insert({node, index});
             }
 
@@ -991,7 +1076,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
 
     for (size_t po : g.primary_outputs) {
         for (size_t fanin : g.compute_node_fanin_nodes(po)) {
-            // BUG: importing from MIG breaks here; for later.
+            // BUG: exporting to MIG breaks here; for later.
             node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
             break;
         }
