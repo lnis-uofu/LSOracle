@@ -469,8 +469,7 @@ struct graph {
             ordering.push_back(node);
             if (std::find(c.inputs.begin(), c.inputs.end(), node) == c.inputs.end()) {
                 for (connection conn : g.compute_node_fanin_connections(node)) {
-                    g.remove_connection(conn.index);
-                    no_outgoing.push_back(conn.to);
+                    no_outgoing.push_back(conn.from);
                 }
             }
         }
