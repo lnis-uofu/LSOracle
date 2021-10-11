@@ -77,7 +77,7 @@ using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 
 template<typename T>
-std::string basic_techmap(const std::string &tech_script, const T &optimal)
+std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal)
 {
     std::cout << "starting basic techmapping" << std::endl;
     char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
@@ -108,7 +108,7 @@ std::string basic_techmap(const std::string &tech_script, const T &optimal)
     mockturtle::write_blif_params ps;
     ps.skip_feedthrough = 1u;
     mockturtle::write_blif(optimal, input_blif, ps);
-    int code = system(("abc -F " + abc_script +
+    int code = system((abc_exec + " -F " + abc_script +
                        " -o " + output_verilog +
                        " " + input_blif).c_str());
     assert(code == 0);
@@ -116,8 +116,8 @@ std::string basic_techmap(const std::string &tech_script, const T &optimal)
     // TODO close everything
     return output_verilog;
 };
-template std::string basic_techmap<aig_names>(const std::string &, const aig_names &);
-template std::string basic_techmap<mig_names>(const std::string &, const mig_names &);
+template std::string basic_techmap<aig_names>(const std::string &, const std::string &, const aig_names &);
+template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &);
 
 template <typename network> std::string get_po_name_or_default(const network &ntk, const typename network::signal &signal)
 {
@@ -205,7 +205,7 @@ template <typename network>
 class noop: public optimizer<network>
 {
 public:
-    noop(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    noop(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -252,13 +252,13 @@ public:
     {
     }
 
-    std::string techmap(std::string liberty_file)
+    std::string techmap(const std::string &liberty_file)
     {
 	if (techmapped.empty()) {
 	    string script =
 		"read_lib " + liberty_file +
 		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-	    techmapped = basic_techmap(script, copy);
+	    techmapped = basic_techmap(script, abc_exec, copy);
 	}
 	return techmapped;
     }
@@ -279,6 +279,7 @@ private:
     node_depth metric;
     optimization_strategy strategy;
     std::string techmapped;
+    const std::string &abc_exec;
 };
 
 template class noop<mockturtle::aig_network>;
@@ -290,7 +291,7 @@ template <typename network>
 class mig_optimizer: public optimizer<network>
 {
 public:
-    mig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    mig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -342,14 +343,13 @@ public:
         return metric;
     }
 
-    std::string techmap(std::string liberty_file)
+    std::string techmap(const std::string &liberty_file)
     {
 	if (techmapped.empty()) {
 	    string script =
 		"read_lib " + liberty_file +
 		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (
-											 script, optimal);
+	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (script, abc_exec, optimal);
 	}
         return techmapped;
     }
@@ -368,6 +368,7 @@ protected:
     string techmapped;
     string name;
     optimization_strategy strategy;
+    const std::string &abc_exec;
 };
 template class mig_optimizer<mockturtle::aig_network>;
 
@@ -375,7 +376,7 @@ template <typename network>
 class aig_optimizer: public optimizer<network>
 {
 public:
-    aig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    aig_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -411,7 +412,7 @@ public:
         return metric;
     }
 
-    std::string techmap(std::string liberty_file)
+    std::string techmap(const std::string &liberty_file)
     {
 	if (techmapped.empty()) {
 
@@ -419,7 +420,7 @@ public:
 		"read_lib " + liberty_file +
 		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
 	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::aig_network>> (
-											 script, optimal);
+											 script, abc_exec, optimal);
         }
 	return techmapped;
     }
@@ -437,6 +438,7 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+    const std::string &abc_exec;
 };
 template class aig_optimizer<mockturtle::aig_network>;
 
@@ -444,7 +446,7 @@ template <typename network>
 class xag_optimizer: public optimizer<network>
 {
 public:
-    xag_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    xag_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -493,7 +495,7 @@ public:
         return metric;
     }
 
-    std::string techmap(std::string liberty_file)
+    std::string techmap(const std::string &liberty_file)
     {
 	if (techmapped.empty()) {
 
@@ -501,7 +503,7 @@ public:
 		"read_lib " + liberty_file +
 		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
 	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::xag_network>> (
-											 script, optimal);
+											 script, abc_exec, optimal);
         }
 	return techmapped;
     }
@@ -531,6 +533,7 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+    const std::string &abc_exec;
 };
 template class xag_optimizer<mockturtle::xag_network>;
 
@@ -538,7 +541,7 @@ template <typename network>
 class xmg_optimizer: public optimizer<network>
 {
 public:
-    xmg_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): index(index), partman(partman), ntk(ntk), strategy(target)
+    xmg_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -589,14 +592,14 @@ public:
         return metric;
     }
 
-    std::string techmap(std::string liberty_file)
+    std::string techmap(const std::string &liberty_file)
     {
 	if (techmapped.empty()) {
 	    string script =
 		"read_lib " + liberty_file +
 		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
 	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::xmg_network>> (
-											 script, optimal);
+											 script, abc_exec, optimal);
         }
 	return techmapped;
     }
@@ -628,6 +631,7 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+    const std::string &abc_exec;
 };
 template class xmg_optimizer<mockturtle::xmg_network>;
 
@@ -635,7 +639,7 @@ template <typename network>
 class migscript_optimizer: public mig_optimizer<network>
 {
 public:
-    migscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
+    migscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -655,7 +659,7 @@ template <typename network>
 class migscript2_optimizer: public mig_optimizer<network>
 {
 public:
-    migscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
+    migscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -675,7 +679,7 @@ template <typename network>
 class migscript3_optimizer: public mig_optimizer<network>
 {
 public:
-    migscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): mig_optimizer<network>(partman, ntk, index, target) {}
+    migscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -695,7 +699,7 @@ template <typename network>
 class aigscript_optimizer: public aig_optimizer<network>
 {
 public:
-    aigscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+    aigscript_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -715,7 +719,7 @@ template <typename network>
 class aigscript2_optimizer: public aig_optimizer<network>
 {
 public:
-    aigscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+    aigscript2_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -735,7 +739,7 @@ template <typename network>
 class aigscript3_optimizer: public aig_optimizer<network>
 {
 public:
-    aigscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+    aigscript3_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -755,7 +759,7 @@ template <typename network>
 class aigscript4_optimizer: public aig_optimizer<network>
 {
 public:
-    aigscript4_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+    aigscript4_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -775,7 +779,7 @@ template <typename network>
 class aigscript5_optimizer: public aig_optimizer<network>
 {
 public:
-    aigscript5_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target): aig_optimizer<network>(partman, ntk, index, target) {}
+    aigscript5_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
@@ -852,23 +856,24 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 			     optimization_strategy strategy,
 			     partition_manager<mockturtle::names_view<network>> &partman,
 			     mockturtle::names_view<network> &ntk,
-			     int index)
+			     int index,
+			     const std::string &abc_exec)
 
 {
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*> optimizers {
-	new noop<network>(partman, ntk, index, strategy),
-	new migscript_optimizer<network>(partman, ntk, index, strategy),
-	new migscript2_optimizer<network>(partman, ntk, index, strategy),
-	new migscript3_optimizer<network>(partman, ntk, index, strategy),
-	new aigscript_optimizer<network>(partman, ntk, index, strategy),
-	new aigscript2_optimizer<network>(partman, ntk, index, strategy),
-	new aigscript3_optimizer<network>(partman, ntk, index, strategy),
-	new aigscript4_optimizer<network>(partman, ntk, index, strategy),
-	new aigscript5_optimizer<network>(partman, ntk, index, strategy),
-	new xmg_optimizer<network>(partman, ntk, index, strategy),
-	new xag_optimizer<network>(partman, ntk, index, strategy),
+	new noop<network>(partman, ntk, index, strategy, abc_exec),
+	new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new aigscript4_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new aigscript5_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new xmg_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new xag_optimizer<network>(partman, ntk, index, strategy, abc_exec),
     };
     // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;
@@ -1276,14 +1281,14 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const string &liberty_file,
     const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec)   // todo use abc_exec
+    const string &output_file, const string &abc_exec)
 {
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
 	n_strategy<network> strategy;
-        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i);
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i, abc_exec);
     }
     assert(num_parts == optimized.size());
 
@@ -1305,10 +1310,10 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
 	}
 	if (optimized[worst_part]->target() == optimization_strategy::size) {
 	    ndp_strategy<network> strategy;
-	    optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, ntk, worst_part);
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, ntk, worst_part, abc_exec);
 	} else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
 	    d_strategy<network> strategy;
-	    optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, ntk, worst_part);
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, ntk, worst_part, abc_exec);
 	} else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.

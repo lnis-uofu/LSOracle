@@ -81,7 +81,7 @@ public:
     /**
      * Techmap, then return a path to a file containing the techmapped verilog.
      */
-    virtual std::string techmap(std::string liberty_file) = 0;
+    virtual std::string techmap(const std::string &liberty_file) = 0;
 };
 }
 
