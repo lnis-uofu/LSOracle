@@ -40,6 +40,9 @@
 #include <sta/TimingArc.hh>
 #include <sta/VerilogReader.hh>
 #include <sta/StaMain.hh>
+
+#include "algorithms/output/verilog_utilities.hpp"
+
 namespace sta {
 extern const char *tcl_inits[];
 }
@@ -48,9 +51,10 @@ extern int Sta_Init(Tcl_Interp *interp);
 }
 
 
+#include <filesystem>
 #include <fmt/format.h>
-#include <tcl.h>
 #include <regex>
+#include <tcl.h>
 #include "algorithms/optimization/budget.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 #include "algorithms/optimization/mig_script.hpp"
@@ -150,7 +154,7 @@ std::string get_node_name_or_default(const network &ntk, const typename network:
     } else {
 	typename network::signal signal = ntk.make_signal(node);
 	if (ntk.has_name(signal)) {
-	    return ntk.get_name(signal);
+	    return  ntk.get_name(signal);
 	} else {
 	    // std::cout << "missing name for non-PI node " << node << std::endl;
 	    int digits_gate = std::to_string(ntk.num_gates()).length();
@@ -181,15 +185,20 @@ template <typename network> void fix_names(partition_manager<mockturtle::names_v
 	std::string name = get_node_name_or_default(ntk, n);
 	part.set_name(part.make_signal(n), name);
     });
-    part.foreach_po([&part, &ntk](typename network::signal s, int i) {
+    int feedthrough = 0;
+    part.foreach_po([&part, &ntk, &feedthrough](typename network::signal s, int i) {
 	typename network::node n = part.get_node(s);
 	if (ntk.is_pi(n)) {
-	    std::cout << "################################ PI is partition PO! ################################" << std::endl;
+	    feedthrough++;
+	    // skip feedthroughs
 	    return;
 	}
 	std::string name = get_node_name_or_default(ntk, n);
 	part.set_output_name(i, name);
     });
+    if (feedthrough > 0 ) {
+	std::cout << "Skipped renaming for " << feedthrough << " feedthrough." << std::endl;
+    }
 }
 
 template <typename network>
@@ -232,7 +241,6 @@ public:
         copy = mockturtle::node_resynthesis<mockturtle::names_view<network>, partition_view<mockturtle::names_view<network>>>
                 (original, resyn);
 	copy.set_network_name("partition_" + std::to_string(index));
-	std::cout << copy.num_pis() << " " << original.num_pis() << std::endl;
     }
 
     mockturtle::names_view<network> optimized()
@@ -246,10 +254,13 @@ public:
 
     std::string techmap(std::string liberty_file)
     {
-        string script =
-            "read_lib " + liberty_file +
-            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        return basic_techmap(script, copy);
+	if (techmapped.empty()) {
+	    string script =
+		"read_lib " + liberty_file +
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+	    techmapped = basic_techmap(script, copy);
+	}
+	return techmapped;
     }
 
     node_depth independent_metric()
@@ -266,8 +277,8 @@ private:
     partition_manager<mockturtle::names_view<network>> partman;
     mockturtle::names_view<network> copy;
     node_depth metric;
-    string techmapped;
     optimization_strategy strategy;
+    std::string techmapped;
 };
 
 template class noop<mockturtle::aig_network>;
@@ -314,7 +325,6 @@ public:
             mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::mig_network>, partition_view<mockturtle::names_view<network>>>
             (original, resyn);
 	converted.set_network_name("partition_" + std::to_string(index));
-	std::cout << converted.num_pis() << " " << original.num_pis() << std::endl;
 
     }
 
@@ -334,11 +344,13 @@ public:
 
     std::string techmap(std::string liberty_file)
     {
-        string script =
-            "read_lib " + liberty_file +
-            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (
-                         script, optimal);
+	if (techmapped.empty()) {
+	    string script =
+		"read_lib " + liberty_file +
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (
+											 script, optimal);
+	}
         return techmapped;
     }
 
@@ -401,12 +413,15 @@ public:
 
     std::string techmap(std::string liberty_file)
     {
-        string script =
-            "read_lib " + liberty_file +
-            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap<mockturtle::names_view<mockturtle::aig_network>> (
-                         script, optimal);
-        return techmapped;
+	if (techmapped.empty()) {
+
+	    string script =
+		"read_lib " + liberty_file +
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::aig_network>> (
+											 script, optimal);
+        }
+	return techmapped;
     }
 
     optimization_strategy target()
@@ -480,12 +495,15 @@ public:
 
     std::string techmap(std::string liberty_file)
     {
-        string script =
-            "read_lib " + liberty_file +
-            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap<mockturtle::names_view<mockturtle::xag_network>> (
-                         script, optimal);
-        return techmapped;
+	if (techmapped.empty()) {
+
+	    string script =
+		"read_lib " + liberty_file +
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::xag_network>> (
+											 script, optimal);
+        }
+	return techmapped;
     }
 
     const std::string optimizer_name()
@@ -496,14 +514,7 @@ public:
     void optimize()
     {
         oracle::xag_script opt;
-	std::cout << converted.get_network_name() << std::endl;
-	std::cout << "################################" << std::endl;
         this->optimal = opt.run(this->converted);
-	std::cout << "################################" << std::endl;
-	std::cout << converted.get_network_name() << std::endl;
-	std::cout << optimal.get_network_name() << std::endl;
-
-	assert(optimal.get_network_name() == converted.get_network_name());
     }
 
     optimization_strategy target()
@@ -580,12 +591,14 @@ public:
 
     std::string techmap(std::string liberty_file)
     {
-        string script =
-            "read_lib " + liberty_file +
-            "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-        techmapped = basic_techmap<mockturtle::names_view<mockturtle::xmg_network>> (
-                         script, optimal);
-        return techmapped;
+	if (techmapped.empty()) {
+	    string script =
+		"read_lib " + liberty_file +
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+	    techmapped = basic_techmap<mockturtle::names_view<mockturtle::xmg_network>> (
+											 script, optimal);
+        }
+	return techmapped;
     }
 
     const std::string optimizer_name()
@@ -909,21 +922,21 @@ std::set<std::string> get_wire_names(
     ntk.foreach_register([&ntk, &wires](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
 	typename network::node ro = reg.second;
-	wires.insert(get_node_name_or_default(ntk, ro));
-	wires.insert(get_ri_name_or_default(ntk, ri));
+	wires.insert(escape_id(get_node_name_or_default(ntk, ro)));
+	wires.insert(escape_id(get_ri_name_or_default(ntk, ri)));
     });
     for (int i = 0; i < num_parts; i++) {
 	partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
 	part.foreach_pi([&ntk, &wires](typename network::node n) {
 	    if (!ntk.is_pi(n) && !ntk.is_constant(n)) {
-		wires.insert(get_node_name_or_default(ntk, n));
+		wires.insert(escape_id(get_node_name_or_default(ntk, n)));
 	    }
 	});
 
 	part.foreach_po([&ntk, &wires](typename network::signal s) {
 	    typename network::node n = ntk.get_node(s);
 	    if (!ntk.is_pi(n) && !ntk.is_constant(n)) {
-		wires.insert(get_node_name_or_default(ntk, n));
+		wires.insert(escape_id(get_node_name_or_default(ntk, n)));
 	    }
 	});
     }
@@ -955,9 +968,9 @@ void write_child(int index,
     verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
     verilog << "\n);\n" << std::endl;
 }
-void write_inverter(std::string abc_exec, std::string liberty, std::ofstream &verilog)
+void write_register(std::string abc_exec, std::string liberty, std::ofstream &verilog)
 {
-    // TODO techmap inverter
+    // TODO techmap register
     verilog << "module mapped_register(D, Q, CLK);\n"
 	    << "input D, CLK;\n"
 	    << "output Q;\n"
@@ -965,9 +978,9 @@ void write_inverter(std::string abc_exec, std::string liberty, std::ofstream &ve
 	    << "endmodule\n" << std::endl;
 }
 
-void write_register(std::string abc_exec, std::string liberty, std::ofstream &verilog)
+void write_inverter(std::string abc_exec, std::string liberty, std::ofstream &verilog)
 {
-    // TODO techmap register
+    // TODO techmap inverter
     verilog << "module mapped_inverter(A, Y);\n"
 	    << "input A; output Y;\n"
 	    << "sky130_fd_sc_hd__inv_1 i(.A(A), .Y(Y));\n"
@@ -979,8 +992,9 @@ string techmap(
     mockturtle::names_view<network> ntk,
     oracle::partition_manager<mockturtle::names_view<network>> partitions,
     std::vector<optimizer<network>*> optimized,
-    string abc_exec,
-    string liberty_file)
+    const string &abc_exec,
+    const string &liberty_file,
+    const string &clock)
 {
     std::cout << "Starting techmap." << std::endl;
     // Write out verilog
@@ -1011,7 +1025,7 @@ string techmap(
     std::cout << "sub-modules written" << std::endl;
     write_register(abc_exec, liberty_file, verilog);
     write_inverter(abc_exec, liberty_file, verilog);
-    write_top(ntk, partitions, optimized, verilog);
+    write_top(ntk, partitions, optimized, verilog, clock);
     verilog.close();
     return output_file;
 
@@ -1044,17 +1058,19 @@ template <typename network>
 void write_top(mockturtle::names_view<network> &ntk,
 	       oracle::partition_manager<mockturtle::names_view<network>> &partitions,
 	       std::vector<optimizer<network>*> &optimized,
-	       std::ofstream &verilog)
+	       std::ofstream &verilog,
+	       const std::string &clock)
 {
+    // TODO escape names
     std::string name = ntk.get_network_name().size() != 0
-                       ? ntk.get_network_name()
-                       : "top";
+	? escape_id(ntk.get_network_name())
+	: "top";
 
     // gather output names
     std::set<std::string> outputs;
     // std::cout << "gathering po names." << std::endl;
     ntk.foreach_po([&outputs, &ntk](typename network::signal signal) {
-	outputs.insert(get_po_name_or_default(ntk, signal));
+	outputs.insert(escape_id(get_po_name_or_default(ntk, signal)));
     });
     std::string output_names = join(", ", outputs);
 
@@ -1062,7 +1078,7 @@ void write_top(mockturtle::names_view<network> &ntk,
     std::set<std::string> inputs;
     // std::cout << "gathering pi names." << std::endl;
     ntk.foreach_pi([&inputs, &ntk](typename network::node node) {
-	inputs.insert(get_pi_name_or_default(ntk, node));
+	inputs.insert(escape_id(get_pi_name_or_default(ntk, node)));
     });
     std::string input_names = join(", ", inputs);
 
@@ -1079,25 +1095,23 @@ void write_top(mockturtle::names_view<network> &ntk,
     }
 
     // assign constant wires.
-    verilog << "wire " << get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false))) << ";\n";
-    verilog << "assign " << get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false))) << " = 1'b0;\n";
+    verilog << "wire " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << ";\n";
+    verilog << "assign " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << " = 1'b0;\n";
     // generate registers.
-    // TODO pass clock name in
-    std::string clock = "clk";
     ntk.foreach_register([&ntk, &clock, &verilog](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
 	typename network::node ro = reg.second;
-	std::string output = get_node_name_or_default(ntk, ro);
-	std::string input = get_ri_name_or_default(ntk, ri);
-	verilog << "mapped_register " << output << "_reg(.D(" << input << "), .Q(" << output << "), .CLK(" << clock << "))\n";
+	std::string output = escape_id(get_node_name_or_default(ntk, ro));
+	std::string input = escape_id(get_ri_name_or_default(ntk, ri));
+	verilog << "mapped_register " << output << "_reg(.D(" << input << "), .Q(" << output << "), .CLK(" << escape_id(clock) << "));\n";
     });
     verilog << std::endl;
 
     // assign PO signal names to driver nodes. if complemented, create an inverter.
     std::set<std::string> assigns;
     ntk.foreach_po([&ntk, &assigns](typename network::signal signal) {
-	std::string output = get_po_name_or_default(ntk, signal);
-	std::string driver = get_node_name_or_default(ntk, ntk.get_node(signal));
+	std::string output = escape_id(get_po_name_or_default(ntk, signal));
+	std::string driver = escape_id(get_node_name_or_default(ntk, ntk.get_node(signal)));
 
         if (output != driver) {
 	    if (ntk.is_complemented(signal)) {
@@ -1114,8 +1128,8 @@ void write_top(mockturtle::names_view<network> &ntk,
     std::set<std::string> regs;
     ntk.foreach_register([&ntk, &regs](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
-	std::string output = get_ri_name_or_default(ntk, ri);
-	std::string driver = get_node_name_or_default(ntk, ntk.get_node(ri));
+	std::string output = escape_id(get_ri_name_or_default(ntk, ri));
+	std::string driver = escape_id(get_node_name_or_default(ntk, ntk.get_node(ri)));
 
         if (output != driver) {
 	    if (ntk.is_complemented(ri)) {
@@ -1139,9 +1153,9 @@ void write_top(mockturtle::names_view<network> &ntk,
 }
 
 template<typename network>
-size_t run_timing(std::string liberty_file,
-                  std::string verilog_file,
-		  // TODO sdc file
+size_t run_timing(const std::string &liberty_file,
+                  const std::string &verilog_file,
+		  const std::string &sdc_file,
                   mockturtle::names_view<network> &ntk,
                   oracle::partition_manager<mockturtle::names_view<network>> &partitions,
                   std::vector<optimizer<network>*> &optimized)
@@ -1163,12 +1177,11 @@ size_t run_timing(std::string liberty_file,
     assert(linked); // << "Failed to link";
 
     std::cout << "Attempting to read sdc" << std::endl;
-    int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::read_sdc /home/snelgrov/code/lsoracle/dummy.sdc");
+    std::string read_sdc = "sta::read_sdc " + sdc_file;
+    int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), read_sdc.c_str());
     assert(a == 0);
     int b = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::report_checks > /tmp/test.monkey");
     assert(b == 0);
-
-    // int d = Tcl_Eval(sta::Sta::sta()->tclInterp(), "puts \"hello world!\"");
 
     std::cout << "running timing" << std::endl;
     // sta::MinPeriodCheck *min = sta::Sta::sta()->minPeriodSlack();
@@ -1191,10 +1204,6 @@ size_t run_timing(std::string liberty_file,
 
     sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::MinMax::max(), worst_path_arrival);
     sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::MinMax::max(), worst_path_slack);
-
-    if (worst_path_slack.slack(sta::Sta::sta()) >= 0.0) {
-	return -1;
-    }
 
     std::vector<float> budget(partitions.get_part_num(), 0.0);
     sta::PathRef second = worst_path_slack;
@@ -1224,7 +1233,12 @@ size_t run_timing(std::string liberty_file,
 	arrival = second.arrival(sta::Sta::sta());
 	second.prevPath(sta::Sta::sta(), second, arc);
     }
-    int max = -1;
+
+    if (worst_path_slack.slack(sta::Sta::sta()) >= 0.0) {
+	return -1;
+    }
+
+    int max = -2;
     float worst = 0;
     for (int i = 0; i < partitions.get_part_num(); i++) {
 	if (budget[i] > worst && optimized[i]->target() != optimization_strategy::depth) { // if this is already fully optimized, move to next worst.
@@ -1260,12 +1274,12 @@ void reset_sta()
 template <typename network> mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
-    const string &liberty_file, const string &output_file, const string &abc_exec)   // todo use abc_exec
-// todo clock signal name
+    const string &liberty_file,
+    const string &sdc_file, const string &clock,
+    const string &output_file, const string &abc_exec)   // todo use abc_exec
 {
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
-    std::cout << "Finding optimizers." << std::endl;
     for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
 	n_strategy<network> strategy;
@@ -1276,13 +1290,17 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     string verilog;
     while (true) {
 	//reset_sta(); // todo not cleaning up
-        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file);
+        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
-        size_t worst_part = run_timing(liberty_file, verilog, ntk, partitions,
-                                       optimized);
+        size_t worst_part = run_timing(liberty_file, verilog, sdc_file,
+				       ntk, partitions, optimized);
         // TODO if this is worse than last result, rollback and finish.
         if (worst_part == -1) {
 	    std::cout << "met timing" << std::endl;
+	    break;
+	}
+	if (worst_part == -2) {  // TODO this is terrible way to use return value
+	    std::cout << "exhausted depth optimization for critical path" << std::endl;
 	    break;
 	}
 	if (optimized[worst_part]->target() == optimization_strategy::size) {
@@ -1300,15 +1318,24 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
     }
     std::cout << "Final results:" << std::endl;
     for (int i = 0; i < num_parts; i++) {
-	std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " " << optimized[i]->target() << std::endl;
-        //partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
+	std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
+	switch (optimized[i]->target()) {
+	case optimization_strategy::depth: std::cout << "depth";
+	    break;
+	case optimization_strategy::balanced: std::cout << "balanced";
+	    break;
+	case optimization_strategy::size: std::cout << "size";
+	    break;
+	}
+	std::cout << std::endl;
+	//partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
 	//mockturtle::names_view<network> opt = optimized[i]->reconvert();
         //partitions.synchronize_part(part, opt, ntk);
     }
+    std::filesystem::copy(verilog, output_file);
 
-    // TODO copy verilog to output_file.
-    partitions.connect_outputs(ntk);
-    ntk = mockturtle::cleanup_dangling(ntk);
+    // partitions.connect_outputs(ntk);
+    // ntk = mockturtle::cleanup_dangling(ntk);
     return ntk;
 }
 
@@ -1319,7 +1346,7 @@ budget_optimization<mockturtle::aig_network>
 (
     mockturtle::names_view<mockturtle::aig_network> &,
     oracle::partition_manager<mockturtle::names_view<mockturtle::aig_network>> &,
-    const std::string &, const std::string &, const std::string &);
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 }
 
 #endif

@@ -45,6 +45,8 @@ public:
         opts.add_option("--output,-o", output_file,
                         "Verilog output file.")->required();
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
+        opts.add_option("--sdc,-s", sdc_file, "SDC file.");
+	opts.add_option("--clock,-c", clock_name, "Clock net.");
         opts.add_option("--abc-exec", abc_exec,
                         "ABC executable, defaults to using path.");
     }
@@ -67,7 +69,8 @@ protected:
         mockturtle::names_view<mockturtle::aig_network> ntk_result =
             oracle::budget_optimization<mockturtle::aig_network>(
                 ntk_aig, partitions_aig,
-                liberty_file, output_file, abc_exec);
+                liberty_file, sdc_file, clock_name,
+		output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();
 
         mockturtle::depth_view new_depth{ntk_result};
@@ -91,6 +94,8 @@ protected:
     }
     string liberty_file;
     string output_file;
+    string sdc_file;
+    string clock_name;
     string abc_exec{"abc"};
 };
 ALICE_ADD_COMMAND(budget_script, "Optimization");

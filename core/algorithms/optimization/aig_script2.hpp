@@ -61,26 +61,19 @@ public:
         //b
         // std::cout << "b\n";
         //mockturtle::depth_view aig_depth{aig};
-	std::cout << "**************************************************************** original " << aig.get_network_name() << std::endl;
 
         aig = mockturtle::balancing<network>(aig, {balfn}, bs);
-	std::cout << "**************************************************************** balancing " << aig.get_network_name() << std::endl;
 
         aig = mockturtle::cleanup_dangling<network, network>(aig);
-	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
         //rw
         // std::cout << "rw\n";
         mockturtle::cut_rewriting<network>(aig, resyn, ps);
-	std::cout << "**************************************************************** cut_rewriting " << aig.get_network_name() << std::endl;
         aig = mockturtle::cleanup_dangling<network, network>(aig);
-	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
 
         //rf
         // std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
-	std::cout << "**************************************************************** refactoring " << aig.get_network_name() << std::endl;
         aig = mockturtle::cleanup_dangling<network, network>(aig);
-	std::cout << "**************************************************************** cleanup_dangling " << aig.get_network_name() << std::endl;
 
         //b
         // std::cout << "b\n";

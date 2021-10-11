@@ -39,8 +39,9 @@ template <typename network>
 mockturtle::names_view<network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
-    const std::string &liberty_file, const std::string &output_file,
-    const std::string &abc_exec);
+    const std::string &liberty_file,
+    const std::string &sdc_file, const std::string &clock_name,
+    const std::string &output_file, const std::string &abc_exec);
 
 struct node_depth {
     int nodes;

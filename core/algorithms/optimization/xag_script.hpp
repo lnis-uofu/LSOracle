@@ -53,25 +53,16 @@ public:
         rp.max_pis = 4;
 
         mockturtle::cut_rewriting(xag, resyn, ps); //rw
-	std::cout << xag.get_network_name() << std::endl;
         xag = mockturtle::cleanup_dangling(xag);
-	std::cout << xag.get_network_name() << std::endl;
         mockturtle::cut_rewriting(xag, resyn, ps); //rw
-	std::cout << xag.get_network_name() << std::endl;
         xag = mockturtle::cleanup_dangling(xag);
-	std::cout << xag.get_network_name() << std::endl;
 
         xag = mockturtle::balancing(xag, {balfn}, bs); //b
-	std::cout << xag.get_network_name() << std::endl;
         xag = mockturtle::cleanup_dangling(xag);
-	std::cout << xag.get_network_name() << std::endl;
         mockturtle::refactoring(xag, resyn, rp); //rf
-	std::cout << xag.get_network_name() << std::endl;
         xag = mockturtle::cleanup_dangling(xag);
-	std::cout << xag.get_network_name() << std::endl;
 
         xag = mockturtle::xag_constant_fanin_optimization(xag); //find XORs
-	std::cout << xag.get_network_name() << std::endl;
 
         return xag;
     }

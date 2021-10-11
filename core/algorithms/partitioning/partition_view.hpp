@@ -231,6 +231,12 @@ public:
     }
 
     template<typename Fn>
+    void foreach_ro(Fn &&fn) const
+    {
+	mockturtle::detail::foreach_element(_latches.begin(), _latches.end(), fn);
+    }
+
+    template<typename Fn>
     void foreach_po(Fn &&fn) const
     {
         mockturtle::detail::foreach_element(_roots.begin(),
@@ -241,6 +247,12 @@ public:
     void foreach_co(Fn &&fn) const
     {
         mockturtle::detail::foreach_element(_roots.begin(), _roots.end(), fn);
+    }
+
+    template<typename Fn>
+    void foreach_ri(Fn &&fn) const
+    {
+        mockturtle::detail::foreach_element(_roots.begin() + _num_pivots, _roots.begin() + _num_pivots + _num_ris, fn);
     }
 
     template<typename Fn>
