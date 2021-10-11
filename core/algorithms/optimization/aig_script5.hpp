@@ -57,11 +57,11 @@ public:
         rp.max_pis = 4;
 
         mockturtle::functional_reduction(aig);
-
+/*
         //b
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
-
+*/
         mockturtle::depth_view b_depth1{aig};
 
         //rw

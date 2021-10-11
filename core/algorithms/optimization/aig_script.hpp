@@ -48,23 +48,29 @@ public:
         mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = 4;
+        mockturtle::bidecomposition_resynthesis<mockturtle::names_view<mockturtle::aig_network>> rf_resyn;
+        mockturtle::refactoring_params rp;
+        rp.allow_zero_gain = false;
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
-
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
-
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        aig = mockturtle::cleanup_dangling(aig);
+        mockturtle::functional_reduction(aig);
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
+        
+        //rf
+        std::cout << "rf\n";
+        mockturtle::refactoring(aig, rf_resyn, rp);
+        aig = mockturtle::cleanup_dangling(aig);
+
+        mockturtle::cut_rewriting(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling(aig);
+     
+        mockturtle::functional_reduction(aig);
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
@@ -77,6 +83,14 @@ public:
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
+
+        mockturtle::cut_rewriting(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling(aig);
+
+        mockturtle::cut_rewriting(aig, resyn, ps);
+        aig = mockturtle::cleanup_dangling(aig);
+
+        mockturtle::functional_reduction(aig);
 
         return aig;
     }
