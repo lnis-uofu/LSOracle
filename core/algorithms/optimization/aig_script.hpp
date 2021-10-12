@@ -61,15 +61,15 @@ public:
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-        
+
         //rf
-        std::cout << "rf\n";
+        // std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
 
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
-     
+
         mockturtle::functional_reduction(aig);
 
         mockturtle::cut_rewriting(aig, resyn, ps);

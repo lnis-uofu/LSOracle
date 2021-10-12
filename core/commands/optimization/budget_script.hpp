@@ -47,7 +47,7 @@ public:
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
         opts.add_option("--sdc,-s", sdc_file, "SDC file.");
 	opts.add_option("--clock,-c", clock_name, "Clock net.");
-        opts.add_option("--abc-exec", abc_exec,
+        opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
     }
 protected:
@@ -66,7 +66,7 @@ protected:
         mockturtle::depth_view orig_depth{ntk_aig};
         auto partitions_aig = *store<part_man_aig_ntk>().current();
         auto start = std::chrono::high_resolution_clock::now();
-        mockturtle::names_view<mockturtle::aig_network> ntk_result =
+        mockturtle::names_view<mockturtle::xmg_network> ntk_result =
             oracle::budget_optimization<mockturtle::aig_network>(
                 ntk_aig, partitions_aig,
                 liberty_file, sdc_file, clock_name,
@@ -90,7 +90,7 @@ protected:
                         (stop - start);
         env->out() << "Full Optimization: " << duration.count() << "ms\n";
         env->out() << "Finished optimization\n";
-        //store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_result);
+        store<xmg_ntk>().extend() = std::make_shared<xmg_names>(ntk_result);
     }
     string liberty_file;
     string output_file;

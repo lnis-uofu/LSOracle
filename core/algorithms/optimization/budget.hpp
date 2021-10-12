@@ -36,7 +36,7 @@ namespace oracle
 {
 
 template <typename network>
-mockturtle::names_view<network> budget_optimization(
+mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const std::string &liberty_file,
@@ -66,14 +66,14 @@ public:
      * Perform optimization
      */
     virtual void optimize() = 0;
-    /**
+     /**
      * Calculate tech independent depth and nodes metrics.
      */
     virtual node_depth independent_metric() = 0;
-    /**
-     * Convert the optimized network back to the original network type.
-     */
-    virtual mockturtle::names_view<network> reconvert() = 0;
+    // /**
+    //  * Convert the optimized network back to the original network type.
+    //  */
+    // virtual mockturtle::names_view<network> reconvert() = 0;
     /**
      * List the type of optimization: area, delay, or balanced.
      */
@@ -82,6 +82,10 @@ public:
      * Techmap, then return a path to a file containing the techmapped verilog.
      */
     virtual std::string techmap(const std::string &liberty_file) = 0;
+    /**
+     * convert the network to the superset.
+     */
+    virtual mockturtle::names_view<mockturtle::xmg_network> export_superset() = 0;
 };
 }
 

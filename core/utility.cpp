@@ -46,6 +46,12 @@ using aig_ntk = std::shared_ptr<aig_names>;
 using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using mig_ntk = std::shared_ptr<mig_names>;
 
+using xag_names = mockturtle::names_view<mockturtle::xag_network>;
+using xag_ntk = std::shared_ptr<xag_names>;
+
+using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+using xmg_ntk = std::shared_ptr<xmg_names>;
+
 template<typename Ntk>
 int computeLevel(Ntk const &ntk, int index)
 {
@@ -530,17 +536,29 @@ template bool is_po<partition_manager<aig_names>>(partition_manager<aig_names>
         const &, partition_manager<aig_names>::node const &);
 template bool is_po<mig_names>(mig_names const &, mig_names::node const &);
 
-using topo_mig =
-    mockturtle::topo_view<mockturtle::names_view<mockturtle::mig_network>>;
-template bool is_po<topo_mig>(topo_mig const &, topo_mig::node const &);
-
 using topo_aig =
     mockturtle::topo_view<mockturtle::aig_network>;
 template bool is_po<topo_aig>(topo_aig const &, topo_aig::node const &);
+
 using topo_names_aig =
     mockturtle::topo_view<mockturtle::names_view<mockturtle::aig_network>>;
 template bool is_po<topo_names_aig>(topo_names_aig const &,
                                     topo_names_aig::node const &);
+
+using xag_names = mockturtle::names_view<mockturtle::xag_network>;
+template bool is_po<xag_names>(xag_names const &, xag_names::node const &);
+
+using topo_mig =
+    mockturtle::topo_view<mockturtle::names_view<mockturtle::mig_network>>;
+template bool is_po<topo_mig>(topo_mig const &, topo_mig::node const &);
+
+using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+template bool is_po<xmg_names>(xmg_names const &, xmg_names::node const &);
+
+using topo_names_xmg =
+    mockturtle::topo_view<mockturtle::names_view<mockturtle::xmg_network>>;
+template bool is_po<topo_names_xmg>(topo_names_xmg const &,
+                                    topo_names_xmg::node const &);
 
 bool is_in_vector(std::vector<int> vec, int nodeIdx)
 {
@@ -604,4 +622,85 @@ bool checkExt(std::string filename, std::string ext)
         return false;
     }
 }//end checkExt
+
+
+enum reconfig_function { AND, OR, XOR, XNOR, XOR3, MAJ, INPUT, UNKNOWN };
+
+template <typename network>
+reconfig_function node_function(const network &ntk,
+				const typename network::node &node)
+{
+    if (ntk.is_pi(node) || ntk.is_ro(node) || ntk.is_constant(node)) {
+	return reconfig_function::INPUT;
+    } else if (ntk.is_and(node)) {
+	return reconfig_function::AND;
+	    } else if (ntk.is_or(node)) {
+	return reconfig_function::OR;
+    } else if (ntk.is_xor(node)) {
+	return reconfig_function::XOR;
+    } else if (ntk.is_maj(node)) {
+	typename network::signal first_signal = ntk._storage->nodes[node].children[0];
+	typename network::node first_fanin = ntk.get_node(first_signal);
+
+	if (ntk.is_constant(first_fanin)) {
+	    if (first_signal.complement) {
+		return reconfig_function::OR;
+	    } else {
+		return reconfig_function::AND;
+		    }
+	} else {
+	    return reconfig_function::MAJ;
+	}
+    } else if (ntk.is_xor3(node)) {
+	typename network::signal first_signal = ntk._storage->nodes[node].children[0];
+	typename network::node first_fanin = ntk.get_node(first_signal);
+	if (ntk.is_constant(first_fanin)) {
+	    if (first_signal.complement) {
+		return reconfig_function::XNOR;
+	    } else {
+		return reconfig_function::XOR;
+	    }
+	} else {
+	    return reconfig_function::XOR3;
+	}
+    } else {
+	return reconfig_function::UNKNOWN;
+    }
+}
+
+template <typename network>
+void update_counts(function_counts &counts,
+		   const network &ntk,
+		   const typename network::node &node)
+{
+    reconfig_function func = node_function(ntk, node);
+    switch(func) {
+    case AND: counts.and_num++; break;
+    case OR: counts.or_num++; break;
+    case XOR: counts.xor_num++; break;
+    case XNOR: counts.xnor_num++; break;
+    case XOR3: counts.xor3_num++; break;
+    case MAJ: counts.maj_num++; break;
+    case INPUT: counts.input_num++; break;
+    case UNKNOWN:
+    default: counts.unknown_num++;
+    }
+}
+template void update_counts<aig_names>(function_counts &, const aig_names &, const typename aig_names::node &);
+template void update_counts<mig_names>(function_counts &, const mig_names &, const typename mig_names::node &);
+template void update_counts<xmg_names>(function_counts &, const xmg_names &, const typename xmg_names::node &);
+template void update_counts<xag_names>(function_counts &, const xag_names &, const typename xag_names::node &);
+
+template <typename network> function_counts node_functions(const network &ntk)
+{
+    function_counts counts;
+    ntk.foreach_node([&](auto node) {
+	update_counts(counts, ntk, node);
+    });
+    return counts;
+}
+template function_counts node_functions<mig_names>(const mig_names&);
+template function_counts node_functions<xmg_names>(const xmg_names&);
+template function_counts node_functions<aig_names>(const aig_names&);
+template function_counts node_functions<xag_names>(const xag_names&);
 }

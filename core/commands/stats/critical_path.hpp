@@ -40,37 +40,43 @@
 
 namespace alice
 {
-class function_stats_command : public alice::command
+class critical_path_command : public alice::command
 {
+
 public:
-    explicit function_stats_command(const environment::ptr &env)
-        : command(env,
-                  "Show counts of the effective gate function used in the stored network")
+    explicit critical_path_command(const environment::ptr &env)
+        : command(env, "Determines the function of nodes along the critical path.")
     {
-        add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
-        add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
-        add_flag("--xmg,-g", "Display stats for stored XMG (AIG is default)");
-        add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
+
     }
 
 protected:
-    template <typename network> void dump_stats(string name)
+    template <typename network>
+    void dump_stats(std::string name)
     {
-        if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-            env->err() << name << " network not stored\n";
-            return;
-        }
-        auto ntk =
-            *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
+        if (!store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
+	    env->err() << name<< " network not stored\n";
+	    return;
+	}
+	auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
+
+	oracle::slack_view<mockturtle::names_view<network>> slack{ntk};
+	auto critical_path = slack.get_critical_path(ntk);
 
 	oracle::function_counts counts = oracle::node_functions(ntk);
-        env->out() << "MAJ nodes internally = " << counts.maj_num << "\n";
-        env->out() << "AND nodes internally = " << counts.and_num << "\n";
-        env->out() << "OR nodes internally = " << counts.or_num << "\n";
-        env->out() << "XOR3 nodes internally = " << counts.xor3_num << "\n";
-        env->out() << "XOR nodes internally = " << counts.xor_num << "\n";
-        env->out() << "XNOR nodes internally = " << counts.xnor_num << "\n";
+	for (auto curr_node : critical_path) {
+	    update_counts(counts, ntk, curr_node);
+	}
+	env->out() << "Critical path size = " << critical_path.size() << "\n"
+		   << "MAJ nodes on critical path = " << counts.maj_num << "\n"
+		   << "AND nodes on critical path = " << counts.and_num << "\n"
+		   << "OR nodes on critical path = " << counts.or_num << "\n"
+		   << "XOR3 nodes on critical path = " << counts.xor3_num << "\n"
+		   << "XOR nodes on critical path = " << counts.xor_num << "\n"
+		   << "XNOR nodes on critical path = " << counts.xnor_num << "\n"
+		   << "INPUTS on critical path = " << counts.input_num << std::endl;
     }
+
     void execute()
     {
         if (is_set("xag")) {
@@ -80,12 +86,11 @@ protected:
         } else if (is_set("mig")) {
             dump_stats<mockturtle::mig_network>("MIG");
         } else {
-            dump_stats<mockturtle::aig_network>("AIG");
-        }
-
+	    dump_stats<mockturtle::aig_network>("AIG");
+	}
     }
 private:
 };
 
-ALICE_ADD_COMMAND(function_stats, "Stats");
+ALICE_ADD_COMMAND(critical_path, "Stats");
 }

@@ -32,7 +32,7 @@ YOSYS := yosys
 YOSYS_PLUGIN := oracle
 TEE := cat - >
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
-ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v
+ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
 EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
 ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} ${ISCAS89}
@@ -65,8 +65,11 @@ UNOPT_OUTPUTS := $(patsubst %.rtl,%_unoptimized.rtl,${SYNTH_BASE})
 SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS} ${AIGSCRIPT_OUTPUTS} ${MIGSCRIPT_OUTPUTS}
 SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_OUTPUTS})
 
+BLIF_FILES := $(patsubst %.rtl,%.blif,${SYNTH_BASE})
+TIMING_SYNTH_OUTPUTS : $(patsubst %.rtl, %_timing.mapped.v, ${SYNTH_BASE})
+
 SYNTH_REPORTS := $(patsubst %.synth.log,%.synth_report,${SYNTH_LOGS})
-TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
+TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS}) ${TIMING_SYNTH_OUTPUTS}
 TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
 TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
@@ -79,7 +82,7 @@ all: everything.png
 
 .PHONY: extract synth reports techmap reports timing everything_reports clean all reset
 
-.PRECIOUS: ${SDC_SCRIPTS} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS}
+.PRECIOUS: ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS}
 
 .DELETE_ON_ERROR:
 
@@ -114,11 +117,12 @@ clean_reports:
 %.aig %.aig.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
-
-%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed &: %.rtl
+#TODO don't forget to change the partitioning argument back to --size
+%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts &: %.rtl
 	$(eval TEMP=$(shell mktemp))
-	echo "ps -a; partitioning --epsilon 0.2 -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization; ps -m; crit_path_stats; ntk_stats; level_size -m; fanin_histogram -m; skip_histogram -m;  fanout_histogram -m" > ${TEMP}
+	echo "ps -a; partitioning 2 --epsilon 0.2 --initial $*_lsoracle.fixed --output $*_lsoracle.parts; optimization; ps -m; crit_path_stats; ntk_stats; level_size -m; fanin_histogram -m; skip_histogram -m;  fanout_histogram -m" > ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	truncate -s -1 $*_lsoracle.parts
 	rm ${TEMP}
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
@@ -126,6 +130,27 @@ clean_reports:
 
 %_migscript.rtl %_migscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log
+
+%.blif: %.rtl
+	${YOSYS} -Q -p "read_rtlil $<; write_blif $@"
+
+# TODO clock signal name
+%_timing.mapped.v %_timing.synth.log %_timing.parts&: %.blif %.sdc
+#	$(eval TEMP=$(shell mktemp))
+	${eval TEMP=$*_timing.script}
+	echo "read_blif -a $<" > ${TEMP}
+	echo "ps -a" >> ${TEMP}
+#	echo "partitioning 2 --epsilon 0.2 --output $*_timing.parts" >> ${TEMP}
+	echo "partitioning 2 -f $*_timing.parts" >> ${TEMP}
+	echo "budget_script --clock CK --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty benchmarks/techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
+	echo "critical_path -g" >> ${TEMP}
+	echo "function_stats -g" >> ${TEMP}
+	echo "fanin_histogram -g" >> ${TEMP}
+	echo "skip_histogram -g" >> ${TEMP}
+	echo "fanout_histograph -g" >> ${TEMP}
+	echo "level_size -g" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
+#	rm ${TEMP}
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
@@ -249,7 +274,7 @@ previous/%_lsoracle.everything: | previous
 everything.tsv: ${REPORTS}
 	@ echo generating report $@
 	python3 combine_report.py $^
-	
+
 #everything.tsv: ${EVERYTHING_REPORTS}
 #	@ echo generating report $@
 #	python3 combine_report.py $< $^

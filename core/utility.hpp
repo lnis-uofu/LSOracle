@@ -119,4 +119,23 @@ int get_index(std::vector<int> index, int nodeIdx);
  *
  */
 bool checkExt(std::string filename, std::string ext);
+
+struct function_counts
+{
+    int maj_num = 0;
+    int xor_num = 0;
+    int xnor_num = 0;
+    int xor3_num = 0;
+    int and_num = 0;
+    int or_num = 0;
+    int input_num = 0;
+    int unknown_num = 0;
+};
+
+template <typename network> function_counts node_functions(const network &ntk);
+template <typename network>
+void update_counts(function_counts &counts,
+		   const network &ntk,
+		   const typename network::node &node);
+
 }

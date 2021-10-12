@@ -55,7 +55,7 @@ public:
 
     explicit crit_path_stats_command(const environment::ptr &env)
         : command(env,
-                  "Determines the number of Majority nodes and AND nodes along the critical path in MIG")
+                  "Determines the number of Majority nodes and AND nodes along the critical path in MIG.\nDEPRECATED: please use critical_path command.")
     {
 
     }

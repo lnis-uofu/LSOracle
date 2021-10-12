@@ -224,9 +224,11 @@ public:
         return strategy;
     }
 
-    mockturtle::names_view<network> reconvert()
+    mockturtle::names_view<mockturtle::xmg_network> export_superset()
     {
-        return copy;
+	mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<network>>
+                (copy, resyn);
     }
 
     /*
@@ -295,25 +297,11 @@ public:
     {
     }
 
-    mockturtle::names_view<network> reconvert()
+    mockturtle::names_view<mockturtle::xmg_network> export_superset()
     {
-        /* LUT mapping */
-        mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
-        mapped{optimal};
-        mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 3;
-        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>, true>
-        (mapped, ps);
-
-        /* collapse into k-LUT network */
-        const auto klut =
-            *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
-            (mapped);
-
-        /* node resynthesis */
-        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
-	// mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
-        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(klut, resyn);
+	mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<mockturtle::mig_network>>
+                (optimal, resyn);
     }
 
     void convert()
@@ -380,10 +368,10 @@ public:
     {
     }
 
-    mockturtle::names_view<network> reconvert()
+    mockturtle::names_view<mockturtle::xmg_network> export_superset()
     {
-        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
-        return mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::names_view<mockturtle::aig_network>>(optimal, resyn);
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<mockturtle::aig_network>>(optimal, resyn);
     }
 
     void convert()
@@ -450,22 +438,11 @@ public:
     {
     }
 
-    mockturtle::names_view<network> reconvert()
+    mockturtle::names_view<mockturtle::xmg_network> export_superset()
     {
-        /* LUT mapping */
-        mockturtle::mapping_view<mockturtle::names_view<mockturtle::xag_network>, true>
-        mapped{optimal};
-        mockturtle::lut_mapping_params ps;
-        ps.cut_enumeration_ps.cut_size = 3;
-        mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::xag_network>, true>, true>
-        (mapped, ps);
-
-        /* collapse into k-LUT network */
-        const auto klut =
-            *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
-            (mapped);
-	 mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
-        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(klut, resyn);
+	mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<mockturtle::xag_network>>
+                (optimal, resyn);
     }
 
     void convert()
@@ -545,25 +522,11 @@ public:
     {
     }
 
-    mockturtle::names_view<network> reconvert()
+    mockturtle::names_view<mockturtle::xmg_network> export_superset()
     {
-        // /* LUT mapping */
-        // mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>
-        // mapped{optimal};
-        // mockturtle::lut_mapping_params ps;
-        // ps.cut_enumeration_ps.cut_size = 3;
-        // mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::names_view<mockturtle::mig_network>, true>, true>
-        // (mapped, ps);
-
-        // /* collapse into k-LUT network */
-        // const auto klut =
-        //     *mockturtle::collapse_mapped_network<mockturtle::names_view<mockturtle::klut_network>>
-        //     (mapped);
-
-        // /* node resynthesis */
-        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
-	// // mockturtle::xag_npn_resynthesis<mockturtle::names_view<network>> resyn;
-        return mockturtle::node_resynthesis<mockturtle::names_view<network>>(optimal, resyn);
+	mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+        return mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<mockturtle::xmg_network>>
+                (optimal, resyn);
     }
 
     void convert()
@@ -862,7 +825,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 {
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
     // todo this is gonna leak memory.
-    std::vector<optimizer<network>*> optimizers {
+    std::vector<optimizer<network>*>optimizers {
 	new noop<network>(partman, ntk, index, strategy, abc_exec),
 	new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
@@ -961,13 +924,13 @@ void write_child(int index,
     partition_view<mockturtle::names_view<network>> part = partman.create_part(ntk, index);
 
     part.foreach_pi([&part, &ntk, &verilog](typename network::node n) {
-	std::string driver = get_node_name_or_default(ntk, n);
+	std::string driver = escape_id(get_node_name_or_default(ntk, n));
 	verilog << "." << driver << "(" << driver << "),\n";
     });
 
     part.foreach_po([&part, &ntk, &verilog](typename network::signal s, auto i) {
 	typename network::node n = ntk.get_node(s);
-	std::string driver = get_node_name_or_default(ntk, n);
+	std::string driver = escape_id(get_node_name_or_default(ntk, n));
 	verilog << "." << driver << "(" << driver << "),\n";
     });
     verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
@@ -1071,6 +1034,9 @@ void write_top(mockturtle::names_view<network> &ntk,
 	? escape_id(ntk.get_network_name())
 	: "top";
 
+    int inv_sequence = 0;
+    int reg_sequence = 0;
+
     // gather output names
     std::set<std::string> outputs;
     // std::cout << "gathering po names." << std::endl;
@@ -1103,24 +1069,25 @@ void write_top(mockturtle::names_view<network> &ntk,
     verilog << "wire " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << ";\n";
     verilog << "assign " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << " = 1'b0;\n";
     // generate registers.
-    ntk.foreach_register([&ntk, &clock, &verilog](std::pair<typename network::signal, typename network::node> reg) {
+    ntk.foreach_register([&ntk, &clock, &verilog, &reg_sequence](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
 	typename network::node ro = reg.second;
 	std::string output = escape_id(get_node_name_or_default(ntk, ro));
 	std::string input = escape_id(get_ri_name_or_default(ntk, ri));
-	verilog << "mapped_register " << output << "_reg(.D(" << input << "), .Q(" << output << "), .CLK(" << escape_id(clock) << "));\n";
+	verilog << "mapped_register reg__" << reg_sequence++ << " (.D(" << input << "), .Q(" << output << "), .CLK(" << escape_id(clock) << "));\n";
     });
     verilog << std::endl;
 
     // assign PO signal names to driver nodes. if complemented, create an inverter.
     std::set<std::string> assigns;
-    ntk.foreach_po([&ntk, &assigns](typename network::signal signal) {
+
+    ntk.foreach_po([&ntk, &assigns, &inv_sequence](typename network::signal signal) {
 	std::string output = escape_id(get_po_name_or_default(ntk, signal));
 	std::string driver = escape_id(get_node_name_or_default(ntk, ntk.get_node(signal)));
 
         if (output != driver) {
 	    if (ntk.is_complemented(signal)) {
-		assigns.insert(fmt::format("mapped_inverter {0}_inv(.A({1}), .Y({0}));", output, driver));
+		assigns.insert(fmt::format("mapped_inverter inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
 	    } else {
 		assigns.insert(fmt::format("assign {0} = {1};", output, driver));
 	    }
@@ -1131,14 +1098,14 @@ void write_top(mockturtle::names_view<network> &ntk,
     }
 
     std::set<std::string> regs;
-    ntk.foreach_register([&ntk, &regs](std::pair<typename network::signal, typename network::node> reg) {
+    ntk.foreach_register([&ntk, &regs, &inv_sequence](std::pair<typename network::signal, typename network::node> reg) {
 	typename network::signal ri = reg.first;
 	std::string output = escape_id(get_ri_name_or_default(ntk, ri));
 	std::string driver = escape_id(get_node_name_or_default(ntk, ntk.get_node(ri)));
 
         if (output != driver) {
 	    if (ntk.is_complemented(ri)) {
-		regs.insert(fmt::format("mapped_inverter {0}_inv(.A({1}), .Y({0}));", output, driver));
+		regs.insert(fmt::format("mapped_inverter inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
 
 	    } else {
 		regs.insert(fmt::format("assign {0} = {1};", output, driver));
@@ -1181,7 +1148,7 @@ size_t run_timing(const std::string &liberty_file,
     bool linked = sta::Sta::sta()->linkDesign(design.c_str());
     assert(linked); // << "Failed to link";
 
-    std::cout << "Attempting to read sdc" << std::endl;
+    std::cout << "Attempting to read sdc" << sdc_file << std::endl;
     std::string read_sdc = "sta::read_sdc " + sdc_file;
     int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), read_sdc.c_str());
     assert(a == 0);
@@ -1276,7 +1243,7 @@ void reset_sta()
     Tcl_Eval(tcl_interp, "namespace import sta::*");
 }
 
-template <typename network> mockturtle::names_view<network> budget_optimization(
+template <typename network> mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const string &liberty_file,
@@ -1322,6 +1289,20 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
 	}
     }
     std::cout << "Final results:" << std::endl;
+
+    mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+    mockturtle::names_view<mockturtle::xmg_network> ntk_final =
+	mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<network>>
+	(ntk, resyn);
+    oracle::partition_manager<mockturtle::names_view<mockturtle::xmg_network>> partitions_final(ntk_final,
+									partitions.get_all_part_connections(),
+									partitions.get_all_partition_inputs(),
+									partitions.get_all_partition_outputs(),
+									partitions.get_all_partition_regs(),
+									partitions.get_all_partition_regin(),
+									partitions.get_part_num());
+
+    std::filesystem::copy(verilog, output_file, std::filesystem::copy_options::overwrite_existing);
     for (int i = 0; i < num_parts; i++) {
 	std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
 	switch (optimized[i]->target()) {
@@ -1333,20 +1314,16 @@ template <typename network> mockturtle::names_view<network> budget_optimization(
 	    break;
 	}
 	std::cout << std::endl;
-	//partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
-	//mockturtle::names_view<network> opt = optimized[i]->reconvert();
-        //partitions.synchronize_part(part, opt, ntk);
+	partition_view<mockturtle::names_view<mockturtle::xmg_network>> part = partitions_final.create_part(ntk_final, i);
+	mockturtle::names_view<mockturtle::xmg_network> opt = optimized[i]->export_superset();
+        partitions_final.synchronize_part(part, opt, ntk_final);
     }
-    std::filesystem::copy(verilog, output_file);
-
-    // partitions.connect_outputs(ntk);
-    // ntk = mockturtle::cleanup_dangling(ntk);
-    return ntk;
+    partitions_final.connect_outputs(ntk_final);
+    ntk_final = mockturtle::cleanup_dangling(ntk_final);
+    return ntk_final;
 }
 
-
-
-template mockturtle::names_view<mockturtle::aig_network>
+template mockturtle::names_view<mockturtle::xmg_network>
 budget_optimization<mockturtle::aig_network>
 (
     mockturtle::names_view<mockturtle::aig_network> &,

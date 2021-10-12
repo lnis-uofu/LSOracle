@@ -85,7 +85,7 @@ std::string escape_id(std::string id)
     }
     std::smatch match;
     if(!std::regex_search(id, match, valid_id)) {
-	return "\\" + id + " ";
+	return "\\" + id + " ";;
     }
     if (keywords.find(id) != keywords.end()) {
 	return "\\" + id + " ";

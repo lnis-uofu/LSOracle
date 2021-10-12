@@ -110,6 +110,7 @@
 #include "commands/stats/level_size.hpp"
 #include "commands/stats/fanin_histogram.hpp"
 #include "commands/stats/function_stats.hpp"
+#include "commands/stats/critical_path.hpp"
 
 //Partitioning
 #include "commands/partitioning/partitioning.hpp"
