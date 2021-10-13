@@ -909,10 +909,10 @@ public:
 
     void connect_outputs(Ntk ntk)
     {
-        // std::cout << "Number of output substitutions = " << output_substitutions.size() << "\n";
+        std::cout << "Number of output substitutions = " << output_substitutions.size() << "\n";
         for (auto it = output_substitutions.begin(); it != output_substitutions.end();
                 ++it) {
-            // std::cout << "substituting " << it->first << " with " << it->second.index << "\n";
+            std::cout << "substituting " << it->first << " with " << it->second.index << "\n";
             ntk.substitute_node(it->first, it->second);
         }
     }

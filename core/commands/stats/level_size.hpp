@@ -47,33 +47,35 @@ public:
 
     template <typename ntk> void dump_stats(string name)
     {
-        if (!store<ntk>().empty()) {
-            auto &dag = *store<ntk>().current();
-            mockturtle::depth_view dag_view{dag};
-            vector<uint32_t> levels(dag_view.depth(), 0);
-            dag_view.foreach_node([&dag_view, &levels](auto n) {
-                levels[dag_view.level(n)]++;
-            });
-            env->out() << "Nodes per level" << std::endl;
-            env->out() << "Level\tNodes" << std::endl;
-            for (size_t i = 0; i < levels.size(); i++) {
-                env->out() << i << "\t" << levels[i] << std::endl;
-            }
-        } else {
-            env->err() << "There is not an " << name << " network stored.\n";
+        if (store<std::shared_ptr<mockturtle::names_view<ntk>>>().empty()) {
+            env->err() << name << " network not stored\n";
+            return;
         }
+        auto dag =
+            *store<std::shared_ptr<mockturtle::names_view<ntk>>>().current();
+
+	mockturtle::depth_view dag_view{dag};
+	vector<uint32_t> levels(dag_view.depth(), 0);
+	dag_view.foreach_node([&dag_view, &levels](auto n) {
+	    levels[dag_view.level(n)]++;
+	});
+	env->out() << "Nodes per level" << std::endl;
+	env->out() << "Level\tNodes" << std::endl;
+	for (size_t i = 0; i < levels.size(); i++) {
+	    env->out() << i << "\t" << levels[i] << std::endl;
+	}
     }
 protected:
     void execute()
     {
         if (is_set("mig")) {
-            dump_stats<mig_ntk>("MIG");
+            dump_stats<mockturtle::mig_network>("MIG");
         } else if (is_set("xag")) {
-            dump_stats<xag_ntk>("XAG");
+            dump_stats<mockturtle::xag_network>("XAG");
         } else if (is_set("xmg")) {
-            dump_stats<xag_ntk>("XMG");
+            dump_stats<mockturtle::xmg_network>("XMG");
         } else {
-            dump_stats<aig_ntk>("AIG");
+            dump_stats<mockturtle::aig_network>("AIG");
         }
     }
 private:

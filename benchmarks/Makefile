@@ -140,14 +140,14 @@ clean_reports:
 	${eval TEMP=$*_timing.script}
 	echo "read_blif -a $<" > ${TEMP}
 	echo "ps -a" >> ${TEMP}
-#	echo "partitioning 2 --epsilon 0.2 --output $*_timing.parts" >> ${TEMP}
+#	echo "partitioning --size 1024 --epsilon 0.2 --output $*_timing.parts" >> ${TEMP}
 	echo "partitioning 2 -f $*_timing.parts" >> ${TEMP}
 	echo "budget_script --clock CK --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty benchmarks/techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
 	echo "critical_path -g" >> ${TEMP}
 	echo "function_stats -g" >> ${TEMP}
 	echo "fanin_histogram -g" >> ${TEMP}
 	echo "skip_histogram -g" >> ${TEMP}
-	echo "fanout_histograph -g" >> ${TEMP}
+	echo "fanout_histogram -g" >> ${TEMP}
 	echo "level_size -g" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
 #	rm ${TEMP}

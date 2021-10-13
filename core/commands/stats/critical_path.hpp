@@ -47,15 +47,18 @@ public:
     explicit critical_path_command(const environment::ptr &env)
         : command(env, "Determines the function of nodes along the critical path.")
     {
-
+        add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
+        add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
+        add_flag("--xmg,-g", "Display stats for stored XMG (AIG is default)");
+        add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
     }
 
 protected:
     template <typename network>
     void dump_stats(std::string name)
     {
-        if (!store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-	    env->err() << name<< " network not stored\n";
+        if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
+	    env->err() << name << " network not stored\n";
 	    return;
 	}
 	auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
@@ -74,6 +77,7 @@ protected:
 		   << "XOR3 nodes on critical path = " << counts.xor3_num << "\n"
 		   << "XOR nodes on critical path = " << counts.xor_num << "\n"
 		   << "XNOR nodes on critical path = " << counts.xnor_num << "\n"
+		   << "unknown nodes on critical path = " << counts.unknown_num << "\n"
 		   << "INPUTS on critical path = " << counts.input_num << std::endl;
     }
 

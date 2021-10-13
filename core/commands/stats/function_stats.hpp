@@ -70,6 +70,8 @@ protected:
         env->out() << "XOR3 nodes internally = " << counts.xor3_num << "\n";
         env->out() << "XOR nodes internally = " << counts.xor_num << "\n";
         env->out() << "XNOR nodes internally = " << counts.xnor_num << "\n";
+        env->out() << "Unknown nodes internally = " << counts.unknown_num << "\n";
+        env->out() << "Input nodes internally = " << counts.input_num << "\n";
     }
     void execute()
     {
