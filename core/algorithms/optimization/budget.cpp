@@ -430,6 +430,36 @@ protected:
 };
 template class aig_optimizer<mockturtle::aig_network>;
 
+
+template< typename newtork>
+class abc_optimizer: public aig_optimizer<network>
+{
+    abc_optimizer(partition_manager<mockturtle::names_view<network>> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+
+    const std::string optimizer_name()
+    {
+	return "abc resyn2";
+    }
+    void optimize()
+    {
+	char *blif_name_char = strdup("/tmp/lsoracle_XXXXXX.blif");
+	if (mkstemps(blif_name_char, 2) == -1) {
+	    throw std::exception();
+	}
+	std::string blif_name = std::string(blif_name_char);
+	std::cout << "writing blif to " << blif_name  << std::endl;
+
+	mockturtle::write_blif_params ps;
+	mockturtle::write_blif(ntk, blif_name, ps);
+	std::string script = "abc -c \"read_blif " + blif_name + "; resyn2; write_blif optimized_" + blif_name + " \"";
+	int code = system((script).c_str());
+	assert(code == 0);
+	std::cout << "optimized with abc" << std::endl;
+	lorina::return_code read_blif_return_code = lorina::read_blif( "optimized_" + blif_name, mockturtle::blif_reader( optimal ));
+	assert(read_blif_return_code == lorina::return_code::success);
+    }
+}
+
 template <typename network>
 class xag_optimizer: public optimizer<network>
 {
@@ -837,6 +867,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 	// new aigscript5_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	// new xmg_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	// new xag_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new abc_optimizer<network>(partman, ntk, index, strategy, abc_exec),
     };
     // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;

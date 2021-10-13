@@ -3,6 +3,7 @@
 
 build/
 build_debug/
+build-debug/
 
 .vscode/
 
