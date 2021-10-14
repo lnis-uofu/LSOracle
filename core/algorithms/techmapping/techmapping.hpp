@@ -263,6 +263,22 @@ struct graph {
             std::cout << po << " [shape=box label=\"PO " << std::get<primary_output>(nodes[po]).index << "\"]\n";
         }
 
+        for (size_t node = 0; node < nodes.size(); node++) {
+            if constexpr (std::is_same_v<cell_type, cell>) {
+                if (std::holds_alternative<cell>(nodes[node])) {
+                    std::cout << node << " [label=\"Node " << node << " 0x";
+                    kitty::print_hex(std::get<cell>(nodes[node]).truth_table[0]);
+                    std::cout << "\"]\n";
+                }
+            } else if constexpr (std::is_same_v<cell_type, lut>) {
+                if (std::holds_alternative<lut>(nodes[node])) {
+                    std::cout << node << " [label=\"Node " << node << " 0x";
+                    kitty::print_hex(std::get<lut>(nodes[node]).truth_table);
+                    std::cout << "\"]\n";
+                }
+            }
+        }
+
         for (std::optional<connection> conn : connections) {
             if (conn.has_value()) {
                 std::cout << conn->from << " -> " << conn->to << '\n';
@@ -491,18 +507,7 @@ struct graph {
         const std::vector<size_t> cut_nodes{nodes_in_cut(c)};
         kitty::dynamic_truth_table result{static_cast<uint32_t>(c.inputs.size())};
 
-        /*std::cout << "cut output: " << c.output << '\n';
-        std::cout << "cut inputs: [";
-        for (size_t node : c.inputs) {
-            std::cout << node << ", ";
-        }
-        std::cout << "]\n";
-
-        std::cout << "nodes contained in cut: [";
-        for (size_t node : cut_nodes) {
-            std::cout << node << ", ";
-        }
-        std::cout << "]\n";*/
+        std::cout << "Simulating output " << c.output << '\n';
 
         // TODO: skip constant drivers when found.
         const int limit = 1 << c.inputs.size();
@@ -515,7 +520,7 @@ struct graph {
             values.insert({1, true});
 
             for (int input = 0; input < c.inputs.size(); input++) {
-                //std::cout << "value of node " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
+                std::cout << "value of input " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
                 values.insert({c.inputs[input], ((1 << input) & mask) != 0});
             }
 
@@ -526,15 +531,15 @@ struct graph {
                 uint64_t node_mask = 0;
 
                 for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
-                    //std::cout << "trying to get value of fanin node " << fanin[fanin_node] << '\n';
                     node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
                 }
 
                 // TODO: assumes cell has a single output.
                 values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
-                //std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
+                std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
             }
 
+            std::cout << "value of output node " << c.output << " with inputs " << mask << " = " << values.at(c.output) << '\n';
             if (values.at(c.output)) {
                 kitty::set_bit(result, mask);
             }
@@ -684,7 +689,6 @@ private:
             }
 
             // Add the cut set of this node to the frontier.
-            //unsigned int depth =
             info[node].selected_cut = std::make_optional(cut_set[0]);
             info[node].depth = cut_depth(cut_set[0], info);
             frontier.insert({node, frontier_info{std::move(cut_set)}});
@@ -767,27 +771,15 @@ private:
             size_t node = frontier.back();
             frontier.pop_back();
 
-            std::cout << "Mapping node " << node << '\n';
-
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
+                std::cout << "Now simulating node " << node << '\n';
                 kitty::dynamic_truth_table tt = g.simulate(*info[node].selected_cut);
-                std::cout << "  Truth table of node is 0x";
-                kitty::print_hex(tt);
-                std::cout << '\n';
                 size_t index = mapping.add_cell(lut{tt});
                 gate_graph_to_lut_graph.insert({node, index});
             }
 
             // Add all the inputs in that cut which are not primary inputs or already-discovered nodes to the mapping frontier.
-            if (g.is_primary_input(node)) {
-                std::cout << "  Node is primary input\n";
-            } else if (g.is_primary_output(node)) {
-                std::cout << "  Node is primary output\n";
-            } else {
-                std::cout << "  Node has " << info[node].selected_cut->input_count() << " inputs\n";
-            }
-
             if (g.is_primary_output(node)) {
                 for (size_t input : g.compute_node_fanin_nodes(node)) {
                     frontier.push_back(input);
@@ -796,13 +788,7 @@ private:
             }
 
             for (size_t input : info[node].selected_cut->inputs) {
-                if (g.is_primary_input(input)) {
-                    std::cout << "    Skipping primary input " << input << '\n';
-                } else if (gate_graph_to_lut_graph.count(input)) {
-                    std::cout << "    Skipping already mapped node " << input << '\n';
-                }
                 if (!g.is_primary_input(input) && !gate_graph_to_lut_graph.count(input)) {
-                    std::cout << "    Adding node " << input << '\n';
                     frontier.push_back(input);
                 }
             }
@@ -822,16 +808,6 @@ private:
 
             visited.insert(node);
 
-            std::cout << "Connecting node " << node << '\n';
-
-            if (g.is_primary_input(node)) {
-                std::cout << "  Node is primary input\n";
-            } else if (g.is_primary_output(node)) {
-                std::cout << "  Node is primary output\n";
-            } else {
-                std::cout << "  Node has " << info[node].selected_cut->input_count() << " inputs\n";
-            }
-
             if (g.is_primary_output(node)) {
                 for (size_t input : g.compute_node_fanin_nodes(node)) {
                     frontier.push_back(input);
@@ -844,7 +820,6 @@ private:
                         frontier.push_back(input);
                     }
                     mapping.add_connection(gate_graph_to_lut_graph.at(input), gate_graph_to_lut_graph.at(node));
-                    std::cout << "  Adding connection between " << input << " and " << node << '\n';
                 }
             }
         }
@@ -870,60 +845,43 @@ private:
 
         assert(frontier.find(node_inputs[0]) != frontier.end() && "bug: mapping frontier does not contain node");
 
-        //std::cout << "[" << node << "] Cut set of input " << node_inputs[0] << " has " << frontier.at(node_inputs[0]).cuts.size() << " cuts:\n";
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
             cut child_cut = frontier.at(node_inputs[0]).cuts[index];
-            /*std::cout << "  " << child_cut.input_count() << " [";
-            for (int child_cut_input : child_cut.inputs) {
-                std::cout << child_cut_input << ", ";
-            }
-            std::cout << "]\n";*/
             cut_set.push_back(child_cut);
         }
 
-        /*std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
-        for (auto& [child_cut, _] : cut_set) {
-            std::cout << "  " << child_cut.input_count() << " [";
-            for (int child_cut_input : child_cut.inputs) {
-                std::cout << child_cut_input << ", ";
-            }
-            std::cout << "]\n";
-        }*/
-
         // For each other input:
-        std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
-            assert(frontier.find(node_input) != frontier.end() && "bug: mapping frontier does not contain node");
+        if (node_inputs.size() > 1) {
+            std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
+                assert(frontier.find(node_input) != frontier.end() && "bug: mapping frontier does not contain node");
 
-            /*std::cout << "[" << node << "] Cut set of input " << node_input << " has " << frontier.at(node_input).cuts.size() << " cuts:\n";
+                std::vector<cut> new_cuts;
 
-            for (cut child_cut : frontier.at(node_input).cuts) {
-                std::cout << "  " << child_cut.input_count() << " [";
-                for (int child_cut_input : child_cut.inputs) {
-                    std::cout << child_cut_input << ", ";
+                // Merge the present cut set with the cuts of this input.
+                for (cut const& c : cut_set) {
+                    for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
+                        new_cuts.push_back(c.merge(frontier.at(node_input).cuts[input_cut], node));
+                    }
                 }
-                std::cout << "]\n";
-            }*/
 
-            std::vector<cut> new_cuts;
+                // Filter out cuts which exceed the cut input limit.
+                new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](cut const& candidate) {
+                    return candidate.input_count() > settings.cut_input_limit;
+                }), new_cuts.end());
 
-            // Merge the present cut set with the cuts of this input.
-            for (cut const& c : cut_set) {
-                for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
-                    new_cuts.push_back(c.merge(frontier.at(node_input).cuts[input_cut], node));
-                }
+                // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
+                // Or does that negatively affect cut quality?
+
+                // Replace the present cut set with the new one.
+                cut_set = std::move(new_cuts);
+            });
+        } else {
+            // When we have only a single input, we end up with the cut set of that input.
+            // We need to patch the cut set to set the cut outputs as this node.
+            for (cut& c : cut_set) {
+                c.output = node;
             }
-
-            // Filter out cuts which exceed the cut input limit.
-            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](cut const& candidate) {
-                return candidate.input_count() > settings.cut_input_limit;
-            }), new_cuts.end());
-
-            // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
-            // Or does that negatively affect cut quality?
-
-            // Replace the present cut set with the new one.
-            cut_set = std::move(new_cuts);
-        });
+        }
 
         // Include the trivial cut in the cut set.
         if (std::holds_alternative<cell>(g.nodes[node])) {
@@ -937,16 +895,8 @@ private:
         }
 
         // Deduplicate cuts in the list with a set.
+        // This appears to break mapping somehow?
         //std::unique(cut_set.begin(), cut_set.end());
-
-        /*std::cout << "[" << node << "] Cut set of node:\n";
-        for (cut child_cut : cut_set) {
-            std::cout << "  [";
-            for (int child_cut_input : child_cut.inputs) {
-                std::cout << child_cut_input << ", ";
-            }
-            std::cout << "]\n";
-        }*/
 
         return cut_set;
     }
@@ -954,9 +904,13 @@ private:
     // Ordering by cut depth is vital to find the best possible mapping for a network.
     static unsigned int cut_depth(cut const& c, std::vector<mapping_info> const& info)
     {
-        return  *std::max_element(c.inputs.begin(), c.inputs.end(), [&](size_t a, size_t b) {
-            return info.at(a).depth < info.at(b).depth;
-        }) + 1;
+        unsigned int depth = 0;
+        for (size_t input : c.inputs) {
+            if (info.at(input).depth > depth) {
+                depth = info.at(input).depth;
+            }
+        }
+        return depth + 1;
     }
 
     // It is better to prefer smaller cuts over bigger cuts because it allows more cuts to be mapped
