@@ -93,6 +93,10 @@ struct cut {
         return inputs.size() == 1 && inputs[0] == output;
     }
 
+    bool operator==(cut const& rhs) const {
+        return output == rhs.output && inputs == rhs.inputs;
+    }
+
     std::vector<size_t> inputs;
     size_t output;
     kitty::dynamic_truth_table truth_table;
@@ -466,8 +470,8 @@ struct graph {
         while (!no_outgoing.empty()) {
             size_t node = no_outgoing.back();
             no_outgoing.pop_back();
-            ordering.push_back(node);
             if (std::find(c.inputs.begin(), c.inputs.end(), node) == c.inputs.end()) {
+                ordering.push_back(node);
                 for (connection conn : g.compute_node_fanin_connections(node)) {
                     no_outgoing.push_back(conn.from);
                 }
@@ -487,7 +491,7 @@ struct graph {
         const std::vector<size_t> cut_nodes{nodes_in_cut(c)};
         kitty::dynamic_truth_table result{static_cast<uint32_t>(c.inputs.size())};
 
-        std::cout << "cut output: " << c.output << '\n';
+        /*std::cout << "cut output: " << c.output << '\n';
         std::cout << "cut inputs: [";
         for (size_t node : c.inputs) {
             std::cout << node << ", ";
@@ -498,7 +502,7 @@ struct graph {
         for (size_t node : cut_nodes) {
             std::cout << node << ", ";
         }
-        std::cout << "]\n";
+        std::cout << "]\n";*/
 
         // TODO: skip constant drivers when found.
         const int limit = 1 << c.inputs.size();
@@ -511,7 +515,7 @@ struct graph {
             values.insert({1, true});
 
             for (int input = 0; input < c.inputs.size(); input++) {
-                std::cout << "value of node " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
+                //std::cout << "value of node " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
                 values.insert({c.inputs[input], ((1 << input) & mask) != 0});
             }
 
@@ -522,13 +526,13 @@ struct graph {
                 uint64_t node_mask = 0;
 
                 for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
-                    std::cout << "trying to get value of fanin node " << fanin[fanin_node] << '\n';
+                    //std::cout << "trying to get value of fanin node " << fanin[fanin_node] << '\n';
                     node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
                 }
 
                 // TODO: assumes cell has a single output.
                 values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
-                std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
+                //std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
             }
 
             if (values.at(c.output)) {
@@ -645,7 +649,7 @@ private:
                 for (int child_cut_input : child_cut.inputs) {
                     std::cout << child_cut_input << ", ";
                 }
-                std::cout << "]\n";
+                std::cout << "]; depth " << cut_depth(cut_set[0], info) << '\n';
             }
 
             // Prune cuts which exceed the node slack in area optimisation mode.
@@ -680,8 +684,9 @@ private:
             }
 
             // Add the cut set of this node to the frontier.
-            unsigned int depth = cut_depth(cut_set[0], info);
+            //unsigned int depth =
             info[node].selected_cut = std::make_optional(cut_set[0]);
+            info[node].depth = cut_depth(cut_set[0], info);
             frontier.insert({node, frontier_info{std::move(cut_set)}});
 
             // Erase fan-in nodes that have their fan-out completely mapped as they will never be used again.
@@ -744,6 +749,7 @@ private:
 
         // Populate the LUT graph with the primary inputs and outputs of the gate graph.
         gate_graph_to_lut_graph.insert({0, mapping.add_constant_zero()});
+        gate_graph_to_lut_graph.insert({1, mapping.add_constant_one()});
 
         for (size_t pi : g.primary_inputs) {
             size_t index = mapping.add_primary_input();
@@ -765,7 +771,11 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
-                size_t index = mapping.add_cell(lut{g.simulate(*info[node].selected_cut)});
+                kitty::dynamic_truth_table tt = g.simulate(*info[node].selected_cut);
+                std::cout << "  Truth table of node is 0x";
+                kitty::print_hex(tt);
+                std::cout << '\n';
+                size_t index = mapping.add_cell(lut{tt});
                 gate_graph_to_lut_graph.insert({node, index});
             }
 
@@ -851,14 +861,12 @@ private:
 
         std::vector<size_t> node_inputs{g.compute_node_fanin_nodes(node)};
 
-        // The trivial cut of a node is just the node itself.
-        cut trivial_cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]};
-
         // To calculate the cut set of a node, we need to compute the cartesian product of its child cuts.
         // This is implemented as performing a 2-way cartesian product N times.
 
         // Start with the cut set of input zero.
-        std::vector<std::tuple<cut, std::vector<int>>> cut_set{};
+
+        std::vector<cut> cut_set{};
 
         assert(frontier.find(node_inputs[0]) != frontier.end() && "bug: mapping frontier does not contain node");
 
@@ -870,7 +878,7 @@ private:
                 std::cout << child_cut_input << ", ";
             }
             std::cout << "]\n";*/
-            cut_set.push_back({child_cut, std::vector{index}});
+            cut_set.push_back(child_cut);
         }
 
         /*std::cout << "[" << node << "] Cut set of node w/o trivial cut has " << cut_set.size() << " cuts:\n";
@@ -896,20 +904,18 @@ private:
                 std::cout << "]\n";
             }*/
 
-            std::vector<std::tuple<cut, std::vector<int>>> new_cuts;
+            std::vector<cut> new_cuts;
 
             // Merge the present cut set with the cuts of this input.
-            for (auto const& [c, children] : cut_set) {
+            for (cut const& c : cut_set) {
                 for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
-                    std::vector<int> new_children{children};
-                    new_children.push_back(input_cut);
-                    new_cuts.push_back({c.merge(frontier.at(node_input).cuts[input_cut], node), new_children});
+                    new_cuts.push_back(c.merge(frontier.at(node_input).cuts[input_cut], node));
                 }
             }
 
             // Filter out cuts which exceed the cut input limit.
-            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](std::tuple<cut, std::vector<int>> const& candidate) {
-                return std::get<0>(candidate).input_count() > settings.cut_input_limit;
+            new_cuts.erase(std::remove_if(new_cuts.begin(), new_cuts.end(), [=](cut const& candidate) {
+                return candidate.input_count() > settings.cut_input_limit;
             }), new_cuts.end());
 
             // TODO: is it sound to keep a running total of the N best cuts and prune cuts that are worse than the limit?
@@ -919,24 +925,22 @@ private:
             cut_set = std::move(new_cuts);
         });
 
-        // Now calculate the LUT masks.
-        std::vector<cut> new_cut_set;
-
-        for (auto& [c, children] : cut_set) {
-            assert(children.size() > 0);
-            new_cut_set.push_back(std::move(c));
-        }
-
         // Include the trivial cut in the cut set.
-        new_cut_set.push_back(std::move(trivial_cut));
+        if (std::holds_alternative<cell>(g.nodes[node])) {
+            // The trivial cut of a node is just the node itself.
+            cut_set.push_back(cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]});
+        }
 
         // Also include the previous-best cut in the cut set, if it exists, to avoid forgetting good cuts.
         if (info[node].selected_cut.has_value()) {
-            new_cut_set.push_back(*info[node].selected_cut);
+            cut_set.push_back(*info[node].selected_cut);
         }
 
+        // Deduplicate cuts in the list with a set.
+        //std::unique(cut_set.begin(), cut_set.end());
+
         /*std::cout << "[" << node << "] Cut set of node:\n";
-        for (cut child_cut : new_cut_set) {
+        for (cut child_cut : cut_set) {
             std::cout << "  [";
             for (int child_cut_input : child_cut.inputs) {
                 std::cout << child_cut_input << ", ";
@@ -944,13 +948,13 @@ private:
             std::cout << "]\n";
         }*/
 
-        return new_cut_set;
+        return cut_set;
     }
 
     // Ordering by cut depth is vital to find the best possible mapping for a network.
     static unsigned int cut_depth(cut const& c, std::vector<mapping_info> const& info)
     {
-        return *std::max_element(c.inputs.begin(), c.inputs.end(), [&](size_t a, size_t b) {
+        return  *std::max_element(c.inputs.begin(), c.inputs.end(), [&](size_t a, size_t b) {
             return info.at(a).depth < info.at(b).depth;
         }) + 1;
     }
@@ -1047,6 +1051,8 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& input_ntk)
         g.add_connection(mockturtle_to_node.at(ntk.get_node(signal)), po);
     });
 
+    mockturtle::write_blif(ntk, "c17.before.blif");
+
     g.dump_to_stdout();
 
     return g;
@@ -1068,7 +1074,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
         for (size_t input : g.compute_node_fanin_nodes(node)) {
             children.push_back(node_to_mockturtle.at(input));
         }
-        if (!g.is_primary_input(node)) {
+        if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
             node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
         }
     }
@@ -1080,6 +1086,8 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
             break;
         }
     }
+
+    mockturtle::write_blif(ntk, "c17.after.blif");
 
     return ntk;
 }
