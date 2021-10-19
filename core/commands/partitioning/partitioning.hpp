@@ -112,13 +112,18 @@ protected:
     void process_network(string type_name)
     {
         auto ntk = *store<gen_ntk>().current();
+	if (num_partitions == 0) {
+	    num_partitions = std::max(ntk.size() / size_partitions, 1u);
+	}
+	env->out() << "Using " << num_partitions << " partitions" << std::endl;
+
         if (part_file != "") {
             env->out() << "Partitioning stored " << type_name <<
-                       " network using external file\n";
+		" network using external file" << std::endl;
             std::map<node_type, int> part_data;
             std::vector<int> parts = read_file(part_file);
             if (parts.size() != ntk.size()) {
-                env->out() << "Partition file contains the incorrect number of nodes\n";
+                env->out() << "Partition file contains the incorrect number of nodes" << std::endl;
                 exit(1);
             }
             for (int i = 0; i < parts.size(); i++) {
@@ -130,7 +135,7 @@ protected:
 #ifdef ENABLE_GALOIS
             if (is_set("bipart")) {
                 env->out() << "Partitioning stored " << type_name <<
-                           " network using Galois BiPart\n";
+                           " network using Galois BiPart" << std::endl;
                 oracle::hypergraph<gen_names> t(ntk);
                 uint32_t num_vertices = 0;
 
@@ -152,7 +157,7 @@ protected:
             } else
 #endif
             {
-                env->out() << "Partitioning stored " << type_name << " network using KaHyPar\n";
+                env->out() << "Partitioning stored " << type_name << " network using KaHyPar" << std::endl;
 
                 int *node_weights = nullptr;
                 int *edge_weights = nullptr;
@@ -172,11 +177,6 @@ protected:
                         node_weights = &data[0];
                     }
                 }
-
-                if (num_partitions == 0) {
-                    num_partitions = std::max(ntk.size() / size_partitions, 1u);
-                }
-                env->out() << "Using " << num_partitions << " partitions" << std::endl;
 
                 if (config_direc == "") {
                     config_direc = make_temp_config();
@@ -222,13 +222,13 @@ protected:
             if (!store<mig_ntk>().empty()) {
                 process_network<mig_ntk, mig_names, part_man_mig, part_man_mig_ntk, mockturtle::mig_network::node>("MIG");
             } else {
-                env->err() << "MIG network not stored\n";
+                env->err() << "MIG network not stored" << std::endl;
             }
         } else {
             if (!store<aig_ntk>().empty()) {
                 process_network<aig_ntk, aig_names, part_man_aig, part_man_aig_ntk, mockturtle::aig_network::node>("AIG");
             } else {
-                env->err() << "AIG network not stored\n";
+                env->err() << "AIG network not stored" << std::endl;
             }
         }
     }
