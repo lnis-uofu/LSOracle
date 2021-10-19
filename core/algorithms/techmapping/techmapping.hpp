@@ -82,10 +82,14 @@ struct cut {
 
     int input_count() const
     {
-        if (!inputs.empty() && inputs[0] == 0) {
-            return inputs.size() - 1;
+        size_t input_count = inputs.size();
+        if (std::find(inputs.begin(), inputs.end(), 0) != inputs.end()) {
+            input_count -= 1;
         }
-        return inputs.size();
+        if (std::find(inputs.begin(), inputs.end(), 1) != inputs.end()) {
+            input_count -= 1;
+        }
+        return input_count;
     }
 
     bool is_trivial() const
@@ -458,8 +462,8 @@ struct graph {
             no_outgoing.pop_back();
             for (connection conn : g.compute_node_fanin_connections(node)) {
                 g.remove_connection(conn.index);
-                if (g.compute_node_fanout_connections(conn.to).empty()) {
-                    no_outgoing.push_back(conn.to);
+                if (g.compute_node_fanout_connections(conn.from).empty()) {
+                    no_outgoing.push_back(conn.from);
                 }
             }
         }
@@ -507,8 +511,6 @@ struct graph {
         const std::vector<size_t> cut_nodes{nodes_in_cut(c)};
         kitty::dynamic_truth_table result{static_cast<uint32_t>(c.inputs.size())};
 
-        std::cout << "Simulating output " << c.output << '\n';
-
         // TODO: skip constant drivers when found.
         const int limit = 1 << c.inputs.size();
 
@@ -520,7 +522,6 @@ struct graph {
             values.insert({1, true});
 
             for (int input = 0; input < c.inputs.size(); input++) {
-                std::cout << "value of input " << c.inputs[input] << " is " << (((1 << input) & mask) != 0) << '\n';
                 values.insert({c.inputs[input], ((1 << input) & mask) != 0});
             }
 
@@ -536,10 +537,8 @@ struct graph {
 
                 // TODO: assumes cell has a single output.
                 values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
-                std::cout << "value of node " << node << " is " << kitty::get_bit(n.truth_table[0], node_mask) << '\n';
             }
 
-            std::cout << "value of output node " << c.output << " with inputs " << mask << " = " << values.at(c.output) << '\n';
             if (values.at(c.output)) {
                 kitty::set_bit(result, mask);
             }
@@ -610,10 +609,12 @@ public:
         std::cout << "Mapping phase 1: prioritise depth.\n";
         enumerate_cuts(cut_depth, cut_input_count, cut_area_flow, false);
 
-        /*std::cout << "Mapping phase 2: prioritise global area.\n";
+        //derive_mapping();
+
+        std::cout << "Mapping phase 2: prioritise global area.\n";
         enumerate_cuts(cut_area_flow, cut_fanin_refs, cut_depth, true);
 
-        std::cout << "Mapping phase 3: prioritise local area.\n";
+        /*std::cout << "Mapping phase 3: prioritise local area.\n";
         enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);
 
         std::cout << "Mapping phase 4: prioritise global area.\n";
@@ -648,17 +649,19 @@ private:
             // Find the node cut set.
             std::vector<cut> cut_set = node_cut_set(node, frontier);
 
-            std::cout << "[" << node << "] Cut set of node:\n";
+            /*std::cout << "[" << node << "] Cut set of node:\n";
             for (const cut& child_cut : cut_set) {
                 std::cout << "  " << child_cut.input_count() << " [";
                 for (int child_cut_input : child_cut.inputs) {
                     std::cout << child_cut_input << ", ";
                 }
                 std::cout << "]; depth " << cut_depth(cut_set[0], info) << '\n';
-            }
+            }*/
 
             // Prune cuts which exceed the node slack in area optimisation mode.
             if (area_optimisation) {
+                //std::cout << "Required time of node is " << info[node].required << '\n';
+
                 cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
                     return cut_depth(c, info) > info[node].required;
                 }), cut_set.end());
@@ -691,6 +694,13 @@ private:
             // Add the cut set of this node to the frontier.
             info[node].selected_cut = std::make_optional(cut_set[0]);
             info[node].depth = cut_depth(cut_set[0], info);
+            info[node].area_flow = cut_area_flow(cut_set[0], info);
+
+            for (size_t input : cut_set[0].inputs) {
+                info[input].references++;
+                info[input].area_flow = cut_area_flow(*info[input].selected_cut, info);
+            }
+
             frontier.insert({node, frontier_info{std::move(cut_set)}});
 
             // Erase fan-in nodes that have their fan-out completely mapped as they will never be used again.
@@ -699,7 +709,7 @@ private:
                 if (std::all_of(node_fanout.begin(), node_fanout.end(), [&](size_t node) {
                     return info[node].selected_cut.has_value();
                 })) {
-                    frontier.erase(fanin_node);
+                    //frontier.erase(fanin_node);
                 }
             }
         }
@@ -711,24 +721,30 @@ private:
     void recalculate_slack()
     {
         // First find the maximum depth of the mapping.
-        unsigned int max_depth = std::max_element(info.begin(), info.end(), [&](mapping_info const& a, mapping_info const& b) {
-            return a.depth < b.depth;
-        })->depth;
+        unsigned int max_depth = 0;
+
+        for (size_t node = 0; node < g.nodes.size(); node++) {
+            if (std::holds_alternative<cell>(g.nodes[node])) {
+                if (info[node].depth > max_depth) {
+                    max_depth = info[node].depth;
+                }
+            }
+        }
+
+        std::cout << "Maximum depth of network is " << max_depth << '\n';
 
         // Next, initialise the node required times.
         for (mapping_info& node : info) {
-            node.required = UINT_MAX;
-        }
-
-        // Set the required times of the primary outputs to the maximum depth.
-        for (size_t po : g.primary_outputs) {
-            info[po].required = max_depth;
+            node.required = max_depth;
         }
 
         // Then work from PO to PI, propagating required times.
         for (size_t node : g.compute_reverse_topological_ordering()) {
+            //std::cout << "Visiting node " << node << '\n';
+
             unsigned int required = info[node].required - 1;
             for (size_t cut_input : info[node].selected_cut->inputs) {
+                //std::cout << "Setting required time of node " << cut_input << " to " << std::min(info[cut_input].required, required) << '\n';
                 info[cut_input].required = std::min(info[cut_input].required, required);
 
                 // If we end up with a negative required time, we have a bug. For instance, this might fire if:
@@ -765,6 +781,12 @@ private:
             gate_graph_to_lut_graph.insert({po, index});
         }
 
+        std::vector<size_t> lut_stats;
+
+        for (int i = 0; i < 7; i++) {
+            lut_stats.push_back(0);
+        }
+
         // While there are still nodes to be mapped:
         while (!frontier.empty()) {
             // Pop a node from the mapping frontier.
@@ -773,10 +795,10 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
-                std::cout << "Now simulating node " << node << '\n';
                 kitty::dynamic_truth_table tt = g.simulate(*info[node].selected_cut);
                 size_t index = mapping.add_cell(lut{tt});
                 gate_graph_to_lut_graph.insert({node, index});
+                lut_stats[info[node].selected_cut->input_count()]++;
             }
 
             // Add all the inputs in that cut which are not primary inputs or already-discovered nodes to the mapping frontier.
@@ -824,7 +846,12 @@ private:
             }
         }
 
-        std::cout << "LUTs: " << mapping.nodes.size() - mapping.primary_inputs.size() - mapping.primary_outputs.size() << '\n';
+        size_t total_luts = 0;
+        for (int lut_size = 1; lut_size < 7; lut_size++) {
+            std::cout << "LUT" << lut_size << ": " << lut_stats[lut_size] << '\n';
+            total_luts += lut_stats[lut_size];
+        }
+        std::cout << "LUTs: " << total_luts << '\n';
 
         return mapping;
     }
@@ -832,7 +859,7 @@ private:
     std::vector<cut> node_cut_set(size_t node, std::unordered_map<size_t, frontier_info> const& frontier) const
     {
         assert(std::holds_alternative<cell>(g.nodes[node]));
-        assert(std::get<cell>(g.nodes[node]).truth_table.size() == 1);
+        assert(std::get<cell>(g.nodes[node]).truth_table.size() == 1 && "not implemented: multiple output gates");
 
         std::vector<size_t> node_inputs{g.compute_node_fanin_nodes(node)};
 
@@ -842,8 +869,6 @@ private:
         // Start with the cut set of input zero.
 
         std::vector<cut> cut_set{};
-
-        assert(frontier.find(node_inputs[0]) != frontier.end() && "bug: mapping frontier does not contain node");
 
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
             cut child_cut = frontier.at(node_inputs[0]).cuts[index];
@@ -933,30 +958,17 @@ private:
     // Area flow estimates how much this cone of logic is shared within the current mapping.
     static float cut_area_flow(cut const& c, std::vector<mapping_info> const& info)
     {
-        return std::transform_reduce(c.inputs.begin(), c.inputs.end(), 1.0f, std::plus<>(), [&](size_t input) {
-            return float(info.at(input).area_flow) / std::max(1.0f, float(info.at(input).references));
-        });
+        float sum_area_flow = 0.0f;
+        for (size_t input : c.inputs) {
+            sum_area_flow += info.at(input).area_flow;
+        }
+        return (sum_area_flow + 1.0f) / std::max(1.0f, float(info.at(c.output).references));
     }
 
     // Exact area calculates the number of LUTs that would be added to the mapping if this cut was selected.
     static unsigned int cut_exact_area(cut const& c, std::vector<mapping_info>& info)
     {
         unsigned int area = 1;
-
-        for (size_t input : c.inputs) {
-            info[input].references--;
-            assert(info[input].references >= 0 && "bug: decremented node reference below zero");
-        }
-
-        for (size_t input : c.inputs) {
-            if (info[input].references == 0 && !info[input].selected_cut->is_trivial()) {
-                area += cut_exact_area(*info[input].selected_cut, info);
-            }
-        }
-
-        for (size_t input : c.inputs) {
-            info[input].references++;
-        }
 
         return area;
     }
@@ -1005,9 +1017,9 @@ graph<cell> mockturtle_to_lut_graph(Ntk const& input_ntk)
         g.add_connection(mockturtle_to_node.at(ntk.get_node(signal)), po);
     });
 
-    mockturtle::write_blif(ntk, "c17.before.blif");
+    mockturtle::write_blif(ntk, "c432.before.blif");
 
-    g.dump_to_stdout();
+    //g.dump_to_stdout();
 
     return g;
 }
@@ -1017,7 +1029,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
     mockturtle::klut_network ntk{};
     std::unordered_map<size_t, mockturtle::klut_network::signal> node_to_mockturtle{};
 
-    g.dump_to_stdout();
+    //g.dump_to_stdout();
 
     for (size_t pi : g.primary_inputs) {
         node_to_mockturtle.insert({pi, ntk.create_pi()});
@@ -1041,7 +1053,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
         }
     }
 
-    mockturtle::write_blif(ntk, "c17.after.blif");
+    mockturtle::write_blif(ntk, "c432.after.blif");
 
     return ntk;
 }
