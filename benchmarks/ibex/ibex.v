@@ -728,7 +728,7 @@ module ibex_alu (
 	assign unused_shift_amt_compl = shift_amt_compl[5];
 endmodule
 module ibex_branch_predict (
-	clk_i,
+	clk,
 	rst_ni,
 	fetch_rdata_i,
 	fetch_pc_i,
@@ -736,7 +736,7 @@ module ibex_branch_predict (
 	predict_branch_taken_o,
 	predict_branch_pc_o
 );
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [31:0] fetch_rdata_i;
 	input wire [31:0] fetch_pc_i;
@@ -781,7 +781,7 @@ module ibex_branch_predict (
 	assign predict_branch_pc_o = fetch_pc_i + branch_imm;
 endmodule
 module ibex_compressed_decoder (
-	clk_i,
+	clk,
 	rst_ni,
 	valid_i,
 	instr_i,
@@ -789,7 +789,7 @@ module ibex_compressed_decoder (
 	is_compressed_o,
 	illegal_instr_o
 );
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire valid_i;
 	input wire [31:0] instr_i;
@@ -896,7 +896,7 @@ module ibex_compressed_decoder (
 	assign is_compressed_o = instr_i[1:0] != 2'b11;
 endmodule
 module ibex_controller (
-	clk_i,
+	clk,
 	rst_ni,
 	ctrl_busy_o,
 	illegal_insn_i,
@@ -963,7 +963,7 @@ module ibex_controller (
 );
 	parameter [0:0] WritebackStage = 0;
 	parameter [0:0] BranchPredictor = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	output reg ctrl_busy_o;
 	input wire illegal_insn_i;
@@ -1453,7 +1453,7 @@ module ibex_controller (
 	assign stall = stall_id_i | stall_wb_i;
 	assign id_in_ready_o = (~stall & ~halt_if) & ~retain_id;
 	assign instr_valid_clear_o = ~(stall | retain_id) | flush_id;
-	always @(posedge clk_i or negedge rst_ni) begin : update_regs
+	always @(posedge clk or negedge rst_ni) begin : update_regs
 		if (!rst_ni) begin
 			ctrl_fsm_cs <= RESET;
 			nmi_mode_q <= 1'b0;
@@ -1475,7 +1475,7 @@ module ibex_controller (
 	end
 endmodule
 module ibex_core (
-	clk_i,
+	clk,
 	rst_ni,
 	test_en_i,
 	hart_id_i,
@@ -1528,7 +1528,7 @@ module ibex_core (
 	parameter [0:0] SecureIbex = 1'b0;
 	parameter [31:0] DmHaltAddr = 32'h1a110800;
 	parameter [31:0] DmExceptionAddr = 32'h1a110808;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire test_en_i;
 	input wire [31:0] hart_id_i;
@@ -1718,13 +1718,13 @@ module ibex_core (
 	wire clk;
 	wire clock_en;
 	assign core_busy_d = (ctrl_busy | if_busy) | lsu_busy;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			core_busy_q <= 1'b0;
 		else
 			core_busy_q <= core_busy_d;
 	reg fetch_enable_q;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			fetch_enable_q <= 1'b0;
 		else if (fetch_enable_i)
@@ -1732,7 +1732,7 @@ module ibex_core (
 	assign clock_en = fetch_enable_q & (((core_busy_q | debug_req_i) | irq_pending) | irq_nm_i);
 	assign core_sleep_o = ~clock_en;
 	prim_clock_gating core_clock_gate_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.en_i(clock_en),
 		.test_en_i(test_en_i),
 		.clk_o(clk)
@@ -1747,7 +1747,7 @@ module ibex_core (
 		.PCIncrCheck(PCIncrCheck),
 		.BranchPredictor(BranchPredictor)
 	) if_stage_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.boot_addr_i(boot_addr_i),
 		.req_i(instr_req_int),
@@ -1805,7 +1805,7 @@ module ibex_core (
 		.WritebackStage(WritebackStage),
 		.BranchPredictor(BranchPredictor)
 	) id_stage_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.ctrl_busy_o(ctrl_busy),
 		.illegal_insn_o(illegal_insn_id),
@@ -1923,7 +1923,7 @@ module ibex_core (
 		.RV32B(RV32B),
 		.BranchTargetALU(BranchTargetALU)
 	) ex_block_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.alu_operator_i(alu_operator_ex),
 		.alu_operand_a_i(alu_operand_a_ex),
@@ -1954,7 +1954,7 @@ module ibex_core (
 	assign data_req_o = data_req_out & ~pmp_req_err[ibex_pkg_PMP_D];
 	assign lsu_resp_err = lsu_load_err | lsu_store_err;
 	ibex_load_store_unit load_store_unit_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.data_req_o(data_req_out),
 		.data_gnt_i(data_gnt_i),
@@ -1985,7 +1985,7 @@ module ibex_core (
 		.perf_store_o(perf_store)
 	);
 	ibex_wb_stage #(.WritebackStage(WritebackStage)) wb_stage_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.en_wb_i(en_wb),
 		.instr_type_wb_i(instr_type_wb),
@@ -2068,7 +2068,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2087,7 +2087,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2106,7 +2106,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2143,7 +2143,7 @@ module ibex_core (
 		.RV32E(RV32E),
 		.RV32M(RV32M)
 	) cs_registers_i(
-		.clk_i(clk),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.hart_id_i(hart_id_i),
 		.priv_mode_id_o(priv_mode_id),
@@ -2228,7 +2228,7 @@ module ibex_core (
 				.PMPNumChan(PMP_NUM_CHAN),
 				.PMPNumRegions(PMPNumRegions)
 			) pmp_i(
-				.clk_i(clk),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.csr_pmp_cfg_i(csr_pmp_cfg),
 				.csr_pmp_addr_i(csr_pmp_addr),
@@ -2257,7 +2257,7 @@ module ibex_core (
 	assign unused_instr_done_wb = instr_done_wb;
 endmodule
 module ibex_counter (
-	clk_i,
+	clk,
 	rst_ni,
 	counter_inc_i,
 	counterh_we_i,
@@ -2266,7 +2266,7 @@ module ibex_counter (
 	counter_val_o
 );
 	parameter signed [31:0] CounterWidth = 32;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire counter_inc_i;
 	input wire counterh_we_i;
@@ -2295,7 +2295,7 @@ module ibex_counter (
 			counter_d = counter[CounterWidth - 1:0];
 	end
 	reg [CounterWidth - 1:0] counter_q;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			counter_q <= {CounterWidth {1'sb0}};
 		else
@@ -2314,7 +2314,7 @@ module ibex_counter (
 	assign counter_val_o = counter;
 endmodule
 module ibex_cs_registers (
-	clk_i,
+	clk,
 	rst_ni,
 	hart_id_i,
 	priv_mode_id_o,
@@ -2394,7 +2394,7 @@ module ibex_cs_registers (
 	parameter [0:0] RV32E = 0;
 	localparam integer ibex_pkg_RV32MFast = 2;
 	parameter integer RV32M = ibex_pkg_RV32MFast;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [31:0] hart_id_i;
 	output wire [1:0] priv_mode_id_o;
@@ -2934,7 +2934,7 @@ module ibex_cs_registers (
 				;
 		endcase
 	end
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			priv_lvl_q <= ibex_pkg_PRIV_LVL_M;
 		else
@@ -2973,7 +2973,7 @@ module ibex_cs_registers (
 		.ShadowCopy(ShadowCSR),
 		.ResetValue({MSTATUS_RST_VAL})
 	) u_mstatus_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i({mstatus_d}),
 		.wr_en_i(mstatus_en),
@@ -2985,7 +2985,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mepc_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mepc_d),
 		.wr_en_i(mepc_en),
@@ -3001,7 +3001,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mie_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i({mie_d}),
 		.wr_en_i(mie_en),
@@ -3013,7 +3013,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mscratch_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(csr_wdata_int),
 		.wr_en_i(mscratch_en),
@@ -3025,7 +3025,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mcause_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mcause_d),
 		.wr_en_i(mcause_en),
@@ -3037,7 +3037,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mtval_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mtval_d),
 		.wr_en_i(mtval_en),
@@ -3049,7 +3049,7 @@ module ibex_cs_registers (
 		.ShadowCopy(ShadowCSR),
 		.ResetValue(32'd1)
 	) u_mtvec_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mtvec_d),
 		.wr_en_i(mtvec_en),
@@ -3063,7 +3063,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue({DCSR_RESET_VAL})
 	) u_dcsr_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i({dcsr_d}),
 		.wr_en_i(dcsr_en),
@@ -3075,7 +3075,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_depc_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(depc_d),
 		.wr_en_i(depc_en),
@@ -3087,7 +3087,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_dscratch0_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(csr_wdata_int),
 		.wr_en_i(dscratch0_en),
@@ -3099,7 +3099,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_dscratch1_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(csr_wdata_int),
 		.wr_en_i(dscratch1_en),
@@ -3112,7 +3112,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue({MSTACK_RESET_VAL})
 	) u_mstack_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i({mstack_d}),
 		.wr_en_i(mstack_en),
@@ -3124,7 +3124,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mstack_epc_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mstack_epc_d),
 		.wr_en_i(mstack_en),
@@ -3136,7 +3136,7 @@ module ibex_cs_registers (
 		.ShadowCopy(1'b0),
 		.ResetValue('0)
 	) u_mstack_cause_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i(mstack_cause_d),
 		.wr_en_i(mstack_en),
@@ -3216,7 +3216,7 @@ module ibex_cs_registers (
 					.ShadowCopy(ShadowCSR),
 					.ResetValue('0)
 				) u_pmp_cfg_csr(
-					.clk_i(clk_i),
+					.clk(clk),
 					.rst_ni(rst_ni),
 					.wr_data_i({pmp_cfg_wdata[i]}),
 					.wr_en_i(pmp_cfg_we[i]),
@@ -3234,7 +3234,7 @@ module ibex_cs_registers (
 					.ShadowCopy(ShadowCSR),
 					.ResetValue('0)
 				) u_pmp_addr_csr(
-					.clk_i(clk_i),
+					.clk(clk),
 					.rst_ni(rst_ni),
 					.wr_data_i(csr_wdata_int[31-:PMPAddrWidth]),
 					.wr_en_i(pmp_addr_we[i]),
@@ -3312,7 +3312,7 @@ module ibex_cs_registers (
 		end
 	end
 	ibex_counter #(.CounterWidth(64)) mcycle_counter_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.counter_inc_i(mhpmcounter_incr[0] & ~mcountinhibit[0]),
 		.counterh_we_i(mhpmcounterh_we[0]),
@@ -3321,7 +3321,7 @@ module ibex_cs_registers (
 		.counter_val_o(mhpmcounter[0])
 	);
 	ibex_counter #(.CounterWidth(64)) minstret_counter_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.counter_inc_i(mhpmcounter_incr[2] & ~mcountinhibit[2]),
 		.counterh_we_i(mhpmcounterh_we[2]),
@@ -3338,7 +3338,7 @@ module ibex_cs_registers (
 		for (cnt = 0; cnt < 29; cnt = cnt + 1) begin : gen_cntrs
 			if (cnt < MHPMCounterNum) begin : gen_imp
 				ibex_counter #(.CounterWidth(MHPMCounterWidth)) mcounters_variable_i(
-					.clk_i(clk_i),
+					.clk(clk),
 					.rst_ni(rst_ni),
 					.counter_inc_i(mhpmcounter_incr[cnt + 3] & ~mcountinhibit[cnt + 3]),
 					.counterh_we_i(mhpmcounterh_we[cnt + 3]),
@@ -3366,7 +3366,7 @@ module ibex_cs_registers (
 			assign mcountinhibit = mcountinhibit_q;
 		end
 	endgenerate
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			mcountinhibit_q <= {((MHPMCounterNum + 2) >= 0 ? MHPMCounterNum + 3 : 1 - (MHPMCounterNum + 2)) {1'sb0}};
 		else
@@ -3398,7 +3398,7 @@ module ibex_cs_registers (
 				.ShadowCopy(1'b0),
 				.ResetValue('0)
 			) u_tselect_csr(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.wr_data_i(tselect_d),
 				.wr_en_i(tselect_we),
@@ -3411,7 +3411,7 @@ module ibex_cs_registers (
 					.ShadowCopy(1'b0),
 					.ResetValue('0)
 				) u_tmatch_control_csr(
-					.clk_i(clk_i),
+					.clk(clk),
 					.rst_ni(rst_ni),
 					.wr_data_i(tmatch_control_d),
 					.wr_en_i(tmatch_control_we[i]),
@@ -3423,7 +3423,7 @@ module ibex_cs_registers (
 					.ShadowCopy(1'b0),
 					.ResetValue('0)
 				) u_tmatch_value_csr(
-					.clk_i(clk_i),
+					.clk(clk),
 					.rst_ni(rst_ni),
 					.wr_data_i(tmatch_value_d),
 					.wr_en_i(tmatch_value_we[i]),
@@ -3495,7 +3495,7 @@ module ibex_cs_registers (
 		.ShadowCopy(ShadowCSR),
 		.ResetValue('0)
 	) u_cpuctrl_csr(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.wr_data_i({cpuctrl_d}),
 		.wr_en_i(cpuctrl_we),
@@ -3505,7 +3505,7 @@ module ibex_cs_registers (
 	assign csr_shadow_err_o = ((mstatus_err | mtvec_err) | pmp_csr_err) | cpuctrl_err;
 endmodule
 module ibex_csr (
-	clk_i,
+	clk,
 	rst_ni,
 	wr_data_i,
 	wr_en_i,
@@ -3515,14 +3515,14 @@ module ibex_csr (
 	parameter [31:0] Width = 32;
 	parameter [0:0] ShadowCopy = 1'b0;
 	parameter [Width - 1:0] ResetValue = 1'sb0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [Width - 1:0] wr_data_i;
 	input wire wr_en_i;
 	output wire [Width - 1:0] rd_data_o;
 	output wire rd_error_o;
 	reg [Width - 1:0] rdata_q;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			rdata_q <= ResetValue;
 		else if (wr_en_i)
@@ -3531,7 +3531,7 @@ module ibex_csr (
 	generate
 		if (ShadowCopy) begin : gen_shadow
 			reg [Width - 1:0] shadow_q;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					shadow_q <= ~ResetValue;
 				else if (wr_en_i)
@@ -3544,7 +3544,7 @@ module ibex_csr (
 	endgenerate
 endmodule
 module ibex_decoder (
-	clk_i,
+	clk,
 	rst_ni,
 	illegal_insn_o,
 	ebrk_insn_o,
@@ -3601,7 +3601,7 @@ module ibex_decoder (
 	localparam integer ibex_pkg_RV32BNone = 0;
 	parameter integer RV32B = ibex_pkg_RV32BNone;
 	parameter [0:0] BranchTargetALU = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	output wire illegal_insn_o;
 	output reg ebrk_insn_o;
@@ -3677,7 +3677,7 @@ module ibex_decoder (
 	assign zimm_rs1_type_o = {27'b000000000000000000000000000, instr_rs1};
 	generate
 		if (RV32B != ibex_pkg_RV32BNone) begin : gen_rs3_flop
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					use_rs3_q <= 1'b0;
 				else
@@ -4492,7 +4492,7 @@ module ibex_decoder (
 	assign unused_instr_alu = {instr_alu[19:15], instr_alu[11:7]};
 endmodule
 module ibex_dummy_instr (
-	clk_i,
+	clk,
 	rst_ni,
 	dummy_instr_en_i,
 	dummy_instr_mask_i,
@@ -4503,7 +4503,7 @@ module ibex_dummy_instr (
 	insert_dummy_instr_o,
 	dummy_instr_data_o
 );
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire dummy_instr_en_i;
 	input wire [2:0] dummy_instr_mask_i;
@@ -4532,7 +4532,7 @@ module ibex_dummy_instr (
 	wire [31:0] dummy_instr_seed_d;
 	assign lfsr_en = insert_dummy_instr & id_in_ready_i;
 	assign dummy_instr_seed_d = dummy_instr_seed_q ^ dummy_instr_seed_i;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			dummy_instr_seed_q <= {32 {1'sb0}};
 		else if (dummy_instr_seed_en_i)
@@ -4541,7 +4541,7 @@ module ibex_dummy_instr (
 		.LfsrDw(32),
 		.StateOutDw(LFSR_OUT_W)
 	) lfsr_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.seed_en_i(dummy_instr_seed_en_i),
 		.seed_i(dummy_instr_seed_d),
@@ -4558,7 +4558,7 @@ module ibex_dummy_instr (
 	assign dummy_cnt_incr = dummy_cnt_q + {{TIMEOUT_CNT_W - 1 {1'b0}}, 1'b1};
 	assign dummy_cnt_d = (insert_dummy_instr ? {TIMEOUT_CNT_W {1'sb0}} : dummy_cnt_incr);
 	assign dummy_cnt_en = (dummy_instr_en_i & id_in_ready_i) & (fetch_valid_i | insert_dummy_instr);
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			dummy_cnt_q <= {TIMEOUT_CNT_W {1'sb0}};
 		else if (dummy_cnt_en)
@@ -4596,7 +4596,7 @@ module ibex_dummy_instr (
 	assign dummy_instr_data_o = dummy_instr;
 endmodule
 module ibex_ex_block (
-	clk_i,
+	clk,
 	rst_ni,
 	alu_operator_i,
 	alu_operand_a_i,
@@ -4628,7 +4628,7 @@ module ibex_ex_block (
 	localparam integer ibex_pkg_RV32BNone = 0;
 	parameter integer RV32B = ibex_pkg_RV32BNone;
 	parameter [0:0] BranchTargetALU = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [5:0] alu_operator_i;
 	input wire [31:0] alu_operand_a_i;
@@ -4721,7 +4721,7 @@ module ibex_ex_block (
 	generate
 		if (RV32M == ibex_pkg_RV32MSlow) begin : gen_multdiv_slow
 			ibex_multdiv_slow multdiv_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.mult_en_i(mult_en_i),
 				.div_en_i(div_en_i),
@@ -4747,7 +4747,7 @@ module ibex_ex_block (
 		end
 		else if ((RV32M == ibex_pkg_RV32MFast) || (RV32M == ibex_pkg_RV32MSingleCycle)) begin : gen_multdiv_fast
 			ibex_multdiv_fast #(.RV32M(RV32M)) multdiv_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.mult_en_i(mult_en_i),
 				.div_en_i(div_en_i),
@@ -4775,7 +4775,7 @@ module ibex_ex_block (
 	assign ex_valid_o = (multdiv_sel ? multdiv_valid : ~(|alu_imd_val_we));
 endmodule
 module ibex_fetch_fifo (
-	clk_i,
+	clk,
 	rst_ni,
 	clear_i,
 	busy_o,
@@ -4792,7 +4792,7 @@ module ibex_fetch_fifo (
 	out_err_plus2_o
 );
 	parameter [31:0] NUM_REQS = 2;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire clear_i;
 	output wire [NUM_REQS - 1:0] busy_o;
@@ -4863,7 +4863,7 @@ module ibex_fetch_fifo (
 	assign addr_incr_two = (instr_addr_q[1] ? unaligned_is_compressed : aligned_is_compressed);
 	assign instr_addr_next = instr_addr_q[31:1] + {29'd0, ~addr_incr_two, addr_incr_two};
 	assign instr_addr_d = (clear_i ? in_addr_i[31:1] : instr_addr_next);
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (instr_addr_en)
 			instr_addr_q <= instr_addr_d;
 	assign out_addr_next_o = {instr_addr_next, 1'b0};
@@ -4895,14 +4895,14 @@ module ibex_fetch_fifo (
 	assign entry_en[DEPTH - 1] = in_valid_i & lowest_free_entry[DEPTH - 1];
 	assign rdata_d[(DEPTH - 1) * 32+:32] = in_rdata_i;
 	assign err_d[DEPTH - 1] = in_err_i;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			valid_q <= {DEPTH {1'sb0}};
 		else
 			valid_q <= valid_d;
 	generate
 		for (i = 0; i < DEPTH; i = i + 1) begin : g_fifo_regs
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (entry_en[i]) begin
 					rdata_q[i * 32+:32] <= rdata_d[i * 32+:32];
 					err_q[i] <= err_d[i];
@@ -4911,7 +4911,7 @@ module ibex_fetch_fifo (
 	endgenerate
 endmodule
 module ibex_icache (
-	clk_i,
+	clk,
 	rst_ni,
 	req_i,
 	branch_i,
@@ -4941,7 +4941,7 @@ module ibex_icache (
 	parameter [31:0] NumWays = 2;
 	parameter [0:0] SpecRequest = 1'b0;
 	parameter [0:0] BranchCache = 1'b0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire req_i;
 	input wire branch_i;
@@ -5125,7 +5125,7 @@ module ibex_icache (
 	assign lookup_addr_aligned = {lookup_addr_ic0[ADDR_W - 1:LINE_W], {LINE_W {1'b0}}};
 	assign prefetch_addr_d = (lookup_grant_ic0 ? lookup_addr_aligned + {{(ADDR_W - LINE_W) - 1 {1'b0}}, 1'b1, {LINE_W {1'b0}}} : addr_i);
 	assign prefetch_addr_en = branch_i | lookup_grant_ic0;
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (prefetch_addr_en)
 			prefetch_addr_q <= prefetch_addr_d;
 	assign lookup_throttle = fb_fill_level > FB_THRESHOLD[1:0];
@@ -5178,7 +5178,7 @@ module ibex_icache (
 				.Depth(NUM_LINES),
 				.DataBitsPerMask(TAG_SIZE_ECC)
 			) tag_bank(
-				.clk_i(clk_i),
+				.clk(clk),
 				.req_i(tag_req_ic0 & tag_banks_ic0[way]),
 				.write_i(tag_write_ic0),
 				.wmask_i({TAG_SIZE_ECC {1'b1}}),
@@ -5191,7 +5191,7 @@ module ibex_icache (
 				.Depth(NUM_LINES),
 				.DataBitsPerMask(LINE_SIZE_ECC)
 			) data_bank(
-				.clk_i(clk_i),
+				.clk(clk),
 				.req_i(data_req_ic0 & data_banks_ic0[way]),
 				.write_i(data_write_ic0),
 				.wmask_i({LINE_SIZE_ECC {1'b1}}),
@@ -5201,12 +5201,12 @@ module ibex_icache (
 			);
 		end
 	endgenerate
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			lookup_valid_ic1 <= 1'b0;
 		else
 			lookup_valid_ic1 <= lookup_actual_ic0;
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (lookup_grant_ic0) begin
 			lookup_addr_ic1 <= lookup_addr_ic0[ADDR_W - 1:INDEX_HI + 1];
 			fill_in_ic1 <= fill_alloc_sel;
@@ -5235,7 +5235,7 @@ module ibex_icache (
 			assign round_robin_way_ic1[way] = round_robin_way_q[way - 1];
 		end
 	endgenerate
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			round_robin_way_q <= {{NumWays - 1 {1'b0}}, 1'b1};
 		else if (lookup_valid_ic1)
@@ -5272,15 +5272,15 @@ module ibex_icache (
 			assign ecc_err_ic1 = lookup_valid_ic1 & (|data_err_ic1 | |tag_err_ic1);
 			assign ecc_correction_ways_d = {NumWays {|tag_err_ic1}} | (tag_match_ic1 & {NumWays {|data_err_ic1}});
 			assign ecc_correction_write_d = ecc_err_ic1;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					ecc_correction_write_q <= 1'b0;
 				else
 					ecc_correction_write_q <= ecc_correction_write_d;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (lookup_grant_ic0)
 					lookup_index_ic1 <= lookup_addr_ic0[INDEX_HI-:INDEX_W];
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (ecc_err_ic1) begin
 					ecc_correction_ways_q <= ecc_correction_ways_d;
 					ecc_correction_index_q <= lookup_index_ic1;
@@ -5305,7 +5305,7 @@ module ibex_icache (
 			reg [CACHE_CNT_W - 1:0] cache_cnt_q;
 			assign cache_cnt_dec = lookup_grant_ic0 & |cache_cnt_q;
 			assign cache_cnt_d = (branch_i ? CACHE_AHEAD[CACHE_CNT_W - 1:0] : cache_cnt_q - {{CACHE_CNT_W - 1 {1'b0}}, cache_cnt_dec});
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					cache_cnt_q <= {CACHE_CNT_W {1'sb0}};
 				else
@@ -5373,7 +5373,7 @@ module ibex_icache (
 			assign fill_data_hit[fb] = (fill_busy_q[fb] & fill_hit_ic1[fb]) & fill_data_sel[fb];
 			assign fill_data_rvd[fb] = ((((((fill_busy_q[fb] & fill_rvd_arb[fb]) & ~fill_hit_q[fb]) & ~fill_hit_ic1[fb]) & ~fill_stale_q[fb]) & ~fill_out_done[fb]) & (fill_rvd_beat[(LINE_BEATS_W >= 0 ? 0 : LINE_BEATS_W) + (fb * (LINE_BEATS_W >= 0 ? LINE_BEATS_W + 1 : 1 - LINE_BEATS_W))+:(LINE_BEATS_W >= 0 ? LINE_BEATS_W + 1 : 1 - LINE_BEATS_W)] == fill_out_cnt_q[(LINE_BEATS_W >= 0 ? 0 : LINE_BEATS_W) + (fb * (LINE_BEATS_W >= 0 ? LINE_BEATS_W + 1 : 1 - LINE_BEATS_W))+:(LINE_BEATS_W >= 0 ? LINE_BEATS_W + 1 : 1 - LINE_BEATS_W)])) & fill_data_sel[fb];
 			assign fill_entry_en[fb] = fill_alloc[fb] | fill_busy_q[fb];
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni) begin
 					fill_busy_q[fb] <= 1'b0;
 					fill_older_q[fb * NUM_FB+:NUM_FB] <= {NUM_FB {1'sb0}};
@@ -5400,23 +5400,23 @@ module ibex_icache (
 				end
 			assign fill_addr_en[fb] = fill_alloc[fb];
 			assign fill_way_en[fb] = lookup_valid_ic1 & fill_in_ic1[fb];
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (fill_addr_en[fb])
 					fill_addr_q[fb] <= lookup_addr_ic0;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (fill_way_en[fb])
 					fill_way_q[fb] <= sel_way_ic1;
 			assign fill_data_d[fb] = (fill_hit_ic1[fb] ? hit_data_ic1[LineSize - 1:0] : {LINE_BEATS {instr_rdata_i}});
 			genvar b;
 			for (b = 0; b < LINE_BEATS; b = b + 1) begin : gen_data_buf
 				assign fill_err_d[(fb * LINE_BEATS) + b] = (((((instr_pmp_err_i & fill_alloc[fb]) & fill_spec_req) & (lookup_addr_ic0[LINE_W - 1:BUS_W] == b[LINE_BEATS_W - 1:0])) | ((instr_pmp_err_i & fill_ext_arb[fb]) & (fill_ext_off[fb * LINE_BEATS_W+:LINE_BEATS_W] == b[LINE_BEATS_W - 1:0]))) | ((fill_rvd_arb[fb] & instr_err_i) & (fill_rvd_off[fb * LINE_BEATS_W+:LINE_BEATS_W] == b[LINE_BEATS_W - 1:0]))) | (fill_busy_q[fb] & fill_err_q[(fb * LINE_BEATS) + b]);
-				always @(posedge clk_i or negedge rst_ni)
+				always @(posedge clk or negedge rst_ni)
 					if (!rst_ni)
 						fill_err_q[(fb * LINE_BEATS) + b] <= 1'b0;
 					else if (fill_entry_en[fb])
 						fill_err_q[(fb * LINE_BEATS) + b] <= fill_err_d[(fb * LINE_BEATS) + b];
 				assign fill_data_en[(fb * LINE_BEATS) + b] = fill_hit_ic1[fb] | ((fill_rvd_arb[fb] & ~fill_hit_q[fb]) & (fill_rvd_off[fb * LINE_BEATS_W+:LINE_BEATS_W] == b[LINE_BEATS_W - 1:0]));
-				always @(posedge clk_i)
+				always @(posedge clk)
 					if (fill_data_en[(fb * LINE_BEATS) + b])
 						fill_data_q[fb][b * BusWidth+:BusWidth] <= fill_data_d[fb][b * BusWidth+:BusWidth];
 			end
@@ -5480,7 +5480,7 @@ module ibex_icache (
 	assign data_valid = |fill_out_arb;
 	assign skid_data_d = output_data[31:16];
 	assign skid_en = data_valid & (ready_i | skid_ready);
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (skid_en) begin
 			skid_data_q <= skid_data_d;
 			skid_err_q <= output_err;
@@ -5490,7 +5490,7 @@ module ibex_icache (
 	assign output_ready = (ready_i | skid_ready) & ~skid_complete_instr;
 	assign output_compressed = rdata_o[1:0] != 2'b11;
 	assign skid_valid_d = (branch_i ? 1'b0 : (skid_valid_q ? ~(ready_i & ((skid_data_q[1:0] != 2'b11) | skid_err_q)) : ((output_addr_q[1] & (~output_compressed | output_err)) | (((~output_addr_q[1] & output_compressed) & ~output_err) & ready_i)) & data_valid));
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			skid_valid_q <= 1'b0;
 		else
@@ -5499,7 +5499,7 @@ module ibex_icache (
 	assign output_addr_en = branch_i | (ready_i & valid_o);
 	assign addr_incr_two = output_compressed & ~err_o;
 	assign output_addr_d = (branch_i ? addr_i[31:1] : output_addr_q[31:1] + {29'd0, ~addr_incr_two, addr_incr_two});
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (output_addr_en)
 			output_addr_q <= output_addr_d;
 	always @(*) begin
@@ -5531,7 +5531,7 @@ module ibex_icache (
 	assign inval_prog_d = start_inval | (inval_prog_q & ~inval_done);
 	assign inval_done = &inval_index_q;
 	assign inval_index_d = (start_inval ? {INDEX_W {1'sb0}} : inval_index_q + {{INDEX_W - 1 {1'b0}}, 1'b1});
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			inval_prog_q <= 1'b0;
 			reset_inval_q <= 1'b0;
@@ -5540,13 +5540,13 @@ module ibex_icache (
 			inval_prog_q <= inval_prog_d;
 			reset_inval_q <= 1'b1;
 		end
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (inval_prog_d)
 			inval_index_q <= inval_index_d;
 	assign busy_o = inval_prog_q | |(fill_busy_q & ~fill_rvd_done);
 endmodule
 module ibex_id_stage (
-	clk_i,
+	clk,
 	rst_ni,
 	ctrl_busy_o,
 	illegal_insn_o,
@@ -5668,7 +5668,7 @@ module ibex_id_stage (
 	parameter [0:0] SpecBranch = 0;
 	parameter [0:0] WritebackStage = 0;
 	parameter [0:0] BranchPredictor = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	output wire ctrl_busy_o;
 	output wire illegal_insn_o;
@@ -5939,7 +5939,7 @@ module ibex_id_stage (
 	generate
 		genvar i;
 		for (i = 0; i < 2; i = i + 1) begin : gen_intermediate_val_reg
-			always @(posedge clk_i or negedge rst_ni) begin : intermediate_val_reg
+			always @(posedge clk or negedge rst_ni) begin : intermediate_val_reg
 				if (!rst_ni)
 					imd_val_q[(1 - i) * 34+:34] <= {34 {1'sb0}};
 				else if (imd_val_we_ex_i[i])
@@ -5964,7 +5964,7 @@ module ibex_id_stage (
 		.RV32B(RV32B),
 		.BranchTargetALU(BranchTargetALU)
 	) decoder_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.illegal_insn_o(illegal_insn_dec),
 		.ebrk_insn_o(ebrk_insn),
@@ -6039,7 +6039,7 @@ module ibex_id_stage (
 		.WritebackStage(WritebackStage),
 		.BranchPredictor(BranchPredictor)
 	) controller_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.ctrl_busy_o(ctrl_busy_o),
 		.illegal_insn_i(illegal_insn_o),
@@ -6130,7 +6130,7 @@ module ibex_id_stage (
 		end
 		else begin : g_branch_set_flop
 			reg branch_set_q;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					branch_set_q <= 1'b0;
 				else
@@ -6142,7 +6142,7 @@ module ibex_id_stage (
 	generate
 		if (DataIndTiming) begin : g_sec_branch_taken
 			reg branch_taken_q;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					branch_taken_q <= 1'b0;
 				else
@@ -6156,7 +6156,7 @@ module ibex_id_stage (
 	reg id_fsm_q;
 	reg id_fsm_d;
 	localparam [0:0] FIRST_CYCLE = 0;
-	always @(posedge clk_i or negedge rst_ni) begin : id_pipeline_reg
+	always @(posedge clk or negedge rst_ni) begin : id_pipeline_reg
 		if (!rst_ni)
 			id_fsm_q <= FIRST_CYCLE;
 		else
@@ -6297,7 +6297,7 @@ module ibex_id_stage (
 	assign perf_div_wait_o = stall_multdiv & div_en_dec;
 endmodule
 module ibex_if_stage (
-	clk_i,
+	clk,
 	rst_ni,
 	boot_addr_i,
 	req_i,
@@ -6350,7 +6350,7 @@ module ibex_if_stage (
 	parameter [0:0] ICacheECC = 1'b0;
 	parameter [0:0] PCIncrCheck = 1'b0;
 	parameter [0:0] BranchPredictor = 1'b0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [31:0] boot_addr_i;
 	input wire req_i;
@@ -6468,7 +6468,7 @@ module ibex_if_stage (
 	generate
 		if (ICache) begin : gen_icache
 			ibex_icache #(.ICacheECC(ICacheECC)) icache_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.req_i(req_i),
 				.branch_i(branch_req),
@@ -6498,7 +6498,7 @@ module ibex_if_stage (
 		end
 		else begin : gen_prefetch_buffer
 			ibex_prefetch_buffer #(.BranchPredictor(BranchPredictor)) prefetch_buffer_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.req_i(req_i),
 				.branch_i(branch_req),
@@ -6536,7 +6536,7 @@ module ibex_if_stage (
 	wire illegal_c_insn;
 	wire instr_is_compressed;
 	ibex_compressed_decoder compressed_decoder_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.valid_i(fetch_valid & ~fetch_err),
 		.instr_i(if_instr_rdata),
@@ -6549,7 +6549,7 @@ module ibex_if_stage (
 			wire insert_dummy_instr;
 			wire [31:0] dummy_instr_data;
 			ibex_dummy_instr dummy_instr_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.dummy_instr_en_i(dummy_instr_en_i),
 				.dummy_instr_mask_i(dummy_instr_mask_i),
@@ -6565,7 +6565,7 @@ module ibex_if_stage (
 			assign illegal_c_instr_out = (insert_dummy_instr ? 1'b0 : illegal_c_insn);
 			assign instr_err_out = (insert_dummy_instr ? 1'b0 : if_instr_err);
 			assign stall_dummy_instr = insert_dummy_instr;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					dummy_instr_id_o <= 1'b0;
 				else if (if_id_pipe_reg_we)
@@ -6592,7 +6592,7 @@ module ibex_if_stage (
 	endgenerate
 	assign instr_valid_id_d = ((if_instr_valid & id_in_ready_i) & ~pc_set_i) | (instr_valid_id_q & ~instr_valid_clear_i);
 	assign instr_new_id_d = if_instr_valid & id_in_ready_i;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			instr_valid_id_q <= 1'b0;
 			instr_new_id_q <= 1'b0;
@@ -6604,7 +6604,7 @@ module ibex_if_stage (
 	assign instr_valid_id_o = instr_valid_id_q;
 	assign instr_new_id_o = instr_new_id_q;
 	assign if_id_pipe_reg_we = instr_new_id_d;
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (if_id_pipe_reg_we) begin
 			instr_rdata_id_o <= instr_out;
 			instr_rdata_alu_id_o <= instr_out;
@@ -6621,7 +6621,7 @@ module ibex_if_stage (
 			reg prev_instr_seq_q;
 			wire prev_instr_seq_d;
 			assign prev_instr_seq_d = ((prev_instr_seq_q | instr_new_id_d) & ~branch_req) & ~stall_dummy_instr;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					prev_instr_seq_q <= 1'b0;
 				else
@@ -6644,24 +6644,24 @@ module ibex_if_stage (
 			reg instr_bp_taken_q;
 			wire instr_bp_taken_d;
 			wire predict_branch_taken_raw;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (if_id_pipe_reg_we)
 					instr_bp_taken_q <= instr_bp_taken_d;
 			assign instr_skid_en = (predicted_branch & ~id_in_ready_i) & ~instr_skid_valid_q;
 			assign instr_skid_valid_d = ((instr_skid_valid_q & ~id_in_ready_i) & ~stall_dummy_instr) | instr_skid_en;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					instr_skid_valid_q <= 1'b0;
 				else
 					instr_skid_valid_q <= instr_skid_valid_d;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (instr_skid_en) begin
 					instr_skid_bp_taken_q <= predict_branch_taken;
 					instr_skid_data_q <= fetch_rdata;
 					instr_skid_addr_q <= fetch_addr;
 				end
 			ibex_branch_predict branch_predict_i(
-				.clk_i(clk_i),
+				.clk(clk),
 				.rst_ni(rst_ni),
 				.fetch_rdata_i(fetch_rdata),
 				.fetch_pc_i(fetch_addr),
@@ -6693,7 +6693,7 @@ module ibex_if_stage (
 	endgenerate
 endmodule
 module ibex_load_store_unit (
-	clk_i,
+	clk,
 	rst_ni,
 	data_req_o,
 	data_gnt_i,
@@ -6723,7 +6723,7 @@ module ibex_load_store_unit (
 	perf_load_o,
 	perf_store_o
 );
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	output reg data_req_o;
 	input wire data_gnt_i;
@@ -6830,12 +6830,12 @@ module ibex_load_store_unit (
 			2'b11: data_wdata = {lsu_wdata_i[7:0], lsu_wdata_i[31:8]};
 			default: data_wdata = lsu_wdata_i[31:0];
 		endcase
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			rdata_q <= {24 {1'sb0}};
 		else if (rdata_update)
 			rdata_q <= data_rdata_i[31:8];
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			rdata_offset_q <= 2'h0;
 			data_type_q <= 2'h0;
@@ -6848,7 +6848,7 @@ module ibex_load_store_unit (
 			data_sign_ext_q <= lsu_sign_ext_i;
 			data_we_q <= lsu_we_i;
 		end
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			addr_last_q <= {32 {1'sb0}};
 		else if (addr_update)
@@ -7002,7 +7002,7 @@ module ibex_load_store_unit (
 		endcase
 	end
 	assign lsu_req_done_o = (lsu_req_i | (ls_fsm_cs != IDLE)) & (ls_fsm_ns == IDLE);
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			ls_fsm_cs <= IDLE;
 			handle_misaligned_q <= 1'b0;
@@ -7030,7 +7030,7 @@ module ibex_load_store_unit (
 	assign busy_o = ls_fsm_cs != IDLE;
 endmodule
 module ibex_multdiv_fast (
-	clk_i,
+	clk,
 	rst_ni,
 	mult_en_i,
 	div_en_i,
@@ -7055,7 +7055,7 @@ module ibex_multdiv_fast (
 );
 	localparam integer ibex_pkg_RV32MFast = 2;
 	parameter integer RV32M = ibex_pkg_RV32MFast;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire mult_en_i;
 	input wire div_en_i;
@@ -7119,7 +7119,7 @@ module ibex_multdiv_fast (
 	assign mult_en_internal = mult_en_i & ~mult_hold;
 	assign div_en_internal = div_en_i & ~div_hold;
 	localparam [2:0] MD_IDLE = 0;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			div_counter_q <= {5 {1'sb0}};
 			md_state_q <= MD_IDLE;
@@ -7242,7 +7242,7 @@ module ibex_multdiv_fast (
 					default: mult_state_d = MULL;
 				endcase
 			end
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					mult_state_q <= MULL;
 				else if (mult_en_internal)
@@ -7322,7 +7322,7 @@ module ibex_multdiv_fast (
 					default: mult_state_d = ALBL;
 				endcase
 			end
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					mult_state_q <= ALBL;
 				else if (mult_en_internal)
@@ -7430,7 +7430,7 @@ module ibex_multdiv_fast (
 	assign valid_o = mult_valid | div_valid;
 endmodule
 module ibex_multdiv_slow (
-	clk_i,
+	clk,
 	rst_ni,
 	mult_en_i,
 	div_en_i,
@@ -7453,7 +7453,7 @@ module ibex_multdiv_slow (
 	multdiv_result_o,
 	valid_o
 );
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire mult_en_i;
 	input wire div_en_i;
@@ -7690,7 +7690,7 @@ module ibex_multdiv_slow (
 			endcase
 	end
 	assign multdiv_en = (mult_en_i | div_en_i) & ~multdiv_hold;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			multdiv_count_q <= 5'h00;
 			op_b_shift_q <= 33'h000000000;
@@ -7709,7 +7709,7 @@ module ibex_multdiv_slow (
 	assign multdiv_result_o = (div_en_i ? accum_window_q[31:0] : res_adder_l[31:0]);
 endmodule
 module ibex_pmp (
-	clk_i,
+	clk,
 	rst_ni,
 	csr_pmp_cfg_i,
 	csr_pmp_addr_i,
@@ -7721,7 +7721,7 @@ module ibex_pmp (
 	parameter [31:0] PMPGranularity = 0;
 	parameter [31:0] PMPNumChan = 2;
 	parameter [31:0] PMPNumRegions = 4;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire [(0 >= (PMPNumRegions - 1) ? ((2 - PMPNumRegions) * 6) + (((PMPNumRegions - 1) * 6) - 1) : (PMPNumRegions * 6) - 1):(0 >= (PMPNumRegions - 1) ? (PMPNumRegions - 1) * 6 : 0)] csr_pmp_cfg_i;
 	input wire [(0 >= (PMPNumRegions - 1) ? ((2 - PMPNumRegions) * 34) + (((PMPNumRegions - 1) * 34) - 1) : (PMPNumRegions * 34) - 1):(0 >= (PMPNumRegions - 1) ? (PMPNumRegions - 1) * 34 : 0)] csr_pmp_addr_i;
@@ -7798,7 +7798,7 @@ module ibex_pmp (
 	endgenerate
 endmodule
 module ibex_prefetch_buffer (
-	clk_i,
+	clk,
 	rst_ni,
 	req_i,
 	branch_i,
@@ -7822,7 +7822,7 @@ module ibex_prefetch_buffer (
 	busy_o
 );
 	parameter [0:0] BranchPredictor = 1'b0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire req_i;
 	input wire branch_i;
@@ -7894,7 +7894,7 @@ module ibex_prefetch_buffer (
 	endgenerate
 	assign fifo_ready = ~&(fifo_busy | rdata_outstanding_rev);
 	ibex_fetch_fifo #(.NUM_REQS(NUM_REQS)) fifo_i(
-		.clk_i(clk_i),
+		.clk(clk),
 		.rst_ni(rst_ni),
 		.clear_i(fifo_clear),
 		.busy_o(fifo_busy),
@@ -7919,7 +7919,7 @@ module ibex_prefetch_buffer (
 	assign discard_req_d = valid_req_q & (branch_or_mispredict | discard_req_q);
 	assign stored_addr_en = (valid_new_req & ~valid_req_q) & ~gnt_or_pmp_err;
 	assign stored_addr_d = instr_addr;
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (stored_addr_en)
 			stored_addr_q <= stored_addr_d;
 	generate
@@ -7927,7 +7927,7 @@ module ibex_prefetch_buffer (
 			reg [31:0] branch_mispredict_addr_q;
 			wire branch_mispredict_addr_en;
 			assign branch_mispredict_addr_en = branch_i & predicted_branch_i;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (branch_mispredict_addr_en)
 					branch_mispredict_addr_q <= addr_next;
 			assign branch_mispredict_addr = branch_mispredict_addr_q;
@@ -7942,7 +7942,7 @@ module ibex_prefetch_buffer (
 	endgenerate
 	assign fetch_addr_en = branch_or_mispredict | (valid_new_req & ~valid_req_q);
 	assign fetch_addr_d = (branch_i ? addr_i : (branch_mispredict_i ? {branch_mispredict_addr[31:2], 2'b00} : {fetch_addr_q[31:2], 2'b00})) + {{29 {1'b0}}, valid_new_req & ~valid_req_q, 2'b00};
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (fetch_addr_en)
 			fetch_addr_q <= fetch_addr_d;
 	assign instr_addr = (valid_req_q ? stored_addr_q : (branch_spec_i ? addr_i : (branch_mispredict_i ? branch_mispredict_addr : fetch_addr_q)));
@@ -7966,7 +7966,7 @@ module ibex_prefetch_buffer (
 	assign rdata_pmp_err_s = (rvalid_or_pmp_err ? {1'b0, rdata_pmp_err_n[NUM_REQS - 1:1]} : rdata_pmp_err_n);
 	assign fifo_valid = rvalid_or_pmp_err & ~branch_discard_q[0];
 	assign fifo_addr = (branch_mispredict_i ? branch_mispredict_addr : addr_i);
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni) begin
 			valid_req_q <= 1'b0;
 			discard_req_q <= 1'b0;
@@ -7986,7 +7986,7 @@ module ibex_prefetch_buffer (
 	assign valid_o = valid_raw & ~branch_mispredict_i;
 endmodule
 module ibex_register_file_ff (
-	clk_i,
+	clk,
 	rst_ni,
 	test_en_i,
 	dummy_instr_id_i,
@@ -8001,7 +8001,7 @@ module ibex_register_file_ff (
 	parameter [0:0] RV32E = 0;
 	parameter [31:0] DataWidth = 32;
 	parameter [0:0] DummyInstructions = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire test_en_i;
 	input wire dummy_instr_id_i;
@@ -8031,7 +8031,7 @@ module ibex_register_file_ff (
 	generate
 		genvar i;
 		for (i = 1; i < NUM_WORDS; i = i + 1) begin : g_rf_flops
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					rf_reg_q[((NUM_WORDS - 1) >= 1 ? i : 1 - (i - (NUM_WORDS - 1))) * DataWidth+:DataWidth] <= {DataWidth {1'sb0}};
 				else if (we_a_dec[i])
@@ -8043,7 +8043,7 @@ module ibex_register_file_ff (
 			wire we_r0_dummy;
 			reg [DataWidth - 1:0] rf_r0_q;
 			assign we_r0_dummy = we_a_i & dummy_instr_id_i;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (!rst_ni)
 					rf_r0_q <= {DataWidth {1'sb0}};
 				else if (we_r0_dummy)
@@ -8063,7 +8063,7 @@ module ibex_register_file_ff (
 	assign unused_test_en = test_en_i;
 endmodule
 module ibex_register_file_fpga (
-	clk_i,
+	clk,
 	rst_ni,
 	test_en_i,
 	dummy_instr_id_i,
@@ -8078,7 +8078,7 @@ module ibex_register_file_fpga (
 	parameter [0:0] RV32E = 0;
 	parameter [31:0] DataWidth = 32;
 	parameter [0:0] DummyInstructions = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire test_en_i;
 	input wire dummy_instr_id_i;
@@ -8096,7 +8096,7 @@ module ibex_register_file_fpga (
 	assign rdata_a_o = (raddr_a_i == {5 {1'sb0}} ? {DataWidth {1'sb0}} : mem[raddr_a_i]);
 	assign rdata_b_o = (raddr_b_i == {5 {1'sb0}} ? {DataWidth {1'sb0}} : mem[raddr_b_i]);
 	assign we = (waddr_a_i == {5 {1'sb0}} ? 1'b0 : we_a_i);
-	always @(posedge clk_i) begin : sync_write
+	always @(posedge clk) begin : sync_write
 		if (we == 1'b1)
 			mem[waddr_a_i] <= wdata_a_i;
 	end
@@ -8108,7 +8108,7 @@ module ibex_register_file_fpga (
 	assign unused_test_en = test_en_i;
 endmodule
 module ibex_register_file_latch (
-	clk_i,
+	clk,
 	rst_ni,
 	test_en_i,
 	dummy_instr_id_i,
@@ -8123,7 +8123,7 @@ module ibex_register_file_latch (
 	parameter [0:0] RV32E = 0;
 	parameter [31:0] DataWidth = 32;
 	parameter [0:0] DummyInstructions = 0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire test_en_i;
 	input wire dummy_instr_id_i;
@@ -8146,16 +8146,16 @@ module ibex_register_file_latch (
 	assign raddr_a_int = raddr_a_i[ADDR_WIDTH - 1:0];
 	assign raddr_b_int = raddr_b_i[ADDR_WIDTH - 1:0];
 	assign waddr_a_int = waddr_a_i[ADDR_WIDTH - 1:0];
-	wire clk_int;
+	wire clknt;
 	assign rdata_a_o = mem[raddr_a_int];
 	assign rdata_b_o = mem[raddr_b_int];
 	prim_clock_gating cg_we_global(
-		.clk_i(clk_i),
+		.clk(clk),
 		.en_i(we_a_i),
 		.test_en_i(test_en_i),
-		.clk_o(clk_int)
+		.clk_o(clknt)
 	);
-	always @(posedge clk_int or negedge rst_ni) begin : sample_wdata
+	always @(posedge clknt or negedge rst_ni) begin : sample_wdata
 		if (!rst_ni)
 			wdata_a_q <= {DataWidth {1'sb0}};
 		else if (we_a_i)
@@ -8181,7 +8181,7 @@ module ibex_register_file_latch (
 		genvar x;
 		for (x = 1; x < NUM_WORDS; x = x + 1) begin : gen_cg_word_iter
 			prim_clock_gating cg_i(
-				.clk_i(clk_int),
+				.clk(clknt),
 				.en_i(waddr_onehot_a[x]),
 				.test_en_i(test_en_i),
 				.clk_o(mem_clocks[x])
@@ -8203,7 +8203,7 @@ module ibex_register_file_latch (
 			reg [DataWidth - 1:0] mem_r0;
 			assign we_r0_dummy = we_a_i & dummy_instr_id_i;
 			prim_clock_gating cg_i(
-				.clk_i(clk_int),
+				.clk(clknt),
 				.en_i(we_r0_dummy),
 				.test_en_i(test_en_i),
 				.clk_o(r0_clock)
@@ -8226,7 +8226,7 @@ module ibex_register_file_latch (
 	endgenerate
 endmodule
 module ibex_wb_stage (
-	clk_i,
+	clk,
 	rst_ni,
 	en_wb_i,
 	instr_type_wb_i,
@@ -8254,7 +8254,7 @@ module ibex_wb_stage (
 	instr_done_wb_o
 );
 	parameter [0:0] WritebackStage = 1'b0;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire en_wb_i;
 	input wire [1:0] instr_type_wb_i;
@@ -8299,12 +8299,12 @@ module ibex_wb_stage (
 			wire wb_valid_d;
 			assign wb_valid_d = (en_wb_i & ready_wb_o) | (wb_valid_q & ~wb_done);
 			assign wb_done = (wb_instr_type_q == ibex_pkg_WB_INSTR_OTHER) | lsu_resp_valid_i;
-			always @(posedge clk_i or negedge rst_ni)
+			always @(posedge clk or negedge rst_ni)
 				if (~rst_ni)
 					wb_valid_q <= 1'b0;
 				else
 					wb_valid_q <= wb_valid_d;
-			always @(posedge clk_i)
+			always @(posedge clk)
 				if (en_wb_i) begin
 					rf_we_wb_q <= rf_we_id_i;
 					rf_waddr_wb_q <= rf_waddr_id_i;
@@ -8338,7 +8338,7 @@ module ibex_wb_stage (
 			wire unused_rst;
 			wire [1:0] unused_instr_type_wb;
 			wire [31:0] unused_pc_id;
-			assign unused_clk = clk_i;
+			assign unused_clk = clk;
 			assign unused_rst = rst_ni;
 			assign unused_instr_type_wb = instr_type_wb_i;
 			assign unused_pc_id = pc_id_i;
@@ -8356,7 +8356,7 @@ module ibex_wb_stage (
 	assign rf_we_wb_o = |rf_wdata_wb_mux_we;
 endmodule
 module prim_badbit_ram_1p (
-	clk_i,
+	clk,
 	req_i,
 	write_i,
 	addr_i,
@@ -8370,7 +8370,7 @@ module prim_badbit_ram_1p (
 	parameter _sv2v_width_MemInitFile = 1;
 	parameter [_sv2v_width_MemInitFile - 1:0] MemInitFile = "";
 	localparam signed [31:0] Aw = $clog2(Depth);
-	input wire clk_i;
+	input wire clk;
 	input wire req_i;
 	input wire write_i;
 	input wire [Aw - 1:0] addr_i;
@@ -8384,7 +8384,7 @@ module prim_badbit_ram_1p (
 		.DataBitsPerMask(DataBitsPerMask),
 		.MemInitFile(MemInitFile)
 	) u_mem(
-		.clk_i(clk_i),
+		.clk(clk),
 		.req_i(req_i),
 		.write_i(write_i),
 		.addr_i(addr_i),
@@ -8413,7 +8413,7 @@ endmodule
 // Example clock gating module for yosys synthesis
 
 module prim_clock_gating (
-  input  clk_i,
+  input  clk,
   input  en_i,
   input  test_en_i,
   output clk_o
@@ -8422,31 +8422,31 @@ module prim_clock_gating (
   reg en_latch;
 
   always @* begin
-    if (!clk_i) begin
+    if (!clk) begin
       en_latch = en_i | test_en_i;
     end
   end
-  assign clk_o = en_latch & clk_i;
+  assign clk_o = en_latch & clk;
 
 endmodule
 module prim_generic_clock_gating (
-	clk_i,
+	clk,
 	en_i,
 	test_en_i,
 	clk_o
 );
-	input clk_i;
+	input clk;
 	input en_i;
 	input test_en_i;
 	output wire clk_o;
 	reg en_latch;
 	always @(*)
-		if (!clk_i)
+		if (!clk)
 			en_latch = en_i | test_en_i;
-	assign clk_o = en_latch & clk_i;
+	assign clk_o = en_latch & clk;
 endmodule
 module prim_generic_ram_1p (
-	clk_i,
+	clk,
 	req_i,
 	write_i,
 	addr_i,
@@ -8460,7 +8460,7 @@ module prim_generic_ram_1p (
 	parameter _sv2v_width_MemInitFile = 1;
 	parameter [_sv2v_width_MemInitFile - 1:0] MemInitFile = "";
 	localparam signed [31:0] Aw = $clog2(Depth);
-	input wire clk_i;
+	input wire clk;
 	input wire req_i;
 	input wire write_i;
 	input wire [Aw - 1:0] addr_i;
@@ -8476,7 +8476,7 @@ module prim_generic_ram_1p (
 			assign wmask[k] = &wmask_i[k * DataBitsPerMask+:DataBitsPerMask];
 		end
 	endgenerate
-	always @(posedge clk_i)
+	always @(posedge clk)
 		if (req_i)
 			if (write_i) begin : sv2v_autoblock_2
 				reg signed [31:0] i;
@@ -8492,7 +8492,7 @@ module prim_generic_ram_1p (
 	end
 endmodule
 module prim_lfsr (
-	clk_i,
+	clk,
 	rst_ni,
 	seed_en_i,
 	seed_i,
@@ -8514,7 +8514,7 @@ module prim_lfsr (
 	parameter [0:0] MaxLenSVA = 1'b1;
 	parameter [0:0] LockupSVA = 1'b1;
 	parameter [0:0] ExtSeedSVA = 1'b1;
-	input clk_i;
+	input clk;
 	input rst_ni;
 	input seed_en_i;
 	input [LfsrDw - 1:0] seed_i;
@@ -8572,7 +8572,7 @@ module prim_lfsr (
 	endgenerate
 	assign lfsr_d = (seed_en_i ? seed_i : (lfsr_en_i && lockup ? DefaultSeed : (lfsr_en_i ? next_lfsr_state : lfsr_q)));
 	assign state_o = lfsr_q[StateOutDw - 1:0];
-	always @(posedge clk_i or negedge rst_ni) begin : p_reg
+	always @(posedge clk or negedge rst_ni) begin : p_reg
 		if (!rst_ni)
 			lfsr_q <= DefaultSeed;
 		else
@@ -8580,7 +8580,7 @@ module prim_lfsr (
 	end
 endmodule
 module prim_ram_1p (
-	clk_i,
+	clk,
 	req_i,
 	write_i,
 	addr_i,
@@ -8594,7 +8594,7 @@ module prim_ram_1p (
 	parameter _sv2v_width_MemInitFile = 1;
 	parameter [_sv2v_width_MemInitFile - 1:0] MemInitFile = "";
 	localparam signed [31:0] Aw = $clog2(Depth);
-	input wire clk_i;
+	input wire clk;
 	input wire req_i;
 	input wire write_i;
 	input wire [Aw - 1:0] addr_i;
@@ -8968,17 +8968,17 @@ module prim_secded_72_64_enc (
 	assign out[71] = ((((((((((((((((((((((((in[5] ^ in[10]) ^ in[14]) ^ in[17]) ^ in[19]) ^ in[20]) ^ in[25]) ^ in[29]) ^ in[32]) ^ in[34]) ^ in[35]) ^ in[39]) ^ in[42]) ^ in[44]) ^ in[45]) ^ in[48]) ^ in[50]) ^ in[51]) ^ in[53]) ^ in[54]) ^ in[55]) ^ in[57]) ^ in[58]) ^ in[60]) ^ in[62]) ^ in[63];
 endmodule
 module prim_xilinx_clock_gating (
-	clk_i,
+	clk,
 	en_i,
 	test_en_i,
 	clk_o
 );
-	input clk_i;
+	input clk;
 	input en_i;
 	input test_en_i;
 	output wire clk_o;
 	BUFGCE u_bufgce(
-		.I(clk_i),
+		.I(clk),
 		.CE(en_i | test_en_i),
 		.O(clk_o)
 	);
