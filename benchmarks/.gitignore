@@ -12,3 +12,7 @@
 *.pdf
 *.log
 *.rtl
+*_timing.*
+*.script
+*.blif
+*.parts

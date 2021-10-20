@@ -110,19 +110,34 @@ clean_reports:
 ######################### SYNTHESIS ############################
 ################################################################
 
-%.rtl %.synth.log &: %.v
-	${YOSYS} -Q -p "read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; write_rtlil $*.rtl; stat" | ${TEE} $*.synth.log
+%.rtl %.synth.v %.synth.log &: %.v
+	${YOSYS} -Q -p "read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; dffunmap; write_rtlil $*.rtl; write_verilog $*.synth.v; stat" | ${TEE} $*.synth.log
 
 # This works in limited circumstances due to flip-flops
 %.aig %.aig.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
-#TODO don't forget to change the partitioning argument back to --size
-%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts &: %.rtl
+%.parts : %.blif
 	$(eval TEMP=$(shell mktemp))
-	echo "ps -a; partitioning 2 --epsilon 0.2 --initial $*_lsoracle.fixed --output $*_lsoracle.parts; optimization; ps -m; crit_path_stats; ntk_stats; level_size -m; fanin_histogram -m; skip_histogram -m;  fanout_histogram -m" > ${TEMP}
+	echo "read_blif -a $<" > ${TEMP}
+	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
+	truncate -s -1 $*.parts
+	rm ${TEMP}
+
+%_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
+	$(eval TEMP=$(shell mktemp))
+	echo "ps -a" > ${TEMP}
+	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	echo "optimization" >> ${TEMP}
+	echo "ps -m" >> ${TEMP}
+	echo "crit_path_stats" >> ${TEMP}
+	echo "ntk_stats" >> ${TEMP}
+#	echo "level_size -m" >> ${TEMP}
+#	echo "fanin_histogram -m" >> ${TEMP}
+#	echo "skip_histogram -m" >> ${TEMP}
+#	echo "fanout_histogram -m" >> ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
-	truncate -s -1 $*_lsoracle.parts
 	rm ${TEMP}
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
@@ -135,20 +150,19 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; write_blif $@"
 
 # TODO clock signal name
-%_timing.mapped.v %_timing.synth.log %_timing.parts&: %.blif %.sdc
+%_timing.mapped.v %_timing.synth.log &: %.blif %.sdc %.parts
 #	$(eval TEMP=$(shell mktemp))
-	${eval TEMP=$*_timing.script}
+	$(eval TEMP=$*_timing.script)
 	echo "read_blif -a $<" > ${TEMP}
 	echo "ps -a" >> ${TEMP}
-#	echo "partitioning --size 1024 --epsilon 0.2 --output $*_timing.parts" >> ${TEMP}
-	echo "partitioning 2 -f $*_timing.parts" >> ${TEMP}
-	echo "budget_script --clock CK --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty benchmarks/techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
-	echo "critical_path -g" >> ${TEMP}
-	echo "function_stats -g" >> ${TEMP}
-	echo "fanin_histogram -g" >> ${TEMP}
-	echo "skip_histogram -g" >> ${TEMP}
-	echo "fanout_histogram -g" >> ${TEMP}
-	echo "level_size -g" >> ${TEMP}
+	echo "partitioning --size 1024 -f $*.parts" >> ${TEMP}
+	echo "budget_script --clock clk --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
+#	echo "critical_path -g" >> ${TEMP}
+#	echo "function_stats -g" >> ${TEMP}
+#	echo "fanin_histogram -g" >> ${TEMP}
+#	echo "skip_histogram -g" >> ${TEMP}
+#	echo "fanout_histogram -g" >> ${TEMP}
+#	echo "level_size -g" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
 #	rm ${TEMP}
 
@@ -164,19 +178,57 @@ clean_reports:
 %_abc.rtl %_abc.synth.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*_abc.rtl" | ${TEE} $*_abc.synth.log
 
-%.tech_equiv.log: %_lsoracle.mapped.v %_unoptimized.mapped.v
+%.mapped.v %.tech.log &: %.rtl
+	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | ${TEE} $*.tech.log
+
+################################################################
+#################### EQUIVALENCE CHECK #########################
+################################################################
+
+%_timing.flatten.v: %_timing.mapped.v
+	${YOSYS} -p "read_verilog $<; flatten; rename -top top; hierarchy -top top; write_verilog $@"
+
+%_timing.formality.log: %_timing.flatten.v %.synth.v
+	$(eval TEMP=$(shell mktemp))
+	echo "read_verilog -r ${word 2,$^}" > ${TEMP}
+	echo "set_top top" >> ${TEMP}
+	echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
+	echo "read_verilog -i $<" >> ${TEMP}
+	echo "set_top top" >> ${TEMP}
+	echo "match" >> ${TEMP}
+	echo "verify" >> ${TEMP}
+	${FM} -work_path formality_workdir -file ${TEMP} -overwrite | ${TEE} $@
+	rm ${TEMP}
+
+%_lsoracle.formality.log: %_lsoracle.mapped.v %.synth.v
+	$(eval TEMP=$(shell mktemp))
+	echo "read_verilog -r ${word 2,$^}" > ${TEMP}
+	echo "set_top top" >> ${TEMP}
+	echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
+	echo "read_verilog -i $<" >> ${TEMP}
+	echo "set_top top" >> ${TEMP}
+	echo "match" >> ${TEMP}
+	echo "verify" >> ${TEMP}
+	${FM} -work_path formality_workdir -file ${TEMP} -overwrite | ${TEE} $@
+	rm ${TEMP}
+
+%_lsoracle.tech_equiv.log: %_lsoracle.mapped.v %_unoptimized.mapped.v
+	${YOSYS} -p "read_verilog ${word 2,$^}; rename -top gold; prep -top gold; splitnets -ports; design -stash gold;\
+		read_verilog $<; rename -top gate; prep -top gate design -stash gate; \
+		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
+		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
+
+%_timing.tech_equiv.log: %_timing.flatten.v %_unoptimized.mapped.v
 	${YOSYS} -p "read_verilog ${word 2,$^}; rename -top gold; design -stash gold;\
 		read_verilog $<; rename -top gate; design -stash gate; \
 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
 		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
-%.equiv.log: %_lsoracle.rtl %.rtl
-	${YOSYS} -p "read_rtlil ${word 2,$^}; rename -top gold; design -stash gold;\
-		read_rtlil $<; rename -top gate; design -stash gate; \
+
+%_lsoracle.equiv.log: %_lsoracle.rtl %.rtl
+	${YOSYS} -p "read_rtlil ${word 2,$^}; rename -top gold; prep -top gold; splitnets -ports; design -stash gold;\
+		read_rtlil $<; rename -top gate; prep -top gate; design -stash gate; \
 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
 		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
-
-%.mapped.v %.tech.log &: %.rtl
-	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | ${TEE} $*.tech.log
 
 ################################################################
 ########################### TIMING #############################
@@ -201,6 +253,8 @@ clean_reports:
 %_aigscript.sdc: %.sdc
 	cp $< $@
 %_abc.sdc: %.sdc
+	cp $< $@
+%_timing.sdc: %.sdc
 	cp $< $@
 
 # %_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc
