@@ -607,29 +607,34 @@ public:
         g.freeze();
 
         std::cout << "Mapping phase 1: prioritise depth.\n";
-        enumerate_cuts(cut_depth, cut_input_count, cut_area_flow, false);
+        enumerate_cuts(false, false);
 
-        //derive_mapping();
+        derive_mapping();
 
         std::cout << "Mapping phase 2: prioritise global area.\n";
-        enumerate_cuts(cut_area_flow, cut_fanin_refs, cut_depth, true);
+        enumerate_cuts(true, false);
 
-        /*std::cout << "Mapping phase 3: prioritise local area.\n";
-        enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);
+        derive_mapping();
+
+        std::cout << "Mapping phase 3: prioritise local area.\n";
+        enumerate_cuts(true, true);
+
+        derive_mapping();
 
         std::cout << "Mapping phase 4: prioritise global area.\n";
-        enumerate_cuts(cut_area_flow, cut_fanin_refs, cut_depth, true);
+        enumerate_cuts(true, false);
+
+        derive_mapping();
 
         std::cout << "Mapping phase 5: prioritise local area.\n";
-        enumerate_cuts(cut_exact_area, cut_fanin_refs, cut_depth, true);*/
+        enumerate_cuts(true, true);
 
         std::cout << "Deriving the final mapping of the network.\n";
         return derive_mapping();
     }
 
 private:
-    template<class F1, class F2, class F3>
-    void enumerate_cuts(F1 sort1, F2 sort2, F3 sort3, bool area_optimisation)
+    void enumerate_cuts(bool area_optimisation, bool local_area)
     {
         std::unordered_map<size_t, frontier_info> frontier;
 
@@ -672,11 +677,25 @@ private:
             }
 
             // Sort the cuts by desired characteristics.
-            std::sort(cut_set.begin(), cut_set.end(), [&](cut const& a, cut const& b) {
-                return sort1(a, info) < sort1(b, info) ||
-                    (sort1(a, info) == sort1(b, info) && sort2(a, info) < sort2(b, info)) ||
-                    (sort1(a, info) == sort1(b, info) && sort2(a, info) == sort2(b, info) && sort3(a, info) < sort3(b, info));
-            });
+            if (!area_optimisation) {
+                std::sort(cut_set.begin(), cut_set.end(), [&](cut const& a, cut const& b) {
+                    return cut_depth(a, info) < cut_depth(b, info) ||
+                        (cut_depth(a, info) == cut_depth(b, info) && cut_input_count(a, info) < cut_input_count(b, info)) ||
+                        (cut_depth(a, info) == cut_depth(b, info) && cut_input_count(a, info) == cut_input_count(b, info) && cut_area_flow(a, info) < cut_area_flow(b, info));
+                });
+            } else if (!local_area) {
+                std::sort(cut_set.begin(), cut_set.end(), [&](cut const& a, cut const& b) {
+                    return cut_area_flow(a, info) < cut_area_flow(b, info) ||
+                        (cut_area_flow(a, info) == cut_area_flow(b, info) && cut_fanin_refs(a, info) < cut_fanin_refs(b, info)) ||
+                        (cut_area_flow(a, info) == cut_area_flow(b, info) && cut_fanin_refs(a, info) == cut_fanin_refs(b, info) && cut_depth(a, info) < cut_depth(b, info));
+                });
+            } else {
+                std::sort(cut_set.begin(), cut_set.end(), [&](cut const& a, cut const& b) {
+                    return cut_exact_area(a) < cut_exact_area(b) ||
+                        (cut_exact_area(a) == cut_exact_area(b) && cut_fanin_refs(a, info) < cut_fanin_refs(b, info)) ||
+                        (cut_exact_area(a) == cut_exact_area(b) && cut_fanin_refs(a, info) == cut_fanin_refs(b, info) && cut_depth(a, info) < cut_depth(b, info));
+                });
+            }
 
             // Keep only the specified good cuts.
             if (cut_set.size() > settings.node_cut_count) {
@@ -927,7 +946,7 @@ private:
     }
 
     // Ordering by cut depth is vital to find the best possible mapping for a network.
-    static unsigned int cut_depth(cut const& c, std::vector<mapping_info> const& info)
+    unsigned int cut_depth(cut const& c, std::vector<mapping_info> const& info)
     {
         unsigned int depth = 0;
         for (size_t input : c.inputs) {
@@ -940,7 +959,7 @@ private:
 
     // It is better to prefer smaller cuts over bigger cuts because it allows more cuts to be mapped
     // for the same network depth.
-    static unsigned int cut_input_count(cut const& c, std::vector<mapping_info> const& info)
+    unsigned int cut_input_count(cut const& c, std::vector<mapping_info> const& info)
     {
         (void)info;
         return c.input_count();
@@ -948,7 +967,7 @@ private:
 
     // Preferring cuts with lower fanin references aims to reduce mapping duplication
     // where a node is covered by multiple mappings at the same time.
-    static float cut_fanin_refs(cut const& c, std::vector<mapping_info> const& info)
+    float cut_fanin_refs(cut const& c, std::vector<mapping_info> const& info)
     {
         return std::transform_reduce(c.inputs.begin(), c.inputs.end(), 0.0, std::plus<>(), [&](size_t input) {
             return float(info.at(input).references);
@@ -956,7 +975,7 @@ private:
     }
 
     // Area flow estimates how much this cone of logic is shared within the current mapping.
-    static float cut_area_flow(cut const& c, std::vector<mapping_info> const& info)
+    float cut_area_flow(cut const& c, std::vector<mapping_info> const& info)
     {
         float sum_area_flow = 0.0f;
         for (size_t input : c.inputs) {
@@ -966,9 +985,16 @@ private:
     }
 
     // Exact area calculates the number of LUTs that would be added to the mapping if this cut was selected.
-    static unsigned int cut_exact_area(cut const& c, std::vector<mapping_info>& info)
+    unsigned int cut_exact_area(cut const& c)
     {
         unsigned int area = 1;
+
+        for (size_t input : c.inputs) {
+            std::vector<size_t> fanin{g.compute_node_fanin_nodes(input)};
+            if (fanin.size() == 1) {
+                area += cut_exact_area(*info.at(input).selected_cut);
+            }
+        }
 
         return area;
     }
