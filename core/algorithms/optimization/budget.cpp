@@ -102,7 +102,7 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
     std::cout << "generated ABC script " << abc_script << std::endl;
 
     std::ofstream script(abc_script);
-    script << tech_script << std::endl;
+    script << "print_fanio; " << tech_script << "; print_fanio;" << std::endl;
     script.close();
     std::cout << "calling ABC" << std::endl;
     mockturtle::write_blif_params ps;
@@ -259,7 +259,7 @@ public:
 	if (techmapped.empty()) {
 	    string script =
 		"read_lib " + liberty_file +
-		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
+		"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c;";
 	    techmapped = basic_techmap(script, abc_exec, copy);
 	}
 	return techmapped;
@@ -990,7 +990,9 @@ void write_register(std::string abc_exec, std::string liberty, std::ofstream &ve
     verilog << "module mapped_register(D, Q, CLK);\n"
 	    << "input D, CLK;\n"
 	    << "output Q;\n"
-	    << "sky130_fd_sc_hd__dfxtp_1 x (.CLK(CLK), .D(D), .Q(Q));\n"
+	    << "wire B;\n"
+	    << "sky130_fd_sc_hd__dfxtp_1 fflop (.CLK(CLK), .D(D), .Q(B));\n"
+	    << "sky130_fd_sc_hd__buf_8 buffer (.A(B), .X(Q));\n"
 	    << "endmodule\n" << std::endl;
 }
 
@@ -1135,9 +1137,10 @@ void write_top(mockturtle::names_view<network> &ntk,
 
         if (output != driver) {
 	    if (ntk.is_complemented(signal)) {
-		assigns.insert(fmt::format("mapped_inverter inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
+		assigns.insert(fmt::format("mapped_inverter po_inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
 	    } else {
-		assigns.insert(fmt::format("assign {0} = {1};", output, driver));
+		// assigns.insert(fmt::format("assign {0} = {1};", output, driver));
+		assigns.insert(fmt::format("sky130_fd_sc_hd__buf_8 po_buffer__{2} (.A({1}), .X({0}));", output, driver, inv_sequence++));
 	    }
         }
     });
@@ -1153,10 +1156,11 @@ void write_top(mockturtle::names_view<network> &ntk,
 
         if (output != driver) {
 	    if (ntk.is_complemented(ri)) {
-		regs.insert(fmt::format("mapped_inverter inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
+		regs.insert(fmt::format("mapped_inverter reg_inv__{2} (.A({1}), .Y({0}));", output, driver, inv_sequence++));
 
 	    } else {
-		regs.insert(fmt::format("assign {0} = {1};", output, driver));
+		regs.insert(fmt::format("sky130_fd_sc_hd__buf_8 reg_buffer__{2} (.A({1}), .X({0}));", output, driver, inv_sequence++));
+		// regs.insert(fmt::format("assign {0} = {1};", output, driver));
 	    }
         }
     });
