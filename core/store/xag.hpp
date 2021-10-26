@@ -57,6 +57,7 @@ ALICE_LOG_STORE_STATISTICS(xag_ntk, xag)
         {"nodes", xag->size()},
         {"inputs", xag->num_pis()},
         {"outputs", xag->num_pos()},
+        {"latches", xag->num_latches()},
         {"XAG nodes", xag->num_gates()},
         {"XAG level", depth.depth()}};
 }
@@ -67,6 +68,7 @@ ALICE_PRINT_STORE_STATISTICS(xag_ntk, os, xag)
     os << "nodes: " << xag->size() << std::endl;
     os << "inputs: " << xag->num_pis() << std::endl;
     os << "outputs: " << xag->num_pos() << std::endl;
+    os << "latches: " << xag->num_latches() << std::endl;
     os << "XAG nodes: " << xag->num_gates() << std::endl;
     os << "XAG level: " << depth.depth() << std::endl;
 

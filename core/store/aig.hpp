@@ -57,9 +57,9 @@ ALICE_LOG_STORE_STATISTICS(aig_ntk, aig)
     mockturtle::depth_view depth{*aig};
     return {
         {"nodes", aig->size()},
-        {"inputs", aig->num_pis() - aig->num_latches()},
+        {"inputs", aig->num_pis()},
         {"latches", aig->num_latches()},
-        {"outputs", aig->num_pos() - aig->num_latches()},
+        {"outputs", aig->num_pos()},
         {"AIG nodes", aig->num_gates()},
         {"AIG level", depth.depth()}};
 }
@@ -68,9 +68,9 @@ ALICE_PRINT_STORE_STATISTICS(aig_ntk, os, aig)
 {
     mockturtle::depth_view depth{*aig};
     os << "nodes: " << aig->size() << std::endl;
-    os << "inputs: " << aig->num_pis() - aig->num_latches() << std::endl;
+    os << "inputs: " << aig->num_pis() << std::endl;
     os << "latches: " << aig->num_latches() << std::endl;
-    os << "outputs: " << aig->num_pos() - aig->num_latches() << std::endl;
+    os << "outputs: " << aig->num_pos() << std::endl;
     os << "AIG nodes: " << aig->num_gates() << std::endl;
     os << "AIG level: " << depth.depth() << std::endl;
 

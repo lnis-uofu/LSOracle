@@ -57,9 +57,9 @@ ALICE_LOG_STORE_STATISTICS(mig_ntk, mig)
     mockturtle::depth_view depth{*mig};
     return {
         {"nodes", mig->size()},
-        {"inputs", mig->num_pis() - mig->num_latches()},
+        {"inputs", mig->num_pis()},
         {"latches", mig->num_latches()},
-        {"outputs", mig->num_pos() - mig->num_latches()},
+        {"outputs", mig->num_pos()},
         {"MAJ nodes", mig->num_gates()},
         {"MIG level", depth.depth()}};
 }
@@ -68,9 +68,9 @@ ALICE_PRINT_STORE_STATISTICS(mig_ntk, os, mig)
 {
     mockturtle::depth_view depth{*mig};
     os << "nodes: " << mig->size() << std::endl;
-    os << "inputs: " << mig->num_pis() - mig->num_latches() << std::endl;
+    os << "inputs: " << mig->num_pis() << std::endl;
     os << "latches: " << mig->num_latches() << std::endl;
-    os << "outputs: " << mig->num_pos() - mig->num_latches() << std::endl;
+    os << "outputs: " << mig->num_pos() << std::endl;
     os << "MAJ nodes: " << mig->num_gates() << std::endl;
     os << "MIG level: " << depth.depth() << std::endl;
 

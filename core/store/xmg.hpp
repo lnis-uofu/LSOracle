@@ -57,8 +57,9 @@ ALICE_LOG_STORE_STATISTICS(xmg_ntk, xmg)
         {"nodes", xmg->size()},
         {"inputs", xmg->num_pis()},
         {"outputs", xmg->num_pos()},
-        {"xmg nodes", xmg->num_gates()},
-        {"xmg level", depth.depth()}};
+        {"latches", xmg->num_latches()},
+        {"XMG nodes", xmg->num_gates()},
+        {"XMG level", depth.depth()}};
 }
 
 ALICE_PRINT_STORE_STATISTICS(xmg_ntk, os, xmg)
@@ -67,8 +68,9 @@ ALICE_PRINT_STORE_STATISTICS(xmg_ntk, os, xmg)
     os << "nodes: " << xmg->size() << std::endl;
     os << "inputs: " << xmg->num_pis() << std::endl;
     os << "outputs: " << xmg->num_pos() << std::endl;
-    os << "xmg nodes: " << xmg->num_gates() << std::endl;
-    os << "xmg level: " << depth.depth() << std::endl;
+    os << "latches: " << xmg->num_latches() << std::endl;
+    os << "XMG nodes: " << xmg->num_gates() << std::endl;
+    os << "XMG level: " << depth.depth() << std::endl;
 
 }
 }
