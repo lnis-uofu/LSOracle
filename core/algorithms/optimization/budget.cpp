@@ -38,6 +38,7 @@
 #include <sta/PathRef.hh>
 #include <sta/PortDirection.hh>
 #include <sta/TimingArc.hh>
+#include <sta/PatternMatch.hh>
 #include <sta/VerilogReader.hh>
 #include <sta/StaMain.hh>
 
@@ -1229,6 +1230,22 @@ size_t run_timing(const std::string &liberty_file,
     sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::MinMax::max(), worst_path_arrival);
     sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::MinMax::max(), worst_path_slack);
 
+
+    sta::ConcreteNetwork *net = reinterpret_cast<sta::ConcreteNetwork*>(sta::Sta::sta()->networkReader());
+    sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
+                                 (net->topInstance());
+    sta::CellSeq cells;
+    sta::PatternMatch *pattern = new sta::PatternMatch("**", false, false, nullptr);
+    net->findCellsMatching(reinterpret_cast<const sta::Library*>(lib), pattern, &cells);
+    std::cout << "Number of cells " << cells.size() << std::endl;
+    double area = 0;
+    for (sta::Cell *cell: cells) {
+	sta::ConcreteCell *ce = reinterpret_cast<sta::ConcreteCell*>(cell);
+	sta::LibertyCell *c = ce->libertyCell();
+	area += c->area();
+    }
+    std::cout << "Area " << area << std::endl;
+
     std::vector<float> budget(partitions.get_part_num(), 0.0);
     sta::PathRef second = worst_path_slack;
     sta::Arrival arrival = second.arrival(sta::Sta::sta());
@@ -1270,9 +1287,7 @@ size_t run_timing(const std::string &liberty_file,
 	    max = i;
 	}
     }
-    // sta::ConcreteNetwork *net = reinterpret_cast<sta::ConcreteNetwork*>(sta::Sta::sta()->networkReader());
-    // sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
-    //                              (net->topInstance());
+
     // net->clear();
     // net->deleteTopInstance();
     return max;
