@@ -887,7 +887,6 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 	new xag_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new abc_optimizer<network>(partman, ntk, index, strategy, abc_exec),
     };
-    // optimizers.emplace_back(new mig_optimizer<network>(part));
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
@@ -1355,12 +1354,10 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
 	    throw "exhausted types";
 	}
     }
-    std::cout << "Final results:" << std::endl;
 
     std::filesystem::copy(verilog, output_file, std::filesystem::copy_options::overwrite_existing);
-    // std::cout << "nodes " << ntk.num_gates() << " inputs " << ntk.num_pis() << " reg " << ntk.num_latches() << std::endl;
-    // mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> dv_p(ntk);
-    // std::cout << "dv nodes " << dv_p.num_gates() << " depth " << dv_p.depth() << " inputs " << dv_p.num_pis() << " reg " << dv_p.num_latches() << std::endl;
+
+    // Output network
     mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
     mockturtle::names_view<mockturtle::xmg_network> ntk_out =
 	mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<network>>
@@ -1384,19 +1381,14 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
 	    break;
 	}
 	std::cout << std::endl;
-	partition_view<mockturtle::names_view<network>> part = partitions.create_part(ntk, i);
-	// partition_view<mockturtle::names_view<network>> part = partitions_out.create_part(ntk, i);
+	partition_view<mockturtle::names_view<mockturtle::xmg_network>> part = partitions_out.create_part(ntk_out, i);
 	mockturtle::names_view<mockturtle::xmg_network> opt = optimized[i]->export_superset();
-        // partitions_out.synchronize_part(part, opt, ntk_out);
+        partitions_out.synchronize_part(part, opt, ntk_out);
     }
 
-    // partitions_out.connect_outputs(ntk_out);
-    // std::cout << "nodes " << ntk.num_gates() << " inputs " << ntk.num_pis() << " reg " << ntk.num_latches() << std::endl;
+    partitions_out.connect_outputs(ntk_out);
+    ntk_out = mockturtle::cleanup_dangling(ntk_out);
 
-    // ntk_out = mockturtle::cleanup_dangling(ntk_out); // TODO not handling registers correctly.
-
-    // mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> dv_a(ntk);
-    // std::cout << "dv_a nodes " << dv_a.num_gates() << " depth " << dv_a.depth() << " inputs " << dv_a.num_pis() << " reg " << dv_a.num_latches() << std::endl;
     return ntk_out;
 }
 

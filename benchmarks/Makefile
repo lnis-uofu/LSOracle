@@ -155,14 +155,15 @@ clean_reports:
 	$(eval TEMP=$*_timing.script)
 	echo "read_blif -a $<" > ${TEMP}
 	echo "ps -a" >> ${TEMP}
-	echo "partitioning --size 1024 -f $*.parts" >> ${TEMP}
+	echo "partitioning 2 -f $*.parts" >> ${TEMP}
 	echo "budget_script --clock clk --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
-#	echo "critical_path -g" >> ${TEMP}
-#	echo "function_stats -g" >> ${TEMP}
-#	echo "fanin_histogram -g" >> ${TEMP}
-#	echo "skip_histogram -g" >> ${TEMP}
-#	echo "fanout_histogram -g" >> ${TEMP}
-#	echo "level_size -g" >> ${TEMP}
+	echo "ps -g" >> ${TEMP}
+	echo "critical_path -g" >> ${TEMP}
+	echo "function_stats -g" >> ${TEMP}
+	echo "fanin_histogram -g" >> ${TEMP}
+	echo "skip_histogram -g" >> ${TEMP}
+	echo "fanout_histogram -g" >> ${TEMP}
+	echo "level_size -g" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
 #	rm ${TEMP}
 

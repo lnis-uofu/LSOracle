@@ -54,7 +54,7 @@ public:
         auto dag =
             *store<std::shared_ptr<mockturtle::names_view<ntk>>>().current();
 
-	mockturtle::depth_view dag_view{dag};
+	mockturtle::depth_view dag_view(dag);
 	vector<uint32_t> levels(dag_view.depth(), 0);
 	dag_view.foreach_node([&dag_view, &levels](auto n) {
 	    levels[dag_view.level(n)]++;

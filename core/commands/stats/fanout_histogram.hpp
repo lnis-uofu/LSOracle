@@ -49,7 +49,7 @@ public:
     {
         if (!store<ntk>().empty()) {
             auto &dag = *store<ntk>().current();
-            mockturtle::fanout_view dag_view{dag};
+            mockturtle::fanout_view dag_view(dag);
             vector<uint32_t> fanout_histogram(33, 0);
 
             dag_view.foreach_node([this, &dag_view, &fanout_histogram](auto n) {
