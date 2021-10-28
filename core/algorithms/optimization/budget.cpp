@@ -1200,7 +1200,7 @@ size_t run_timing(const std::string &liberty_file,
     bool linked = sta::Sta::sta()->linkDesign(design.c_str());
     assert(linked); // << "Failed to link";
 
-    std::cout << "Attempting to read sdc" << sdc_file << std::endl;
+    std::cout << "Attempting to read sdc " << sdc_file << std::endl;
     std::string read_sdc = "sta::read_sdc " + sdc_file;
     int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), read_sdc.c_str());
     assert(a == 0);
