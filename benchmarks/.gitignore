@@ -16,3 +16,4 @@
 *.script
 *.blif
 *.parts
+*.synth.v

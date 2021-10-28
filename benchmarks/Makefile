@@ -26,10 +26,13 @@
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
-LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
 YOSYS_PLUGIN := oracle
+
+TECHMAPPING_SCRIPT := techmapping/skywater/synth.tcl
+LIBERTY_FILE := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
+
 TEE := cat - >
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
@@ -120,25 +123,22 @@ clean_reports:
 %.parts : %.blif
 	$(eval TEMP=$(shell mktemp))
 	echo "read_blif -a $<" > ${TEMP}
-	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
 	truncate -s -1 $*.parts
 	rm ${TEMP}
 
 %_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
-	$(eval TEMP=$(shell mktemp))
+#	$(eval TEMP=$(shell mktemp))
+	$(eval TEMP=$*_lsoracle.script)
 	echo "ps -a" > ${TEMP}
-	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
 	echo "optimization" >> ${TEMP}
 	echo "ps -m" >> ${TEMP}
 	echo "crit_path_stats" >> ${TEMP}
 	echo "ntk_stats" >> ${TEMP}
-#	echo "level_size -m" >> ${TEMP}
-#	echo "fanin_histogram -m" >> ${TEMP}
-#	echo "skip_histogram -m" >> ${TEMP}
-#	echo "fanout_histogram -m" >> ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
-	rm ${TEMP}
+#	rm ${TEMP}
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
@@ -150,13 +150,13 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; write_blif $@"
 
 # TODO clock signal name
-%_timing.mapped.v %_timing.synth.log &: %.blif %.sdc %.parts
+%_timing.internal.v %_timing.synth.log %_timing.blif &: %.blif %.sdc
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_timing.script)
 	echo "read_blif -a $<" > ${TEMP}
 	echo "ps -a" >> ${TEMP}
-	echo "partitioning 2 -f $*.parts" >> ${TEMP}
-	echo "budget_script --clock clk --sdc $*.sdc --output $@ --abc_exec ${ABC} --liberty techmapping/sky130_fd_sc_hd__tt_025C_1v80.lib" >> ${TEMP}
+	echo "partitioning --size 1024 --epsilon 0.05 --output $*_timing.parts" >> ${TEMP}
+	echo "budget_script --clock clk --sdc $*.sdc --output $*_timing.internal.v --abc_exec ${ABC} --liberty ${LIBERTY_FILE}" >> ${TEMP}
 	echo "ps -g" >> ${TEMP}
 	echo "critical_path -g" >> ${TEMP}
 	echo "function_stats -g" >> ${TEMP}
@@ -164,8 +164,12 @@ clean_reports:
 	echo "skip_histogram -g" >> ${TEMP}
 	echo "fanout_histogram -g" >> ${TEMP}
 	echo "level_size -g" >> ${TEMP}
+	echo "write_blif -g  $*_timing.blif" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
 #	rm ${TEMP}
+
+%_timing.rtl: %_timing.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $<; techmap; opt -purge; stat; write_rtlil $@"
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
@@ -180,7 +184,7 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*_abc.rtl" | ${TEE} $*_abc.synth.log
 
 %.mapped.v %.tech.log &: %.rtl
-	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | ${TEE} $*.tech.log
+	CIRCUIT_INPUT=$* ${YOSYS} -Q -c ${TECHMAPPING_SCRIPT} | ${TEE} $*.tech.log
 
 ################################################################
 #################### EQUIVALENCE CHECK #########################
@@ -262,7 +266,7 @@ clean_reports:
 # 	cp $< $@
 
 %.sta.log: %.mapped.v %.sdc
-	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc ${STA} -exit techmapping/sta.tcl | ${TEE} $@
+	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc LIBERTY_FILE=${LIBERTY_FILE} ${STA} -exit techmapping/sta.tcl | ${TEE} $@
 
 ################################################################
 ######################### REPORTS ##############################
