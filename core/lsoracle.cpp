@@ -84,6 +84,8 @@
 #include "commands/input/read_verilog.hpp"
 #include "commands/input/read_bench.hpp"
 
+#include "commands/conversion/xmg.hpp"
+
 //LUT_Map
 #include "commands/lut_map/lut_map.hpp"
 
@@ -111,6 +113,7 @@
 #include "commands/stats/fanin_histogram.hpp"
 #include "commands/stats/function_stats.hpp"
 #include "commands/stats/critical_path.hpp"
+#include "commands/stats/write_stats.hpp"
 
 //Partitioning
 #include "commands/partitioning/partitioning.hpp"
@@ -154,7 +157,7 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
-#include "commands/lut_map/xmg_map.hpp"
+// #include "commands/lut_map/xmg_map.hpp"
 
 #include "commands/version.hpp"
 

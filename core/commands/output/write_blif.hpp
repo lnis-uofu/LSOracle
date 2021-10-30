@@ -48,7 +48,10 @@ public:
 
         opts.add_option("--filename,filename", filename,
                         "BLIF file to write out to")->required();
+        add_flag("--aig,-a", "Read from the AIG network (Default)");
         add_flag("--mig,-m", "Read from the MIG network");
+        add_flag("--xag,-x", "Read from the XAG network");
+        add_flag("--xmg,-g", "Read from the XMG network");
         add_flag("--skip-feedthrough",
                  "Do not include feedthrough nets when writing out the file");
     }
@@ -66,6 +69,20 @@ protected:
                     mockturtle::write_blif(mig, filename, ps);
                 } else {
                     env->err() << "There is not an MIG network stored.\n";
+                }
+            } else if (is_set("xag")) {
+                if (!store<xag_ntk>().empty()) {
+                    auto &xag = *store<xag_ntk>().current();
+                    mockturtle::write_blif(xag, filename, ps);
+                } else {
+                    env->err() << "There is not an XAG network stored.\n";
+                }
+            } else if (is_set("xmg")) {
+                if (!store<xmg_ntk>().empty()) {
+                    auto &xmg = *store<xmg_ntk>().current();
+                    mockturtle::write_blif(xmg, filename, ps);
+                } else {
+                    env->err() << "There is not an XMG network stored.\n";
                 }
             } else {
                 if (!store<aig_ntk>().empty()) {

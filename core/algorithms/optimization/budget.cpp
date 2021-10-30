@@ -1035,15 +1035,20 @@ string techmap(
         std::cout << "using optimizer " << opt->optimizer_name() << std::endl;
         std::string module_file = opt->techmap(liberty_file);
         std::cout << "writing results" << std::endl;
+	verilog << "// Partition " << i << std::endl;
         std::ifstream module(module_file);
         verilog << module.rdbuf();
         verilog << std::endl;
         module.close();
     }
     std::cout << "sub-modules written" << std::endl;
+    verilog << "// Register" << std::endl;
     write_register(abc_exec, liberty_file, verilog);
+    verilog << "// Inverter" << std::endl;
     write_inverter(abc_exec, liberty_file, verilog);
+    verilog << "// Top" << std::endl;
     write_top(ntk, partitions, optimized, verilog, clock);
+
     verilog.close();
     return output_file;
 
@@ -1387,8 +1392,9 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
     }
 
     partitions_out.connect_outputs(ntk_out);
-    ntk_out = mockturtle::cleanup_dangling(ntk_out);
-
+    std::cout << "Finished connecting outputs" << std::endl;
+    // ntk_out = mockturtle::cleanup_dangling_with_registers(ntk_out);
+    // std::cout << "Finished cleaning dangling" << std::endl;
     return ntk_out;
 }
 

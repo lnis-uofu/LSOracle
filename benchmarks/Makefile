@@ -30,15 +30,24 @@ ABC := yosys-abc
 YOSYS := yosys
 YOSYS_PLUGIN := oracle
 
-TECHMAPPING_SCRIPT := techmapping/skywater/synth.tcl
-LIBERTY_FILE := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
+# TECHMAPPING_SCRIPT := techmapping/skywater/synth.tcl
+# LIBERTY_FILE := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
 
 TEE := cat - >
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
 EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
-ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} ${ISCAS89}
+#ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} ${ISCAS89}
+
+# TECHMAPPING_SCRIPT := techmapping/gf12/synth.tcl
+# LIBERTY_FILE := techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
+
+TECHMAPPING_SCRIPT := techmapping/tigfet/synth.tcl
+LIBERTY_FILE := techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib
+TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c17.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v div.v i2c.v int2float.v log2.v max.v mem_ctrl.v multiplier.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v sqrt.v square.v voter.v
+MONKEY := tigfet
+ORIGINAL_FILES := $(addprefix ${MONKEY}/,${TIGFET_FILES})
 
 ################################################################
 ######################## Targets ###############################
@@ -50,6 +59,7 @@ AIG_LOGS := $(patsubst %.v,%.aig.log,${ORIGINAL_FILES})
 SDC_SCRIPTS := $(patsubst %.v,%_lsoracle.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_abc.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_unoptimized.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_aigscript.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_migscript.sdc,${ORIGINAL_FILES})
 
 SYNTH_BASE := $(patsubst %.v,%.rtl,${ORIGINAL_FILES})
+PART_FILES := $(patsubst %.v,%.part,${ORIGINAL_FILES})
 SYNTH_BASE_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_BASE})
 
 LSORACLE_OUTPUTS := $(patsubst %.rtl,%_lsoracle.rtl,${SYNTH_BASE})
@@ -62,17 +72,18 @@ LSORACLE_TIMING_LOG := $(patsubst %.rtl,%_lsoracle.sta.log,${SYNTH_BASE})
 
 AIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_aigscript.rtl,${SYNTH_BASE})
 MIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_migscript.rtl,${SYNTH_BASE})
+TIMING_SYNTH_OUTPUTS := $(patsubst %.rtl,%_timing.rtl,${SYNTH_BASE})
 
 ABC_OUTPUTS := $(patsubst %.rtl,%_abc.rtl,${SYNTH_BASE})
 UNOPT_OUTPUTS := $(patsubst %.rtl,%_unoptimized.rtl,${SYNTH_BASE})
-SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS} ${AIGSCRIPT_OUTPUTS} ${MIGSCRIPT_OUTPUTS}
+SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS} ${AIGSCRIPT_OUTPUTS} ${MIGSCRIPT_OUTPUTS} ${TIMING_SYNTH_OUTPUTS}
 SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_OUTPUTS})
 
 BLIF_FILES := $(patsubst %.rtl,%.blif,${SYNTH_BASE})
-TIMING_SYNTH_OUTPUTS : $(patsubst %.rtl, %_timing.mapped.v, ${SYNTH_BASE})
+TIMING_SYNTH_INTERNAL := $(patsubst %.rtl,%_timing.internal.v,${SYNTH_BASE})
 
 SYNTH_REPORTS := $(patsubst %.synth.log,%.synth_report,${SYNTH_LOGS})
-TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS}) ${TIMING_SYNTH_OUTPUTS}
+TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
 TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
 TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
@@ -81,11 +92,14 @@ REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
 ################################################################
-all: everything.png
+test:
+	echo ${ORIGINAL_FILES}
+
+all: $(patsubst %.v,%_lsoracle.report.json,${ORIGINAL_FILES})
 
 .PHONY: extract synth reports techmap reports timing everything_reports clean all reset
 
-.PRECIOUS: ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS}
+.PRECIOUS: ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS} ${PART_FILES} ${TIMING_SYNTH_INTERNAL}
 
 .DELETE_ON_ERROR:
 
@@ -105,7 +119,7 @@ reset:
 	rm -f ${LSORACLE_OUTPUTS} ${LSORACLE_SYNTH_LOG} ${LSORACLE_TECHMAP_OUTPUTS} ${LSORACLE_SYNTH_REPORTS} ${LSORACLE_TECHMAP_LOGS} ${LSORACLE_TIMING_REPORT} ${LSORACLE_TIMING_LOG} ${REPORTS}
 
 clean: clean_reports
-	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS}
+	rm -f ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS} ${PART_FILES} ${TIMING_SYNTH_BLIF} ${TIMING_SYNTH_INTERNAL}
 
 clean_reports:
 	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
@@ -123,21 +137,29 @@ clean_reports:
 %.parts : %.blif
 	$(eval TEMP=$(shell mktemp))
 	echo "read_blif -a $<" > ${TEMP}
-	echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+#	echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
 	truncate -s -1 $*.parts
 	rm ${TEMP}
 
-%_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
+%_lsoracle.stats.json %_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_lsoracle.script)
 	echo "ps -a" > ${TEMP}
-	echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
-	echo "optimization" >> ${TEMP}
-	echo "ps -m" >> ${TEMP}
-	echo "crit_path_stats" >> ${TEMP}
-	echo "ntk_stats" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	echo "xmg_convert -a" >> ${TEMP}
+#	echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
+#	echo "optimization" >> ${TEMP}
+	echo "xmgscript" >> ${TEMP}
+	# echo "ps -g" >> ${TEMP}
+	# echo "critical_path -g" >> ${TEMP}
+	# echo "function_stats -g" >> ${TEMP}
+	# echo "fanin_histogram -g" >> ${TEMP}
+	# echo "skip_histogram -g" >> ${TEMP}
+	# echo "fanout_histogram -g" >> ${TEMP}
+	# echo "level_size -g" >> ${TEMP}
+	echo "write_stats -g $*_lsoracle.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 #	rm ${TEMP}
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
@@ -150,26 +172,26 @@ clean_reports:
 	${YOSYS} -Q -p "read_rtlil $<; write_blif $@"
 
 # TODO clock signal name
-%_timing.internal.v %_timing.synth.log %_timing.blif &: %.blif %.sdc
+%_timing.internal.v %_timing.synth.log %_timing.rtl &: %.blif %.sdc %.parts
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_timing.script)
 	echo "read_blif -a $<" > ${TEMP}
 	echo "ps -a" >> ${TEMP}
-	echo "partitioning --size 1024 --epsilon 0.05 --output $*_timing.parts" >> ${TEMP}
+#	echo "partitioning --size 1024 --epsilon 0.05 --output $*_timing.parts" >> ${TEMP}
+	echo "partitioning --size 1024 -f $*.parts" >> ${TEMP}
+#	echo "partitioning 2 -f $*.parts" >> ${TEMP}
 	echo "budget_script --clock clk --sdc $*.sdc --output $*_timing.internal.v --abc_exec ${ABC} --liberty ${LIBERTY_FILE}" >> ${TEMP}
 	echo "ps -g" >> ${TEMP}
-	echo "critical_path -g" >> ${TEMP}
-	echo "function_stats -g" >> ${TEMP}
-	echo "fanin_histogram -g" >> ${TEMP}
-	echo "skip_histogram -g" >> ${TEMP}
-	echo "fanout_histogram -g" >> ${TEMP}
-	echo "level_size -g" >> ${TEMP}
-	echo "write_blif -g  $*_timing.blif" >> ${TEMP}
+#	echo "critical_path -g" >> ${TEMP}
+#	echo "function_stats -g" >> ${TEMP}
+#	echo "fanin_histogram -g" >> ${TEMP}
+#	echo "skip_histogram -g" >> ${TEMP}
+#	echo "fanout_histogram -g" >> ${TEMP}
+#	echo "level_size -g" >> ${TEMP}
+	echo "write_blif -g --filename $*_timing.blif" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*_timing.blif; techmap; opt -purge; stat; write_rtlil $*_timing.rtl"
 #	rm ${TEMP}
-
-%_timing.rtl: %_timing.blif
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $<; techmap; opt -purge; stat; write_rtlil $@"
 
 %_unoptimized.rtl: %.rtl
 	cp $< $@
@@ -195,25 +217,27 @@ clean_reports:
 
 %_timing.formality.log: %_timing.flatten.v %.synth.v
 	$(eval TEMP=$(shell mktemp))
-	echo "read_verilog -r ${word 2,$^}" > ${TEMP}
-	echo "set_top top" >> ${TEMP}
-	echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
-	echo "read_verilog -i $<" >> ${TEMP}
-	echo "set_top top" >> ${TEMP}
-	echo "match" >> ${TEMP}
-	echo "verify" >> ${TEMP}
+	@ echo "read_verilog -r ${word 2,$^}" > ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
+	@ echo "read_verilog -i $<" >> ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "match" >> ${TEMP}
+	@ echo "verify" >> ${TEMP}
+	cat ${TEMP}
 	${FM} -work_path formality_workdir -file ${TEMP} -overwrite | ${TEE} $@
 	rm ${TEMP}
 
 %_lsoracle.formality.log: %_lsoracle.mapped.v %.synth.v
 	$(eval TEMP=$(shell mktemp))
-	echo "read_verilog -r ${word 2,$^}" > ${TEMP}
-	echo "set_top top" >> ${TEMP}
-	echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
-	echo "read_verilog -i $<" >> ${TEMP}
-	echo "set_top top" >> ${TEMP}
-	echo "match" >> ${TEMP}
-	echo "verify" >> ${TEMP}
+	@ echo "read_verilog -r ${word 2,$^}" > ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "read_db -i techmapping/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
+	@ echo "read_verilog -i $<" >> ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "match" >> ${TEMP}
+	@ echo "verify" >> ${TEMP}
+	cat ${TEMP}
 	${FM} -work_path formality_workdir -file ${TEMP} -overwrite | ${TEE} $@
 	rm ${TEMP}
 
@@ -248,6 +272,8 @@ clean_reports:
 	echo "set_output_delay -clock clk 0 {" >> $@
 	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
+%.sdc: dummy.sdc
+	cp $< $@
 
 %_lsoracle.sdc: %.sdc
 	cp $< $@
@@ -285,6 +311,38 @@ previous/%_lsoracle.everything: | previous
 	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | python3 -c 'import sys; print("${TYPE}_arrival\t", max([float(i) for i in sys.stdin.readlines()]))' >> $@
 	@ sed -n 's/worst slack \([0-9.]*\)/${TYPE}_worst_slack\t\1/p' $< >> $@
 	@ sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/${TYPE}_area\t\1/" $*.tech.log >> $@
+
+POWER_REGEX := \s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([.0-9]*\)%.*
+POWER_JSON := {"internal": \1, "switching": \2, "leakage": \3, "total": \4, "percent": \5}
+%.timing.json: %.sta.log %.tech.log %.mapped.v %.gates
+	@ echo generating report $@
+	@ echo '{"power": {' > $@
+	@ sed -n 's/^Combinational${POWER_REGEX}/"combinational": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Sequential${POWER_REGEX}/"sequential": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Pad${POWER_REGEX}/"pad": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Macro${POWER_REGEX}/"macro": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Total${POWER_REGEX}/"total": ${POWER_JSON}/p' $< >> $@
+	@ echo '}, "timing": {' >> $@
+	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | \
+		python3 -c 'import sys; print("\"data_arrival\": ", max([float(i) for i in sys.stdin.readlines()]), ",")' >> $@
+	@ sed -n 's/worst slack \([0-9.]*\)/"worst_slack": \1/p' $< >> $@
+	@ echo '},' >> $@
+	@ echo '"liberty_file": "'$(shell basename ${LIBERTY_FILE})'",' >> $@
+	@ echo '"area_estimate": {' >> $@
+	@ sed -n 's/\s*Chip area for module .*: \([.0-9]*\)/"total": \1/p' $*.gates >> $@
+	@ echo '}, "gates": {' >> $@
+	@ sed -e '1,/Number of cells/d' -e '/^$$/,$$d' $*.gates \
+	| sed 's/\s*\(\S*\)\s*\([0-9]*\)/"\1": \2/' \
+	| python3 -c 'import sys; print(",".join(sys.stdin.readlines()))'  >> $@
+	@ echo '},' >> $@
+	@ sed -n 's/\s*Number of wire bits:\s*\([0-9]*\)/"wires": \1/p' $*.gates >> $@
+	@ echo '}' >> $@
+
+%.gates: %.mapped.v
+	${YOSYS} -Q -p "read_verilog $<; stat -liberty ${LIBERTY_FILE}" > $@
+
+%.report.json: %.timing.json %.stats.json
+	jq -s '.[0] * .[1]' $^ > $@
 
 %_lsoracle.synth_report: %_lsoracle.synth.log
 	@ echo generating report $@

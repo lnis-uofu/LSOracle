@@ -35,7 +35,7 @@ target_include_directories(lsoracle PRIVATE .)
 target_include_directories(lsoracle PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(lsoracle alice mockturtle kahypar)
+target_link_libraries(lsoracle alice mockturtle kahypar nlohmann_json::nlohmann_json)
 
 set(LSORACLE_TESTS
   algorithms/partitioning/__tests__/sap_test.cpp
