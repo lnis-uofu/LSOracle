@@ -4,7 +4,7 @@ yosys -import
 echo
 read_rtlil $::env(CIRCUIT_INPUT).rtl
 read_liberty -lib techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
-read_verilog -defer techmapping/skywater/cells_clkgate_hd.v
+# read_verilog -defer techmapping/skywater/cells_clkgate_hd.v
 techmap -map techmapping/skywater/cells_latch_hd.v
 dfflibmap -liberty techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
 opt

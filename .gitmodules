@@ -142,3 +142,6 @@
 [submodule "lib/OpenSTA"]
 	path = lib/OpenSTA
 	url = https://github.com/The-OpenROAD-Project/OpenSTA.git
+[submodule "lib/json"]
+	path = lib/json
+	url = https://github.com/nlohmann/json.git
