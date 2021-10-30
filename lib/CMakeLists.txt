@@ -49,3 +49,6 @@ endif()
 if (${ENABLE_OPENSTA})
   add_subdirectory(OpenSTA)
 endif()
+
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(json)
