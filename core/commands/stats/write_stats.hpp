@@ -50,6 +50,7 @@ public:
         : command(env, "Output statistics in json format.")
     {
 	add_option("--output,output", file, "Filename");
+	add_option("--name", design, "Design name");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG");
         add_flag("--xmg,-g", "Display stats for stored XMG");
@@ -71,6 +72,7 @@ protected:
 
 	// Basic stats.
 	stats["module"] = ntk.get_network_name();
+	stats["design"] = design;
 	stats["graph"] = name;
 	stats["size"] = ntk.size();
 	stats["registers"] = ntk.num_latches();
@@ -152,7 +154,7 @@ private:
 	j["UNKNOWN"] = c.unknown_num;
     }
     string file;
-
+    string design;
 };
 
 ALICE_ADD_COMMAND(write_stats, "Stats");
