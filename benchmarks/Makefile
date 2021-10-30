@@ -45,7 +45,7 @@ EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v
 
 TECHMAPPING_SCRIPT := techmapping/tigfet/synth.tcl
 LIBERTY_FILE := techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib
-TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c17.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v div.v i2c.v int2float.v log2.v max.v mem_ctrl.v multiplier.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v sqrt.v square.v voter.v
+TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c17.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v i2c.v int2float.v log2.v max.v mem_ctrl.v multiplier.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v square.v voter.v # sqrt.v div.v
 MONKEY := tigfet
 ORIGINAL_FILES := $(addprefix ${MONKEY}/,${TIGFET_FILES})
 
@@ -89,19 +89,19 @@ TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
 #EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
 REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
+JSON_REPORTS := $(patsubst %.v,%_lsoracle.report.json,${ORIGINAL_FILES})
 ################################################################
 ######################## Phony targets #########################
 ################################################################
-test:
-	echo ${ORIGINAL_FILES}
 
-all: $(patsubst %.v,%_lsoracle.report.json,${ORIGINAL_FILES})
+test:
+	@ echo ${JSON_REPORTS}
+
+all: ${JSON_REPORTS}
 
 .PHONY: extract synth reports techmap reports timing everything_reports clean all reset
 
-.PRECIOUS: ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS} ${PART_FILES} ${TIMING_SYNTH_INTERNAL}
-
-.DELETE_ON_ERROR:
+.SECONDARY:
 
 extract: ${SYNTH_BASE}
 
@@ -136,7 +136,7 @@ clean_reports:
 
 %.parts : %.blif
 	$(eval TEMP=$(shell mktemp))
-	echo "read_blif -a $<" > ${TEMP}
+	@ echo "read_blif -a $<" > ${TEMP}
 #	echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
 	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
@@ -146,19 +146,19 @@ clean_reports:
 %_lsoracle.stats.json %_lsoracle.rtl %_lsoracle.synth.log &: %.rtl
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_lsoracle.script)
-	echo "ps -a" > ${TEMP}
-	echo "xmg_convert -a" >> ${TEMP}
+	@ echo "ps -a" > ${TEMP}
+	@ echo "xmg_convert -a" >> ${TEMP}
 #	echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
 #	echo "optimization" >> ${TEMP}
-	echo "xmgscript" >> ${TEMP}
-	# echo "ps -g" >> ${TEMP}
-	# echo "critical_path -g" >> ${TEMP}
-	# echo "function_stats -g" >> ${TEMP}
-	# echo "fanin_histogram -g" >> ${TEMP}
-	# echo "skip_histogram -g" >> ${TEMP}
-	# echo "fanout_histogram -g" >> ${TEMP}
-	# echo "level_size -g" >> ${TEMP}
-	echo "write_stats -g $*_lsoracle.stats.json" >> ${TEMP}
+	@ echo "xmgscript" >> ${TEMP}
+#	echo "ps -g" >> ${TEMP}
+#	echo "critical_path -g" >> ${TEMP}
+#	echo "function_stats -g" >> ${TEMP}
+#	echo "fanin_histogram -g" >> ${TEMP}
+#	echo "skip_histogram -g" >> ${TEMP}
+#	echo "fanout_histogram -g" >> ${TEMP}
+#	echo "level_size -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) -g $*_lsoracle.stats.json" >> ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 #	rm ${TEMP}
 
@@ -335,7 +335,8 @@ POWER_JSON := {"internal": \1, "switching": \2, "leakage": \3, "total": \4, "per
 	| sed 's/\s*\(\S*\)\s*\([0-9]*\)/"\1": \2/' \
 	| python3 -c 'import sys; print(",".join(sys.stdin.readlines()))'  >> $@
 	@ echo '},' >> $@
-	@ sed -n 's/\s*Number of wire bits:\s*\([0-9]*\)/"wires": \1/p' $*.gates >> $@
+	@ sed -n 's/\s*Number of wire bits:\s*\([0-9]*\)/"wires": \1,/p' $*.gates >> $@
+	@ echo '"design": "$(shell basename $*)"' >> $@
 	@ echo '}' >> $@
 
 %.gates: %.mapped.v
