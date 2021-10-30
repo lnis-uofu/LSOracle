@@ -94,16 +94,34 @@ JSON_REPORTS := $(foreach TECH,${LIBERTY_FILES},$(patsubst %.v,%_lsoracle.$(shel
 ######################## Phony targets #########################
 ################################################################
 
-test:
-	@ echo ${JSON_REPORTS}
+# test:
+# 	@ echo ${JSON_REPORTS}
 
 all: ${JSON_REPORTS}
 
-.PHONY: extract synth reports techmap reports timing everything_reports clean all reset
+.PHONY: extract synth reports techmap reports timing everything_reports clean all reset test lsoracle
 
-.PRECIOUS: %.rtl %.mapped.v %.log %.stats.json
+#.PRECIOUS: %.rtl %.mapped.v %.log %.stats.json
+
+.SECONDARY:
+
+.DELETE_ON_ERROR:
+
+clean_synth: clean_techmap
+	rm -f tigfet/*_lsoracle.rtl tigfet/*_lsoracle.stats.json
+
+clean_techmap: clean_timing
+	rm -f tigfet/*.mapped.v tigfet/*.tech.log
+
+clean_timing: clean_reports
+	rm -f tigfet/*.sta.log tigfet/*.gates
+
+clean_reports:
+	rm -f tigfet/*.report.json tigfet/*.tech.json tigfet/*.timing.json tigfet/*.gates.json
 
 extract: ${SYNTH_BASE}
+
+lsoracle: $(LSORACLE_OUTPUTS)
 
 synth: $(SYNTH_OUTPUTS)
 
@@ -115,14 +133,14 @@ timing: ${TIMING}
 
 sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 
-reset:
-	rm -f ${LSORACLE_OUTPUTS} ${LSORACLE_SYNTH_LOG} ${LSORACLE_TECHMAP_OUTPUTS} ${LSORACLE_SYNTH_REPORTS} ${LSORACLE_TECHMAP_LOGS} ${LSORACLE_TIMING_REPORT} ${LSORACLE_TIMING_LOG} ${REPORTS}
+# reset:
+# 	rm -f ${LSORACLE_OUTPUTS} ${LSORACLE_SYNTH_LOG} ${LSORACLE_TECHMAP_OUTPUTS} ${LSORACLE_SYNTH_REPORTS} ${LSORACLE_TECHMAP_LOGS} ${LSORACLE_TIMING_REPORT} ${LSORACLE_TIMING_LOG} ${REPORTS}
 
-clean: clean_reports
-	rm -f ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS} ${PART_FILES} ${TIMING_SYNTH_BLIF} ${TIMING_SYNTH_INTERNAL}
+# clean: clean_reports
+# 	rm -f ${SDC_SCRIPTS} ${BLIF_FILES} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS} ${PART_FILES} ${TIMING_SYNTH_BLIF} ${TIMING_SYNTH_INTERNAL}
 
-clean_reports:
-	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
+# clean_reports:
+# 	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
 ################################################################
 ######################### SYNTHESIS ############################
 ################################################################
@@ -137,8 +155,8 @@ clean_reports:
 %.parts : %.blif
 	$(eval TEMP=$(shell mktemp))
 	@ echo "read_blif -a $<" > ${TEMP}
-#	echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
-	echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+#	@ echo "partitioning 2 --epsilon 0.05 --output $*.parts" >> ${TEMP}
+	@ echo "partitioning --size 1024 --epsilon 0.05 --output $*.parts" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
 	truncate -s -1 $*.parts
 	rm ${TEMP}
@@ -148,16 +166,16 @@ clean_reports:
 	$(eval TEMP=$*_lsoracle.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "xmg_convert -a" >> ${TEMP}
-#	echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
-#	echo "optimization" >> ${TEMP}
+#	@ echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
+#	@ echo "optimization" >> ${TEMP}
 	@ echo "xmgscript" >> ${TEMP}
-#	echo "ps -g" >> ${TEMP}
-#	echo "critical_path -g" >> ${TEMP}
-#	echo "function_stats -g" >> ${TEMP}
-#	echo "fanin_histogram -g" >> ${TEMP}
-#	echo "skip_histogram -g" >> ${TEMP}
-#	echo "fanout_histogram -g" >> ${TEMP}
-#	echo "level_size -g" >> ${TEMP}
+#	@ echo "ps -g" >> ${TEMP}
+#	@ echo "critical_path -g" >> ${TEMP}
+#	@ echo "function_stats -g" >> ${TEMP}
+#	@ echo "fanin_histogram -g" >> ${TEMP}
+#	@ echo "skip_histogram -g" >> ${TEMP}
+#	@ echo "fanout_histogram -g" >> ${TEMP}
+#	@ echo "level_size -g" >> ${TEMP}
 	@ echo "write_stats --name $(shell basename $*) -g $*_lsoracle.stats.json" >> ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
 #	rm ${TEMP}
@@ -175,20 +193,20 @@ clean_reports:
 %_timing.internal.v %_timing.synth.log %_timing.rtl &: %.blif %.sdc %.parts
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_timing.script)
-	echo "read_blif -a $<" > ${TEMP}
-	echo "ps -a" >> ${TEMP}
-#	echo "partitioning --size 1024 --epsilon 0.05 --output $*_timing.parts" >> ${TEMP}
-	echo "partitioning --size 1024 -f $*.parts" >> ${TEMP}
-#	echo "partitioning 2 -f $*.parts" >> ${TEMP}
-	echo "budget_script --clock clk --sdc $*.sdc --output $*_timing.internal.v --abc_exec ${ABC} --liberty ${LIBERTY_FILE}" >> ${TEMP}
-	echo "ps -g" >> ${TEMP}
-#	echo "critical_path -g" >> ${TEMP}
-#	echo "function_stats -g" >> ${TEMP}
-#	echo "fanin_histogram -g" >> ${TEMP}
-#	echo "skip_histogram -g" >> ${TEMP}
-#	echo "fanout_histogram -g" >> ${TEMP}
-#	echo "level_size -g" >> ${TEMP}
-	echo "write_blif -g --filename $*_timing.blif" >> ${TEMP}
+	@ echo "read_blif -a $<" > ${TEMP}
+	@ echo "ps -a" >> ${TEMP}
+#	@ echo "partitioning --size 1024 --epsilon 0.05 --output $*_timing.parts" >> ${TEMP}
+	@ echo "partitioning --size 1024 -f $*.parts" >> ${TEMP}
+#	@ echo "partitioning 2 -f $*.parts" >> ${TEMP}
+	@ echo "budget_script --clock clk --sdc $*.sdc --output $*_timing.internal.v --abc_exec ${ABC} --liberty ${LIBERTY_FILE}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+#	@ echo "critical_path -g" >> ${TEMP}
+#	@ echo "function_stats -g" >> ${TEMP}
+#	@ echo "fanin_histogram -g" >> ${TEMP}
+#	@ echo "skip_histogram -g" >> ${TEMP}
+#	@ echo "fanout_histogram -g" >> ${TEMP}
+#	@ echo "level_size -g" >> ${TEMP}
+	@ echo "write_blif -g --filename $*_timing.blif" >> ${TEMP}
 	${LSORACLE} -e -f ${TEMP} | ${TEE} $*_timing.synth.log
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*_timing.blif; techmap; opt -purge; stat; write_rtlil $*_timing.rtl"
 #	rm ${TEMP}
@@ -358,8 +376,8 @@ POWER_JSON := {"internal": \1, "switching": \2, "leakage": \3, "total": \4, "per
 	@ echo generating report $@
 	@  echo '{ "gates": {' > $@
 	@ sed -e '1,/Number of cells/d' -e '/^$$/,$$d' $< \
-	| sed 's/\s*\(\S*\)\s*\([0-9]*\)/"\1": \2/' \
-	| python3 -c 'import sys; print(",".join(sys.stdin.readlines()))'  >> $@
+	 | sed 's/\s*\(\S*\)\s*\([0-9]*\)/"\1": \2/' \
+	 | python3 -c 'import sys; print(",".join(sys.stdin.readlines()))'  >> $@
 	@ echo '},' >> $@
 	@ sed -n 's/\s*Number of wire bits:\s*\([0-9]*\)/"wires": \1,/p' $< >> $@
 	@ echo '"area_estimate": {' >> $@
