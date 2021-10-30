@@ -13,7 +13,9 @@
 *.log
 *.rtl
 *_timing.*
-*.script
+*.lsoracle.script
+*.yosys.script
+*.abc.script
 *.blif
 *.parts
 *.synth.v
