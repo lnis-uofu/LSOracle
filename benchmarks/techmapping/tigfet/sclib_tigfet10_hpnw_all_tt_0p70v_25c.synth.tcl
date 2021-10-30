@@ -2,7 +2,7 @@ puts $::env(CIRCUIT_INPUT)
 
 yosys -import
 echo
-read_rtlil $::env(CIRCUIT_INPUT).rtl
+read_rtlil $::env(CIRCUIT_INPUT)
 read_liberty -lib techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib
 # read_verilog -defer techmapping/cells_clkgate_hd.v
 # techmap -map techmapping/tigfet/cells_latch_hd.v
@@ -20,5 +20,5 @@ splitnets
 opt_clean -purge
 check
 flatten
-write_verilog -noattr -noexpr -nohex -nodec $::env(CIRCUIT_INPUT).mapped.v
+write_verilog -noattr -noexpr -nohex -nodec $::env(OUTPUT_FILE)
 stat -liberty techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib

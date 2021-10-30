@@ -2,7 +2,7 @@ puts $::env(CIRCUIT_INPUT)
 
 yosys -import
 echo
-read_rtlil $::env(CIRCUIT_INPUT).rtl
+read_rtlil $::env(CIRCUIT_INPUT)
 read_liberty -lib techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
 # read_verilog -defer techmapping/skywater/cells_clkgate_hd.v
 techmap -map techmapping/skywater/cells_latch_hd.v
@@ -21,4 +21,4 @@ hilomap -singleton \
 insbuf -buf sky130_fd_sc_hd__buf_4 A X
 check
 flatten
-write_verilog -noattr -noexpr -nohex -nodec $::env(CIRCUIT_INPUT).mapped.v
+write_verilog -noattr -noexpr -nohex -nodec $::env(OUTPUT_FILE)
