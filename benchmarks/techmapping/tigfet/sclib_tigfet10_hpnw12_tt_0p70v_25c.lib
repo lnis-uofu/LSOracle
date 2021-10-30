@@ -62,7 +62,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     index_2 ("0.396941, 0.931908, 2.00184, 4.07484, 8.2877, 16.7134, 33.5649, 67.2678");
   }
   cell (AND2_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "AND2_F3";
     cell_leakage_power : 466.234;
     pg_pin (VDD) {
@@ -378,7 +378,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (AOI21_HPNW12) {
-    area : 0.061104;
+    area : 0.141440;
     cell_footprint : "AOI21_F3";
     cell_leakage_power : 442.655;
     pg_pin (VDD) {
@@ -1201,7 +1201,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (BUF1_HPNW12) {
-    area : 0.061104;
+    area : 0.141440;
     cell_footprint : "BUF1_F3";
     cell_leakage_power : 894.496;
     pg_pin (VDD) {
@@ -1356,7 +1356,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (DFFNQ1_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "DFFNQ1_F3";
     cell_leakage_power : 2087.61;
     ff ("IQ") {
@@ -1742,7 +1742,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (DFFQ1_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "DFFQ1_F3";
     cell_leakage_power : 2087.62;
     ff ("IQ") {
@@ -2129,7 +2129,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (INV1_HPNW12) {
-    area : 0.037152;
+    area : 0.121040;
     cell_footprint : "INV1_F3";
     cell_leakage_power : 447.227;
     pg_pin (VDD) {
@@ -2284,7 +2284,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (MAJ3_HPNW12) {
-    area : 0.122208;
+    area : 0.282880;
     cell_footprint : "MAJ3_F3";
     cell_leakage_power : 1260.44;
     pg_pin (VDD) {
@@ -3847,7 +3847,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (MIN3_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "MIN3_F3";
     cell_leakage_power : 338.235;
     pg_pin (VDD) {
@@ -5410,7 +5410,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (MUX2_HPNW12) {
-    area : 0.122208;
+    area : 0.282880;
     cell_footprint : "MUX2_F3";
     cell_leakage_power : 1120.05;
     pg_pin (VDD) {
@@ -6374,7 +6374,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (MUXI2_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "MUXI2_F3";
     cell_leakage_power : 672.8;
     pg_pin (VDD) {
@@ -7338,7 +7338,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (NAND2_HPNW12) {
-    area : 0.061104;
+    area : 0.141440;
     cell_footprint : "NAND2_F3";
     cell_leakage_power : 230.395;
     pg_pin (VDD) {
@@ -7654,7 +7654,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (NOR2_HPNW12) {
-    area : 0.061104;
+    area : 0.141440;
     cell_footprint : "NOR2_F3";
     cell_leakage_power : 441.725;
     pg_pin (VDD) {
@@ -7970,7 +7970,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (OAI21_HPNW12) {
-    area : 0.061104;
+    area : 0.141440;
     cell_footprint : "OAI21_F3";
     cell_leakage_power : 231.377;
     pg_pin (VDD) {
@@ -8793,7 +8793,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (OR2_HPNW12) {
-    area : 0.098256;
+    area : 0.262480;
     cell_footprint : "OR2_F3";
     cell_leakage_power : 1100.4;
     pg_pin (VDD) {
@@ -9109,7 +9109,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (XNOR2_HPNW12) {
-    area : 0.122208;
+    area : 0.282880;
     cell_footprint : "XNOR2_F3";
     cell_leakage_power : 1626.18;
     pg_pin (VDD) {
@@ -9515,7 +9515,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (XNOR3_HPNW12) {
-    area : 0.15936;
+    area : 0.403920;
     cell_footprint : "XNOR3_F3";
     cell_leakage_power : 2073.53;
     pg_pin (VDD) {
@@ -11090,7 +11090,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (XOR2_HPNW12) {
-    area : 0.122208;
+    area : 0.282880;
     cell_footprint : "XOR2_F3";
     cell_leakage_power : 1626.18;
     pg_pin (VDD) {
@@ -11496,7 +11496,7 @@ library (sclib_tigfet10_hpnw12_tt_0p70v_25c) {
     }
   }
   cell (XOR3_HPNW12) {
-    area : 0.15936;
+    area : 0.403920;
     cell_footprint : "XOR3_F3";
     cell_leakage_power : 2073.53;
     pg_pin (VDD) {
