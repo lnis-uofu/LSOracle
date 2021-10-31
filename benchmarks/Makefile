@@ -101,7 +101,7 @@ all: ${JSON_REPORTS}
 
 .PHONY: extract synth reports techmap reports timing everything_reports clean all reset test lsoracle
 
-#.PRECIOUS: %.rtl %.mapped.v %.log %.stats.json
+.PRECIOUS: %.rtl %.mapped.v %.log %.stats.json %.sta.log
 
 .SECONDARY:
 
@@ -296,8 +296,9 @@ $(foreach TECHMAPPING_SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(TECHMAPPING)))
 	echo "set_output_delay -clock clk 0 {" >> $@
 	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
 	echo "}" >> $@
-%.sdc: dummy.sdc
-	cp $< $@
+
+# %.sdc: dummy.sdc
+# 	cp $< $@
 
 %_lsoracle.sdc: %.sdc
 	cp $< $@
