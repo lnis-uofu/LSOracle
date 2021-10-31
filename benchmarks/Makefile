@@ -107,6 +107,8 @@ all: ${JSON_REPORTS}
 
 .DELETE_ON_ERROR:
 
+sdc_skels: $(patsubst %.v,%.sdc_skel,${ORIGINAL_FILES})
+
 clean_synth: clean_techmap
 	rm -f tigfet/*_lsoracle.rtl tigfet/*_lsoracle.stats.json
 
@@ -181,7 +183,7 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 #	rm ${TEMP}
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
 
 %_migscript.rtl %_migscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log

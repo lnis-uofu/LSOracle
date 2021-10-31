@@ -1,7 +1,5 @@
 create_clock -name clk -period 10 {CK}
 set_input_delay -clock clk 0 {
-VDD
-GND
 G9
 G8
 G7
