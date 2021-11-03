@@ -1,4 +1,4 @@
-create_clock -name clk -period 10 {clk_i}
+create_clock -name clk -period 10 {clk}
 set_input_delay -clock clk 0 {
 wbm_dat_i
 wbm_ack_i

@@ -37,17 +37,17 @@
 
 namespace alice
 {
-class xmg_convert_command : public alice::command
+class xag_convert_command : public alice::command
 {
 
 public:
-    explicit xmg_convert_command(const environment::ptr &env)
-        : command(env, "Convert stored network to XMG.")
+    explicit xag_convert_command(const environment::ptr &env)
+        : command(env, "Convert stored network to XAG.")
     {
         add_flag("--aig,-a", "Load from stored AIG (Default)");
         add_flag("--mig,-m", "Load from stored MIG");
-        add_flag("--xag,-x", "Load from stored XAG");
-	add_flag("--xmg,-g", "Resynth current XMG");
+        add_flag("--xag,-x", "Resynth current XAG");
+	add_flag("--xmg,-g", "Load from stored XMG");
     }
 
 protected:
@@ -60,14 +60,14 @@ protected:
 	mockturtle::names_view<network> src =
             *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
-        mockturtle::xmg_npn_resynthesis resyn;
-	mockturtle::names_view<mockturtle::xmg_network> dest;
+        mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+	mockturtle::names_view<mockturtle::xag_network> dest;
 
 	mockturtle::node_resynthesis(dest, src, resyn);
 
-	store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
-			      std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(dest);
-	env->out() << "XMG network stored\n";
+	store<std::shared_ptr<mockturtle::names_view<mockturtle::xag_network>>>().extend() =
+			      std::make_shared<mockturtle::names_view<mockturtle::xag_network>>(dest);
+	env->out() << "XAG network stored\n";
     }
     void execute()
     {
@@ -82,5 +82,5 @@ protected:
         }
     }
 };
-ALICE_ADD_COMMAND(xmg_convert, "Convert");
+ALICE_ADD_COMMAND(xag_convert, "Convert");
 }

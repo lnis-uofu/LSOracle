@@ -46,7 +46,7 @@ EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v
 TECHMAPPING_SCRIPT := techmapping/tigfet/synth.tcl
 LIBERTY_FILES := techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
-TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c17.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v i2c.v int2float.v log2.v max.v mem_ctrl.v multiplier.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v square.v voter.v # sqrt.v div.v
+TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v i2c.v int2float.v log2.v max.v mem_ctrl.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v square.v voter.v # multiplier.v # sqrt.v div.v 
 ORIGINAL_FILES := $(addprefix tigfet/,${TIGFET_FILES})
 
 ################################################################
@@ -89,13 +89,15 @@ TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
 #EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
 REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
-JSON_REPORTS := $(foreach TECH,${LIBERTY_FILES},$(patsubst %.v,%_lsoracle.$(shell basename ${TECH} .lib).report.json,${ORIGINAL_FILES}))
+RUNS := xmg2 lsoracle abc mixed
+JSON_REPORTS := $(foreach RUN,${RUNS},$(foreach TECH,${LIBERTY_FILES},$(patsubst %.v,%_${RUN}.$(shell basename ${TECH} .lib).report.json,${ORIGINAL_FILES})))
+
 ################################################################
 ######################## Phony targets #########################
 ################################################################
 
-# test:
-# 	@ echo ${JSON_REPORTS}
+test:
+	@ echo ${JSON_REPORTS}
 
 all: ${JSON_REPORTS}
 
@@ -104,8 +106,6 @@ all: ${JSON_REPORTS}
 .PRECIOUS: %.rtl %.mapped.v %.log %.stats.json %.sta.log
 
 .SECONDARY:
-
-.DELETE_ON_ERROR:
 
 sdc_skels: $(patsubst %.v,%.sdc_skel,${ORIGINAL_FILES})
 
@@ -167,20 +167,50 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*_lsoracle.script)
 	@ echo "ps -a" > ${TEMP}
+	@ echo "write_blif -a /mnt/nas/users/snelgrov/lsoracle/benchmarks/aig.blif" >> ${TEMP}
 	@ echo "xmg_convert -a" >> ${TEMP}
-#	@ echo "partitioning --size 1024 --epsilon 0.05 --output $*_lsoracle.parts" >> ${TEMP}
-#	@ echo "optimization" >> ${TEMP}
+	@ echo "xmgscript2" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
 	@ echo "xmgscript" >> ${TEMP}
-#	@ echo "ps -g" >> ${TEMP}
-#	@ echo "critical_path -g" >> ${TEMP}
-#	@ echo "function_stats -g" >> ${TEMP}
-#	@ echo "fanin_histogram -g" >> ${TEMP}
-#	@ echo "skip_histogram -g" >> ${TEMP}
-#	@ echo "fanout_histogram -g" >> ${TEMP}
-#	@ echo "level_size -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
 	@ echo "write_stats --name $(shell basename $*) -g $*_lsoracle.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl; write_blif $*_lsoracle.yosys.blif" | ${TEE} $*_lsoracle.synth.log
 #	rm ${TEMP}
+
+%_mixed.stats.json %_mixed.rtl %_mixed.synth.log %_mixed.inner.blif &: %.rtl
+#	$(eval TEMP=$(shell mktemp))
+	$(eval TEMP=$*_mixed.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "partitioning --size 1024 --epsilon 0.05" >> ${TEMP}
+	@ echo "optimization_redux --output tigfet/$*_mixed.internal.v --clock clk --abc_exec yosys-abc --liberty techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) -g $*_mixed.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_mixed.rtl; write_blif $*_mixed.yosys.blif" | ${TEE} $*_mixed.synth.log
+#	rm ${TEMP}
+
+%_xmg2.stats.json %_xmg2.rtl %_xmg2.synth.log &: %_mixed.rtl
+#	$(eval TEMP=$(shell mktemp))
+	$(eval TEMP=$*_xmg2.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "xmg_convert -a" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "xmgscript2" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "xmgscript" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) -g $*_xmg2.stats.json" >> ${TEMP}
+	@ echo "write_blif -g $*_xmg2.inner.blif" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_xmg2.rtl; write_blif $*_xmg2.yosys.blif" | ${TEE} $*_xmg2.synth.log
+#	rm ${TEMP}
+
+%.stats.json: %.blif
+	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) -a $@"
 
 %_aigscript.rtl %_aigscript.synth.log &: %.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
@@ -313,6 +343,12 @@ $(foreach TECHMAPPING_SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(TECHMAPPING)))
 %_abc.sdc: %.sdc
 	cp $< $@
 %_timing.sdc: %.sdc
+	cp $< $@
+%_xmg2.sdc: %.sdc
+	cp $< $@
+%_xmgscript.sdc: %.sdc
+	cp $< $@
+%_mixed.sdc: %.sdc
 	cp $< $@
 
 # %_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc

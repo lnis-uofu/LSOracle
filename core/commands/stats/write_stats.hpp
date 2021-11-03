@@ -89,15 +89,15 @@ protected:
 	// TODO make optional
 	if (store<std::shared_ptr<mockturtle::names_view<original>>>().empty()) {
 	    env->err() << "Original AIG network not stored\n";
-	    return;
+	} else {
+	    auto orig = *store<std::shared_ptr<mockturtle::names_view<original>>>().current();
+	    mockturtle::depth_view depth_orig(orig);
+	    stats["preoptimization"]["graph"] = "AIG";
+	    stats["preoptimization"]["depth"] = depth_orig.depth();
+	    stats["preoptimization"]["size"] = orig.size();
+	    oracle::function_counts orig_counts = oracle::node_functions(orig);
+	    write_nodes(stats["preoptimization"]["nodes"], orig_counts);
 	}
-	auto orig = *store<std::shared_ptr<mockturtle::names_view<original>>>().current();
-	mockturtle::depth_view depth_orig(orig);
-	stats["preoptimization"]["graph"] = "AIG";
-	stats["preoptimization"]["depth"] = depth_orig.depth();
-	stats["preoptimization"]["size"] = orig.size();
-	oracle::function_counts orig_counts = oracle::node_functions(orig);
-	write_nodes(stats["preoptimization"]["nodes"], orig_counts);
 
 	// Optimization stats
 	// TODO store optimization runtime and type.
@@ -111,8 +111,6 @@ protected:
 	oracle::slack_view<mockturtle::names_view<network>> slack(ntk);
 	auto critical_path = slack.get_critical_path(ntk);
 
-
-
 	oracle::function_counts critical_counts = oracle::node_functions(ntk);
 	for (auto curr_node : critical_path) {
 	    update_counts(critical_counts, ntk, curr_node);
@@ -123,7 +121,7 @@ protected:
 	// TODO write timing.
 	// TODO write power
 	// TODO write techmapped area, gate counts
-
+	
 	std::ofstream output(file);
 	output << stats;
 	output.close();

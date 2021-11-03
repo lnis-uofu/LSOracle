@@ -59,6 +59,7 @@
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
+#include "algorithms/optimization/xmg_script2.hpp"
 #include "algorithms/optimization/xag_script.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
 
@@ -85,6 +86,9 @@
 #include "commands/input/read_bench.hpp"
 
 #include "commands/conversion/xmg.hpp"
+#include "commands/conversion/xag.hpp"
+#include "commands/conversion/aig.hpp"
+#include "commands/conversion/mig.hpp"
 
 //LUT_Map
 #include "commands/lut_map/lut_map.hpp"

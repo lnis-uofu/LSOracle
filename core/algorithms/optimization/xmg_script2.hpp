@@ -24,7 +24,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#pragma once
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
@@ -38,15 +37,12 @@
 namespace oracle
 {
 
-class xmg_script
+class xmg_script2
 {
 public:
     mockturtle::names_view<mockturtle::xmg_network> run(mockturtle::names_view<mockturtle::xmg_network> &xmg)
     {
-        mockturtle::xmg_algebraic_depth_rewriting_params ps;
-        mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> xmg_depth{xmg};
-        mockturtle::xmg_algebraic_depth_rewriting(xmg_depth, ps);
-	xmg = xmg_depth;
+        xmg = mockturtle::xmg_dont_cares_optimization<mockturtle::names_view<mockturtle::xmg_network>>(xmg);
         // xmg = mockturtle::cleanup_dangling(xmg);
 
         return xmg;
