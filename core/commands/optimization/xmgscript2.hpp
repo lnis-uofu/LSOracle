@@ -37,12 +37,12 @@
 
 namespace alice
 {
-class xmgscript2_command : public alice::command
+class xmgscript_dc_command : public alice::command
 {
 
 public:
-    explicit xmgscript2_command(const environment::ptr &env)
-        : command(env, "Perform XMG based optimization")
+    explicit xmgscript_dc_command(const environment::ptr &env)
+        : command(env, "Perform XMG based don't care optimization")
     {
 
         //opts.add_option("--strategy", strategy, "Optimization strategy [0-4]");
@@ -75,6 +75,6 @@ protected:
         }
     }
 }; //class
-ALICE_ADD_COMMAND(xmgscript2, "Optimization");
+ALICE_ADD_COMMAND(xmgscript_dc, "Optimization");
 } //namespace alice
 

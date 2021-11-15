@@ -68,6 +68,7 @@ extern int Sta_Init(Tcl_Interp *interp);
 #include "algorithms/optimization/aig_script5.hpp"
 #include "algorithms/optimization/xag_script.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
+#include "algorithms/partitioning/slack_view.hpp"
 #include "utility.hpp"
 
 namespace oracle
@@ -872,12 +873,15 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 
 {
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
+    // partition_view<mockturtle::names_view<network>> orig = partman.create_part(ntk, index);
+    // mockturtle::depth_view part_depth(orig);
+    // std::cout << "Original depth " << part_depth.depth() << " gates " << part_depth.num_gates() << " size " << part_depth.size() << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*>optimizers {
-	// new noop<network>(partman, ntk, index, strategy, abc_exec),
 	new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+	new noop<network>(partman, ntk, index, strategy, abc_exec),
 	new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 	new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
@@ -1400,12 +1404,122 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
     return ntk_out;
 }
 
+template <typename network>
+const int worst_indep(mockturtle::names_view<network> &ntk,
+	        oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+	       std::vector<optimization_strategy> &optimized)
+{
+  oracle::slack_view<mockturtle::names_view<network>> slack(ntk);
+  auto critical_path = slack.get_critical_path(ntk);
+  int parts = partitions.get_part_num();
+  std::vector<int> budget(parts, 0);  
+  for (auto i = critical_path.begin(); i != critical_path.end(); i++) {
+    budget[partitions.node_partition(*i)] += 1;
+  }
+
+  int max = -2;
+  float worst = 0;
+  for (int i = 0; i < parts; i++) {
+    if (budget[i] > worst && optimized[i] != optimization_strategy::depth) { // if this is already fully optimized, move to next worst.
+      worst = budget[i];
+      max = i;
+    }
+  }
+  return max;
+}
+
+template <typename network> mockturtle::names_view<mockturtle::xmg_network> optimization_simple(
+    mockturtle::names_view<network> &ntk,
+    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+    const string &liberty_file,
+    const string &sdc_file, const string &clock,
+    const string &output_file, const string &abc_exec)
+{
+    int num_parts = partitions.get_part_num();
+    std::vector<optimizer<network>*> optimized(num_parts);
+    for (int i = 0; i < num_parts; i++) {
+        std::cout << "partition " << i << std::endl;
+	n_strategy<network> strategy;
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i, abc_exec);
+    }
+    assert(num_parts == optimized.size());
+
+    string verilog;
+    mockturtle::names_view<mockturtle::xmg_network> ntk_out;    
+    while (true) {
+          // Output network
+      mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
+      ntk_out = mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::xmg_network>, mockturtle::names_view<network>>(ntk, resyn);
+      oracle::partition_manager<mockturtle::names_view<mockturtle::xmg_network>> partitions_out(ntk_out,
+												partitions.get_all_part_connections(),
+												partitions.get_all_partition_inputs(),
+												partitions.get_all_partition_outputs(),
+												partitions.get_all_partition_regs(),
+												partitions.get_all_partition_regin(),
+												partitions.get_part_num());
+
+    for (int i = 0; i < num_parts; i++) {
+	partition_view<mockturtle::names_view<mockturtle::xmg_network>> part = partitions_out.create_part(ntk_out, i);
+	mockturtle::names_view<mockturtle::xmg_network> opt = optimized[i]->export_superset();
+        partitions_out.synchronize_part(part, opt, ntk_out);
+    }
+
+    partitions_out.connect_outputs(ntk_out);
+    ntk_out = mockturtle::cleanup_dangling(ntk_out);
+
+	//reset_sta(); // todo not cleaning up
+        //verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock);
+      	//     string script =
+	// 	"read_lib " + liberty_file +
+	// 	"; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c;";
+	// verilog = basic_techmap(script, abc_exec, ntk_out);
+        // std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
+	std::vector<optimization_strategy> strats(optimized.size(), optimization_strategy::size);
+	for (int i = 0; i < optimized.size(); i++) {
+	  strats[i] = optimized[i]->target();
+	}
+	const std::string design = ntk.get_network_name() != "" ? ntk.get_network_name() : "top";
+        // size_t worst_part = run_timing(liberty_file, verilog, sdc_file, design, partitions.get_part_num(), strats);
+	size_t worst_part = worst_indep(ntk_out, partitions_out, strats);
+        // TODO if this is worse than last result, rollback and finish.
+        if (worst_part == -1) {
+	    std::cout << "met timing" << std::endl;
+	    break;
+	}
+	if (worst_part == -2) {  // TODO this is terrible way to use return value
+	    std::cout << "exhausted depth optimization for critical path" << std::endl;
+	    break;
+	}
+	if (optimized[worst_part]->target() == optimization_strategy::size) {
+	    ndp_strategy<network> strategy;
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, ntk, worst_part, abc_exec);
+	} else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
+	    d_strategy<network> strategy;
+	    optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, ntk, worst_part, abc_exec);
+	} else if (optimized[worst_part]->target() == optimization_strategy::depth) {
+            std::cout << "previous result was already the best we can do." << std::endl;
+            break; // met timing, or it's the best we can do.
+	} else {
+	    throw "exhausted types";
+	}
+    }
+
+    // std::filesystem::copy(verilog, output_file, std::filesystem::copy_options::overwrite_existing);
+
+    std::cout << "Finished connecting outputs" << std::endl;
+    // ntk_out = mockturtle::cleanup_dangling_with_registers(ntk_out);
+    // std::cout << "Finished cleaning dangling" << std::endl;
+    return ntk_out;
+}
+
 template <typename network> mockturtle::names_view<mockturtle::xmg_network> optimization_redux (
     mockturtle::names_view<network> &ntk_in,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions_in,
     const string &liberty_file,
     const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec)
+    const string &output_file, const string &abc_exec,
+    optimization_strategy strategy
+												)
 {
   int num_parts = partitions_in.get_part_num();
   mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
@@ -1420,15 +1534,26 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> opti
 	       partitions_in.get_all_partition_regs(),
 	       partitions_in.get_all_partition_regin(),
 	       partitions_in.get_part_num());
+  optimization_strategy_comparator<mockturtle::xmg_network> *target;
+  switch (strategy) {
+  case optimization_strategy::depth:
+    target = new d_strategy<mockturtle::xmg_network>();
+    break;
+  case optimization_strategy::balanced: std::cout << "balanced";
+    target = new ndp_strategy<mockturtle::xmg_network>();
+    break;
+  case optimization_strategy::size: std::cout << "size";
+    target = new n_strategy<mockturtle::xmg_network>();    
+    break;
+  }
 
   std::vector<optimizer<mockturtle::xmg_network>*> optimized(num_parts);
   for (int i = 0; i < num_parts; i++) {
     std::cout << "partition " << i << std::endl;
-    d_strategy<mockturtle::xmg_network> strategy;
-    optimized[i] = optimize(strategy, optimization_strategy::depth, partitions, ntk, i, abc_exec);
+    optimized[i] = optimize(*target, strategy, partitions, ntk, i, abc_exec);
   }
   assert(num_parts == optimized.size());
-
+  delete target;
   std::string verilog;
 
   for (int i = 0; i < num_parts; i++) {
@@ -1453,7 +1578,6 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> opti
   std::cout << "Depth " << dep.depth() << dep.num_gates() << std::endl;
   return ntk;
 }
-
 /*
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimization_redux (mockturtle::names_view<network> &ntk,
@@ -1546,6 +1670,7 @@ mockturtle::names_view<mockturtle::xmg_network> optimization_redux (mockturtle::
   return ntk_out;
 }
 */
+
 template mockturtle::names_view<mockturtle::xmg_network>
 budget_optimization<mockturtle::aig_network>
 (
@@ -1558,8 +1683,15 @@ optimization_redux<mockturtle::aig_network>
 (
     mockturtle::names_view<mockturtle::aig_network> &,
     oracle::partition_manager<mockturtle::names_view<mockturtle::aig_network>> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+    const optimization_strategy);
 
+template mockturtle::names_view<mockturtle::xmg_network>
+optimization_simple<mockturtle::aig_network>
+(
+    mockturtle::names_view<mockturtle::aig_network> &,
+    oracle::partition_manager<mockturtle::names_view<mockturtle::aig_network>> &,
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 
 }
 #endif

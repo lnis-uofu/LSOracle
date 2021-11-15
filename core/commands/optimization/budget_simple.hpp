@@ -35,11 +35,11 @@
 
 namespace alice
 {
-class optimization_redux_command : public alice::command
+class budget_simple_command : public alice::command
 {
 
 public:
-    explicit optimization_redux_command(const environment::ptr &env)
+    explicit budget_simple_command(const environment::ptr &env)
         : command(env, "Perform timing driven mixed synthesis.")
     {
         opts.add_option("--output,-o", output_file,
@@ -63,17 +63,17 @@ protected:
         }
 
         auto ntk_aig = *store<aig_ntk>().current();
-        mockturtle::depth_view orig_depth(ntk_aig);
+        mockturtle::depth_view orig_depth{ntk_aig};
         auto partitions_aig = *store<part_man_aig_ntk>().current();
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
-            oracle::optimization_redux<mockturtle::aig_network>(
+            oracle::optimization_simple<mockturtle::aig_network>(
                 ntk_aig, partitions_aig,
                 liberty_file, sdc_file, clock_name,
-		output_file, abc_exec, oracle::optimization_strategy::balanced);
+		output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();
 
-        mockturtle::depth_view new_depth(ntk_result);
+        mockturtle::depth_view new_depth{ntk_result};
         if (ntk_result.size() == ntk_aig.size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
@@ -98,7 +98,7 @@ protected:
     string clock_name;
     string abc_exec{"abc"};
 };
-ALICE_ADD_COMMAND(optimization_redux, "Optimization");
+ALICE_ADD_COMMAND(budget_simple, "Optimization");
 }
 
 #endif

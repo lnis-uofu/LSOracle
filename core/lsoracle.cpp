@@ -136,11 +136,14 @@
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/budget_script.hpp"
+#include "commands/optimization/budget_simple.hpp"
+#include "commands/optimization/optimization_redux.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
 #include "commands/optimization/xmgscript.hpp"
+#include "commands/optimization/xmgscript2.hpp"
 #include "commands/optimization/xagscript.hpp"
 
 

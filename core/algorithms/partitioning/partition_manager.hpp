@@ -1187,6 +1187,11 @@ public:
         return ids;
     }
 
+  kahypar_partition_id_t node_partition(node node)
+  {
+    return _part_nodes[node];
+  }
+
 private:
     int num_partitions = 0;
 

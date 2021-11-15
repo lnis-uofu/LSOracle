@@ -51,6 +51,7 @@ public:
     {
 	add_option("--output,output", file, "Filename");
 	add_option("--name", design, "Design name");
+	add_option("--optimization", optimization, "Optimization name");
         add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display stats for stored XAG");
         add_flag("--xmg,-g", "Display stats for stored XMG");
@@ -102,7 +103,7 @@ protected:
 	// Optimization stats
 	// TODO store optimization runtime and type.
 
-
+	stats["optimization"]["name"] = optimization;	
 	if (!(store<std::shared_ptr<oracle::partition_manager<mockturtle::names_view<original>>>>().empty())) {
 	    auto partman = *store<std::shared_ptr<oracle::partition_manager<mockturtle::names_view<original>>>>().current();
 	    stats["optimization"]["partitions"]["number"] = partman.get_part_num();
@@ -153,6 +154,7 @@ private:
     }
     string file;
     string design;
+    string optimization;
 };
 
 ALICE_ADD_COMMAND(write_stats, "Stats");

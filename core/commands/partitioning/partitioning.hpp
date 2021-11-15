@@ -117,7 +117,7 @@ protected:
 	}
 	env->out() << "Using " << num_partitions << " partitions" << std::endl;
 
-        if (part_file != "") {
+        if (part_file != "" && num_partitions > 1) {
             env->out() << "Partitioning stored " << type_name <<
 		" network using external file" << std::endl;
             std::map<node_type, int> part_data;

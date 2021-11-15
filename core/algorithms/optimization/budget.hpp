@@ -43,8 +43,19 @@ mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec);
 
+enum optimization_strategy { size, balanced, depth };
+
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimization_redux(
+    mockturtle::names_view<network> &ntk,
+    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+    const std::string &liberty_file,
+    const std::string &sdc_file, const std::string &clock_name,
+    const std::string &output_file, const std::string &abc_exec, 
+    const optimization_strategy strategy);
+
+template <typename network>
+mockturtle::names_view<mockturtle::xmg_network> optimization_simple(
     mockturtle::names_view<network> &ntk,
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const std::string &liberty_file,
@@ -56,7 +67,6 @@ struct node_depth {
     int depth;
 };
 
-enum optimization_strategy { size, balanced, depth };
 
 template<typename network>
 class optimizer

@@ -50,6 +50,10 @@ public:
                         "Verilog file to write out to")->required();
         add_flag("--mig,-m",
                  "Read from the MIG network and MIG partition manager for truth table generation");
+        add_flag("--xag,-x",
+                 "Read from the XAG network and XAG partition manager for truth table generation");
+        add_flag("--xmg,-g",
+                 "Read from the XMG network and XMG partition manager for truth table generation");
     }
 
 protected:
@@ -63,15 +67,28 @@ protected:
                 } else {
                     env->err() << "There is not an MIG network stored.\n";
                 }
-            } else {
-                if (!store<aig_ntk>().empty()) {
-                    auto &aig = *store<aig_ntk>().current();
-                    mockturtle::write_dot(aig, filename);
-                } else {
-                    env->err() << "There is not an AIG network stored.\n";
-                }
+            } else if (is_set("xag")) {
+	      if (!store<xag_ntk>().empty()) {
+		auto &xag = *store<xag_ntk>().current();
+		mockturtle::write_dot(xag, filename);
+	      } else {
+		env->err() << "There is not an XAG network stored.\n";
+	      }
+	    } else if (is_set("xmg")) {
+	      if (!store<xmg_ntk>().empty()) {
+		auto &xmg = *store<xmg_ntk>().current();
+		mockturtle::write_dot(xmg, filename);
+	      } else {
+		env->err() << "There is not an XMG network stored.\n";
+	      }
+	    } else {
+	      if (!store<aig_ntk>().empty()) {
+		auto &aig = *store<aig_ntk>().current();
+		mockturtle::write_dot(aig, filename);
+	      } else {
+		env->err() << "There is not an AIG network stored.\n";
+	      }
             }
-
         } else {
             env->err() << filename << " is not a valid dot file\n";
         }
