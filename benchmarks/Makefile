@@ -44,10 +44,10 @@ ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} $
 # LIBERTY_FILE := techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 
 TECHMAPPING_SCRIPT := techmapping/tigfet/synth.tcl
-# techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib 
-LIBERTY_FILES := techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib 
+# techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
+LIBERTY_FILES := techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
-TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v i2c.v int2float.v log2.v max.v mem_ctrl.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v square.v voter.v # multiplier.v # sqrt.v div.v 
+TIGFET_FILES := adder.v arbiter.v bar.v c1335.v c1908a.v c1908.v c2670a.v c2670.v c3540a.v c3540.v c432.v c499.v c5288.v c5315a.v c5315.v c7552.v cavlc.v ctrl.v dec.v i2c.v int2float.v log2.v max.v mem_ctrl.v picorv32.v priority.v router.v s1196.v s1238.v s15850.v s298.v sin.v square.v voter.v # multiplier.v # sqrt.v div.v
 ORIGINAL_FILES := $(addprefix tigfet/,${TIGFET_FILES})
 
 ################################################################
@@ -267,7 +267,7 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 #	@ echo "partitioning --size 512 --epsilon 0.05 --output $*.timing.parts" >> ${TEMP}
 	@ echo "partitioning --size 512 -f $*.parts" >> ${TEMP}
 #	@ echo "budget_script --clock clk --sdc $*.timing.sdc --output $*.timing.sclib_tigfet10_hpnw_all_tt_0p70v_25c.internal.v --abc_exec ${ABC} --liberty techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib" >> ${TEMP}
-	@ echo "budget_simple --clock clk --sdc $*.timing.sdc --output $*.timing.sclib_tigfet10_hpnw_all_tt_0p70v_25c.internal.v --abc_exec ${ABC} --liberty techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib" >> ${TEMP}
+	@ echo "budget_script --clock clk --sdc $*.timing.sdc --output $*.timing.sclib_tigfet10_hpnw_all_tt_0p70v_25c.internal.v --abc_exec ${ABC} --liberty techmapping/tigfet/sclib_tigfet10_hpnw_all_tt_0p70v_25c.lib" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 #	@ echo "critical_path -g" >> ${TEMP}
 #	@ echo "function_stats -g" >> ${TEMP}
@@ -282,7 +282,7 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 #	rm ${TEMP}
 
 # TODO clock signal name, library
-%.timing2.sclib_tigfet10_hpnw_all_tt_0p70v_25c.internal.v %.timing2.synth.log %.timing2.stats.json %.timing2.rtl &: %.rtl %.timing2.sdc 
+%.timing2.sclib_tigfet10_hpnw_all_tt_0p70v_25c.internal.v %.timing2.synth.log %.timing2.stats.json %.timing2.rtl &: %.rtl %.timing2.sdc
 #	$(eval TEMP=$(shell mktemp))
 	$(eval TEMP=$*.timing2.script)
 	@ echo "ps -a" > ${TEMP}
