@@ -79,7 +79,7 @@ using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 
 template<typename T>
-std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal)
+std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
 {
     std::cout << "starting basic techmapping" << std::endl;
     char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
@@ -87,6 +87,7 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
         throw std::exception();
     }
     std::string input_blif = std::string(blif);
+    // std::string input_blif = fmt::format("{}.{}.tech.blif", temp_prefix, optimal.get_network_name());
     std::cout << "generated blif " << input_blif << std::endl;
 
     char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
@@ -94,6 +95,7 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
         throw std::exception();
     }
     std::string output_verilog = std::string(verilog);
+    // std::string output_verilog = fmt::format("{}.{}.tech.v", temp_prefix, optimal.get_network_name());
     std::cout << "writing output to " << output_verilog << std::endl;
 
     char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
@@ -101,6 +103,7 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
         throw std::exception();
     }
     std::string abc_script = std::string(abc);
+    // std::string abc_script = fmt::format("{}.{}.tech.abc", temp_prefix, optimal.get_network_name());
     std::cout << "generated ABC script " << abc_script << std::endl;
 
     std::ofstream script(abc_script);
@@ -118,8 +121,8 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
     // TODO close everything
     return output_verilog;
 };
-template std::string basic_techmap<aig_names>(const std::string &, const std::string &, const aig_names &);
-template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &);
+    template std::string basic_techmap<aig_names>(const std::string &, const std::string &, const aig_names &, const std::string &);
+template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &, const std::string &);
 
 template <typename network> std::string get_po_name_or_default(const network &ntk, const typename network::signal &signal)
 {
@@ -263,13 +266,13 @@ public:
     {
     }
 
-    std::string techmap(const std::string &liberty_file)
+    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
             string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c;";
-            techmapped = basic_techmap(script, abc_exec, copy);
+            techmapped = basic_techmap(script, abc_exec, copy, temp_prefix);
         }
         return techmapped;
     }
@@ -340,13 +343,13 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file)
+    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
             string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-            techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (script, abc_exec, optimal);
+            techmapped = basic_techmap<mockturtle::names_view<mockturtle::mig_network>> (script, abc_exec, optimal, temp_prefix);
         }
         return techmapped;
     }
@@ -409,7 +412,7 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file)
+    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
 
@@ -417,7 +420,7 @@ public:
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
             techmapped = basic_techmap<mockturtle::names_view<mockturtle::aig_network>> (
-                                                                                         script, abc_exec, optimal);
+                script, abc_exec, optimal, temp_prefix);
         }
         return techmapped;
     }
@@ -536,7 +539,7 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file)
+    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
 
@@ -544,7 +547,7 @@ public:
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
             techmapped = basic_techmap<mockturtle::names_view<mockturtle::xag_network>> (
-                                                                                         script, abc_exec, optimal);
+                script, abc_exec, optimal, temp_prefix);
         }
         return techmapped;
     }
@@ -623,14 +626,14 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file)
+    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
             string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
             techmapped = basic_techmap<mockturtle::names_view<mockturtle::xmg_network>> (
-                                                                                         script, abc_exec, optimal);
+                script, abc_exec, optimal, temp_prefix);
         }
         return techmapped;
     }
@@ -935,19 +938,19 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     // std::cout << "Original depth " << part_depth.depth() << " gates " << part_depth.num_gates() << " size " << part_depth.size() << std::endl;
     // todo this is gonna leak memory.
     std::vector<optimizer<network>*>optimizers {
-        new noop<network>(partman, ntk, index, strategy, abc_exec),
+        // new noop<network>(partman, ntk, index, strategy, abc_exec),
         new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 
-        new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new aigscript4_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new aigscript5_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new aigscript4_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new aigscript5_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         new xmg_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         new xag_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        new abc_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        // new abc_optimizer<network>(partman, ntk, index, strategy, abc_exec),
     };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
@@ -1074,7 +1077,8 @@ string techmap(
     std::vector<optimizer<network>*> optimized,
     const string &abc_exec,
     const string &liberty_file,
-    const string &clock)
+    const string &clock,
+    const string &temp_prefix)
 {
     std::cout << "Starting techmap." << std::endl;
     // Write out verilog
@@ -1082,8 +1086,8 @@ string techmap(
     if (mkstemps(output, 11) == -1) {
         throw std::exception();
     }
-
     std::string output_file = std::string(output);
+    // std::string output_file = fmt::format("{}.work.v", temp_prefix);
     std::cout << "Writing out to " << output_file << std::endl;
 
     std::ofstream verilog(output_file);
@@ -1095,7 +1099,7 @@ string techmap(
         std::cout << "techmapping partition " << i << std::endl;
         optimizer<network> *opt = optimized[i];
         std::cout << "using optimizer " << opt->optimizer_name() << std::endl;
-        std::string module_file = opt->techmap(liberty_file);
+        std::string module_file = opt->techmap(liberty_file, temp_prefix);
         std::cout << "writing results" << std::endl;
         verilog << "// Partition " << i << std::endl;
         std::ifstream module(module_file);
@@ -1183,8 +1187,8 @@ void write_top(mockturtle::names_view<network> &ntk,
     }
 
     // assign constant wires.
-    verilog << "wire " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << ";\n";
-    verilog << "assign " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << " = 1'b0;\n";
+    // verilog << "wire " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << ";\n";
+    // verilog << "assign " << escape_id(get_pi_name_or_default(ntk, ntk.get_node(ntk.get_constant(false)))) << " = 1'b0;\n";
     // generate registers.
     ntk.foreach_register([&ntk, &clock, &verilog, &reg_sequence](std::pair<typename network::signal, typename network::node> reg) {
         typename network::signal ri = reg.first;
@@ -1454,7 +1458,7 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
     oracle::partition_manager<mockturtle::names_view<network>> &partitions_in,
     const string &liberty_file,
     const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec)
+    const string &output_file, const string &abc_exec, const string &temp_prefix)
 {
     mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn;
     mockturtle::names_view<mockturtle::xmg_network> ntk =
@@ -1470,20 +1474,17 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
 
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<mockturtle::xmg_network>*> optimized(num_parts);
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
         n_strategy<mockturtle::xmg_network> strategy;
         optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i, abc_exec);
-    }
-    for (int i = 1; i < num_parts; i++) {
-        optimized[i] = new noop<mockturtle::xmg_network>(partitions, ntk, i, optimization_strategy::size, abc_exec);
     }
     assert(num_parts == optimized.size());
 
     string verilog;
     while (true) {
         //reset_sta(); // todo not cleaning up
-        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock);
+        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock, temp_prefix);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
         std::vector<optimization_strategy> strats(optimized.size(), optimization_strategy::size);
         for (int i = 0; i < optimized.size(); i++) {
@@ -1547,24 +1548,28 @@ template <typename network> mockturtle::names_view<mockturtle::xmg_network> budg
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const string &liberty_file,
     const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec)
+    const string &output_file, const string &abc_exec, const string &temp_prefix)
 {
     int num_parts = partitions.get_part_num();
     std::vector<optimizer<network>*> optimized(num_parts);
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < num_parts; i++) {
         std::cout << "partition " << i << std::endl;
         n_strategy<network> strategy;
         optimized[i] = optimize(strategy, optimization_strategy::size, partitions, ntk, i, abc_exec);
     }
-    for (int i = 1; i < num_parts; i++) {
-        optimized[i] = new noop<network>(partitions, ntk, i, optimization_strategy::size, abc_exec);
-    }
+    // for (int i = 1; i < num_parts; i++) {
+    //     std::cout << "partition " << i << std::endl;
+    //     optimized[i] = new migscript_optimizer<network>(partitions, ntk, i, optimization_strategy::size, abc_exec);
+    //     optimized[i]->convert();
+    //     optimized[i]->optimize();
+
+    // }
     assert(num_parts == optimized.size());
 
     string verilog;
     while (true) {
         //reset_sta(); // todo not cleaning up
-        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock);
+        verilog = techmap(ntk, partitions, optimized, abc_exec, liberty_file, clock, temp_prefix);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
         std::vector<optimization_strategy> strats(optimized.size(), optimization_strategy::size);
         for (int i = 0; i < optimized.size(); i++) {
@@ -1823,12 +1828,9 @@ mockturtle::names_view<mockturtle::xmg_network> optimization_redux (
       break;
   }
 
-  for (int i = 0; i < 1; i++) { // NOCOMMIT
+  for (int i = 0; i < num_parts; i++) {
     std::cout << "partition " << i << std::endl;
     optimized[i] = optimize(*target, strategy, partitions, ntk, i, abc_exec);
-  }
-  for (int i = 1; i < num_parts; i++) {
-      optimized[i] = new noop<network>(partitions, ntk, i, strategy, abc_exec);
   }
   delete target;
   assert(num_parts == optimized.size());
@@ -1842,7 +1844,7 @@ budget_optimization<mockturtle::aig_network>
 (
     mockturtle::names_view<mockturtle::aig_network> &,
     oracle::partition_manager<mockturtle::names_view<mockturtle::aig_network>> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 
 template mockturtle::names_view<mockturtle::xmg_network>
 optimization_redux<mockturtle::aig_network>

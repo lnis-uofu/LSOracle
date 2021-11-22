@@ -46,10 +46,16 @@ public:
                         "Verilog output file.")->required();
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
         opts.add_option("--sdc,-s", sdc_file, "SDC file.");
-	opts.add_option("--clock,-c", clock_name, "Clock net.");
+        opts.add_option("--clock,-c", clock_name, "Clock net.");
+        opts.add_option("--temp-prefix", abc_exec,
+                        "Temp filename prefixes.");
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
-    }
+        opts.add_flag("--techmap-whole", "Techmap whole network.");
+        opts.add_flag("--techmap-partitions", "Techmap individual partitions.");
+        opts.add_flag("--tech-independent", "Use tech independent target while selecting optimizations.");
+        opts.add_flag("--tech-dependent", "Use tech mapped metrics target while selecting optimizations.");
+}
 protected:
     void execute()
     {
@@ -70,7 +76,7 @@ protected:
             oracle::budget_optimization<mockturtle::aig_network>(
                 ntk_aig, partitions_aig,
                 liberty_file, sdc_file, clock_name,
-		output_file, abc_exec);
+                output_file, abc_exec, temp_prefix);
         auto stop = std::chrono::high_resolution_clock::now();
 
         mockturtle::depth_view new_depth{ntk_result};
@@ -96,6 +102,7 @@ protected:
     string output_file;
     string sdc_file;
     string clock_name;
+    string temp_prefix;
     string abc_exec{"abc"};
 };
 ALICE_ADD_COMMAND(budget_script, "Optimization");

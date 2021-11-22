@@ -41,7 +41,7 @@ mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
     oracle::partition_manager<mockturtle::names_view<network>> &partitions,
     const std::string &liberty_file,
     const std::string &sdc_file, const std::string &clock_name,
-    const std::string &output_file, const std::string &abc_exec);
+    const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
 
 enum optimization_strategy { size, balanced, depth };
 
@@ -99,7 +99,7 @@ public:
     /**
      * Techmap, then return a path to a file containing the techmapped verilog.
      */
-    virtual std::string techmap(const std::string &liberty_file) = 0;
+    virtual std::string techmap(const std::string &liberty_file, const std::string &temp_prefix) = 0;
     /**
      * convert the network to the superset.
      */

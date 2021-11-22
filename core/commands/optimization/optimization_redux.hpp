@@ -42,13 +42,11 @@ public:
     explicit optimization_redux_command(const environment::ptr &env)
         : command(env, "Perform timing driven mixed synthesis.")
     {
-        opts.add_option("--output,-o", output_file,
-                        "Verilog output file.")->required();
-        opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
-        opts.add_option("--sdc,-s", sdc_file, "SDC file.");
-	opts.add_option("--clock,-c", clock_name, "Clock net.");
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
+        opts.add_flag("--ndp", "Node Depth Product target");
+        opts.add_flag("--nodes", "Node Count target");
+        opts.add_flag("--depth", "Depth target");
     }
 protected:
     void execute()
@@ -61,7 +59,15 @@ protected:
             env->err() << "AIG not partitioned yet\n";
             return;
         }
-
+        oracle::optimization_strategy strategy;
+        if (is_set("depth")) {
+            strategy = oracle::optimization_strategy::depth;
+        } else if (is_set("nodes")) {
+            strategy = oracle::optimization_strategy::size;
+        } else {
+            strategy = oracle::optimization_strategy::balanced;
+        }
+        oracle::optimization_strategy::balanced;
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth(ntk_aig);
         auto partitions_aig = *store<part_man_aig_ntk>().current();
@@ -70,7 +76,7 @@ protected:
             oracle::optimization_redux<mockturtle::aig_network>(
                 ntk_aig, partitions_aig,
                 liberty_file, sdc_file, clock_name,
-		output_file, abc_exec, oracle::optimization_strategy::balanced);
+		output_file, abc_exec, strategy);
         auto stop = std::chrono::high_resolution_clock::now();
 
         mockturtle::depth_view new_depth(ntk_result);

@@ -54,6 +54,7 @@ public:
         add_flag("--xmg,-g", "Read from the XMG network");
         add_flag("--skip-feedthrough",
                  "Do not include feedthrough nets when writing out the file");
+        opts.add_flag("--no-names", "Don't preserve names.");
     }
 
 protected:
@@ -79,8 +80,13 @@ protected:
                 }
             } else if (is_set("xmg")) {
                 if (!store<xmg_ntk>().empty()) {
-                    auto &xmg = *store<xmg_ntk>().current();
-                    mockturtle::write_blif(xmg, filename, ps);
+                    if (is_set("no-names")) {
+                        mockturtle::xmg_network &xmg = *store<xmg_ntk>().current();
+                        mockturtle::write_blif(xmg, filename, ps);
+                    } else {
+                        auto &xmg = *store<xmg_ntk>().current();
+                        mockturtle::write_blif(xmg, filename, ps);
+                    }
                 } else {
                     env->err() << "There is not an XMG network stored.\n";
                 }

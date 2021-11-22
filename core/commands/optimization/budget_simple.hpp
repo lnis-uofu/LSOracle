@@ -40,13 +40,8 @@ class budget_simple_command : public alice::command
 
 public:
     explicit budget_simple_command(const environment::ptr &env)
-        : command(env, "Perform timing driven mixed synthesis.")
+        : command(env, "Perform timing driven mixed synthesis, tech independent.")
     {
-        opts.add_option("--output,-o", output_file,
-                        "Verilog output file.")->required();
-        opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
-        opts.add_option("--sdc,-s", sdc_file, "SDC file.");
-	opts.add_option("--clock,-c", clock_name, "Clock net.");
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
     }
