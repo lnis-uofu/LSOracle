@@ -9,6 +9,9 @@
 *.redux.*
 *.timing2.*
 *.timing.*
+*.timing_direct*.*
+*.timing_yosys*.*
+*.redux_*.*
 *.xmg2.*
 *.xmg3.*
 *.mapped.v
