@@ -526,17 +526,21 @@ struct graph {
             }
 
             for (size_t node : cut_nodes) {
-                cell const& n = std::get<cell>(nodes[node]);
-                std::vector<size_t> fanin = compute_node_fanin_nodes(node);
+                if (std::holds_alternative<cell>(nodes[node])) {
+                    cell const& n = std::get<cell>(nodes[node]);
+                    std::vector<size_t> fanin = compute_node_fanin_nodes(node);
 
-                uint64_t node_mask = 0;
+                    uint64_t node_mask = 0;
 
-                for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
-                    node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
+                    for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
+                        node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
+                    }
+
+                    // TODO: assumes cell has a single output.
+                    values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
+                } else if (std::holds_alternative<constant_zero>(nodes[node]) || std::holds_alternative<constant_one>(nodes[node])) {
+                    continue;
                 }
-
-                // TODO: assumes cell has a single output.
-                values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
             }
 
             if (values.at(c.output)) {
@@ -606,6 +610,8 @@ public:
     {
         g.freeze();
 
+        std::cout << "Input graph has " << g.nodes.size() << " nodes and " << g.connections.size() << " edges.\n";
+
         std::cout << "Mapping phase 1: prioritise depth.\n";
         enumerate_cuts(false, false);
 
@@ -616,17 +622,15 @@ public:
 
         derive_mapping();
 
+        enumerate_cuts(true, false);
+
+        derive_mapping();
+
         std::cout << "Mapping phase 3: prioritise local area.\n";
         enumerate_cuts(true, true);
 
         derive_mapping();
 
-        std::cout << "Mapping phase 4: prioritise global area.\n";
-        enumerate_cuts(true, false);
-
-        derive_mapping();
-
-        std::cout << "Mapping phase 5: prioritise local area.\n";
         enumerate_cuts(true, true);
 
         std::cout << "Deriving the final mapping of the network.\n";
@@ -987,12 +991,45 @@ private:
     // Exact area calculates the number of LUTs that would be added to the mapping if this cut was selected.
     unsigned int cut_exact_area(cut const& c)
     {
+        if (info.at(c.output).selected_cut.has_value()) {
+            if (c == *info.at(c.output).selected_cut) {
+                auto area2 = exact_area_ref(c);
+                auto area1 = exact_area_deref(c);
+                return area1;
+            }
+        }
+
+        auto area1 = exact_area_deref(c);
+        auto area2 = exact_area_ref(c);
+        return area1;
+    }
+
+    unsigned int exact_area_deref(cut const& c)
+    {
         unsigned int area = 1;
 
-        for (size_t input : c.inputs) {
-            std::vector<size_t> fanin{g.compute_node_fanin_nodes(input)};
-            if (fanin.size() == 1) {
-                area += cut_exact_area(*info.at(input).selected_cut);
+        for (size_t cut_input : c.inputs) {
+            if (std::holds_alternative<cell>(g.nodes[cut_input]) && info.at(cut_input).references >= 1) {
+                info.at(cut_input).references--;
+                if (info.at(cut_input).references == 0) {
+                    area += exact_area_deref(*info.at(cut_input).selected_cut);
+                }
+            }
+        }
+
+        return area;
+    }
+
+    unsigned int exact_area_ref(cut const& c)
+    {
+        unsigned int area = 1;
+
+        for (size_t cut_input : c.inputs) {
+            if (std::holds_alternative<cell>(g.nodes[cut_input])) {
+                if (info.at(cut_input).references == 0) {
+                    area += exact_area_ref(*info.at(cut_input).selected_cut);
+                }
+                info.at(cut_input).references++;
             }
         }
 
@@ -1074,6 +1111,9 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
     for (size_t po : g.primary_outputs) {
         for (size_t fanin : g.compute_node_fanin_nodes(po)) {
             // BUG: exporting to MIG breaks here; for later.
+            if (node_to_mockturtle.find(fanin) == node_to_mockturtle.end()) {
+                std::cout << "Node " << fanin << " not in node_to_mockturtle\n";
+            }
             node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
             break;
         }
