@@ -239,9 +239,14 @@ struct graph {
 
     void freeze()
     {
-        frozen = true;
         node_fanin_nodes = std::vector<std::vector<size_t>>{nodes.size()};
         node_fanout_nodes = std::vector<std::vector<size_t>>{nodes.size()};
+
+        // Populate the caches by computing topological orderings.
+        compute_topological_ordering();
+        compute_reverse_topological_ordering();
+
+        frozen = true;
     }
 
     void unfreeze()
