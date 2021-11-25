@@ -239,6 +239,8 @@ struct graph {
 
     void freeze()
     {
+        std::cout << "freezing graph...";
+        fflush(stdout);
         node_fanin_nodes = std::vector<std::vector<size_t>>{nodes.size()};
         node_fanout_nodes = std::vector<std::vector<size_t>>{nodes.size()};
 
@@ -247,6 +249,7 @@ struct graph {
         compute_reverse_topological_ordering();
 
         frozen = true;
+        std::cout << "done\n";
     }
 
     void unfreeze()
@@ -620,21 +623,24 @@ public:
         std::cout << "Mapping phase 1: prioritise depth.\n";
         enumerate_cuts(false, false);
 
-        derive_mapping();
+        // After depth mapping, recalculate node slacks.
+        recalculate_slack();
+
+        //derive_mapping();
 
         std::cout << "Mapping phase 2: prioritise global area.\n";
         enumerate_cuts(true, false);
 
-        derive_mapping();
+        //derive_mapping();
 
         enumerate_cuts(true, false);
 
-        derive_mapping();
+        //derive_mapping();
 
         std::cout << "Mapping phase 3: prioritise local area.\n";
         enumerate_cuts(true, true);
 
-        derive_mapping();
+        //derive_mapping();
 
         enumerate_cuts(true, true);
 
@@ -741,9 +747,6 @@ private:
                 }
             }
         }
-
-        // After mapping, recalculate node slacks.
-        recalculate_slack();
     }
 
     void recalculate_slack()
@@ -760,6 +763,9 @@ private:
         }
 
         std::cout << "Maximum depth of network is " << max_depth << '\n';
+
+        std::cout << "Propagating arrival times...";
+        fflush(stdout);
 
         // Next, initialise the node required times.
         for (mapping_info& node : info) {
@@ -781,6 +787,7 @@ private:
                 assert(info[cut_input].required >= 0 && "bug: node has negative arrival time");
             }
         }
+        std::cout << "done\n";
     }
 
     graph<lut> derive_mapping() const
