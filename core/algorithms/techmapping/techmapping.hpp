@@ -416,7 +416,19 @@ struct graph {
             }
         }
 
-        // TODO: if `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        // If `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        bool remaining_edges = false;
+
+        for (std::optional<connection> const& conn : g.connections) {
+            if (conn) {
+                remaining_edges = true;
+                std::cout << conn->from << " -> " << conn->to << '\n';
+            }
+        }
+
+        if (remaining_edges) {
+            throw std::logic_error{"input graph is cyclic or has nodes not reachable from primary inputs"};
+        }
 
         if (frozen) {
             forward_topological_ordering = ordering;
@@ -448,7 +460,19 @@ struct graph {
             }
         }
 
-        // TODO: if `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        // If `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        bool remaining_edges = false;
+
+        for (std::optional<connection> const& conn : g.connections) {
+            if (conn) {
+                remaining_edges = true;
+                std::cout << conn->from << " -> " << conn->to << '\n';
+            }
+        }
+
+        if (remaining_edges) {
+            throw std::logic_error("input graph is cyclic or has nodes not reachable from primary inputs");
+        }
 
         return ordering;
     }
@@ -476,7 +500,19 @@ struct graph {
             }
         }
 
-        // TODO: if `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        // If `g` still has edges this is a cyclic graph, which cannot be topologically ordered.
+        bool remaining_edges = false;
+
+        for (std::optional<connection> const& conn : g.connections) {
+            if (conn) {
+                remaining_edges = true;
+                std::cout << conn->from << " -> " << conn->to << '\n';
+            }
+        }
+
+        if (remaining_edges) {
+            throw std::logic_error("input graph is cyclic or has nodes not reachable from primary inputs");
+        }
 
         if (frozen) {
             reverse_topological_ordering = ordering;
@@ -720,20 +756,18 @@ private:
             // We should have at least one cut provided by the trivial cut.
             assert(!cut_set.empty() && "bug: node has no cuts"); // TODO: maybe this is redundant given the assert in area_optimisation?
 
-            // Choose the best cut as the representative cut for this node.
-            for (size_t input : cut_set[0].inputs) {
-                info[input].references++;
+            // If there's a representative cut for this node already, decrement its references first.
+            if (info[node].selected_cut.has_value()) {
+                cut_deref(*info[node].selected_cut);
             }
+
+            // Choose the best cut as the representative cut for this node.
+            cut_ref(cut_set[0]);
 
             // Add the cut set of this node to the frontier.
             info[node].selected_cut = std::make_optional(cut_set[0]);
             info[node].depth = cut_depth(cut_set[0], info);
             info[node].area_flow = cut_area_flow(cut_set[0], info);
-
-            for (size_t input : cut_set[0].inputs) {
-                info[input].references++;
-                info[input].area_flow = cut_area_flow(*info[input].selected_cut, info);
-            }
 
             frontier.insert({node, frontier_info{std::move(cut_set)}});
 
@@ -985,9 +1019,11 @@ private:
     // where a node is covered by multiple mappings at the same time.
     float cut_fanin_refs(cut const& c, std::vector<mapping_info> const& info)
     {
-        return std::transform_reduce(c.inputs.begin(), c.inputs.end(), 0.0, std::plus<>(), [&](size_t input) {
-            return float(info.at(input).references);
-        }) / float(c.input_count());
+        float references = 0.0;
+        for (size_t input : c.inputs) {
+            references += float(info.at(input).references);
+        }
+        return references / float(c.input_count());
     }
 
     // Area flow estimates how much this cone of logic is shared within the current mapping.
@@ -1007,12 +1043,22 @@ private:
             if (c == *info.at(c.output).selected_cut) {
                 auto area2 = exact_area_ref(c);
                 auto area1 = exact_area_deref(c);
+
+                if (area1 != area2) {
+                    throw std::logic_error("bug: mismatch between number of nodes referenced and dereferenced");
+                }
+
                 return area1;
             }
         }
 
-        auto area1 = exact_area_deref(c);
         auto area2 = exact_area_ref(c);
+        auto area1 = exact_area_deref(c);
+
+        if (area1 != area2) {
+            throw std::logic_error("bug: mismatch between number of nodes referenced and dereferenced");
+        }
+
         return area1;
     }
 
@@ -1021,7 +1067,12 @@ private:
         unsigned int area = 1;
 
         for (size_t cut_input : c.inputs) {
-            if (std::holds_alternative<cell>(g.nodes[cut_input]) && info.at(cut_input).references >= 1) {
+            if (std::holds_alternative<cell>(g.nodes[cut_input])) {
+                if (info.at(cut_input).references <= 0) {
+                    std::cout << "At node " << cut_input << ":\n";
+                    throw std::logic_error{"bug: decremented node reference below zero"};
+                }
+
                 info.at(cut_input).references--;
                 if (info.at(cut_input).references == 0) {
                     area += exact_area_deref(*info.at(cut_input).selected_cut);
@@ -1046,6 +1097,36 @@ private:
         }
 
         return area;
+    }
+
+    void cut_deref(cut const& c)
+    {
+        for (size_t cut_input : c.inputs) {
+            if (std::holds_alternative<cell>(g.nodes[cut_input])) {
+                if (info.at(cut_input).references <= 0) {
+                    throw std::logic_error{"bug: decremented node reference below zero"};
+                }
+
+                info.at(cut_input).references--;
+                info.at(cut_input).area_flow = cut_area_flow(*info.at(cut_input).selected_cut, info);
+                if (info.at(cut_input).references == 0) {
+                    cut_deref(*info.at(cut_input).selected_cut);
+                }
+            }
+        }
+    }
+
+    void cut_ref(cut const& c)
+    {
+        for (size_t cut_input : c.inputs) {
+            if (std::holds_alternative<cell>(g.nodes[cut_input])) {
+                if (info.at(cut_input).references == 0) {
+                    cut_ref(*info.at(cut_input).selected_cut);
+                }
+                info.at(cut_input).references++;
+                info.at(cut_input).area_flow = cut_area_flow(*info.at(cut_input).selected_cut, info);
+            }
+        }
     }
 
     graph<cell> g;
