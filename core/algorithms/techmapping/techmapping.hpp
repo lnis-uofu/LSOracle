@@ -577,6 +577,15 @@ struct graph {
                     uint64_t node_mask = 0;
 
                     for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
+                        if (values.find(fanin[fanin_node]) == values.end()) {
+                            std::cout << "while simulating cut [";
+                            for (size_t input : c.inputs) {
+                                std::cout << input << ", ";
+                            }
+                            std::cout << "] -> " << c.output << ":\n";
+                            std::cout << "at node " << fanin[fanin_node] << ":\n";
+                            throw std::logic_error{"fanin node not in simulation values"};
+                        }
                         node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
                     }
 
@@ -705,18 +714,21 @@ private:
             // Find the node cut set.
             std::vector<cut> cut_set = node_cut_set(node, frontier);
 
-            /*std::cout << "[" << node << "] Cut set of node:\n";
-            for (const cut& child_cut : cut_set) {
-                std::cout << "  " << child_cut.input_count() << " [";
-                for (int child_cut_input : child_cut.inputs) {
-                    std::cout << child_cut_input << ", ";
-                }
-                std::cout << "]; depth " << cut_depth(cut_set[0], info) << '\n';
-            }*/
-
             // Prune cuts which exceed the node slack in area optimisation mode.
             if (area_optimisation) {
-                //std::cout << "Required time of node is " << info[node].required << '\n';
+                if (std::all_of(cut_set.begin(), cut_set.end(), [&](cut const& c) {
+                    return cut_depth(c, info) > info[node].required;
+                })) {
+                    std::cout << "Required time of node " << node << " is " << info[node].required << '\n';
+                    std::cout << "Depth of cuts:\n";
+                    for (cut const& c : cut_set) {
+                        std::cout << "[";
+                        for (size_t input : c.inputs) {
+                            std::cout << input << " @ " << cut_depth(*info[input].selected_cut, info) << ", ";
+                        }
+                        std::cout << "] -> " << c.output << " = " << cut_depth(c, info) << '\n';
+                    }
+                }
 
                 cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
                     return cut_depth(c, info) > info[node].required;
@@ -724,7 +736,9 @@ private:
 
                 // Because the previous cut is included in the set and must meet required times
                 // we must have at least one cut left from this.
-                assert(!cut_set.empty() && "bug: erased all cuts from a node");
+                if (cut_set.empty()) {
+                    throw std::logic_error{"bug: no cuts meet node required time"};
+                }
             }
 
             // Sort the cuts by desired characteristics.
@@ -748,13 +762,18 @@ private:
                 });
             }
 
+            // Deduplicate cuts to ensure diversity.
+            cut_set.erase(std::unique(cut_set.begin(), cut_set.end()), cut_set.end());
+
             // Keep only the specified good cuts.
             if (cut_set.size() > settings.node_cut_count) {
                 cut_set.erase(cut_set.begin()+settings.node_cut_count, cut_set.end());
             }
 
             // We should have at least one cut provided by the trivial cut.
-            assert(!cut_set.empty() && "bug: node has no cuts"); // TODO: maybe this is redundant given the assert in area_optimisation?
+            if (cut_set.empty()) {
+                throw std::logic_error{"bug: node has no cuts"};// TODO: maybe this is redundant given the assert in area_optimisation?
+            }
 
             // If there's a representative cut for this node already, decrement its references first.
             if (info[node].selected_cut.has_value()) {
@@ -936,7 +955,6 @@ private:
         // This is implemented as performing a 2-way cartesian product N times.
 
         // Start with the cut set of input zero.
-
         std::vector<cut> cut_set{};
 
         for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
@@ -947,7 +965,9 @@ private:
         // For each other input:
         if (node_inputs.size() > 1) {
             std::for_each(node_inputs.begin()+1, node_inputs.end(), [&](size_t node_input) {
-                assert(frontier.find(node_input) != frontier.end() && "bug: mapping frontier does not contain node");
+                if (frontier.find(node_input) == frontier.end()) {
+                    throw std::logic_error("bug: mapping frontier does not contain node");
+                }
 
                 std::vector<cut> new_cuts;
 
@@ -987,10 +1007,6 @@ private:
         if (info[node].selected_cut.has_value()) {
             cut_set.push_back(*info[node].selected_cut);
         }
-
-        // Deduplicate cuts in the list with a set.
-        // This appears to break mapping somehow?
-        //std::unique(cut_set.begin(), cut_set.end());
 
         return cut_set;
     }
