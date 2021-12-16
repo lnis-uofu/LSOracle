@@ -119,6 +119,7 @@
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
+#include "commands/optimization/optimization_test.hpp"
 
 /* these were commented out in previous master */
 // #include "commands/optimization/depth_partition.hpp"
