@@ -955,12 +955,10 @@ private:
         // This is implemented as performing a 2-way cartesian product N times.
 
         // Start with the cut set of input zero.
-        std::vector<cut> cut_set{};
+        std::vector<cut> cut_set{frontier.at(node_inputs[0]).cuts};
 
-        for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
-            cut child_cut = frontier.at(node_inputs[0]).cuts[index];
-            cut_set.push_back(child_cut);
-        }
+        // Append the trivial cut of input zero.
+        cut_set.push_back(cut{node_inputs[0]});
 
         // For each other input:
         if (node_inputs.size() > 1) {
@@ -975,6 +973,7 @@ private:
                 for (cut const& c : cut_set) {
                     for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
                         new_cuts.push_back(c.merge(frontier.at(node_input).cuts[input_cut], node));
+                        new_cuts.push_back(c.merge(cut{node_input}, node));
                     }
                 }
 
@@ -995,12 +994,6 @@ private:
             for (cut& c : cut_set) {
                 c.output = node;
             }
-        }
-
-        // Include the trivial cut in the cut set.
-        if (std::holds_alternative<cell>(g.nodes[node])) {
-            // The trivial cut of a node is just the node itself.
-            cut_set.push_back(cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]});
         }
 
         // Also include the previous-best cut in the cut set, if it exists, to avoid forgetting good cuts.
