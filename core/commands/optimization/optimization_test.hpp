@@ -31,6 +31,7 @@
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <sys/stat.h>
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 //#include "algorithms/optimization/budget.hpp"
 
 namespace alice
@@ -46,33 +47,81 @@ public:
         //                 "ABC executable, defaults to using path.");
         opts.add_option("--partition,-p", index,
                         "index of partition to test opt.");
+        opts.add_option("--file,-f", part_file,
+                        "partition file.");
+        auto num_opt = opts.add_option("--num,num", num_partitions,
+                                       "Number of desired partitions");
+        opts.add_option("--size", size_partitions,
+                        "Number of desired average nodes per partition.")->excludes(num_opt);
         // opts.add_flag("--ndp", "Node Depth Product target");
         // opts.add_flag("--nodes", "Node Count target");
         // opts.add_flag("--depth", "Depth target");
     }
 protected:
+    std::vector<int> read_file(string filename)
+    {
+        std::vector<int> output;
+        std::ifstream ifs;
+
+        ifs.open(filename);
+        if (ifs.is_open()) {
+            while (ifs.good()) {
+                std::string part;
+                getline(ifs, part);
+                if (part != "")
+                    output.push_back(std::stoi(part));
+            }
+            ifs.close();
+            return output;
+        } else {
+            env->err() << "Unable to open partition data file\n";
+            throw exception();
+        }
+    }
+
     void execute()
     {
         if (store<aig_ntk>().empty()) {
             env->err() << "No AIG stored\n";
             return;
         }
-        if (store<part_man_aig_ntk>().empty()) {
-            env->err() << "AIG not partitioned yet\n";
-            return;
+        // if (store<part_man_aig_ntk>().empty()) {
+        //     env->err() << "AIG not partitioned yet\n";
+        //     return;
+        // }
+        auto ntk = *store<aig_ntk>().current();
+        mockturtle::depth_view orig_depth(ntk);
+        // auto partitions_view = *store<part_man_aig_ntk>().current();
+        if (num_partitions == 0) {
+            num_partitions = std::max(ntk.size() / size_partitions, 1u);
         }
-        auto ntk_aig = *store<aig_ntk>().current();
-        mockturtle::depth_view orig_depth(ntk_aig);
-        auto partitions_view = *store<part_man_aig_ntk>().current();
+        mockturtle::node_map<int, mockturtle::names_view<mockturtle::aig_network>> partitions(ntk);
+        std::vector<int> parts = read_file(part_file);
+        if (parts.size() != ntk.size()) {
+            env->out() << "Partition file contains the incorrect number of nodes\n";
+            exit(1);
+        }
+        for (int i = 0; i < parts.size(); i++) {
+            partitions[ntk.index_to_node(i)] = parts[i];
+        }
         auto start = std::chrono::high_resolution_clock::now();
-        oracle::partition_view<mockturtle::names_view<mockturtle::aig_network>> original = partitions_view.create_part(ntk_aig, index);
-        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
-        mockturtle::names_view<mockturtle::aig_network> copy = mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::aig_network>, oracle::partition_view<mockturtle::names_view<mockturtle::aig_network>>>
-                (original, resyn);
+        oracle::partition_manager_junior junior(ntk, partitions, num_partitions);
 
+        mockturtle::window_view<mockturtle::names_view<mockturtle::aig_network>> original = junior.partition(index);
+        //oracle::partition_view<mockturtle::names_view<mockturtle::aig_network>> original =
+        //     partitions_view.create_part(ntk, index);
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
+        mockturtle::names_view<mockturtle::aig_network> copy =
+            mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::aig_network>,
+                                         mockturtle::window_view<mockturtle::names_view<mockturtle::aig_network>>>
+                (original, resyn);
+        junior.integrate(original, copy);
         auto stop = std::chrono::high_resolution_clock::now();
         env->out() << "Finished optimization\n";
     }
+    uint32_t num_partitions = 0;
+    uint32_t size_partitions = 2048;
+    std::string part_file = "";
     string liberty_file;
     string output_file;
     string sdc_file;
