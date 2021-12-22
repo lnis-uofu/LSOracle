@@ -98,7 +98,8 @@ protected:
             while (ifs.good()) {
                 std::string part;
                 getline(ifs, part);
-                output.push_back(std::stoi(part));
+                if (part != "")
+                    output.push_back(std::stoi(part));
             }
             ifs.close();
             return output;

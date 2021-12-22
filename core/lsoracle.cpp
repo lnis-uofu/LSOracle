@@ -40,6 +40,7 @@
 
 /*** Algorithms ***/
 #include "algorithms/partitioning/partition_view.hpp"
+#include "utility.hpp"
 #include "algorithms/partitioning/hyperg.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
 //#include "algorithms/partitioning/cluster.hpp"
@@ -61,12 +62,10 @@
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xmg_script2.hpp"
 #include "algorithms/optimization/xag_script.hpp"
-//#include "algorithms/optimization/four_way_optimization.hpp"
-
-//#include "algorithms/asic_mapping/techmapping.hpp"
-//#include "algorithms/output/mapped_verilog.hpp"
-//#include "algorithms/output/part_verilog.hpp"
-
+#include "algorithms/output/rtlil.hpp"
+#include "algorithms/asic_mapping/techmapping.hpp"
+#include "algorithms/techmapping/techmapping.hpp"
+#include "algorithms/output/mapped_verilog.hpp"
 
 /*** Stores ***/
 #include "store/aig.hpp"
@@ -92,6 +91,7 @@
 
 //LUT_Map
 #include "commands/lut_map/lut_map.hpp"
+#include "commands/lut_map/new_lut_map.hpp"
 
 //Output
 #include "commands/output/write_verilog.hpp"
@@ -142,9 +142,11 @@
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
+#include "commands/optimization/optimization_test.hpp"
 #include "commands/optimization/xmgscript.hpp"
 #include "commands/optimization/xmgscript2.hpp"
 #include "commands/optimization/xagscript.hpp"
+
 
 
 /* these were commented out in previous master */
@@ -164,7 +166,6 @@
 // #include "commands/testing/test_seed_partitioner.hpp"
 // #include "commands/testing/test_fpga_seed.hpp"
 // #include "commands/testing/pattern_view.hpp"
-// #include "commands/lut_map/xmg_map.hpp"
 
 #include "commands/version.hpp"
 

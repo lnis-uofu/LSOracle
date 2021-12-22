@@ -3,8 +3,6 @@
 
 build/
 build_debug/
-build-debug/
-
 .vscode/
 
 examples/abc/csharp/bin
