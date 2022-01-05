@@ -115,7 +115,10 @@ protected:
             mockturtle::node_resynthesis<mockturtle::names_view<mockturtle::aig_network>,
                                          mockturtle::window_view<mockturtle::names_view<mockturtle::aig_network>>>
                 (original, resyn);
-        junior.integrate(original, copy);
+        oracle::aig_script2 opt;
+        mockturtle::names_view<mockturtle::aig_network> optimal = opt.run(copy);
+
+        junior.integrate(original, optimal);
         auto stop = std::chrono::high_resolution_clock::now();
         env->out() << "Finished optimization\n";
     }

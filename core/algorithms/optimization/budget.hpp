@@ -29,7 +29,7 @@
 #ifdef ENABLE_OPENSTA
 #ifdef ENABLE_ABC
 #include <mockturtle/mockturtle.hpp>
-#include "algorithms/partitioning/partition_manager.hpp"
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 #include "utility.hpp"
 
 namespace oracle
@@ -37,8 +37,7 @@ namespace oracle
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
-    mockturtle::names_view<network> &ntk,
-    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+    oracle::partition_manager_junior<network> &partitions,
     const std::string &liberty_file,
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
@@ -47,8 +46,7 @@ enum optimization_strategy { size, balanced, depth };
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimization_redux(
-    mockturtle::names_view<network> &ntk,
-    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+    oracle::partition_manager_junior<network> &partitions,
     const std::string &liberty_file,
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec,
@@ -56,8 +54,7 @@ mockturtle::names_view<mockturtle::xmg_network> optimization_redux(
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimization_simple(
-    mockturtle::names_view<network> &ntk,
-    oracle::partition_manager<mockturtle::names_view<network>> &partitions,
+    oracle::partition_manager_junior<network> &partitions,
     const std::string &liberty_file,
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec);
@@ -104,10 +101,10 @@ public:
      * convert the network to the superset.
      */
     virtual mockturtle::names_view<mockturtle::xmg_network> export_superset() = 0;
-    /**
-     * Reapply this optimization to a different network. (Maybe fix the XMG resynth problems)
-     */
-    virtual optimizer<mockturtle::xmg_network> *reapply(partition_manager<mockturtle::names_view<mockturtle::xmg_network>> &partman, mockturtle::names_view<mockturtle::xmg_network> &ntk) = 0;
+    // /**
+    //  * Reapply this optimization to a different network. (Maybe fix the XMG resynth problems)
+    //  */
+    virtual optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, mockturtle::names_view<mockturtle::xmg_network> &ntk) = 0;
 };
 }
 

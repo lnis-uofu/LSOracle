@@ -1171,6 +1171,15 @@ public:
         return partition_results;
     }
 
+    mockturtle::node_map<int, aig_names> get_partitions_map(Ntk &ntk)
+    {
+        mockturtle::node_map<int, aig_names> part_map(ntk);
+        ntk.foreach_node([&] (auto n) {
+             part_map[n] = _part_nodes[n];
+        });
+        return part_map;
+    }
+
     std::vector<kahypar_partition_id_t> get_initial_partitions()
     {
         return initial_partitions;

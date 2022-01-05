@@ -71,12 +71,17 @@ protected:
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth(ntk_aig);
         auto partitions_aig = *store<part_man_aig_ntk>().current();
+        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr (
+            ntk_aig,
+            partitions_aig.get_partitions_map(ntk_aig),
+            partitions_aig.get_part_num());
+
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
             oracle::optimization_redux<mockturtle::aig_network>(
-                ntk_aig, partitions_aig,
+                partitions_jr,
                 liberty_file, sdc_file, clock_name,
-		output_file, abc_exec, strategy);
+                output_file, abc_exec, strategy);
         auto stop = std::chrono::high_resolution_clock::now();
 
         mockturtle::depth_view new_depth(ntk_result);

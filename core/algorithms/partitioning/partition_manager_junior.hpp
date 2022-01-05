@@ -1,3 +1,35 @@
+/* LSOracle: A learning based Oracle for Logic Synthesis
+
+ * MIT License
+ * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+
+#include <algorithm>
+#include <vector>
+#include <mockturtle/mockturtle.hpp>
 
 namespace oracle
 {
@@ -12,13 +44,13 @@ public:
     using signal = typename network::signal;
     using window_view = typename mockturtle::window_view<network>;
     using fanout_view = typename mockturtle::fanout_view<network>;
-    partition_manager_junior(network &ntk, partition_map &partitions, int part_num):
+    partition_manager_junior(network &ntk, partition_map partitions, int part_num):
         ntk(ntk),
         partitions(partitions),
         partition_count(part_num),
         fanout(mockturtle::fanout_view(ntk)) {}
 
-    network &full_network()
+    network &get_network()
     {
         return ntk;
     }
@@ -60,7 +92,8 @@ public:
     template<class optimized_network>
     void integrate(int id, mockturtle::names_view<optimized_network> &opt)
     {
-        integrate(partition(id), opt);
+        window_view part = partition(id);
+        integrate<optimized_network>(part, opt);
     }
 
     template<class optimized_network>
@@ -115,9 +148,12 @@ public:
             }
         });
         std::cout << "Calculated substitutions" << std::endl;
-        std::list<std::pair<node, signal>> substitution_list(substitutions.begin(),
-                                                               substitutions.end());
-        ntk.substitute_nodes(substitution_list);
+        // std::list<std::pair<node, signal>> substitution_list(substitutions.begin(),
+        //                                                        substitutions.end());
+        // ntk.substitute_nodes(substitution_list);
+        for (auto substitution = substitutions.begin(); substitution != substitutions.end(); substitution++) {
+            ntk.substitute_node(substitution->first, substitution->second);
+        }
         std::cout << "Substituted nodes." << std::endl;
     }
 
@@ -126,14 +162,15 @@ public:
         return partitions[n];
     }
 
-    int number_of_partitions()
+    int count()
     {
         return partition_count;
     }
+
 private:
     network &ntk;
     fanout_view fanout;
-    partition_map &partitions;
+    partition_map partitions;
     int partition_count;
 };
 }

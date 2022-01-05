@@ -32,6 +32,7 @@
 #include <mockturtle/mockturtle.hpp>
 #include <sys/stat.h>
 #include "algorithms/optimization/budget.hpp"
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 
 namespace alice
 {
@@ -60,10 +61,14 @@ protected:
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth{ntk_aig};
         auto partitions_aig = *store<part_man_aig_ntk>().current();
+        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr (ntk_aig ,
+                                                       partitions_aig.get_partitions_map(ntk_aig),
+                                                       partitions_aig.get_part_num());
+
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
             oracle::optimization_simple<mockturtle::aig_network>(
-                ntk_aig, partitions_aig,
+                partitions_jr,
                 liberty_file, sdc_file, clock_name,
 		output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();

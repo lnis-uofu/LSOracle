@@ -32,6 +32,7 @@
 #include <mockturtle/mockturtle.hpp>
 #include <sys/stat.h>
 #include "algorithms/optimization/budget.hpp"
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 
 namespace alice
 {
@@ -42,6 +43,7 @@ public:
     explicit budget_script_command(const environment::ptr &env)
         : command(env, "Perform timing driven mixed synthesis.")
     {
+        opts.add_option("--file",partition_file,"Partition file");
         opts.add_option("--output,-o", output_file,
                         "Verilog output file.")->required();
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
@@ -57,24 +59,62 @@ public:
         opts.add_flag("--tech-dependent", "Use tech mapped metrics target while selecting optimizations.");
 }
 protected:
+    std::vector<int> read_file(string filename)
+    {
+        std::vector<int> output;
+        std::ifstream ifs;
+
+        ifs.open(filename);
+        if (ifs.is_open()) {
+            while (ifs.good()) {
+                std::string part;
+                getline(ifs, part);
+                if (part != "")
+                    output.push_back(std::stoi(part));
+            }
+            ifs.close();
+            return output;
+        } else {
+            env->err() << "Unable to open partition data file\n";
+            throw exception();
+        }
+    }
+
+
     void execute()
     {
         if (store<aig_ntk>().empty()) {
             env->err() << "No AIG stored\n";
             return;
         }
-        if (store<part_man_aig_ntk>().empty()) {
-            env->err() << "AIG not partitioned yet\n";
-            return;
-        }
 
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth{ntk_aig};
-        auto partitions_aig = *store<part_man_aig_ntk>().current();
+        // if (store<part_man_aig_ntk>().empty()) {
+        //     env->err() << "AIG not partitioned yet\n";
+        //     return;
+        // }
+        // auto partitions_aig = *store<part_man_aig_ntk>().current();
+        // auto map = partitions_aig.get_partitions_map(ntk_aig);
+        mockturtle::node_map<int, mockturtle::names_view<mockturtle::aig_network>> part_map(ntk_aig);
+        std::vector<int> parts = read_file(partition_file);
+        if (parts.size() != ntk_aig.size()) {
+            env->out() << "Partition file contains the incorrect number of nodes\n";
+            exit(1);
+        }
+        int part_count = 0;
+        for (int i = 0; i < parts.size(); i++) {
+            part_map[ntk_aig.index_to_node(i)] = parts[i];
+            if (parts[i] > part_count) part_count = parts[i];
+        }
+
+        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr (ntk_aig,
+                                                      part_map,
+                                                      part_count);
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
             oracle::budget_optimization<mockturtle::aig_network>(
-                ntk_aig, partitions_aig,
+                partitions_jr,
                 liberty_file, sdc_file, clock_name,
                 output_file, abc_exec, temp_prefix);
         auto stop = std::chrono::high_resolution_clock::now();
@@ -101,6 +141,7 @@ protected:
     string liberty_file;
     string output_file;
     string sdc_file;
+    string partition_file;
     string clock_name;
     string temp_prefix;
     string abc_exec{"abc"};
