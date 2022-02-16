@@ -33,6 +33,7 @@
 
 namespace oracle
 {
+// Beware the son of partition manager!
 template<typename network_base>
 class partition_manager_junior
 {
@@ -44,41 +45,76 @@ public:
     using signal = typename network::signal;
     using window_view = typename mockturtle::window_view<network>;
     using fanout_view = typename mockturtle::fanout_view<network>;
-    partition_manager_junior(network &ntk, partition_map partitions, int part_num):
+    partition_manager_junior(network ntk, partition_map partitions, int part_num):
         ntk(ntk),
         partitions(partitions),
-        partition_count(part_num),
-        fanout(mockturtle::fanout_view(ntk)) {}
+        partition_count(part_num) {}
 
     network &get_network()
     {
         return ntk;
     }
 
+                       // {
+               //     // Check if all fanin are not in the partition.
+               //     bool exterior = true;
+               //     std::vector<node> possible_ci;
+               //     // Add CI for each non-partition fanin.
+               //     ntk.foreach_fanin(n, [&](signal const &f){
+               //         node fin = ntk.get_node(f);
+               //         if (partitions[fin] != id) {
+               //             possible_ci.push_back(fin);
+               //         } else {
+               //             exterior = false;
+               //         }
+               //     });
+               //     if (exterior) {
+               //         // Not a parent network CI, but is a CI in the partition.
+               //         inputs.push_back(n);
+               //     } else {
+               //         // Is in the network, add any external fanin to inputs.
+               //         for (auto i = possible_ci.begin(); i != possible_ci.end(); i++) {
+               //             inputs.push_back(*i);
+               //         }
+               //         gates.push_back(n);
+               //     }
+               // }
+
     window_view partition(int id)
     {
         std::vector<node> inputs;
         std::vector<signal> outputs;
         std::vector<node> gates;
+        fanout_view fanout(ntk);
+
         ntk.foreach_node([&](node const &n) {
-           if (partitions[n] != id) {
+           if (partitions[n] != id || ntk.is_constant(n)) {
                return;
            } else if (ntk.is_ci(n)) {
                inputs.push_back(n);
            } else {
-               gates.push_back(n);
-               ntk.foreach_fanin(n, [&](signal const &f){
-                   node fin = ntk.get_node(f);
-                   if (partitions[fin] != id) {
-                       inputs.push_back(fin);
-                   }
-               });
-               fanout.foreach_fanout(n, [&](node const &s) {
-                   if (partitions[s] != id) {
-                       outputs.push_back(ntk.make_signal(n));
-                   }
-               });
-           }
+              gates.push_back(n);
+              // Add CI for each non-partition fanin.
+              ntk.foreach_fanin(n, [&](signal const &f){
+                  node fin = ntk.get_node(f);
+                  if (partitions[fin] != id && !ntk.is_constant(fin)) {
+                      inputs.push_back(fin);
+                  }
+              });
+          }
+
+           // Add output if fans out to non-partition.
+           fanout.foreach_fanout(n, [&](node const &s) {
+               if (partitions[s] != id) {
+                  outputs.push_back(ntk.make_signal(n));
+               }
+           });
+           // Add output if is a CO source.
+           ntk.foreach_co([&](signal const &s) {
+               if (ntk.get_node(s) == n) {
+                   outputs.push_back(ntk.make_signal(n));
+               }
+           });
         });
         std::sort(inputs.begin(), inputs.end());
         auto iend = std::unique(inputs.begin(), inputs.end());
@@ -93,16 +129,15 @@ public:
     void integrate(int id, mockturtle::names_view<optimized_network> &opt)
     {
         window_view part = partition(id);
-        integrate<optimized_network>(part, opt);
+        integrate<optimized_network>(id, part, opt);
     }
 
     template<class optimized_network>
-    void integrate(window_view &part, mockturtle::names_view<optimized_network> &opt)
+    void integrate(int partition_id, window_view &part, mockturtle::names_view<optimized_network> &opt)
     {
         std::cout << "Running integration" << std::endl;
         assert(opt.num_cis() == part.num_cis());
         assert(opt.num_cos() == part.num_cos());
-
         mockturtle::node_map<signal, mockturtle::names_view<optimized_network>> old_to_new(opt);
 
         // WARNING!!!! This works by assuming that PIs and POs in the
@@ -114,9 +149,9 @@ public:
             old_to_new[o] = ntk.make_signal(n);
         });
         std::cout << "Setup PIs" << std::endl;
-        mockturtle::topo_view opt_top{opt};
+        mockturtle::topo_view opt_topo{opt};
 
-        opt_top.foreach_gate([&](auto node) {
+        opt_topo.foreach_gate([&](auto node) {
             // Insert node into original network.
             std::vector<signal> children;
             opt.foreach_fanin(node, [&](auto child) {
@@ -132,9 +167,14 @@ public:
                 ntk.set_name(old_to_new[node], opt.get_name(signal));
             }
         });
-        std::cout << "Inserted new nodes" << std::endl;
+        std::cout << "Inserted new nodes " << partition_id << std::endl;
+        partitions.resize();
+        opt_topo.foreach_gate([&](auto node) {
+            partitions[old_to_new[node]] = partition_id;
+        });
+
         // Calculate substitutions from partition outputs.
-        std::unordered_map<node, signal> substitutions;
+        // std::unordered_map<node, signal> substitutions;
         opt.foreach_co([&](auto opt_signal, auto index) {
             auto opt_node = opt.get_node(opt_signal);
             signal new_out = old_to_new[opt_node];
@@ -155,6 +195,7 @@ public:
             ntk.substitute_node(substitution->first, substitution->second);
         }
         std::cout << "Substituted nodes." << std::endl;
+        //ntk = mockturtle::cleanup_dangling_with_registers(ntk);
     }
 
     int node_partition(const node &n)
@@ -168,9 +209,9 @@ public:
     }
 
 private:
-    network &ntk;
-    fanout_view fanout;
+    network ntk;
     partition_map partitions;
     int partition_count;
+    std::unordered_map<node, signal> substitutions;
 };
 }

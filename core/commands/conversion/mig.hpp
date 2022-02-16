@@ -47,7 +47,7 @@ public:
         add_flag("--aig,-a", "Load from stored AIG (Default)");
         add_flag("--mig,-m", "Resynth current MIG");
         add_flag("--xag,-x", "Load from stored XAG");
-	add_flag("--xmg,-g", "Load from stored XMG");
+        add_flag("--xmg,-g", "Load from stored XMG");
     }
 
 protected:
@@ -57,24 +57,24 @@ protected:
             env->err() << name << " network not stored\n";
             return;
         }
-	mockturtle::names_view<network> src =
+        mockturtle::names_view<network> src =
             *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
         mockturtle::mig_npn_resynthesis resyn;
-	mockturtle::names_view<mockturtle::mig_network> dest;
+        mockturtle::names_view<mockturtle::mig_network> dest;
 
-	mockturtle::node_resynthesis(dest, src, resyn);
+        mockturtle::node_resynthesis(dest, src, resyn);
 
-	store<std::shared_ptr<mockturtle::names_view<mockturtle::mig_network>>>().extend() =
-			      std::make_shared<mockturtle::names_view<mockturtle::mig_network>>(dest);
-	env->out() << "MIG network stored\n";
+        store<std::shared_ptr<mockturtle::names_view<mockturtle::mig_network>>>().extend() =
+                              std::make_shared<mockturtle::names_view<mockturtle::mig_network>>(dest);
+        env->out() << "MIG network stored\n";
     }
     void execute()
     {
-	if (is_set("mig")) {
-	    convert<mockturtle::mig_network>("MIG");
-	} else if (is_set("xmg")) {
-	    convert<mockturtle::xmg_network>("XMG");
+        if (is_set("mig")) {
+            convert<mockturtle::mig_network>("MIG");
+        } else if (is_set("xmg")) {
+            convert<mockturtle::xmg_network>("XMG");
         } else if (is_set("xag")) {
             convert<mockturtle::xag_network>("XAG");
         } else {

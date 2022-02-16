@@ -153,10 +153,11 @@ sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
 %.aig %.aig.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
-%.redux_ndp.stats.json %.redux_ndp.rtl %.redux_ndp.synth.log &: %.rtl
+%.redux_ndp.stats.json %.redux_ndp.rtl %.redux_ndp.synth.log &: %.rtl %.parts
 	$(eval TEMP=$*.redux_ndp.script)
 	@ echo "ps -a" > ${TEMP}
-	@ echo "partitioning --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+#	@ echo "partitioning --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "partitioning --size ${PART_SIZE} -f $*.parts" >> ${TEMP}
 	@ echo "optimization_redux --ndp --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 	@ echo "write_stats -g --name $(shell basename $*) --optimization redux_ndp $*.redux_ndp.stats.json" >> ${TEMP}

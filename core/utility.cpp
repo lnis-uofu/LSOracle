@@ -704,3 +704,23 @@ template function_counts node_functions<xmg_names>(const xmg_names&);
 template function_counts node_functions<aig_names>(const aig_names&);
 template function_counts node_functions<xag_names>(const xag_names&);
 }
+
+std::vector<int> read_integer_file(string filename)
+{
+    std::vector<int> output;
+    std::ifstream ifs;
+
+    ifs.open(filename);
+    if (ifs.is_open()) {
+        while (ifs.good()) {
+            std::string part;
+            getline(ifs, part);
+            if (part != "")
+                output.push_back(std::stoi(part));
+        }
+        ifs.close();
+        return output;
+    } else {
+        throw exception();
+    }
+}

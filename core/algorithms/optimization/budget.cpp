@@ -323,7 +323,8 @@ public:
         mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
         fix_names(partman, original, ntk, index);
 
-        mockturtle::mig_npn_resynthesis resyn;
+        // mockturtle::mig_npn_resynthesis resyn;
+        mockturtle::direct_resynthesis<mig_names> resyn;
         converted =
             mockturtle::node_resynthesis<mig_names, mockturtle::window_view<mockturtle::names_view<network>>>
             (original, resyn);
@@ -684,6 +685,7 @@ public:
 
     optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
     {
+        std::cout << "reapply " << this->index << std::endl;
         return new migscript_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
     }
     void optimize()
@@ -940,12 +942,12 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     // todo this is gonna leak memory.
     mockturtle::names_view<network> &ntk = partman.get_network();
     std::vector<optimizer<network>*>optimizers {
-        // new noop<network>(partman, ntk, index, strategy, abc_exec),
-        new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        new noop<network>(partman, ntk, index, strategy, abc_exec),
+        // new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         // new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         // new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
 
-        // new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         // new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         // new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
         // new aigscript4_optimizer<network>(partman, ntk, index, strategy, abc_exec),
@@ -1298,7 +1300,6 @@ size_t run_timing(const std::string &liberty_file,
     sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::MinMax::max(), worst_path_arrival);
     sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::MinMax::max(), worst_path_slack);
 
-
     sta::ConcreteNetwork *net = reinterpret_cast<sta::ConcreteNetwork*>(sta::Sta::sta()->networkReader());
     sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
                                  (net->topInstance());
@@ -1434,16 +1435,14 @@ xmg_names setup_output(
             optimizer<mockturtle::xmg_network> *optim = optimized[i]->reapply(partitions_out, ntk_out);
             optim->convert();
             optim->optimize();
+
             xmg_names opt = optim->export_superset();
-            partitions_out.integrate(part,opt);
-            // This is segfaulting, getting void for num_cis?
-            // xmg_names opt = optimized[i]->export_superset();
-            // partitions_out.integrate(i, opt);
+            partitions_out.integrate(i, part, opt);
         }
     }
-    ntk_out = mockturtle::cleanup_dangling_with_registers(ntk_out);
+
     std::cout << "Finished connecting outputs" << std::endl;
-    return ntk_out;
+    return partitions_out.get_network();
 }
 
 /*
@@ -1572,7 +1571,7 @@ xmg_names optimization_redux (
   std::vector<optimizer<network>*> optimized(num_parts);
   optimization_strategy_comparator<network> *target;
   switch (strategy) {
-  case optimization_strategy::depth:
+  case optimization_strategy::depth: std::cout << "depth";
       target = new d_strategy<network>();
       break;
   case optimization_strategy::balanced: std::cout << "balanced";
@@ -1582,7 +1581,7 @@ xmg_names optimization_redux (
       target = new n_strategy<network>();
       break;
   }
-
+  std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
     std::cout << "partition " << i << std::endl;
     optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);

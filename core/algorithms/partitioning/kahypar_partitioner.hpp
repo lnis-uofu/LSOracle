@@ -46,14 +46,15 @@
 
 namespace oracle
 {
-template <Ntk>
+template <typename network>
 class kahypar_partitioner
 {
+    using Ntk = mockturtle::names_view<network>;
 public:
     kahypar_partitioner(Ntk &ntk, int part_num, std::string config_direc = "",
                       kahypar_hypernode_weight_t *hypernode_weights = nullptr,
                         kahypar_hyperedge_weight_t *hyperedge_weights = nullptr,
-                        double imbalance = 0.9): ntk(ntk), part_num(part_num)
+                        double imbalance = 0.9): ntk(ntk), part_num(part_num), node_partition(ntk)
     {
         // mockturtle::incomplete_node_map<kahypar_hyperedge_id_t, Ntk> initial_partitions;
         static_assert(mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type");
@@ -71,7 +72,7 @@ public:
                       "Ntk does not implement the make_signal method");
 
 
-        std::cout << "num_partitions: " << num_partitions << "\n";
+        std::cout << "num_partitions: " << part_num << "\n";
 
         if (part_num == 1) {
             ntk.foreach_node([&](auto n) { node_partition[n] = 0; });
@@ -155,12 +156,13 @@ public:
         kahypar_context_free(context);
     }
 
-    partition_manager_junior &partition_manager() {
-        return partition_manager_junior(ntk, node_partition, part_num);
+    partition_manager_junior<network> partition_manager() {
+        return partition_manager_junior<network>(ntk, node_partition, part_num);
     }
+
 private:
     int part_num = 0;
-    mockturtle::node_map<kahypar_hyperedge_id_t, Ntk> node_partition;
-    Ntk &ntk;
-}
+    mockturtle::node_map<int, mockturtle::names_view<network>> node_partition;
+    mockturtle::names_view<network> ntk;
+};
 };

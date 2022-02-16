@@ -35,6 +35,7 @@
 #include <mockturtle/mockturtle.hpp>
 
 #include <fmt/format.h>
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 
 namespace alice
 {
@@ -42,6 +43,8 @@ using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using mig_ntk = std::shared_ptr<mig_names>;
 using part_man_mig = oracle::partition_manager<mig_names>;
 using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+using part_man_jr_mig = oracle::partition_manager_junior<mockturtle::mig_network>;
+using part_man_jr_mig_ntk = std::shared_ptr<part_man_jr_mig>;
 
 ALICE_ADD_STORE(mig_ntk, "mig", "m", "mig", "MIGs")
 
@@ -101,4 +104,31 @@ ALICE_PRINT_STORE_STATISTICS(part_man_mig_ntk, os, part_man)
 {
     os << "partition number: " << part_man->get_part_num() << std::endl;
 }//end partition manager<mig_network> print store statistics
+
+ALICE_ADD_STORE(part_man_jr_mig_ntk, "part_man_jr_mig", "pm_m", "part_man_jr_mig",
+                "PART_MAN_JR_MIGs")
+
+/* Implements the short string to describe a store element in store -a */
+ALICE_DESCRIBE_STORE(part_man_jr_mig_ntk, part_man_jr)
+{
+
+    const auto name = "partition manager for Named MIG networks";
+    const auto part_num = part_man_jr->count();
+
+    return fmt::format("{} # partitions = {}", name, part_num);
+}//end partition manager<mig_network> describe store
+
+ALICE_LOG_STORE_STATISTICS(part_man_jr_mig_ntk, part_man_jr)
+{
+
+    return {
+        {"partition number", part_man_jr->count()}};
+}//end partition manager<mig_network> log store statistics
+
+/* Implements the functionality of ps -b */
+ALICE_PRINT_STORE_STATISTICS(part_man_jr_mig_ntk, os, part_man_jr)
+{
+    os << "partition number: " << part_man_jr->count() << std::endl;
+}//end partition manager<mig_network> print store statistics
+
 }

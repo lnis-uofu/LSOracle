@@ -118,7 +118,7 @@ protected:
         oracle::aig_script2 opt;
         mockturtle::names_view<mockturtle::aig_network> optimal = opt.run(copy);
 
-        junior.integrate(original, optimal);
+        junior.integrate(index, original, optimal);
         auto stop = std::chrono::high_resolution_clock::now();
         env->out() << "Finished optimization\n";
     }

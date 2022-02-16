@@ -87,13 +87,13 @@ protected:
             env->err() << "No AIG stored\n";
             return;
         }
-
-        auto ntk_aig = *store<aig_ntk>().current();
-        mockturtle::depth_view orig_depth{ntk_aig};
         // if (store<part_man_aig_ntk>().empty()) {
         //     env->err() << "AIG not partitioned yet\n";
         //     return;
         // }
+
+        auto ntk_aig = *store<aig_ntk>().current();
+        mockturtle::depth_view orig_depth{ntk_aig};
         // auto partitions_aig = *store<part_man_aig_ntk>().current();
         // auto map = partitions_aig.get_partitions_map(ntk_aig);
         mockturtle::node_map<int, mockturtle::names_view<mockturtle::aig_network>> part_map(ntk_aig);
