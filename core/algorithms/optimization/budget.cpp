@@ -76,6 +76,8 @@ using aig_names = mockturtle::names_view<mockturtle::aig_network>;
 using xag_names = mockturtle::names_view<mockturtle::xag_network>;
 using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+using xmg_manager = partition_manager_junior<mockturtle::xmg_network>;
+using xmg_partition = mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>>;
 
 template<typename T>
 std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
@@ -124,7 +126,6 @@ template std::string basic_techmap<aig_names>(const std::string &, const std::st
 template std::string basic_techmap<xag_names>(const std::string &, const std::string &, const xag_names &, const std::string &);
 template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &, const std::string &);
 template std::string basic_techmap<xmg_names>(const std::string &, const std::string &, const xmg_names &, const std::string &);
-
 
 template <typename network> std::string get_po_name_or_default(const network &ntk, const typename network::signal &signal)
 {
@@ -184,10 +185,10 @@ std::string get_ri_name_or_default(const network &ntk, const typename network::s
 }
 
 template <typename network> void fix_names(partition_manager_junior<network> &partman,
-                                       mockturtle::window_view<mockturtle::names_view<network>> &part,
-                                       const mockturtle::names_view<network> &ntk,
-                                       int index)
+                                           mockturtle::window_view<mockturtle::names_view<network>> &part,
+                                           int index)
 {
+    mockturtle::names_view<network> ntk = partman.get_network();
     part.foreach_pi([&part, &ntk](typename network::node n) {
         std::string name = get_node_name_or_default(ntk, n);
         part.set_name(part.make_signal(n), name);
@@ -209,10 +210,40 @@ template <typename network> void fix_names(partition_manager_junior<network> &pa
 }
 
 template <typename network>
+mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_manager_junior<network> &partman, int index)
+{
+    mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
+    mockturtle::names_view<network> ntk = partman.get_network();
+    part.foreach_pi([&part, &ntk](typename network::node n) {
+        std::string name = get_node_name_or_default(ntk, n);
+        part.set_name(part.make_signal(n), name);
+    });
+    int feedthrough = 0;
+    part.foreach_po([&part, &ntk, &feedthrough](typename network::signal s, int i) {
+        typename network::node n = part.get_node(s);
+        if (ntk.is_pi(n)) {
+            feedthrough++;
+            // skip feedthroughs
+            return;
+        }
+        std::string name = get_node_name_or_default(ntk, n);
+        part.set_output_name(i, name);
+    });
+    if (feedthrough > 0 ) {
+        std::cout << "Skipped renaming for " << feedthrough << " feedthrough." << std::endl;
+    }
+    return part;
+}
+
+template <typename network>
 class noop: public optimizer<network>
 {
+    using names = mockturtle::names_view<network>;
+    using partition = mockturtle::window_view<names>;
+    // using manager = partition_manager_junior<network>;
+
 public:
-    noop(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
+    noop(int index, const partition &part, optimization_strategy target, const std::string &abc_exec): index(index), original(part), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -222,9 +253,9 @@ public:
     }
 
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new noop<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new noop<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
 
@@ -241,8 +272,7 @@ public:
     xmg_names export_superset()
     {
         mockturtle::direct_resynthesis<xmg_names> resyn;
-        return mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>
-                (copy, resyn);
+        return mockturtle::node_resynthesis<xmg_names, names>(copy, resyn);
     }
 
     /*
@@ -250,16 +280,14 @@ public:
      */
     void convert()
     {
-        mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
-        // original.set_network_name("partition_" + std::to_string(index)); // TODO not working?
-        fix_names(partman, original, ntk, index);
-        mockturtle::direct_resynthesis<mockturtle::names_view<network>> resyn;
-        copy = mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::window_view<mockturtle::names_view<network>>>
-                (original, resyn);
+        // partition original = partman.partition(index);
+        // // original.set_network_name("partition_" + std::to_string(index)); // TODO not working?
+        mockturtle::direct_resynthesis<names> resyn;
+        copy = mockturtle::node_resynthesis<names, partition> (original, resyn);
         copy.set_network_name("partition_" + std::to_string(index));
     }
 
-    mockturtle::names_view<network> optimized()
+    names optimized()
     {
         return copy;
     }
@@ -288,16 +316,14 @@ public:
         return metric;
     }
 private:
-    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager_junior<network> partman;
-    mockturtle::names_view<network> copy;
+    partition original;
+    names copy;
     node_depth metric;
     optimization_strategy strategy;
     std::string techmapped;
     const std::string &abc_exec;
 };
-
 template class noop<mockturtle::aig_network>;
 template class noop<mockturtle::mig_network>;
 template class noop<mockturtle::xag_network>;
@@ -306,8 +332,12 @@ template class noop<mockturtle::xmg_network>;
 template <typename network>
 class mig_optimizer: public optimizer<network>
 {
+    using names = mockturtle::names_view<network>;
+    using partition = mockturtle::window_view<names>;
+    using manager = mockturtle::window_view<names>;
+
 public:
-    mig_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
+    mig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -320,9 +350,6 @@ public:
 
     void convert()
     {
-        mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
-        fix_names(partman, original, ntk, index);
-
         // mockturtle::mig_npn_resynthesis resyn;
         mockturtle::direct_resynthesis<mig_names> resyn;
         converted =
@@ -362,9 +389,8 @@ public:
         return strategy;
     }
 protected:
-    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager_junior<network> partman;
+    partition original;
     mig_names optimal;
     mig_names converted;
     node_depth metric;
@@ -378,8 +404,9 @@ template class mig_optimizer<mockturtle::aig_network>;
 template <typename network>
 class aig_optimizer: public optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aig_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
+    aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
     {
     }
 
@@ -391,13 +418,8 @@ public:
 
     void convert()
     {
-        mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
-        fix_names(partman, original, ntk, index);
-
         mockturtle::xag_npn_resynthesis<aig_names> resyn;
-        converted =
-            mockturtle::node_resynthesis<aig_names, mockturtle::window_view<mockturtle::names_view<network>>>
-            (original, resyn);
+        converted = mockturtle::node_resynthesis<aig_names, partition> (original, resyn);
         converted.set_network_name("partition_" + std::to_string(index));
     }
 
@@ -433,9 +455,8 @@ public:
         return strategy;
     }
 protected:
-    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager_junior<network> partman;
+    partition original;
     aig_names optimal;
     aig_names converted;
     node_depth metric;
@@ -449,18 +470,20 @@ template class aig_optimizer<mockturtle::aig_network>;
 template< typename network>
 class abc_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    abc_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    abc_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
         return "abc resyn2";
     }
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new abc_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new abc_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
+
     void optimize()
     {
         char *blif_name_char = strdup("/tmp/lsoracle_XXXXXX.blif");
@@ -499,33 +522,28 @@ public:
 template <typename network>
 class xag_optimizer: public optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    xag_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
+    xag_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
     {
     }
 
     xmg_names export_superset()
     {
         mockturtle::direct_resynthesis<xmg_names> resyn;
-        return mockturtle::node_resynthesis<xmg_names, xag_names>
-                (optimal, resyn);
+        return mockturtle::node_resynthesis<xmg_names, xag_names>(optimal, resyn);
     }
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+        optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new xag_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new xag_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
+
     void convert()
     {
-        mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
-        fix_names(partman, original, ntk, index);
-
         mockturtle::xag_npn_resynthesis<xag_names> resyn;
-        converted =
-            mockturtle::node_resynthesis<xag_names, mockturtle::window_view<mockturtle::names_view<network>>>
-            (original, resyn);
+        converted = mockturtle::node_resynthesis<xag_names, partition> (original, resyn);
         converted.set_network_name("partition_" + std::to_string(index));
-        assert(converted.get_network_name() == "partition_" + std::to_string(index));
     }
 
     xag_names optimized()
@@ -572,9 +590,8 @@ public:
     }
 
 protected:
-    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager_junior<network> partman;
+    partition original;
     xag_names optimal;
     xag_names converted;
     node_depth metric;
@@ -587,31 +604,27 @@ template class xag_optimizer<mockturtle::xag_network>;
 template <typename network>
 class xmg_optimizer: public optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    xmg_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): index(index), partman(partman), ntk(ntk), strategy(target), abc_exec(abc_exec)
+    xmg_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
     {
     }
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+        optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new xmg_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new xmg_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
+
     xmg_names export_superset()
     {
         mockturtle::direct_resynthesis<xmg_names> resyn;
-        return mockturtle::node_resynthesis<xmg_names, xmg_names>
-                (optimal, resyn);
+        return mockturtle::node_resynthesis<xmg_names, xmg_names>(optimal, resyn);
     }
 
     void convert()
     {
-        mockturtle::window_view<mockturtle::names_view<network>> original = partman.partition(index);
-        fix_names(partman, original, ntk, index);
-
         mockturtle::xmg_npn_resynthesis resyn;
-        converted =
-            mockturtle::node_resynthesis<xmg_names, mockturtle::window_view<mockturtle::names_view<network>>>
-            (original, resyn);
+        converted = mockturtle::node_resynthesis<xmg_names, partition>(original, resyn);
         converted.set_network_name("partition_" + std::to_string(index));
     }
 
@@ -650,8 +663,6 @@ public:
     {
         oracle::xmg_script opt;
         this->optimal = opt.run(this->converted);
-        assert(optimal.get_network_name() == converted.get_network_name());
-
     }
 
     optimization_strategy target()
@@ -660,9 +671,8 @@ public:
     }
 
 protected:
-    mockturtle::names_view<network> ntk;
     int index;
-    partition_manager_junior<network> partman;
+    partition original;
     xmg_names optimal;
     xmg_names converted;
     node_depth metric;
@@ -675,61 +685,61 @@ template class xmg_optimizer<mockturtle::xmg_network>;
 template <typename network>
 class migscript_optimizer: public mig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    migscript_optimizer(partition_manager_junior<network> partman, mockturtle::names_view<network> ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    migscript_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
         return "migscript";
     }
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        std::cout << "reapply " << this->index << std::endl;
-        return new migscript_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new migscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
+
     void optimize()
     {
         oracle::mig_script migopt;
         this->optimal = migopt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class migscript2_optimizer: public mig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    migscript2_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    migscript2_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
 
     const std::string optimizer_name()
     {
         return "migscript2";
     }
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new migscript2_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new migscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
+
     void optimize()
     {
         oracle::mig_script2 migopt;
         this->optimal = migopt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class migscript3_optimizer: public mig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    migscript3_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    migscript3_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new migscript3_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new migscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -741,20 +751,19 @@ public:
     {
         oracle::mig_script3 migopt;
         this->optimal = migopt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class aigscript_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aigscript_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    aigscript_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new aigscript_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new aigscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -766,20 +775,19 @@ public:
     {
         oracle::aig_script opt;
         this->optimal = opt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class aigscript2_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aigscript2_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    aigscript2_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new aigscript2_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new aigscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -791,20 +799,19 @@ public:
     {
         oracle::aig_script2 opt;
         this->optimal = opt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class aigscript3_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aigscript3_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    aigscript3_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new aigscript3_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new aigscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -816,20 +823,19 @@ public:
     {
         oracle::aig_script3 opt;
         this->optimal = opt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class aigscript4_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aigscript4_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    aigscript4_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new aigscript4_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new aigscript4_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -841,20 +847,19 @@ public:
     {
         oracle::aig_script4 opt;
         this->optimal = opt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
 template <typename network>
 class aigscript5_optimizer: public aig_optimizer<network>
 {
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aigscript5_optimizer(partition_manager_junior<network> &partman, mockturtle::names_view<network> &ntk, int index, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(partman, ntk, index, target, abc_exec) {}
+    aigscript5_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
-    optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, xmg_names &ntk)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
-        return new aigscript5_optimizer<mockturtle::xmg_network>(partman, ntk, this->index, this->strategy, this->abc_exec);
+        return new aigscript5_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
 
     const std::string optimizer_name()
@@ -866,8 +871,6 @@ public:
     {
         oracle::aig_script5 opt;
         this->optimal = opt.run(this->converted);
-        assert(this->optimal.get_network_name() == this->converted.get_network_name());
-
     }
 };
 
@@ -940,21 +943,23 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     // mockturtle::depth_view part_depth(orig);
     // std::cout << "Original depth " << part_depth.depth() << " gates " << part_depth.num_gates() << " size " << part_depth.size() << std::endl;
     // todo this is gonna leak memory.
-    mockturtle::names_view<network> &ntk = partman.get_network();
+    // const mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
+    // todo remove double network.
+    // fix_names(partman, part, partman.get_network(), index);
+    const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partman, index);
     std::vector<optimizer<network>*>optimizers {
-        new noop<network>(partman, ntk, index, strategy, abc_exec),
-        // new migscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new migscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new migscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-
-        new aigscript_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new aigscript2_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new aigscript3_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new aigscript4_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new aigscript5_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new xmg_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new xag_optimizer<network>(partman, ntk, index, strategy, abc_exec),
-        // new abc_optimizer<network>(partman, ntk, index, strategy, abc_exec),
+        new noop<network>(index, part, strategy, abc_exec),
+        new migscript_optimizer<network>(index, part, strategy, abc_exec),
+        new migscript2_optimizer<network>(index, part, strategy, abc_exec),
+        new migscript3_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript2_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript3_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript4_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
+        new xmg_optimizer<network>(index, part, strategy, abc_exec),
+        new xag_optimizer<network>(index, part, strategy, abc_exec),
+        new abc_optimizer<network>(index, part, strategy, abc_exec),
     };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
@@ -1410,14 +1415,13 @@ xmg_names setup_output(
     int num_parts = partitions_in.count();
     mockturtle::direct_resynthesis<xmg_names> resyn;
     mockturtle::names_view<network> &ntk = partitions_in.get_network();
-    xmg_names ntk_out = mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>
-        (ntk, resyn);
+    xmg_names ntk_out = mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>(ntk, resyn);
     mockturtle::node_map<int, xmg_names> partitions_out_map(ntk_out);
     partitions_in.get_network().foreach_node([&](auto n){
         int i = ntk.node_to_index(n);
         partitions_out_map[ntk_out.index_to_node(i)] = partitions_in.node_partition(n);
     });
-    oracle::partition_manager_junior<mockturtle::xmg_network> partitions_out(ntk_out, partitions_out_map, partitions_in.count());
+    xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
 
     for (int i = 0; i < num_parts; i++) {
         std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
@@ -1431,13 +1435,14 @@ xmg_names setup_output(
         }
         std::cout << std::endl;
         if (optimized[i]->optimizer_name() != "noop") {
-            mockturtle::window_view<xmg_names> part = partitions_out.partition(i);
-            optimizer<mockturtle::xmg_network> *optim = optimized[i]->reapply(partitions_out, ntk_out);
+            // const xmg_partition part = fix_names2(partitions_out, i);
+            const xmg_partition part = partitions_out.partition(i);
+            optimizer<mockturtle::xmg_network> *optim = optimized[i]->reapply(i, part);
             optim->convert();
             optim->optimize();
 
             xmg_names opt = optim->export_superset();
-            partitions_out.integrate(i, part, opt);
+            partitions_out.integrate(i, partitions_out.partition(i), opt);
         }
     }
 

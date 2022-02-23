@@ -104,7 +104,7 @@ public:
     // /**
     //  * Reapply this optimization to a different network. (Maybe fix the XMG resynth problems)
     //  */
-    virtual optimizer<mockturtle::xmg_network> *reapply(partition_manager_junior<mockturtle::xmg_network> &partman, mockturtle::names_view<mockturtle::xmg_network> &ntk) = 0;
+    virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
 };
 }
 
