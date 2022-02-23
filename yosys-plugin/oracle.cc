@@ -47,7 +47,7 @@
 #define LSO_COMMAND_PART_EXCLU_AIG "ps -a; partitioning {P}; optimization -a; ps -a "
 #define LSO_COMMAND_PART_EXCLU_MIG "ps -a; partitioning {P}; optimization -m; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_DEEP "ps -a; partitioning {P}; optimization -i {D}; ps -m; crit_path_stats; ntk_stats "
-#define LSO_COMMAND_PART_HIGH_EFFORT "ps -a; oracle --partition 16; ps -m; " //modified because of kahypar issues. change back.
+#define LSO_COMMAND_PART_HIGH_EFFORT "ps -a; oracle --partition 16; ps -m " //modified because of kahypar issues. change back.
 #define LSO_COMMAND_PART_DEEP_M "ps -a; partitioning {P}; optimization -i {D} -c; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_HIGH_EFFORT_M "ps -a; oracle -c; ps -m; crit_path_stats; ntk_stats "
 
