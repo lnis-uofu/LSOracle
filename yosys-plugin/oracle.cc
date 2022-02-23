@@ -1490,8 +1490,8 @@ struct ORACLEPass : public Pass {
 #endif
 		std::string script_file, liberty_file, constr_file, clk_str;
 		std::string delay_target, sop_inputs, sop_products, lutin_shared = "-S 1";
-		bool fast_mode = false, dff_mode = false, keepff = false, cleanup = true;
-		bool show_tempdir = false, sop_mode = false;
+		bool fast_mode = false, dff_mode = false, keepff = false, cleanup = false;
+		bool show_tempdir = true, sop_mode = false;
 		bool abc_dress = false;
 		vector<int> lut_costs;
 		markgroups = false;
