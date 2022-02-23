@@ -47,7 +47,7 @@
 #define LSO_COMMAND_PART_EXCLU_AIG "ps -a; partitioning {P}; optimization -a; ps -a "
 #define LSO_COMMAND_PART_EXCLU_MIG "ps -a; partitioning {P}; optimization -m; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_DEEP "ps -a; partitioning {P}; optimization -i {D}; ps -m; crit_path_stats; ntk_stats "
-#define LSO_COMMAND_PART_HIGH_EFFORT "ps -a; oracle; ps -m; crit_path_stats; ntk_stats "
+#define LSO_COMMAND_PART_HIGH_EFFORT "ps -a; oracle --partition 16; ps -m; " //modified because of kahypar issues. change back.
 #define LSO_COMMAND_PART_DEEP_M "ps -a; partitioning {P}; optimization -i {D} -c; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_HIGH_EFFORT_M "ps -a; oracle -c; ps -m; crit_path_stats; ntk_stats "
 
@@ -1111,7 +1111,8 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 
 		printf("Finished LSO\n");
 
-		std::string cec_script = stringf("cec %s %s", aiger_temp_file.c_str(), blif_output_file.c_str());
+		//added -n flag
+		std::string cec_script = stringf("cec -n %s %s", aiger_temp_file.c_str(), blif_output_file.c_str());
 		cec_script = add_echos_to_abc_cmd(cec_script);
 
 		for (size_t i = 0; i+1 < cec_script.size(); i++)
