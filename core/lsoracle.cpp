@@ -59,6 +59,10 @@
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
 #include "algorithms/optimization/optimization_test.hpp"
+#include "algorithms/optimization/xmg_script.hpp"
+#include "algorithms/optimization/xag_script.hpp"
+//#include "algorithms/optimization/four_way_optimization.hpp"
+//#include "algorithms/output/part_verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
 #include "algorithms/techmapping/techmapping.hpp"
@@ -69,6 +73,8 @@
 #include "store/mig.hpp"
 #include "store/xag.hpp"
 #include "store/klut.hpp"
+#include "store/xmg.hpp"
+
 
 /*** Commands ***/
 //Input
@@ -119,6 +125,9 @@
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
+#include "commands/optimization/xmgscript.hpp"
+#include "commands/optimization/xagscript.hpp"
+
 
 /* these were commented out in previous master */
 // #include "commands/optimization/depth_partition.hpp"

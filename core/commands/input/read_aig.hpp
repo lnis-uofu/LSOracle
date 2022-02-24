@@ -52,6 +52,8 @@ public:
                         "AIG file to read in")->required();
         add_flag("--mig,-m", "Store AIG file as MIG network (AIG network is default)");
         add_flag("--xag,-x", "Store AIG file as XAG network (AIG network is default)");
+        add_flag("--xmg,-g", "Store AIG file as XMG network (AIG network is default)");
+
     }
 
 protected:
@@ -84,6 +86,20 @@ protected:
                 }
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
                 env->out() << "XAG network stored\n";
+
+                filename.erase(filename.end() - 4, filename.end());
+                names_view.set_network_name(filename);
+            } else if (is_set("xmg")) {
+                mockturtle::xmg_network ntk;
+                mockturtle::names_view<mockturtle::xmg_network> names_view{ntk};
+                lorina::return_code result = lorina::read_aiger(filename,
+                                             mockturtle::aiger_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read aiger file";
+                    return;
+                }
+                store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
+                env->out() << "XMG network stored\n";
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
