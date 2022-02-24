@@ -46,7 +46,7 @@ class oracle_command : public alice::command
 public:
     explicit oracle_command(const environment::ptr &env)
         : command(env,
-                  "Partitions Stored AIG netowrk, and Performs Mixed Synthesis on Network")
+                  "Partitions Stored AIG network, and Performs Mixed Synthesis on Network")
     {
 
         opts.add_option("--partition,partition", num_partitions,

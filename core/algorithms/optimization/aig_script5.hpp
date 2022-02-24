@@ -39,11 +39,11 @@ namespace oracle
 class aig_script5
 {
 public:
-    mockturtle::aig_network run(mockturtle::aig_network &aig)
+    mockturtle::names_view<mockturtle::aig_network> run(mockturtle::names_view<mockturtle::aig_network> &aig)
     {
 
-        mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
-        mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::aig_network>> balfn;
+        mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;
 
@@ -54,10 +54,12 @@ public:
         rp.allow_zero_gain = false;
         rp.max_pis = 4;
 
+        mockturtle::functional_reduction(aig);
+/*
         //b
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
-
+*/
         mockturtle::depth_view b_depth1{aig};
 
         //rw
@@ -108,7 +110,7 @@ public:
         //b
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
-
+        mockturtle::functional_reduction(aig);
         mockturtle::depth_view b_depth4{aig};
 
         return aig;

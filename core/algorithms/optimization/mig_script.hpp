@@ -39,7 +39,7 @@ namespace oracle
 class mig_script
 {
 public:
-    mockturtle::mig_network run(mockturtle::mig_network &mig)
+    mockturtle::names_view<mockturtle::mig_network> run(mockturtle::names_view<mockturtle::mig_network> &mig)
     {
         mockturtle::depth_view mig_depth{mig};
 

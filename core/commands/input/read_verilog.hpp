@@ -47,8 +47,10 @@ public:
 
         opts.add_option("--filename,filename", filename,
                         "Verilog file to read in")->required();
-        add_flag("--mig,-m",
-                 "Store Verilog file as MIG network (AIG network is default)");
+        add_flag("--mig,-m", "Store file as MIG network (AIG network is default)");
+        add_flag("--klut,-k", "Store file as KLUT network (AIG network is default)");
+        add_flag("--xag,-x", "Store file as XAG network (AIG network is default)");
+        add_flag("--xmg,-g", "Store file as XMG network (AIG network is default)");
     }
 
 protected:
@@ -56,27 +58,84 @@ protected:
     {
 
         if (oracle::checkExt(filename, "v")) {
-            if (is_set("mig")) {
-                mockturtle::mig_network mig;
-                mockturtle::names_view<mockturtle::mig_network> names_view{mig};
+                        if (is_set("mig")) {
+                mockturtle::mig_network ntk;
+                mockturtle::names_view<mockturtle::mig_network> names_view{ntk};
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file." << std::endl;
+                    env->err() << "Unable to read verilog file";
                     return;
                 }
+
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
                 env->out() << "MIG network stored" << std::endl;
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
-            } else {
-                mockturtle::aig_network aig;
-                mockturtle::names_view<mockturtle::aig_network> names_view{aig};
+            } else if (is_set("klut")) {
+                mockturtle::aig_network ntk;
+                mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file." << std::endl;
+                    env->err() << "Unable to read verilog file";
+                    return;
+                }
+
+                mockturtle::mapping_view<aig_names, true> mapped_aig{names_view};
+                mockturtle::lut_mapping_params ps;
+                ps.cut_enumeration_ps.cut_size = 4;
+                mockturtle::lut_mapping<mockturtle::mapping_view<aig_names, true>, true>
+                (mapped_aig, ps);
+
+                const auto klut = *mockturtle::collapse_mapped_network<klut_names>(mapped_aig);
+
+                store<klut_ntk>().extend() = std::make_shared<klut_names>(klut);
+                env->out() << "KLUT network stored\n";
+
+                filename.erase(filename.end() - 2, filename.end());
+                names_view.set_network_name(filename);
+
+            } else if (is_set("xag")) {
+                mockturtle::xag_network ntk;
+                mockturtle::names_view<mockturtle::xag_network> names_view{ntk};
+                lorina::return_code result = lorina::read_verilog(filename,
+                                             mockturtle::verilog_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read verilog file";
+                    return;
+                }
+
+                store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
+                env->out() << "XAG network stored" << std::endl;
+
+                filename.erase(filename.end() - 2, filename.end());
+                names_view.set_network_name(filename);
+            
+            } else if (is_set("xmg")) {
+                mockturtle::xmg_network ntk;
+                mockturtle::names_view<mockturtle::xmg_network> names_view{ntk};
+                lorina::return_code result = lorina::read_verilog(filename,
+                                             mockturtle::verilog_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read verilog file";
+                    return;
+                }
+
+                store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
+                env->out() << "XMG network stored" << std::endl;
+
+                filename.erase(filename.end() - 2, filename.end());
+                names_view.set_network_name(filename);
+
+            } else {
+                mockturtle::aig_network ntk;
+                mockturtle::names_view<mockturtle::aig_network> names_view{ntk};
+                lorina::return_code result = lorina::read_verilog(filename,
+                                             mockturtle::verilog_reader(names_view));
+                if (result != lorina::return_code::success) {
+                    env->err() << "Unable to read verilog file";
                     return;
                 }
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);

@@ -64,12 +64,12 @@ protected:
             switch (strategy) {
             default:
             case 0: {
-                oracle::aig_script aigopt;
+                oracle::aig_script4 aigopt;
                 opt = aigopt.run(opt);
             }
             break;
             case 1: {
-                oracle::aig_script2 aigopt;
+                oracle::aig_script aigopt;
                 opt = aigopt.run(opt);
             }
             break;
@@ -79,12 +79,12 @@ protected:
             }
             break;
             case 3: {
-                oracle::aig_script4 aigopt;
+                oracle::aig_script5 aigopt;
                 opt = aigopt.run(opt);
             }
             break;
             case 4: {
-                oracle::aig_script5 aigopt;
+                oracle::aig_script2 aigopt;
                 opt = aigopt.run(opt);
             }
             break;

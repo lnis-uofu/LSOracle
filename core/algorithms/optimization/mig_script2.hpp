@@ -39,12 +39,12 @@ namespace oracle
 class mig_script2
 {
 public:
-    mockturtle::mig_network run(mockturtle::mig_network &mig)
+    mockturtle::names_view<mockturtle::mig_network> run(mockturtle::names_view<mockturtle::mig_network> &mig)
     {
 
-        mockturtle::sop_rebalancing<mockturtle::mig_network> balfn;
+        mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::mig_network>> balfn;
         mockturtle::mig_npn_resynthesis resyn;
-        mockturtle::akers_resynthesis<mockturtle::mig_network> rf_resyn;
+        mockturtle::akers_resynthesis<mockturtle::names_view<mockturtle::mig_network>> rf_resyn;
         mockturtle::cut_rewriting_params ps;
         mockturtle::refactoring_params rp;
         mockturtle::balancing_params bs;
