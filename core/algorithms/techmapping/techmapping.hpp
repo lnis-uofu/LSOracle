@@ -187,6 +187,11 @@ struct graph {
         return index;
     }
 
+    bool is_constant(size_t index) const
+    {
+        return std::holds_alternative<constant_zero>(nodes[index]) || std::holds_alternative<constant_one>(nodes[index]);
+    }
+
     size_t add_primary_input()
     {
         assert(!frozen);
@@ -404,6 +409,9 @@ struct graph {
         graph g{*this};
         g.unfreeze();
 
+        no_incoming.push_back(0);
+        no_incoming.push_back(1);
+
         while (!no_incoming.empty()) {
             size_t node = no_incoming.back();
             ordering.push_back(node);
@@ -447,6 +455,9 @@ struct graph {
         std::vector<size_t> no_incoming{primary_inputs};
         graph g{*this};
         g.unfreeze();
+
+        no_incoming.push_back(0);
+        no_incoming.push_back(1);
 
         while (!no_incoming.empty()) {
             size_t node = no_incoming.back();
@@ -591,7 +602,7 @@ struct graph {
 
                     // TODO: assumes cell has a single output.
                     values.insert({node, kitty::get_bit(n.truth_table[0], node_mask)});
-                } else if (std::holds_alternative<constant_zero>(nodes[node]) || std::holds_alternative<constant_one>(nodes[node])) {
+                } else if (is_constant(node)) {
                     continue;
                 }
             }
@@ -701,13 +712,16 @@ private:
         // TODO: ABC computes the graph crosscut to pre-allocate frontier memory.
 
         // Initialise frontier with the trivial cuts of primary inputs.
+        frontier.insert({0, frontier_info{0}});
+        frontier.insert({1, frontier_info{1}});
+
         for (size_t pi : g.primary_inputs) {
             frontier.insert({pi, frontier_info{pi}});
         }
 
         for (size_t node : g.compute_topological_ordering()) {
-            // Skip primary inputs and outputs.
-            if (g.is_primary_input(node) || g.is_primary_output(node)) {
+            // Skip primary inputs, primary outputs, and constants.
+            if (g.is_primary_input(node) || g.is_primary_output(node) || g.is_constant(node)) {
                 continue;
             }
 
@@ -955,12 +969,15 @@ private:
         // This is implemented as performing a 2-way cartesian product N times.
 
         // Start with the cut set of input zero.
-        std::vector<cut> cut_set{};
-
-        for (int index = 0; index < frontier.at(node_inputs[0]).cuts.size(); index++) {
-            cut child_cut = frontier.at(node_inputs[0]).cuts[index];
-            cut_set.push_back(child_cut);
+        if (node_inputs.empty()) {
+            std::cout << "node: " << node << '\n';
+            throw std::logic_error{"node_cut_set called on node without fanin"};
         }
+
+        std::vector<cut> cut_set{frontier.at(node_inputs[0]).cuts};
+
+        // Append the trivial cut of input zero.
+        cut_set.push_back(cut{node_inputs[0]});
 
         // For each other input:
         if (node_inputs.size() > 1) {
@@ -975,6 +992,7 @@ private:
                 for (cut const& c : cut_set) {
                     for (int input_cut = 0; input_cut < frontier.at(node_input).cuts.size(); input_cut++) {
                         new_cuts.push_back(c.merge(frontier.at(node_input).cuts[input_cut], node));
+                        new_cuts.push_back(c.merge(cut{node_input}, node));
                     }
                 }
 
@@ -995,12 +1013,6 @@ private:
             for (cut& c : cut_set) {
                 c.output = node;
             }
-        }
-
-        // Include the trivial cut in the cut set.
-        if (std::holds_alternative<cell>(g.nodes[node])) {
-            // The trivial cut of a node is just the node itself.
-            cut_set.push_back(cut{node_inputs, node, std::get<cell>(g.nodes[node]).truth_table[0]});
         }
 
         // Also include the previous-best cut in the cut set, if it exists, to avoid forgetting good cuts.
@@ -1203,6 +1215,9 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
 
     //g.dump_to_stdout();
 
+    node_to_mockturtle.insert({0, ntk.get_constant(0)});
+    node_to_mockturtle.insert({1, ntk.get_constant(1)});
+
     for (size_t pi : g.primary_inputs) {
         node_to_mockturtle.insert({pi, ntk.create_pi()});
     }
@@ -1212,7 +1227,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
         for (size_t input : g.compute_node_fanin_nodes(node)) {
             children.push_back(node_to_mockturtle.at(input));
         }
-        if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
+        if (!g.is_primary_input(node) && !g.is_primary_output(node) && !g.is_constant(node)) {
             node_to_mockturtle.insert({node, ntk.create_node(children, std::get<lut>(g.nodes[node]).truth_table)});
         }
     }
