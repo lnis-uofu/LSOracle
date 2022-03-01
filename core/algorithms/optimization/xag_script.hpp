@@ -52,7 +52,7 @@ public:
         bs.cut_enumeration_ps.cut_size = 4u;
         rp.allow_zero_gain = false;
         rp.max_pis = 4;
-
+        
         mockturtle::cut_rewriting(xag, resyn, ps); //rw
         xag = mockturtle::cleanup_dangling(xag);
         mockturtle::cut_rewriting(xag, resyn, ps); //rw

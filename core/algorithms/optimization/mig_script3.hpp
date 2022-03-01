@@ -53,7 +53,7 @@ public:
         //pm.selective; //this line does nothing after mockturtle upgrade.  Revisit.
 
         ps.cut_enumeration_ps.cut_size = 4u;
-        //rf
+
         mockturtle::depth_view mig_ref_depth1{mig};
         mockturtle::mig_algebraic_depth_rewriting(mig_ref_depth1, pm);
         mig = mockturtle::cleanup_dangling(mig);
@@ -69,8 +69,8 @@ public:
         //rw
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
+        // std::cout << "5\n";
 
-        //rwz
         ps.allow_zero_gain = true;
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
@@ -79,16 +79,16 @@ public:
         //b
         mig = mockturtle::balancing(mig, {balfn}, bs);
         mig = mockturtle::cleanup_dangling(mig);
-*/
-        //rw
+*/    
+
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
-
-        //rw
+        //rfz
+        // std::cout << "activate zero gain\n";
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
+        // std::cout << "8\n";
 
-        //rwz
         ps.allow_zero_gain = true;
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);

@@ -46,8 +46,7 @@ public:
         mockturtle::xmg_algebraic_depth_rewriting_params ps;
         mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> xmg_depth{xmg};
         mockturtle::xmg_algebraic_depth_rewriting(xmg_depth, ps);
-	xmg = xmg_depth;
-        // xmg = mockturtle::cleanup_dangling(xmg);
+        //xmg = mockturtle::cleanup_dangling(xmg_depth);
 
         return xmg;
     }

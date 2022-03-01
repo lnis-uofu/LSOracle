@@ -62,6 +62,8 @@
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xmg_script2.hpp"
 #include "algorithms/optimization/xag_script.hpp"
+//#include "algorithms/optimization/four_way_optimization.hpp"
+//#include "algorithms/output/part_verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
 #include "algorithms/asic_mapping/techmapping.hpp"
 #include "algorithms/techmapping/techmapping.hpp"
@@ -71,7 +73,6 @@
 #include "store/aig.hpp"
 #include "store/mig.hpp"
 #include "store/xag.hpp"
-#include "store/xmg.hpp"
 #include "store/klut.hpp"
 #include "store/xmg.hpp"
 
