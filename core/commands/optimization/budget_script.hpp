@@ -49,7 +49,7 @@ public:
         opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
         opts.add_option("--sdc,-s", sdc_file, "SDC file.");
         opts.add_option("--clock,-c", clock_name, "Clock net.");
-        opts.add_option("--temp-prefix", abc_exec,
+        opts.add_option("--temp-prefix", temp_prefix,
                         "Temp filename prefixes.");
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
@@ -87,6 +87,10 @@ protected:
             env->err() << "No AIG stored\n";
             return;
         }
+        if (store<std::shared_ptr<oracle::partition_manager_junior<mockturtle::aig_network>>>().empty()) {
+            env->err() << "AIG not partitioned yet\n";
+            return;
+        }
         // if (store<part_man_aig_ntk>().empty()) {
         //     env->err() << "AIG not partitioned yet\n";
         //     return;
@@ -94,23 +98,8 @@ protected:
 
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth{ntk_aig};
-        // auto partitions_aig = *store<part_man_aig_ntk>().current();
-        // auto map = partitions_aig.get_partitions_map(ntk_aig);
-        mockturtle::node_map<int, mockturtle::names_view<mockturtle::aig_network>> part_map(ntk_aig);
-        std::vector<int> parts = read_file(partition_file);
-        if (parts.size() != ntk_aig.size()) {
-            env->out() << "Partition file contains the incorrect number of nodes\n";
-            exit(1);
-        }
-        int part_count = 0;
-        for (int i = 0; i < parts.size(); i++) {
-            part_map[ntk_aig.index_to_node(i)] = parts[i];
-            if (parts[i] > part_count) part_count = parts[i];
-        }
-
-        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr (ntk_aig,
-                                                      part_map,
-                                                      part_count);
+        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr =
+            *store<std::shared_ptr<oracle::partition_manager_junior<mockturtle::aig_network>>>().current();
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
             oracle::budget_optimization<mockturtle::aig_network>(

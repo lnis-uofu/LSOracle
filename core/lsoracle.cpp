@@ -125,7 +125,7 @@
 #include "commands/partitioning/partition_detail.hpp"
 #include "commands/partitioning/kahypar.hpp"
 #include "commands/partitioning/external_partition.hpp"
-
+#include "commands/partitioning/write_metis.hpp"
 //Classification
 //#include "commands/classification/generate_truth_tables.hpp"
 

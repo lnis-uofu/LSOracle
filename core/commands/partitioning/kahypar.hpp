@@ -130,17 +130,6 @@ namespace alice
 
             store<std::shared_ptr<oracle::partition_manager_junior<network>>>().extend() =
                 std::make_shared<oracle::partition_manager_junior<network>>(partitioner.partition_manager());
-
-            // TODO make a new command to write partitions.
-            // if (output_file != "") {
-            //     std::ofstream out;
-            //     out.open(output_file);
-            //     auto parts = partitions.get_partitions();
-            //     for (auto i = parts.begin(); i != parts.end(); i++) {
-            //         out << *i << std::endl;
-            //     }
-            //     out.close();
-            // }
         }
         void execute()
         {

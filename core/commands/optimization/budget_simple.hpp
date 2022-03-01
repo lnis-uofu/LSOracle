@@ -53,17 +53,15 @@ protected:
             env->err() << "No AIG stored\n";
             return;
         }
-        if (store<part_man_aig_ntk>().empty()) {
+        if (store<std::shared_ptr<oracle::partition_manager_junior<mockturtle::aig_network>>>().empty()) {
             env->err() << "AIG not partitioned yet\n";
             return;
         }
 
         auto ntk_aig = *store<aig_ntk>().current();
         mockturtle::depth_view orig_depth{ntk_aig};
-        auto partitions_aig = *store<part_man_aig_ntk>().current();
-        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr (ntk_aig ,
-                                                       partitions_aig.get_partitions_map(ntk_aig),
-                                                       partitions_aig.get_part_num());
+        oracle::partition_manager_junior<mockturtle::aig_network> partitions_jr =
+            *store<std::shared_ptr<oracle::partition_manager_junior<mockturtle::aig_network>>>().current();
 
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =

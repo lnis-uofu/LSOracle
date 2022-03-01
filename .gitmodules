@@ -145,3 +145,6 @@
 [submodule "lib/json"]
 	path = lib/json
 	url = https://github.com/nlohmann/json.git
+[submodule "benchmarks/techmapping/tigfet/sclib"]
+	path = benchmarks/techmapping/tigfet/sclib
+	url = git@github.com:lnis-uofu/TIGFET-10nm-SCLIB.git

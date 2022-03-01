@@ -50,12 +50,8 @@ namespace alice
             add_flag("--xag,-x", "Partition stored XAG");
             add_flag("--xmg,-g", "Partition stored XMG");
 
-            opts.add_option("--file,-f", part_file,
+            opts.add_option("--file,-f,file", part_file,
                             "External file containing partition information");
-            auto num_opt = opts.add_option("--num,num", num_partitions,
-                                           "Number of desired partitions");
-            opts.add_option("--size", size_partitions,
-                            "Number of desired average nodes per partition.")->excludes(num_opt);
         }
 
     protected:
@@ -71,17 +67,15 @@ namespace alice
                 *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
 
-            if (num_partitions == 0) {
-                num_partitions = std::max(ntk.size() / size_partitions, 1u);
-            }
-            env->out() << "Using " << num_partitions << " partitions" << std::endl;
-
             env->out() << "Partitioning stored " << name << " network using external file" << std::endl;
             std::vector<int> parts = read_integer_file(part_file);
             if (parts.size() != ntk.size()) {
                 env->out() << "Partition file contains the incorrect number of nodes" << std::endl;
                 exit(1);
             }
+
+            int num_partitions = *std::max_element(parts.begin(), parts.end());
+            env->out() << "Found " << num_partitions << " partitions" << std::endl;
 
             mockturtle::node_map<int, mockturtle::names_view<network>> part_data(ntk);
             for (int i = 0; i < parts.size(); i++) {
@@ -105,8 +99,6 @@ namespace alice
             }
         }
     private:
-        uint32_t num_partitions = 0;
-        uint32_t size_partitions = 2048;
         std::string part_file = "";
     };
 

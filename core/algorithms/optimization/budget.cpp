@@ -69,7 +69,7 @@ extern int Sta_Init(Tcl_Interp *interp);
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/partitioning/slack_view.hpp"
 #include "utility.hpp"
-
+// TODO replace "pi/po" with "ci/co"
 namespace oracle
 {
 using aig_names = mockturtle::names_view<mockturtle::aig_network>;
@@ -83,28 +83,33 @@ template<typename T>
 std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
 {
     std::cout << "starting basic techmapping" << std::endl;
-    char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
-    if (mkstemps(blif, 5) == -1) {
-        throw std::exception();
+    std::string input_blif, output_verilog, abc_script;
+    if (temp_prefix.empty()) {
+        char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
+        if (mkstemps(blif, 5) == -1) {
+            throw std::exception();
+        }
+        input_blif = std::string(blif);
+
+        char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
+        if (mkstemps(verilog, 2) == -1) {
+            throw std::exception();
+        }
+        output_verilog = std::string(verilog);
+
+        char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
+        if (mkstemps(abc, 4) == -1) {
+            throw std::exception();
+        }
+        abc_script = std::string(abc);
+    } else {
+        input_blif = fmt::format("{}.{}.tech.blif", temp_prefix, optimal.get_network_name());
+        output_verilog = fmt::format("{}.{}.tech.v", temp_prefix, optimal.get_network_name());
+        abc_script = fmt::format("{}.{}.tech.abc", temp_prefix, optimal.get_network_name());
     }
-    std::string input_blif = std::string(blif);
-    // std::string input_blif = fmt::format("{}.{}.tech.blif", temp_prefix, optimal.get_network_name());
+
     std::cout << "generated blif " << input_blif << std::endl;
-
-    char *verilog = strdup("/tmp/lsoracle_XXXXXX.v");
-    if (mkstemps(verilog, 2) == -1) {
-        throw std::exception();
-    }
-    std::string output_verilog = std::string(verilog);
-    // std::string output_verilog = fmt::format("{}.{}.tech.v", temp_prefix, optimal.get_network_name());
     std::cout << "writing output to " << output_verilog << std::endl;
-
-    char *abc = strdup("/tmp/lsoracle_XXXXXX.abc");
-    if (mkstemps(abc, 4) == -1) {
-        throw std::exception();
-    }
-    std::string abc_script = std::string(abc);
-    // std::string abc_script = fmt::format("{}.{}.tech.abc", temp_prefix, optimal.get_network_name());
     std::cout << "generated ABC script " << abc_script << std::endl;
 
     std::ofstream script(abc_script);
@@ -201,7 +206,7 @@ template <typename network> void fix_names(partition_manager_junior<network> &pa
             // skip feedthroughs
             return;
         }
-        std::string name = get_node_name_or_default(ntk, n);
+        std::string name = get_node_name_or_default(ntk, n) + (s.complement ? "_c" : "");
         part.set_output_name(i, name);
     });
     if (feedthrough > 0 ) {
@@ -516,6 +521,7 @@ public:
         assert(read_blif_return_code == lorina::return_code::success);
         mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
         mockturtle::node_resynthesis(this->optimal, klut, resyn);
+        this->optimal.set_network_name(this->converted.get_network_name());
     }
 };
 
@@ -938,6 +944,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
                              const std::string &abc_exec)
 
 {
+    std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
     // mockturtle::window_view<mockturtle::names_view<network>> orig = partman.partition(index);
     // mockturtle::depth_view part_depth(orig);
@@ -950,17 +957,17 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     std::vector<optimizer<network>*>optimizers {
         new noop<network>(index, part, strategy, abc_exec),
         new migscript_optimizer<network>(index, part, strategy, abc_exec),
-        new migscript2_optimizer<network>(index, part, strategy, abc_exec),
+        // new migscript2_optimizer<network>(index, part, strategy, abc_exec),
         new migscript3_optimizer<network>(index, part, strategy, abc_exec),
-        new aigscript_optimizer<network>(index, part, strategy, abc_exec),
-        new aigscript2_optimizer<network>(index, part, strategy, abc_exec),
-        new aigscript3_optimizer<network>(index, part, strategy, abc_exec),
-        new aigscript4_optimizer<network>(index, part, strategy, abc_exec),
-        new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
+        // new aigscript_optimizer<network>(index, part, strategy, abc_exec),
+        // new aigscript2_optimizer<network>(index, part, strategy, abc_exec),
+        // new aigscript3_optimizer<network>(index, part, strategy, abc_exec),
+        // new aigscript4_optimizer<network>(index, part, strategy, abc_exec),
+        // new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
         new xmg_optimizer<network>(index, part, strategy, abc_exec),
-        new xag_optimizer<network>(index, part, strategy, abc_exec),
+        // new xag_optimizer<network>(index, part, strategy, abc_exec),
         new abc_optimizer<network>(index, part, strategy, abc_exec),
-    };
+   };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
@@ -984,7 +991,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
             continue;
         }
     }
-    std::cout << "******************************** using " << best->optimizer_name() << " for " << index << " ********************************" << std::endl;
+    std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
 
     return best;
 
@@ -1103,7 +1110,7 @@ string techmap(
     // add all partition modules to verilog file.
     int num_parts = partitions.count();
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "techmapping partition " << i << std::endl;
+        std::cout << "******************************** techmapping partition " << i << " ********************************" << std::endl;
         optimizer<network> *opt = optimized[i];
         std::cout << "using optimizer " << opt->optimizer_name() << std::endl;
         std::string module_file = opt->techmap(liberty_file, temp_prefix);
@@ -1254,21 +1261,14 @@ void write_top(oracle::partition_manager_junior<network> &partitions,
     verilog << "endmodule" << std::endl;
 }
 
-size_t run_timing(const std::string &liberty_file,
+size_t run_timing(sta::LibertyLibrary *lib,
+                  const std::string &liberty_file,
                   const std::string &verilog_file,
                   const std::string &sdc_file,
                   const std::string &design,
                   const int parts,
                   const std::vector<optimization_strategy> &optimized)
 {
-    sta::Corner *corner = new sta::Corner("tt", 0);
-    sta::MinMaxAll *minmax = sta::MinMaxAll::all();
-
-    sta::LibertyLibrary *lib = sta::Sta::sta()->readLiberty(liberty_file.c_str(),
-                               corner,
-                               minmax,
-                               true);
-    assert(lib != nullptr);// << "failed to read liberty library"
     bool read_ver = sta::readVerilogFile(verilog_file.c_str(),
     // bool read_ver = sta::readVerilogFile("/home/snelgrov/code/lsoracle/benchmarks/picorv32/picorv32_lsoracle.mapped.v",
                                          sta::Sta::sta()->networkReader());
@@ -1445,7 +1445,7 @@ xmg_names setup_output(
             partitions_out.integrate(i, partitions_out.partition(i), opt);
         }
     }
-
+    partitions_out.substitute_nodes();
     std::cout << "Finished connecting outputs" << std::endl;
     return partitions_out.get_network();
 }
@@ -1459,10 +1459,17 @@ template <typename network> xmg_names budget_optimization(
     const string &sdc_file, const string &clock,
     const string &output_file, const string &abc_exec, const string &temp_prefix)
 {
+    sta::Corner *corner = new sta::Corner("tt", 0);
+    sta::MinMaxAll *minmax = sta::MinMaxAll::all();
+    sta::LibertyLibrary *lib = sta::Sta::sta()->readLiberty(liberty_file.c_str(),
+                               corner,
+                               minmax,
+                               true);
+    assert(lib != nullptr);// << "failed to read liberty library"
+
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "partition " << i << std::endl;
         n_strategy<network> strategy;
         optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec);
     }
@@ -1478,7 +1485,7 @@ template <typename network> xmg_names budget_optimization(
             strats[i] = optimized[i]->target();
         }
         const std::string design = partitions.get_network().get_network_name() != "" ? partitions.get_network().get_network_name() : "top";
-        size_t worst_part = run_timing(liberty_file, verilog, sdc_file, design, partitions.count(), strats);
+        size_t worst_part = run_timing(lib, liberty_file, verilog, sdc_file, design, partitions.count(), strats);
         // TODO if this is worse than last result, rollback and finish.
         if (worst_part == -1) {
             std::cout << "met timing" << std::endl;
@@ -1521,7 +1528,6 @@ template <typename network> xmg_names optimization_simple(
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "partition " << i << std::endl;
         n_strategy<network> strategy;
         optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec);
     }
@@ -1588,7 +1594,6 @@ xmg_names optimization_redux (
   }
   std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
-    std::cout << "partition " << i << std::endl;
     optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);
   }
   delete target;

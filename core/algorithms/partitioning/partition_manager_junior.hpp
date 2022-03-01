@@ -55,31 +55,6 @@ public:
         return ntk;
     }
 
-                       // {
-               //     // Check if all fanin are not in the partition.
-               //     bool exterior = true;
-               //     std::vector<node> possible_ci;
-               //     // Add CI for each non-partition fanin.
-               //     ntk.foreach_fanin(n, [&](signal const &f){
-               //         node fin = ntk.get_node(f);
-               //         if (partitions[fin] != id) {
-               //             possible_ci.push_back(fin);
-               //         } else {
-               //             exterior = false;
-               //         }
-               //     });
-               //     if (exterior) {
-               //         // Not a parent network CI, but is a CI in the partition.
-               //         inputs.push_back(n);
-               //     } else {
-               //         // Is in the network, add any external fanin to inputs.
-               //         for (auto i = possible_ci.begin(); i != possible_ci.end(); i++) {
-               //             inputs.push_back(*i);
-               //         }
-               //         gates.push_back(n);
-               //     }
-               // }
-
     window_view partition(int id)
     {
         std::vector<node> inputs;
@@ -107,13 +82,18 @@ public:
            fanout.foreach_fanout(n, [&](node const &s) {
                if (partitions[s] != id) {
                   outputs.push_back(ntk.make_signal(n));
+                  return false;
                }
+               return true;
            });
            // Add output if is a CO source.
            ntk.foreach_co([&](signal const &s) {
                if (ntk.get_node(s) == n) {
+                   // always use non-complemented
                    outputs.push_back(ntk.make_signal(n));
+                   return false;
                }
+               return true;
            });
         });
         std::sort(inputs.begin(), inputs.end());
@@ -171,14 +151,6 @@ public:
         assert(opt.num_cis() == part.num_cis());
         assert(opt.num_cos() == part.num_cos());
         mockturtle::node_map<signal, mockturtle::names_view<optimized_network>> old_to_new(opt, ntk.get_constant(false));
-        print_network(ntk);
-        std::cout << "Start " << old_to_new.size();
-        int x = 0;
-        for (auto i = old_to_new.data->begin(); i != old_to_new.data->end(); i++) {
-            std::cout << " " << x << "|" << i->index << "/" << i->data;
-            x++;
-        }
-        std::cout << std::endl;
         // WARNING!!!! This works by assuming that PIs and POs in the
         // optimized network were created in the same order as in the partition.
         // This does not deal with other types of inputs/outputs, window_view treats all
@@ -188,12 +160,6 @@ public:
             old_to_new[o] = ntk.make_signal(n);
         });
         std::cout << "Setup PIs" << std::endl;
-        x = 0;
-        for (auto i = old_to_new.data->begin(); i != old_to_new.data->end(); i++) {
-            std::cout << " " << x << "|" << i->index << "/" << i->data;
-            x++;
-        }
-        std::cout << std::endl;
         mockturtle::topo_view opt_topo{opt};
 
         opt_topo.foreach_gate([&](auto node) {
@@ -211,11 +177,6 @@ public:
             });
 
             old_to_new[node] = ntk.clone_node(opt_topo, node, children);
-            std::cout << "Create node " << old_to_new[node].index << " for " << node << " children";
-            for (auto i = children.begin(); i != children.end(); i++) {
-                std::cout << " " << (*i).index;
-            }
-            std::cout << std::endl;
             // Clone names if present.
             auto signal = opt_topo.make_signal(node);
             if (opt_topo.has_name(signal)) {
@@ -223,13 +184,6 @@ public:
             }
         });
         std::cout << "Inserted new nodes" << std::endl;
-        x = 0;
-        std::cout << "Final map";
-        for (auto i = old_to_new.data->begin(); i != old_to_new.data->end(); i++) {
-            std::cout << " " << x << "|" << i->index << "/" << i->data;
-            x++;
-        }
-        std::cout << std::endl;
         partitions.resize();
         opt_topo.foreach_gate([&](auto node) {
             partitions[old_to_new[node]] = partition_id;
@@ -248,28 +202,19 @@ public:
                 substitutions[orig_node] = new_out;
             }
         });
-        std::cout << "Calculated substitutions";
+        std::cout << "Calculated substitutions" << std::endl;
     }
 
     void substitute_nodes()
     {
-        for (auto i = substitutions.begin(); i != substitutions.end(); i++) {
-            std::cout << " " << i->first << "|" << i->second.index << "/" << i->second.data;
-        }
-
-        std::cout << std::endl;
-        std::list<std::pair<node, signal>> substitution_list(substitutions.begin(),
-                                                             substitutions.end());
-        std::cout << "Pre substitute" << std::endl;
-        print_network(ntk);
+        std::cout << "Begin node substitution" << std::endl;
         // ntk.substitute_nodes(substitution_list);
         for (auto substitution = substitutions.begin(); substitution != substitutions.end(); substitution++) {
             ntk.substitute_node(substitution->first, substitution->second);
         }
-        std::cout << "Post substitute" << std::endl;
-        print_network(ntk);
         std::cout << "Substituted nodes." << std::endl;
-        //ntk = mockturtle::cleanup_dangling_with_registers(ntk);
+        ntk = mockturtle::cleanup_dangling_with_registers(ntk);
+        std::cout << "Cleaned up dangling." << std::endl;
         substitutions.clear();
     }
     int node_partition(const node &n)
