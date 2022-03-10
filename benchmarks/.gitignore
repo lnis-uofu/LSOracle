@@ -3,6 +3,7 @@
 *.migscript.*
 *.abc.*
 
+*.direct_ndp.*
 *.mixed.*
 *.unoptimized.*
 *.xmgscript.*
@@ -32,3 +33,5 @@
 *.synth.v
 *.json
 *.gates
+*.script
+formality_workdir

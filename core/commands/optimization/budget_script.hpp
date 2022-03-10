@@ -112,7 +112,6 @@ protected:
         if (ntk_result.size() == ntk_aig.size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
-            return;
         }
 
         env->out() << "Final ntk size = " << ntk_result.num_gates() << " and depth = "

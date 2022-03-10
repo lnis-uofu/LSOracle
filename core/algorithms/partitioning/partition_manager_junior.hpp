@@ -198,7 +198,9 @@ public:
             }
             signal part_signal = part.co_at(index);
             node orig_node = ntk.get_node(part_signal);
-            if (!opt_topo.is_constant(opt_node) && !opt_topo.is_ci(opt_node)) {
+            if (!opt_topo.is_constant(opt_node)
+                && !opt_topo.is_ci(opt_node)
+                && opt_node != ntk.get_node(new_out)) {
                 substitutions[orig_node] = new_out;
             }
         });
@@ -207,10 +209,12 @@ public:
 
     void substitute_nodes()
     {
-        std::cout << "Begin node substitution" << std::endl;
+        std::cout << "Begin node substitution for " << substitutions.size() << " nodes" << std::endl;
+        // std::list<std::pair<node, signal>> substitution_list(substitutions.begin(), substitutions.end());
         // ntk.substitute_nodes(substitution_list);
         for (auto substitution = substitutions.begin(); substitution != substitutions.end(); substitution++) {
             ntk.substitute_node(substitution->first, substitution->second);
+
         }
         std::cout << "Substituted nodes." << std::endl;
         ntk = mockturtle::cleanup_dangling_with_registers(ntk);
