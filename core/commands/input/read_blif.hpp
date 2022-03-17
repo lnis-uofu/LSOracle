@@ -34,7 +34,7 @@
 
 #include <sys/stat.h>
 #include <stdlib.h>
-
+#include "utility.hpp"
 
 namespace alice
 {
@@ -146,6 +146,27 @@ protected:
 
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(named_dest);
                 env->out() << "AIG network stored\n";
+
+                filename.erase(filename.end() - 5, filename.end());
+                named_dest.set_network_name(filename);
+            } else if (is_set("xmg")) {
+                mockturtle::klut_network klut_ntk;
+                mockturtle::names_view<mockturtle::klut_network> klut_name_view{klut_ntk};
+                auto const result = lorina::read_blif(filename,
+                                                      mockturtle::blif_reader(klut_name_view));
+
+                if (result != lorina::return_code::success)
+                    env->err() << "parsing failed\n";
+
+                mockturtle::xmg_npn_resynthesis resyn;
+
+                mockturtle::xmg_network ntk;
+                mockturtle::names_view<mockturtle::xmg_network>named_dest(ntk);
+
+                mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
+
+                store<xmg_ntk>().extend() = std::make_shared<xmg_names>(named_dest);
+                env->out() << "XMG network stored\n";
 
                 filename.erase(filename.end() - 5, filename.end());
                 named_dest.set_network_name(filename);

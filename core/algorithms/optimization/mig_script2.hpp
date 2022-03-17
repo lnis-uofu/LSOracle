@@ -27,6 +27,7 @@
 #pragma once
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
+#include <mockturtle/algorithms/balancing/sop_balancing.hpp>
 
 #include <iostream>
 #include <string>

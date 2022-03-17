@@ -25,6 +25,8 @@ add_custom_command(
 set(LSORACLE_SOURCE
   ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   kahypar_temp_config.cpp
+  algorithms/optimization/resynthesis.cpp
+  utility.cpp
 )
 
 add_executable(lsoracle lsoracle.cpp ${LSORACLE_SOURCE})
@@ -32,7 +34,7 @@ target_include_directories(lsoracle PRIVATE .)
 target_include_directories(lsoracle PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(lsoracle alice mockturtle kahypar)
+target_link_libraries(lsoracle alice mockturtle kahypar nlohmann_json::nlohmann_json)
 
 if (${ENABLE_GALOIS})
   add_definitions(-DENABLE_GALOIS)
@@ -42,6 +44,7 @@ endif()
 
 set(LSORACLE_TESTS
   algorithms/partitioning/__tests__/sap_test.cpp
+  algorithms/partitioning/__tests__/partition_manager_junior_test.cpp
 )
 add_executable(unit_tests ${LSORACLE_SOURCE} ${LSORACLE_TESTS})
 target_link_libraries(unit_tests gtest_main alice mockturtle kahypar)
@@ -50,6 +53,22 @@ target_include_directories(unit_tests INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
   target_link_libraries(lsoracle stdc++fs)
   target_link_libraries(unit_tests stdc++fs)
+endif()
+
+if (${ENABLE_ABC})
+  add_definitions(-DENABLE_ABC)
+  target_include_directories(lsoracle PRIVATE ${ABC_INCLUDE_DIR})
+  # target_link_libraries(lsoracle libabc)
+endif()
+
+if (${ENABLE_OPENSTA})
+  add_definitions(-DENABLE_OPENSTA)
+  find_package(TCL)
+  include(FindZLIB)
+  include_directories (${TCL_INCLUDE_PATH})
+  # add_definitions (-DUSE_TCL_STUBS)
+  target_link_libraries(lsoracle OpenSTA sta_swig ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
+  # target_link_libraries(unit_tests OpenSTA sta_swig ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
 endif()
 
 enable_testing()

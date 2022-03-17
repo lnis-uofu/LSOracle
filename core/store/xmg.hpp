@@ -35,11 +35,14 @@
 #include <mockturtle/mockturtle.hpp>
 
 #include <fmt/format.h>
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 
 namespace alice
 {
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 using xmg_ntk = std::shared_ptr<xmg_names>;
+using part_man_jr_xmg = oracle::partition_manager_junior<mockturtle::xmg_network>;
+using part_man_jr_xmg_ntk = std::shared_ptr<part_man_jr_xmg>;
 
 ALICE_ADD_STORE(xmg_ntk, "xmg", "g", "xmg", "XMGs")
 
@@ -57,8 +60,9 @@ ALICE_LOG_STORE_STATISTICS(xmg_ntk, xmg)
         {"nodes", xmg->size()},
         {"inputs", xmg->num_pis()},
         {"outputs", xmg->num_pos()},
-        {"xmg nodes", xmg->num_gates()},
-        {"xmg level", depth.depth()}};
+        {"latches", xmg->num_latches()},
+        {"XMG nodes", xmg->num_gates()},
+        {"XMG level", depth.depth()}};
 }
 
 ALICE_PRINT_STORE_STATISTICS(xmg_ntk, os, xmg)
@@ -67,8 +71,37 @@ ALICE_PRINT_STORE_STATISTICS(xmg_ntk, os, xmg)
     os << "nodes: " << xmg->size() << std::endl;
     os << "inputs: " << xmg->num_pis() << std::endl;
     os << "outputs: " << xmg->num_pos() << std::endl;
-    os << "xmg nodes: " << xmg->num_gates() << std::endl;
-    os << "xmg level: " << depth.depth() << std::endl;
+    os << "latches: " << xmg->num_latches() << std::endl;
+    os << "XMG nodes: " << xmg->num_gates() << std::endl;
+    os << "XMG level: " << depth.depth() << std::endl;
 
 }
+
+
+ALICE_ADD_STORE(part_man_jr_xmg_ntk, "part_man_jr_xmg", "pm_g", "part_man_jr_xmg",
+                "PART_MAN_JR_XMGs")
+
+/* Implements the short string to describe a store element in store -a */
+ALICE_DESCRIBE_STORE(part_man_jr_xmg_ntk, part_man_jr)
+{
+
+    const auto name = "partition manager for Named XMG networks";
+    const auto part_num = part_man_jr->count();
+
+    return fmt::format("{} # partitions = {}", name, part_num);
+}//end partition manager<xmg_network> describe store
+
+ALICE_LOG_STORE_STATISTICS(part_man_jr_xmg_ntk, part_man_jr)
+{
+
+    return {
+        {"partition number", part_man_jr->count()}};
+}//end partition manager<xmg_network> log store statistics
+
+/* Implements the functionality of ps -b */
+ALICE_PRINT_STORE_STATISTICS(part_man_jr_xmg_ntk, os, part_man_jr)
+{
+    os << "partition number: " << part_man_jr->count() << std::endl;
+}//end partition manager<xmg_network> print store statistics
+
 }

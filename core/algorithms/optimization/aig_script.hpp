@@ -63,7 +63,6 @@ public:
         aig = mockturtle::cleanup_dangling(aig);
         
         //rf
-        std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
 

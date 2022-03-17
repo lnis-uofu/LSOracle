@@ -57,7 +57,6 @@ public:
         rp.allow_zero_gain = false;
 
         //fraig
-        std::cout << "fraig\n";
         mockturtle::functional_reduction(aig);
 //good here
         //b
@@ -66,55 +65,45 @@ public:
       //  aig = mockturtle::cleanup_dangling(aig);
 
         //rw
-        std::cout << "rw\n";
+
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 //second
         //rf
-        std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
 
         //b
-        std::cout << "b\n";
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rw
-        std::cout << "rw\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 //first cut
         //rwz
-        std::cout << "rwz\n";
         ps.allow_zero_gain = true;
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         //b
-        std::cout << "b\n";
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rfz
-        std::cout << "rfz\n";
         rp.allow_zero_gain = true;
         mockturtle::refactoring(aig, rf_resyn, rp);
-        std::cout << "refactored\n";
         aig = mockturtle::cleanup_dangling(aig);
 
         //rwz
-        std::cout << "rwz\n";
         mockturtle::cut_rewriting(aig, resyn, ps);
         aig = mockturtle::cleanup_dangling(aig);
 
         //b
-        std::cout << "b\n";
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //fraig
-        std::cout << "fraig\n";
         mockturtle::functional_reduction(aig);
 
         return aig;
