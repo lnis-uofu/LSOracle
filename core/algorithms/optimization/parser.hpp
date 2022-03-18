@@ -51,9 +51,9 @@ public:
         script_file.open(final);
         bool dbg = true; 
 
-        if ( dbg ) { 
-          printf("Opened file for debugging! File name %s\n", script );
-        }
+     //   if ( dbg ) { 
+     //     printf("Opened file for debugging! File name %s\n", script );
+     //   }
 
         /* Let's just use the first recommendation */
         int line_count = 0; 
@@ -66,7 +66,7 @@ public:
               break; 
             
             std::getline( script_file, line );
-            printf("line: %s\n", line.c_str()); 
+       //     printf("line: %s\n", line.c_str()); 
             std::string delimiter = ";";
             line_count++;
             size_t pos = 0;
@@ -85,7 +85,7 @@ public:
             while ((pos = line.find(delimiter)) != std::string::npos) {
                 token = line.substr(0, pos);
                 std::string delimiter_word = " ";
-                printf("token1: %s\n", token.c_str()); 
+         //       printf("token1: %s\n", token.c_str()); 
                 
                 size_t pos_word = 0;
                 std::string token_word;
@@ -116,7 +116,7 @@ public:
                         //getchar();
                         if ( is_rw )
                         {
-                          printf("applying rw\n");
+           //               printf("applying rw\n");
                           mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
                           mockturtle::cut_rewriting_params ps;
 
@@ -133,7 +133,7 @@ public:
                         }
                         if ( is_rf )
                         {
-                          printf("applying rf\n");
+             //             printf("applying rf\n");
                           mockturtle::refactoring_params ps;
                           if ( is_z ) ps.allow_zero_gain = true;
                           if ( is_d ) ps.use_dont_cares = true;
@@ -146,11 +146,11 @@ public:
                           is_z = false; 
                           is_d = false; 
                           cut_size = 0;
-                          std::cout << "Post-rf size = " << aig.num_gates() << std::endl;
+               //           std::cout << "Post-rf size = " << aig.num_gates() << std::endl;
                         }
                         if ( is_rs )
                         {
-                          printf("applying rs\n");
+                 //         printf("applying rs\n");
                           mockturtle::resubstitution_params ps;
                           mockturtle::resubstitution_stats st;
 
@@ -168,7 +168,7 @@ public:
                           cut_size = 0;
                           is_s = false; 
                           is_rs = false; 
-                          std::cout << "Post-rs size = " << aig.num_gates() << std::endl;
+                   //       std::cout << "Post-rs size = " << aig.num_gates() << std::endl;
                         }
                       }
                     }                   
@@ -178,7 +178,7 @@ public:
             }
           }
         }
-        std::cout << "Final network size = " << aig.num_gates() << std::endl;
+        //std::cout << "Final network size = " << aig.num_gates() << std::endl;
         return aig; 
         // mockturtle::depth_view mig_depth{mig};
 
