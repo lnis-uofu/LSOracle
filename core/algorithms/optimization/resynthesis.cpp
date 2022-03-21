@@ -1106,7 +1106,7 @@ string techmap(
     }
     std::cout << "sub-modules written" << std::endl;
 
-    verilog << "// Mappings";
+    verilog << "// Mappings" << std::endl;
     std::ifstream mappings(mappings_file);
     verilog << mappings.rdbuf();
     verilog << std::endl;
