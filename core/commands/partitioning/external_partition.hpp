@@ -67,14 +67,14 @@ namespace alice
                 *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
 
-            env->out() << "Partitioning stored " << name << " network using external file" << std::endl;
+            env->out() << "Partitioning stored " << name << " network using external file " << part_file << std::endl;
             std::vector<int> parts = read_integer_file(part_file);
             if (parts.size() != ntk.size()) {
                 env->out() << "Partition file contains the incorrect number of nodes" << std::endl;
                 exit(1);
             }
 
-            int num_partitions = *std::max_element(parts.begin(), parts.end());
+            int num_partitions = *std::max_element(parts.begin(), parts.end()) + 1;
             env->out() << "Found " << num_partitions << " partitions" << std::endl;
 
             mockturtle::node_map<int, mockturtle::names_view<network>> part_data(ntk);

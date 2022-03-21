@@ -998,11 +998,17 @@ string join(std::string delim, std::set<string> input)
 {
     std::vector<std::string> data(input.begin(), input.end());
     std::stringstream ss;
-    for (auto i = data.begin(); i != (data.end() - 1); i++) {
-        ss << *i << delim;
+    if (input.size() == 0) {
+        return "";
+    } else if (input.size() == 1) {
+        return *data.begin();
+    } else {
+        for (auto i = data.begin(); i != (data.end() - 1); i++) {
+            ss << *i << delim;
+        }
+        ss << *(data.end() - 1);
+        return ss.str();
     }
-    ss << *(data.end() - 1);
-    return ss.str();
 }
 
 
