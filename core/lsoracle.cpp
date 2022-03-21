@@ -58,9 +58,7 @@
 #include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
-#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
-#include "algorithms/optimization/xmg_script2.hpp"
 #include "algorithms/optimization/xag_script.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
 //#include "algorithms/output/part_verilog.hpp"
@@ -103,7 +101,6 @@
 #include "commands/output/show_ntk.hpp"
 #include "commands/output/disjoint_clouds.hpp"
 #include "commands/output/write_partition.hpp"
-#include "commands/output/redirect.hpp"
 //#include "commands/output/get_all_partitions.hpp" //need to add a write_toplevel_verilog method to recover this feature
 //#include "commands/output/print_karnaugh_map.hpp" //removed because of frugally deep dependence; will get back to it
 
@@ -138,9 +135,8 @@
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
-#include "commands/optimization/tech_resynthesis.hpp"
-#include "commands/optimization/resynthesis.hpp"
-#include "commands/optimization/mixed_synthesis.hpp"
+#include "commands/optimization/optimize_timing.hpp"
+#include "commands/optimization/optimize.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"

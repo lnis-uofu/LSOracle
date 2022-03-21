@@ -36,7 +36,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include "algorithms/optimization/optimization_test.hpp"
 
 namespace alice
 {

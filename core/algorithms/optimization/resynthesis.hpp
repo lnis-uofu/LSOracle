@@ -26,7 +26,6 @@
  */
 #pragma once
 
-#ifdef ENABLE_OPENSTA
 #ifdef ENABLE_ABC
 #include <mockturtle/mockturtle.hpp>
 #include "algorithms/partitioning/partition_manager_junior.hpp"
@@ -35,29 +34,26 @@
 namespace oracle
 {
 
+#ifdef ENABLE_OPENSTA
 template <typename network>
-mockturtle::names_view<mockturtle::xmg_network> budget_optimization(
+mockturtle::names_view<mockturtle::xmg_network> optimize_timing(
     oracle::partition_manager_junior<network> &partitions,
-    const std::string &liberty_file,
+    const std::string &liberty_file, const std::string &mapping_file,
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
+#endif
 
 enum optimization_strategy { size, balanced, depth };
 
 template <typename network>
-mockturtle::names_view<mockturtle::xmg_network> optimization_redux(
+mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     oracle::partition_manager_junior<network> &partitions,
-    const std::string &liberty_file,
-    const std::string &sdc_file, const std::string &clock_name,
-    const std::string &output_file, const std::string &abc_exec,
+    const std::string &abc_exec,
     const optimization_strategy strategy);
 
 template <typename network>
-mockturtle::names_view<mockturtle::xmg_network> optimization_simple(
-    oracle::partition_manager_junior<network> &partitions,
-    const std::string &liberty_file,
-    const std::string &sdc_file, const std::string &clock_name,
-    const std::string &output_file, const std::string &abc_exec);
+mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
+    oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec);
 
 struct node_depth {
     int nodes;
@@ -85,10 +81,6 @@ public:
      * Calculate tech independent depth and nodes metrics.
      */
     virtual node_depth independent_metric() = 0;
-    // /**
-    //  * Convert the optimized network back to the original network type.
-    //  */
-    // virtual mockturtle::names_view<network> reconvert() = 0;
     /**
      * List the type of optimization: area, delay, or balanced.
      */
@@ -101,12 +93,11 @@ public:
      * convert the network to the superset.
      */
     virtual mockturtle::names_view<mockturtle::xmg_network> export_superset() = 0;
-    // /**
-    //  * Reapply this optimization to a different network. (Maybe fix the XMG resynth problems)
-    //  */
+    /**
+     * Reapply this optimization to a different network.
+     */
     virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
 };
 }
 
-#endif
 #endif

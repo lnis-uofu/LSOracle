@@ -26,233 +26,386 @@
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
-LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
 YOSYS_PLUGIN := oracle
 TEE := cat - >
+FM := fm_shell
+
+PART_SIZE := 2048
+
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
-ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v
+ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
 EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
-ORIGINAL_FILES := picorv32/picorv32.v ibex/ibex.v ${OPDB} ${EPFL} # ${ISCAS85} ${ISCAS89}
+
+ORIGINAL_FILES := picorv32/picorv32.v ${EPFL} ibex/ibex.v # ${OPDB} # ${ISCAS85} ${ISCAS89}
+LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib #\
+#	techmapping/tigfet/sclib_tigfet10_hpall_tt_0p70v_25c.lib \
+#	techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib \
+#	techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib \
+#	techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib \
+#	techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib \
+#	techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
+LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
+TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.unoptimized.tcl,${LIBERTY_FILES})
+
+RUNS := abc lsoracle migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
 
 ################################################################
 ######################## Targets ###############################
 ################################################################
 
-AIG_FILES := $(patsubst %.v,%.aig,${ORIGINAL_FILES})
-AIG_LOGS := $(patsubst %.v,%.aig.log,${ORIGINAL_FILES})
+SYNTH_OUTPUTS := $(patsubst %.v,%.unoptimized.rtl,${ORIGINAL_FILES})
 
-SDC_SCRIPTS := $(patsubst %.v,%_lsoracle.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_abc.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_unoptimized.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_aigscript.sdc,${ORIGINAL_FILES}) $(patsubst %.v,%_migscript.sdc,${ORIGINAL_FILES})
+PARTITION_OUTPUTS := $(patsubst %.v,%.direct.parts,${ORIGINAL_FILES})
 
-SYNTH_BASE := $(patsubst %.v,%.rtl,${ORIGINAL_FILES})
-SYNTH_BASE_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_BASE})
+OPTIMIZE_OUTPUTS := $(foreach RUN,${RUNS},$(patsubst %.v,%.${RUN}.rtl,${ORIGINAL_FILES}))
 
-LSORACLE_OUTPUTS := $(patsubst %.rtl,%_lsoracle.rtl,${SYNTH_BASE})
-LSORACLE_SYNTH_LOG := $(patsubst %.rtl,%_lsoracle.synth.log,${SYNTH_BASE})
-LSORACLE_TECHMAP_OUTPUTS := $(patsubst %.rtl,%_lsoracle.mapped.v,${SYNTH_BASE})
-LSORACLE_SYNTH_REPORTS := $(patsubst %.rtl,%_lsoracle.synth_report,${SYNTH_BASE})
-LSORACLE_TECHMAP_LOGS := $(patsubst %.rtl,%_lsoracle.tech.log,${SYNTH_BASE})
-LSORACLE_TIMING_REPORT := $(patsubst %.rtl,%_lsoracle.timing,${SYNTH_BASE})
-LSORACLE_TIMING_LOG := $(patsubst %.rtl,%_lsoracle.sta.log,${SYNTH_BASE})
+TECHMAP_OUTPUTS := $(foreach TECH,${LIBERTY_FILES},$(patsubst %.rtl,%.$(shell basename ${TECH} .lib).mapped.v,${OPTIMIZE_OUTPUTS}))
 
-AIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_aigscript.rtl,${SYNTH_BASE})
-MIGSCRIPT_OUTPUTS := $(patsubst %.rtl,%_migscript.rtl,${SYNTH_BASE})
+TIMING_OUTPUTS := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
 
-ABC_OUTPUTS := $(patsubst %.rtl,%_abc.rtl,${SYNTH_BASE})
-UNOPT_OUTPUTS := $(patsubst %.rtl,%_unoptimized.rtl,${SYNTH_BASE})
-SYNTH_OUTPUTS := ${LSORACLE_OUTPUTS} ${UNOPT_OUTPUTS} ${ABC_OUTPUTS} ${AIGSCRIPT_OUTPUTS} ${MIGSCRIPT_OUTPUTS}
-SYNTH_LOGS := $(patsubst %.rtl,%.synth.log,${SYNTH_OUTPUTS})
+JSON_REPORTS := $(patsubst %.mapped.v,%.report.json,${TECHMAP_OUTPUTS})
 
-SYNTH_REPORTS := $(patsubst %.synth.log,%.synth_report,${SYNTH_LOGS})
-TECHMAP_OUTPUTS := $(patsubst %.rtl,%.mapped.v,${SYNTH_OUTPUTS})
-TECHMAP_LOGS := $(patsubst %.rtl,%.tech.log,${SYNTH_OUTPUTS})
-TIMING := $(patsubst %.mapped.v,%.sta.log,${TECHMAP_OUTPUTS})
-TIMING_REPORTS := $(patsubst %.sta.log,%.timing,${TIMING})
-#EVERYTHING_REPORTS := $(patsubst %.v,%.everything,${ORIGINAL_FILES})
-REPORTS := $(patsubst %.v,%.report,${ORIGINAL_FILES})
+EQUIV_OUTPUTS := $(patsubst %.formality.log,%.mapped.v,${TECHMAP_OUTPUTS})
+
 ################################################################
 ######################## Phony targets #########################
 ################################################################
-all: everything.png
 
-.PHONY: extract synth reports techmap reports timing everything_reports clean all reset
+all: synth optimize techmap timing reports equivalence skywater
 
-.PRECIOUS: ${SDC_SCRIPTS} ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${REPORTS} ${TECHMAP_OUTPUTS} ${TECHMAP_LOGS} ${TIMING} ${SYNTH_REPORTS} ${TIMING_REPORTS} ${EVERYTHING_REPORTS} ${REPORTS}
+clean: clean_synth clean_synth clean_optimize clean_techmap clean_timing clean_reports clean_equivalence
 
-.DELETE_ON_ERROR:
+picorv: $(foreach LIB,${LIBERTY_LIBS},$(foreach RUN,${RUNS},picorv32/picorv32.${RUN}.${LIB}.report.json))
 
-extract: ${SYNTH_BASE}
+.PHONY: synth clean_synth optimize clean_optimize techmap clean_techmap timing clean_timing reports clean_reports clean all picorv skywater
+
+.PRECIOUS: %.rtl %.v %.log %.json %.blif %.sdc %.parts
+
+.SECONDARY:
 
 synth: $(SYNTH_OUTPUTS)
 
+clean_synth:
+	rm -f **/*.unoptimized.rtl **/*.unoptimized.v **/*.unoptimized.log **/*.unoptimized.blif
+
+partition: $(PARTITION_OUTPUTS)
+
+clean_partition:
+	rm -f **/*.parts
+
+optimize: $(OPTIMIZE_OUTPUTS)
+
+clean_optimize:
+	rm -f **/*.stats.json $(foreach RUN,${RUNS},**/*.${RUN}.rtl **/*.${RUN}.blif) **/*.optimize.log **/*.optimize_rtl.log
+
 techmap: $(TECHMAP_OUTPUTS)
 
-reports: ${REPORTS}
+clean_techmap:
+	rm -f **/*.mapped.v **/*.tech.log **/*.flatten.v **/*.tech.json  **/*.gates **/*.gates.json
 
-timing: ${TIMING}
+timing: ${TIMING_OUTPUTS}
 
-sdc_skel: $(patsubst %.v,%.sdc,$(wildcard iscas89/*.v))
+clean_timing:
+	rm -f **/*.sta.log **/*.timing.json
 
-reset:
-	rm -f ${LSORACLE_OUTPUTS} ${LSORACLE_SYNTH_LOG} ${LSORACLE_TECHMAP_OUTPUTS} ${LSORACLE_SYNTH_REPORTS} ${LSORACLE_TECHMAP_LOGS} ${LSORACLE_TIMING_REPORT} ${LSORACLE_TIMING_LOG} ${REPORTS}
-
-clean: clean_reports
-	rm -f ${AIG_FILES} ${AIG_LOGS} ${SYNTH_BASE} ${SYNTH_BASE_LOGS} ${SYNTH_OUTPUTS} ${SYNTH_LOGS} ${TECHMAP_OUTPUTS} ${TIMING} ${SDC_SCRIPTS} ${TECHMAP_LOGS}
+reports: ${JSON_REPORTS}
 
 clean_reports:
-	rm -f ${SYNTH_REPORTS} ${TIMING_REPORTS} ${REPORTS} ${EVERYTHING_REPORTS}  everything.tsv everything.png
+	rm -f **/*.report.json
+
+equivalence: ${EQUIV_OUTPUTS}
+
+clean_equivalence:
+	rm -f **/*.formality.log
+
+skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
+
+# gf12: sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.pdf
+
+# tigfet: sclib_tigfet10_hpall_tt_0p70v_25c.pdf
+
+# tigfet1: sclib_tigfet10_hpnw1_tt_0p70v_25c.pdf
+
+# tigfet4: sclib_tigfet10_hpnw4_tt_0p70v_25c.pdf
+
+# tigfet8: sclib_tigfet10_hpnw8_tt_0p70v_25c.pdf
+
+# tigfet12: sclib_tigfet10_hpnw12_tt_0p70v_25c.pdf
+
 ################################################################
 ######################### SYNTHESIS ############################
 ################################################################
 
-%.rtl %.synth.log &: %.v
-	${YOSYS} -Q -p "read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; write_rtlil $*.rtl; stat" | ${TEE} $*.synth.log
+%.unoptimized.rtl %.unoptimized.v %.unoptimized.log %.unoptimized.blif &: %.v
+	${YOSYS} -Q -p 'read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; async2sync; dffunmap; dfflegalize -cell $$_DFF_P_ x -cell $$_DFF_N_ x; write_rtlil $*.unoptimized.rtl; write_verilog -norename $*.unoptimized.v; write_blif $*.unoptimized.blif; stat' | ${TEE} $*.unoptimized.log
 
 # This works in limited circumstances due to flip-flops
 %.aig %.aig.log &: %.rtl
 	${YOSYS} -Q -p "read_rtlil $<; dffunmap; aigmap; write_aiger $*.aig" | ${TEE} $*.aig.log
 
 
-%_lsoracle.rtl %_lsoracle.synth.log %_lsoracle.parts %_lsoracle.fixed &: %.rtl
+################################################################
+######################### PARTITION ############################
+################################################################
+
+%.direct.parts : %.unoptimized.blif
 	$(eval TEMP=$(shell mktemp))
-	echo "ps -a; partitioning -i $*_lsoracle.fixed -o $*_lsoracle.parts; optimization ; ps -m; crit_path_stats; ntk_stats " > ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*_lsoracle.rtl" | ${TEE} $*_lsoracle.synth.log
+	@ echo "read_blif -a $<" > ${TEMP}
+	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "write_metis $@" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.partition.log
 	rm ${TEMP}
 
-%_aigscript.rtl %_aigscript.synth.log &: %.rtl
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig; techmap; opt -purge; stat; write_rtlil $*_aigscript.rtl" | ${TEE} $*_aigscript.synth.log
+################################################################
+####################### OPTIMIZATION ###########################
+################################################################
 
-%_migscript.rtl %_migscript.synth.log &: %.rtl
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*_migscript.rtl" | ${TEE} $*_migscript.synth.log
+# TODO add a single internal-to-yosys partition file
+%.mixed_ndp.stats.json %.mixed_ndp.rtl %.mixed_ndp.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_ndp.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "optimize --ndp --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats -g --name $(shell basename $*) --optimization mixed_ndp $*.mixed_ndp.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_ndp.rtl" | ${TEE} $*.mixed_ndp.optimize.log
 
-%_unoptimized.rtl: %.rtl
+%.mixed_depth.stats.json %.mixed_depth.rtl %.mixed_depth.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_depth.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "optimize --depth --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_blif -g $*.mixed_depth.internal.blif"
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_depth -g $*.mixed_depth.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -nonames -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_depth.rtl" | ${TEE} $*.mixed_depth.optimize.log
+
+%.mixed_nodes.stats.json %.mixed_nodes.rtl %.mixed_nodes.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_nodes.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "optimize --nodes --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_nodes -g $*.mixed_nodes.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_nodes.rtl" | ${TEE} $*.mixed_nodes.optimize.log
+
+%.mixed_resynth.stats.json %.mixed_resynth.rtl %.mixed_resynth.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_resynth.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
+	@ echo "optimize --resynth --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_resynth -g $*.mixed_resynth.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_resynth.rtl" | ${TEE} $*.mixed_resynth.optimize.log
+
+%.lsoracle_old.stats.json %.lsoracle_old.rtl %.lsoracle_old.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.lsoracle_old.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "partitioning" >> ${TEMP}
+	@ echo "optimization" >> ${TEMP}
+	@ echo "ps -m" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization lsoracle -m $*.lsoracle_old.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.lsoracle_old.rtl" | ${TEE} $*.lsoracle_old.optimize.log
+
+%.xmgscript.stats.json %.xmgscript.rtl %.xmgscript.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.xmgscript.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "xmg_convert -a" >> ${TEMP}
+	@ echo "xmgscript" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "xmgscript" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "function_stats -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization xmgscript -g $*.xmgscript.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.xmgscript.rtl" | ${TEE} $*.xmgscript.optimize.log
+
+%.abc.stats.json: %.abc.blif
+	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization abc -a $@"
+
+%.unoptimized.stats.json: %.unoptimized.blif
+	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization unoptimized -a $@"
+
+%.aigscript.rtl %.aigscript.blif %.aigscript.optimize.log &: %.unoptimized.rtl
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.aigscript.rtl; write_blif $*.aigscript.blif" | ${TEE} $*.aigscript.optimize.log
+
+%.aigscript.stats.json: %.aigscript.blif
+	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization aigscript -a $@"
+
+%.migscript.rtl %.migscript.blif %.migscript.optimize.log &: %.unoptimized.rtl
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*.migscript.rtl; write_blif $*.migscript.blif" | ${TEE} $*.migscript.optimize.log
+
+%.migscript.stats.json: %.migscript.blif
+	${LSORACLE} -e -c "read_blif -m $<; write_stats --name $(shell basename $*) --optimization migscript -m $@"
+
+%.mixed_ndp_direct.stats.json %.direct_ndp.blif %.direct_ndp.optimize.log &: %.unoptimized.blif %.direct.parts
+	$(eval TEMP=$*.direct_ndp.script)
+	@ echo "read_blif -a $<" > ${TEMP}
+	@ echo "ps -a" >> ${TEMP}
+	@ echo "external_partition $*.direct.parts" >> ${TEMP}
+	@ echo "optimize --ndp --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_blif -g --filename $*.direct_ndp.blif" >> ${TEMP}
+	@ echo "write_stats -g --name $(shell basename $*) --optimization direct_ndp $*.direct_ndp.stats.json" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.direct_ndp.optimize.log
+
+%.direct_ndp.rtl &: %.direct_ndp.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_ndp.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_ndp.rtl" | ${TEE} $*.direct_ndp.optimize_rtl.log
+
+define TIMING_SYNTH =
+# Yosys name mangling is causing conflicts, not currently working.
+# %.timing_yosys_internal.${2}.v %.timing_yosys.optimize.log %.timing_yosys.stats.json %.timing_yosys.rtl &: %.unoptimized.rtl %.timing_yosys.${2}.sdc %.direct.parts
+# 	$$(eval TEMP=$$*.timing_yosys.script)
+# 	@ echo "ps -a" > $${TEMP}
+# 	@ echo "external_partition $$*.direct.parts" >> $${TEMP}
+# 	@ echo "optimize_timing --clock clk --sdc $$*.timing_yosys.${2}.sdc --output $$*.timing_yosys_internal.${2}.v --abc_exec $${ABC} --liberty ${1} --mapping ${3}" >> $${TEMP}
+# 	@ echo "ps -g" >> $${TEMP}
+# 	@ echo "write_blif -g --filename $$*.timing_yosys.blif" >> $${TEMP}
+# 	@ echo "write_stats --name $$(shell basename $$*) --optimization timing -g $$*.timing_yosys.stats.json" >> $${TEMP}
+# 	$${YOSYS} -m $${YOSYS_PLUGIN} -Q -p "read_rtlil $$<; lsoracle -xmg_out -lso_exe $${LSORACLE} -script $${TEMP}; techmap; opt -purge; stat; write_rtlil $$*.timing_yosys.rtl" | $${TEE} $$*.timing_yosys.optimize.log
+
+%.timing_direct_internal.${2}.v %.timing_direct.optimize.log %.timing_direct.stats.json %.timing_direct_internal.stats.json %.timing_direct.blif &: %.unoptimized.blif %.timing_direct.${2}.sdc %.direct.parts
+#	$$(eval TEMP=$$(shell mktemp))
+	$$(eval TEMP=$$*.timing_direct.script)
+	@ echo "read_blif -a $$<" > $${TEMP}
+	@ echo "ps -a" >> $${TEMP}
+	@ echo "external_partition $$*.direct.parts" >> $${TEMP}
+	@ echo "optimize_timing --clock clk --sdc $$*.timing_direct.${2}.sdc --output $$*.timing_direct_internal.${2}.v --abc_exec $${ABC} --liberty ${1} --mapping ${3}" >> $${TEMP}
+	@ echo "ps -g" >> $${TEMP}
+	@ echo "write_blif -g --filename $$*.timing_direct.blif" >> $${TEMP}
+	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_direct -g $$*.timing_direct.stats.json" >> $${TEMP}
+	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_direct_internal -g $$*.timing_direct_internal.stats.json" >> $${TEMP}
+	$${LSORACLE} -e -f $${TEMP} | $${TEE} $$*.timing_direct.optimize.log
+endef
+$(foreach LIB,${LIBERTY_FILES},$(eval $(call TIMING_SYNTH,${LIB},$(shell basename ${LIB} .lib),$(patsubst %.lib,%.mapping.v,${LIB}))))
+
+%.timing_direct.rtl &: %.timing_direct.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.timing_direct.rtl" | ${TEE} $*.timing_direct.optimize_rtl.log
+
+%.timing_direct_internal.rtl: %.timing_direct.rtl
 	cp $< $@
 
-%.hpg: %.rtl
+%.abc.rtl %.abc.blif %.abc.optimize.log &: %.unoptimized.rtl
+	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*.abc.rtl; write_blif $*.abc.blif" | ${TEE} $*.abc.optimize.log
+
+################################################################
+####################### TECHMAPPING ############################
+################################################################
+
+define TECHMAPPING =
+$(2).test:
+	echo foo
+%.$(2).mapped.v %.$(2).tech.log &: %.rtl
+	CIRCUIT_INPUT=$$< OUTPUT_FILE=$$*.$(2).mapped.v $${YOSYS} -Q -c $(1) | ${TEE} $$*.$(2).tech.log
+endef
+$(foreach SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(call TECHMAPPING,$(SCRIPT),$(shell basename $(SCRIPT) .synth.tcl))))
+
+################################################################
+#################### EQUIVALENCE CHECK #########################
+################################################################
+
+%.flatten.v: %.v
+	${YOSYS} -p "read_verilog $<; flatten; hierarchy -auto-top; rename -top top; write_verilog  -noattr $@"
+
+#TODO add per run copies of %.unoptimized.v, all targets
+%.sky130_fd_sc_hd__tt_025C_1v80.formality.log: %.sky130_fd_sc_hd__tt_025C_1v80.flatten.v %.unoptimized.v
 	$(eval TEMP=$(shell mktemp))
-	echo "write_hypergraph $@" > ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}"
+	@ echo "read_verilog -r ${word 2,$^}" > ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "read_db -i techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.db" >> ${TEMP}
+	@ echo "read_verilog -i $<" >> ${TEMP}
+	@ echo "set_top top" >> ${TEMP}
+	@ echo "match" >> ${TEMP}
+	@ echo "verify" >> ${TEMP}
+	@ echo "analyze_points -failing" >> ${TEMP}
+	cat ${TEMP}
+	${FM} -work_path formality_workdir -file ${TEMP} -overwrite | ${TEE} $@
 	rm ${TEMP}
 
-%_abc.rtl %_abc.synth.log &: %.rtl
-	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*_abc.rtl" | ${TEE} $*_abc.synth.log
+# %.sky130_fd_sc_hd__tt_025C_1v80.tech_equiv.log: %.sky130_fd_sc_hd__tt_025C_1v80.mapped.v %.unoptimized.mapped.v
+# 	${YOSYS} -p "read_verilog ${word 2,$^}; rename -top gold; prep -top gold; splitnets -ports; design -stash gold;\
+# # 		read_verilog $<; rename -top gate; prep -top gate design -stash gate; \
+# # 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
+# # 		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
 
-%.tech_equiv.log: %_lsoracle.mapped.v %_unoptimized.mapped.v
-	${YOSYS} -p "read_verilog ${word 2,$^}; rename -top gold; design -stash gold;\
-		read_verilog $<; rename -top gate; design -stash gate; \
-		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
-		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
-%.equiv.log: %_lsoracle.rtl %.rtl
-	${YOSYS} -p "read_rtlil ${word 2,$^}; rename -top gold; design -stash gold;\
-		read_rtlil $<; rename -top gate; design -stash gate; \
-		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
-		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
-
-%.mapped.v %.tech.log &: %.rtl
-	CIRCUIT_INPUT=$* ${YOSYS} -Q -c techmapping/synth.tcl | ${TEE} $*.tech.log
+# %.lsoracle_old.equiv.log: %.lsoracle_old.rtl %.unoptimized.rtl
+# 	${YOSYS} -p "read_rtlil ${word 2,$^}; rename -top gold; prep -top gold; splitnets -ports; design -stash gold;\
+# # 		read_rtlil $<; rename -top gate; prep -top gate; design -stash gate; \
+# # 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
+# # 		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
 
 ################################################################
 ########################### TIMING #############################
 ################################################################
+define SDC_COPY =
+%.$(RUN).$(LIB).sdc: %.sdc
+	cp $$< $$@
+endef
+$(foreach LIB,${LIBERTY_LIBS},$(foreach RUN,${RUNS},$(eval $(SDC_COPY))))
 
-# this is there to help generate these, but they need to be tweaked to get clocks.
-%.sdc_skel: %.rtl
-	echo "create_clock -name clk -period ${CLK_PERIOD} {clk_i}" > $@
-	echo "set_input_delay -clock clk 0 {" >> $@
-	${YOSYS} -Q -p  'read_rtlil $<; select i:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
-	echo "}" >> $@
-	echo "set_output_delay -clock clk 0 {" >> $@
-	${YOSYS} -Q -p  'read_rtlil $<; select o:* -list' | sed -e '/^top/!d' -e 's/top\///' >> $@
-	echo "}" >> $@
-
-%_lsoracle.sdc: %.sdc
-	cp $< $@
-%_unoptimized.sdc: %.sdc
-	cp $< $@
-%_migscript.sdc: %.sdc
-	cp $< $@
-%_aigscript.sdc: %.sdc
-	cp $< $@
-%_abc.sdc: %.sdc
-	cp $< $@
-
-# %_lsoracle.sdc %_abc.sdc %_migscript.sdc %_aigscript.sdc %_unoptimized.sdc: %.sdc
-# 	cp $< $@
-
-%.sta.log: %.mapped.v %.sdc
-	VERILOG_INPUT=$< VERILOG_TOP=top SDC_FILE=$*.sdc ${STA} -exit techmapping/sta.tcl | ${TEE} $@
+define TIMING =
+%.$(2).sta.log: %.$(2).mapped.v %.$(2).sdc
+	VERILOG_INPUT=$$< VERILOG_TOP=top SDC_FILE=$$*.$(2).sdc LIBERTY_FILE=$(1) ${STA} -exit techmapping/sta.tcl | ${TEE} $$@
+endef
+$(foreach LIBERTY_FILE,${LIBERTY_FILES},$(eval $(call TIMING,$(LIBERTY_FILE),$(shell basename ${LIBERTY_FILE} .lib))))
 
 ################################################################
 ######################### REPORTS ##############################
 ################################################################
-# Dummy columns if previous doesn't exist.
-previous:
-	mkdir -p previous
+define TIMING_JSON =
+%.$(2).stats.json: %.stats.json
+	cp $$< $$@
 
-previous/%_lsoracle.everything: | previous
-	@ echo -n "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" > $@
+%.$(2).tech.json: %.$(2).mapped.v
+	@ echo generating report $$@
+	@ echo '{ "liberty_file": "$(2)" }' > $$@
 
-%.timing: %.sta.log %.tech.log
-	$(eval TYPE=$(shell echo $* | sed 's/^.*_\([a-z]*\)$$/\1/'))
+%.$(2).gates: %.$(2).mapped.v
+	${YOSYS} -Q -p "read_verilog $$<; stat -liberty $(1)" > $$@
+endef
+$(foreach LIBERTY_FILE,${LIBERTY_FILES},$(eval $(call TIMING_JSON,$(LIBERTY_FILE),$(shell basename ${LIBERTY_FILE} .lib))))
+
+POWER_REGEX := \s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([-+.e0-9]*\)\s*\([.0-9]*\)%.*
+POWER_JSON := {"internal": \1, "switching": \2, "leakage": \3, "total": \4, "percent": \5}
+%.timing.json: %.sta.log
 	@ echo generating report $@
-	@ sed -n 's/^Combinational\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([-.e0-9]*\)\s*\([.0-9]*\)%.*/${TYPE}_internal_power\t\1\n${TYPE}_switching_power\t\2\n${TYPE}_leakage_power\t\3\n${TYPE}_total_power\t\4\n${TYPE}_percent_power\t\5/p' $< > $@
-	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | python3 -c 'import sys; print("${TYPE}_arrival\t", max([float(i) for i in sys.stdin.readlines()]))' >> $@
-	@ sed -n 's/worst slack \([0-9.]*\)/${TYPE}_worst_slack\t\1/p' $< >> $@
-	@ sed -e "/Area/!d" -e "s/.*Area = *\([0-9.]*\) .*/${TYPE}_area\t\1/" $*.tech.log >> $@
+	@ echo '{"power": {' > $@
+	@ sed -n 's/^Combinational${POWER_REGEX}/"combinational": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Sequential${POWER_REGEX}/"sequential": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Pad${POWER_REGEX}/"pad": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Macro${POWER_REGEX}/"macro": ${POWER_JSON},/p' $< >> $@
+	@ sed -n 's/^Total${POWER_REGEX}/"total": ${POWER_JSON}/p' $< >> $@
+	@ echo '}, "timing": {' >> $@
+	@ sed -n 's/\s*-\([0-9.]*\)\s *data arrival time/\1/p' $< | \
+		python3 -c 'import sys; print("\"data_arrival\": ", max([float(i) for i in sys.stdin.readlines()]), ",")' >> $@
+	@ sed -n 's/worst slack \([0-9.]*\)/"worst_slack": \1/p' $< >> $@
+	@ echo '}}' >> $@
 
-%_lsoracle.synth_report: %_lsoracle.synth.log
+%.gates.json: %.gates
 	@ echo generating report $@
-	@ sed -n -e "s/LSOracle: inputs: \([0-9]*\)/inputs\t\1/p" \
-	-e "s/LSOracle: outputs: \([0-9]*\)/outputs\t\1/p" \
-	-e "s/LSOracle: AIG level: \([0-9]*\)/unoptimized_level\t\1/p" \
-	-e "s/LSOracle: AIG nodes: \([0-9]*\)/unoptimized_nodes\t\1/p" \
-	-e "s/LSOracle.* Using \([0-9]*\) partitions/lsoracle_partitions\t\1/p" \
-	-e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/lsoracle_nodes\t\1\nlsoracle_level\t\2/p" \
-	-e "s/LSOracle: \([0-9]*\) AIGs and \([0-9]*\) MIGs/lsoracle_aigs\t\1\\nlsoracle_migs\t\2/p" \
-	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/lsoracle_runtime\t\1/p" \
-	-e "s/LSOracle: MAJ nodes internally = \([0-9]*\)/lsoracle_maj_nodes_internal\t\1/p" \
-	-e "s/LSOracle: AND nodes internally = \([0-9]*\)/lsoracle_and_nodes_internal\t\1/p" \
-	-e "s/LSOracle: AND nodes on critical path = \([0-9]*\)/lsoracle_critical_and\t\1/p" \
-	-e "s/LSOracle: MAJ nodes on critical path = \([0-9]*\)/lsoracle_critical_maj\t\1/p" \
-	-e "s/LSOracle: INPUTS nodes on critical path = \([0-9]*\)/lsoracle_critical_inputs\t\1/p" < $< > $@
+	@  echo '{ "gates": {' > $@
+	@ sed -e '1,/Number of cells/d' -e '/^$$/,$$d' $< \
+	 | sed 's/\s*\(\S*\)\s*\([0-9]*\)/"\1": \2/' \
+	 | python3 -c 'import sys; print(",".join(sys.stdin.readlines()))'  >> $@
+	@ echo '},' >> $@
+	@ sed -n 's/\s*Number of wire bits:\s*\([0-9]*\)/"wires": \1,/p' $< >> $@
+	@ echo '"area_estimate": {' >> $@
+	@ sed -n 's/\s*Chip area for module .*: \([.0-9]*\)/"total": \1/p' $< >> $@
+	@ echo '}}' >> $@
 
-%_migscript.synth_report: %_migscript.synth.log
+%.report.json: %.timing.json %.stats.json %.tech.json %.gates.json
+	jq -s '.[0] * .[1] * .[2] * .[3]' $^ > $@
+
+everything.tsv: ${JSON_REPORTS}
 	@ echo generating report $@
-	@ sed -n -e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/migscript_nodes\t\1\\nmigscript_level\t\2/p" \
-	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/migscript_runtime\t\1/p" \
-	-e "s/LSOracle: MAJ nodes internally = \([0-9]*\)/migscript_maj_nodes_internal\t\1/p" \
-	-e "s/LSOracle: AND nodes internally = \([0-9]*\)/migscript_and_nodes_internal\t\1/p" \
-	-e "s/LSOracle: AND nodes on critical path = \([0-9]*\)/migscript_critical_and\t\1/p" \
-	-e "s/LSOracle: MAJ nodes on critical path = \([0-9]*\)/migscript_critical_maj\t\1/p" \
-	-e "s/LSOracle: INPUTS nodes on critical path = \([0-9]*\)/migscript_critical_inputs\t\1/p" < $< > $@
+	jq -r '[.liberty_file, .design, .optimization.name, .area_estimate.total, .size, .depth, .timing["data_arrival"], .power.total.total] | @tsv' < $^ > $@
 
-%_aigscript.synth_report: %_aigscript.synth.log
-	@ sed -n -e "s/LSOracle: Final ntk size = \([0-9]*\) and depth = \([0-9]*\)/aigscript_nodes\t\1\\naigscript_level\t\2/p" \
-	-e "s/LSOracle: Full Optimization: \([0-9]*\)ms/aigscript_runtime\t\1/p" < $< > $@
 
-%_abc.synth_report: %_abc.synth.log
-	@ echo generating report $@
-	@ sed -n 's/ABC:.*and = *\([0-9]*\) *lev = *\([0-9*]\)/abc_nodes\t\1\nabc_level\t\2/p' < $< > $@
-
-%.report: %_lsoracle.synth_report %_lsoracle.timing %_abc.synth_report %_abc.timing %_unoptimized.timing %_migscript.synth_report %_migscript.timing %_aigscript.synth_report %_aigscript.timing
-	@ echo "circuit\t$*" > $@
-	cat $^ >> $@
-
-#%.everything: %.report
-#	@ echo generating report $@
-#	@ cut -f1 < $< | tr '\n' '\t' | sed 's/\t$$//' > $@
-#	@ echo >> $@
-#	@ cut -f2 < $< | tr '\n' '\t' | sed 's/\t$$//' >> $@
-#	@ echo >> $@
-everything.tsv: ${REPORTS}
-	@ echo generating report $@
-	python3 combine_report.py $^
-
-#everything.tsv: ${EVERYTHING_REPORTS}
-#	@ echo generating report $@
-#	python3 combine_report.py $< $^
-
-everything.png everything.pdf: everything.tsv
-	python3 plot_bars.py everything.tsv previous/everything.tsv $@
+define GRAPHS =
+${LIB}.png ${LIB}.pdf: ${JSON_REPORTS}
+	python3 plot_bars.py $@ **/*.${LIB}.report.json
+endef
+$(foreach LIB,$(LIBERTY_LIBS),$(eval ${GRAPHS}))

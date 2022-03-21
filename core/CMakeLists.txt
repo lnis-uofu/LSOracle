@@ -68,7 +68,7 @@ if (${ENABLE_OPENSTA})
   include_directories (${TCL_INCLUDE_PATH})
   # add_definitions (-DUSE_TCL_STUBS)
   target_link_libraries(lsoracle OpenSTA sta_swig ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
-  # target_link_libraries(unit_tests OpenSTA sta_swig ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
+  target_link_libraries(unit_tests OpenSTA sta_swig ${TCL_LIBRARY} ${ZLIB_LIBRARIES})
 endif()
 
 enable_testing()

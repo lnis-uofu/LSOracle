@@ -1066,26 +1066,6 @@ void write_child(int index,
     verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
     verilog << "\n);\n" << std::endl;
 }
-void write_register(std::string abc_exec, std::string liberty, std::ofstream &verilog)
-{
-    // TODO techmap register
-    verilog << "module mapped_register(D, Q, CLK);\n"
-            << "input D, CLK;\n"
-            << "output Q;\n"
-            << "wire B;\n"
-            << "sky130_fd_sc_hd__dfxtp_1 fflop (.CLK(CLK), .D(D), .Q(B));\n"
-            << "sky130_fd_sc_hd__buf_8 buffer (.A(B), .X(Q));\n"
-            << "endmodule\n" << std::endl;
-}
-
-void write_inverter(std::string abc_exec, std::string liberty, std::ofstream &verilog)
-{
-    // TODO techmap inverter
-    verilog << "module mapped_inverter(A, Y);\n"
-            << "input A; output Y;\n"
-            << "sky130_fd_sc_hd__inv_1 i(.A(A), .Y(Y));\n"
-            << "endmodule\n" << std::endl;
-}
 
 template <typename network>
 string techmap(
@@ -1093,6 +1073,7 @@ string techmap(
     std::vector<optimizer<network>*> optimized,
     const string &abc_exec,
     const string &liberty_file,
+    const string &mappings_file,
     const string &clock,
     const string &temp_prefix)
 {
@@ -1124,10 +1105,13 @@ string techmap(
         module.close();
     }
     std::cout << "sub-modules written" << std::endl;
-    verilog << "// Register" << std::endl;
-    write_register(abc_exec, liberty_file, verilog);
-    verilog << "// Inverter" << std::endl;
-    write_inverter(abc_exec, liberty_file, verilog);
+
+    verilog << "// Mappings";
+    std::ifstream mappings(mappings_file);
+    verilog << mappings.rdbuf();
+    verilog << std::endl;
+    mappings.close();
+
     verilog << "// Top" << std::endl;
     write_top(partitions, optimized, verilog, clock);
 
@@ -1455,9 +1439,9 @@ xmg_names setup_output(
 /*
  * Mixed synthesis followed by XMG resynthesis and combination.
  */
-template <typename network> xmg_names budget_optimization(
+template <typename network> xmg_names optimize_timing(
     oracle::partition_manager_junior<network> &partitions,
-    const string &liberty_file,
+    const string &liberty_file, const std::string &mapping_file,
     const string &sdc_file, const string &clock,
     const string &output_file, const string &abc_exec, const string &temp_prefix)
 {
@@ -1480,7 +1464,7 @@ template <typename network> xmg_names budget_optimization(
     string verilog;
     while (true) {
         //reset_sta(); // todo not cleaning up
-        verilog = techmap(partitions, optimized, abc_exec, liberty_file, clock, temp_prefix);
+        verilog = techmap(partitions, optimized, abc_exec, liberty_file, mapping_file, clock, temp_prefix);
         std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
         std::vector<optimization_strategy> strats(optimized.size(), optimization_strategy::size);
         for (int i = 0; i < optimized.size(); i++) {
@@ -1521,11 +1505,8 @@ template <typename network> xmg_names budget_optimization(
 /*
 Mixed synthesis followed by XMG resynthesis and combiniation
 */
-template <typename network> xmg_names optimization_simple(
-    oracle::partition_manager_junior<network> &partitions,
-    const string &liberty_file,
-    const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec)
+template <typename network> xmg_names optimize_resynthesis(
+    oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
 {
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
@@ -1573,11 +1554,9 @@ template <typename network> xmg_names optimization_simple(
  * Mixed synthesis optimization followed by XMG resynthesis and combination.
  */
 template <typename network>
-xmg_names optimization_redux (
+xmg_names optimize_basic (
     oracle::partition_manager_junior<network> &partitions,
-    const string &liberty_file,
-    const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec,
+    const string &abc_exec,
     optimization_strategy strategy)
 {
   int num_parts = partitions.count();
@@ -1606,23 +1585,23 @@ xmg_names optimization_redux (
 
 /**************** Template instances ****************/
 template xmg_names
-budget_optimization<mockturtle::aig_network>
+optimize_timing<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 
 template xmg_names
-optimization_redux<mockturtle::aig_network>
+optimize_basic<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &,
+    const std::string &,
     const optimization_strategy);
 
 template xmg_names
-optimization_simple<mockturtle::aig_network>
+optimize_resynthesis<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+    const std::string &);
 
 }
 #endif

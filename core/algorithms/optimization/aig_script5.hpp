@@ -34,6 +34,7 @@
 #include <fmt/format.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "rw_script.hpp"
 
 namespace oracle
 {

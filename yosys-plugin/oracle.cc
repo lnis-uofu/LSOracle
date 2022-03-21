@@ -731,20 +731,29 @@ struct abc_output_filter
 	}
 };
 
-std::string prepend_script_file(std::string script_file, std::string input_file, std::string output_file)
+std::string prepend_script_file(std::string script_file, std::string input_file, std::string output_file, bool aig, bool mig, bool xag, bool xmg)
 {
 	std::ifstream script;
 	script.open(script_file);
 	std::stringstream lso_script;
 	lso_script << stringf("read %s; ", input_file.c_str());
 	lso_script << script.rdbuf();
-	lso_script << stringf("write_blif %s", output_file.c_str());
+	lso_script << "write_blif ";
+	if (mig)
+		lso_script << "-m ";
+	else if (xag)
+		lso_script << "-x ";
+	else if (xmg)
+		lso_script << "-g ";
+	else
+		lso_script << "-a ";
+	lso_script << output_file;
 	return lso_script.str();
 }
 
 std::string generate_lso_script(std::string exe_file, std::string input_aig_file, std::string output_blif_file,
 			std::string num_parts, bool partitioned, bool exclu_part, bool mig,
-			bool deep, bool merge, bool test, bool aig, bool lut)
+				bool deep, bool merge, bool test, bool aig, bool xag, bool xmg, bool lut)
 {
 
 	std::string lso_script;
@@ -793,12 +802,20 @@ std::string generate_lso_script(std::string exe_file, std::string input_aig_file
 		if(!partitioned){
 			if(aig)
 				lso_script += !lut ? stringf("; write_blif %s", output_blif_file.c_str()) : stringf("; lut_map -o %s", output_blif_file.c_str());
+			else if (xag)
+				lso_script += !lut ? stringf("; write_blif -x %s", output_blif_file.c_str()) : stringf("; lut_map -x -o %s", output_blif_file.c_str());
+			else if (xmg)
+				lso_script += !lut ? stringf("; write_blif -g %s", output_blif_file.c_str()) : stringf("; lut_map -g -o %s", output_blif_file.c_str());
 			else
 				lso_script += !lut ? stringf("; write_blif -m %s", output_blif_file.c_str()) : stringf("; lut_map -m -o %s", output_blif_file.c_str());
 		}
 		else{
 			if(aig)
 				lso_script += !lut ? stringf("; write_blif %s", output_blif_file.c_str()) : stringf("; lut_map -o %s", output_blif_file.c_str());
+			else if (xag)
+				lso_script += !lut ? stringf("; write_blif -x %s", output_blif_file.c_str()) : stringf("; lut_map -x -o %s", output_blif_file.c_str());
+			else if (xmg)
+				lso_script += !lut ? stringf("; write_blif -g %s", output_blif_file.c_str()) : stringf("; lut_map -g -o %s", output_blif_file.c_str());
 			else
 				lso_script += !lut ? stringf("; write_blif -m %s", output_blif_file.c_str()) : stringf("; lut_map -m -o %s", output_blif_file.c_str());
 		}
@@ -840,7 +857,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		std::string liberty_file, std::string constr_file, bool cleanup, vector<int> lut_costs, bool dff_mode, std::string clk_str,
 		bool keepff, std::string delay_target, std::string sop_inputs, std::string sop_products, std::string lutin_shared, bool fast_mode,
 		const std::vector<RTLIL::Cell*> &cells, bool show_tempdir, bool sop_mode, bool abc_dress, std::string num_parts, bool partitioned,
-		bool exclu_part, bool mig, bool deep, bool merge, bool test, bool aig, bool lut)
+		bool exclu_part, bool mig, bool deep, bool merge, bool test, bool aig, bool xag, bool xmg, bool lut)
 {
 	module = current_module;
 	map_autoidx = autoidx++;
@@ -1094,10 +1111,10 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 		if (script_file == "") {
 		// TODO pass temp filenames
 			lso_script = generate_lso_script(lsoexe_file, aiger_temp_file, blif_output_file, num_parts,
-							partitioned, exclu_part, mig, deep, merge, test, aig, lut);
+							 partitioned, exclu_part, mig, deep, merge, test, aig, xag, xmg, lut);
 
 		} else {
-			lso_script = prepend_script_file(script_file, aiger_temp_file, blif_output_file);
+			lso_script = prepend_script_file(script_file, aiger_temp_file, blif_output_file, aig, mig, xag, xmg);
 		}
 		std::string script = write_lso_script(lso_script, tempdir_name);
 
@@ -1467,7 +1484,18 @@ struct ORACLEPass : public Pass {
 		log("\n");
 		log("    -script <file>\n");
 		log("        use the specified LSOracle script file instead of the default script.\n");
-		log("        if no -script parameter is given, the following scripts are used:\n");
+		log("\n");
+		log("    -aig_out <file>\n");
+		log("        write output from stored AIG network. (default)\n");
+		log("\n");
+		log("    -mig_out <file>\n");
+		log("        write output from stored MIG network.\n");
+		log("\n");
+		log("    -xag_out <file>\n");
+		log("        write output from stored XAG network.\n");
+		log("\n");
+		log("    -xmg_out <file>\n");
+		log("        write output from stored XMG network.\n");
 		log("\n");
 
 	}
@@ -1502,7 +1530,7 @@ struct ORACLEPass : public Pass {
 		enabled_gates.clear();
 
 		std::string num_parts;
-		bool partitioned = false, exclu_part = false, mig = false, aig = false, lut = false, deep = false, merge = false, test = false;
+		bool partitioned = false, exclu_part = false, mig = false, aig = false, xag = false, xmg = false, lut = false, deep = false, merge = false, test = false;
 
 #ifdef _WIN32
 #ifndef ABCEXTERNAL
@@ -1566,6 +1594,22 @@ struct ORACLEPass : public Pass {
 					merge = true;
 					continue;
 				}
+				if (arg == "-aig_out") {
+					aig = true;
+					continue;
+				}
+				if (arg == "-mig_out") {
+					mig = true;
+					continue;
+				}
+				if (arg == "-xag_out") {
+					xag = true;
+					continue;
+				}
+				if (arg == "-xmg_out") {
+					xmg = true;
+					continue;
+				}
 				if (arg == "-mig") {
 					mig = true;
 					continue;
@@ -1616,7 +1660,7 @@ struct ORACLEPass : public Pass {
 				if (!dff_mode || !clk_str.empty()) {
 					abc_module(design, mod, script_file, abcexe_file, lsoexe_file, liberty_file, constr_file, cleanup, lut_costs, dff_mode, clk_str, keepff,
 							delay_target, sop_inputs, sop_products, lutin_shared, fast_mode, mod->selected_cells(), show_tempdir, sop_mode, abc_dress,
-							num_parts, partitioned, exclu_part, mig, deep, merge, test, aig, lut);
+						   num_parts, partitioned, exclu_part, mig, deep, merge, test, aig, xag, xmg, lut);
 					continue;
 				}
 			}
