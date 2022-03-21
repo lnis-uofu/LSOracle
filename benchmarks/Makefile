@@ -48,15 +48,15 @@ LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib #\
 #	techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib \
 #	techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
-TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
+TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.unoptimized.tcl,${LIBERTY_FILES})
 
-RUNS := abc lsoracle migscript aigscript redux_nodes redux_depth redux_ndp redux_resynth timing_direct_indep timing_direct_indep_internal direct_ndp unoptimized
+RUNS := abc lsoracle migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
 
 ################################################################
 ######################## Targets ###############################
 ################################################################
 
-SYNTH_OUTPUTS := $(patsubst %.v,%.synth.rtl,${ORIGINAL_FILES})
+SYNTH_OUTPUTS := $(patsubst %.v,%.unoptimized.rtl,${ORIGINAL_FILES})
 
 PARTITION_OUTPUTS := $(patsubst %.v,%.direct.parts,${ORIGINAL_FILES})
 
@@ -89,7 +89,7 @@ picorv: $(foreach LIB,${LIBERTY_LIBS},$(foreach RUN,${RUNS},picorv32/picorv32.${
 synth: $(SYNTH_OUTPUTS)
 
 clean_synth:
-	rm -f **/*.synth.rtl **/*.synth.v **/*.synth.log **/*.synth.blif
+	rm -f **/*.unoptimized.rtl **/*.unoptimized.v **/*.unoptimized.log **/*.unoptimized.blif
 
 partition: $(PARTITION_OUTPUTS)
 
@@ -139,8 +139,8 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 ######################### SYNTHESIS ############################
 ################################################################
 
-%.synth.rtl %.synth.v %.synth.log %.synth.blif &: %.v
-	${YOSYS} -Q -p 'read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; async2sync; dffunmap; dfflegalize -cell $$_DFF_P_ x -cell $$_DFF_N_ x; write_rtlil $*.synth.rtl; write_verilog -norename $*.synth.v; write_blif $*.synth.blif; stat' | ${TEE} $*.synth.log
+%.unoptimized.rtl %.unoptimized.v %.unoptimized.log %.unoptimized.blif &: %.v
+	${YOSYS} -Q -p 'read_verilog -sv $<; synth -auto-top -flatten -noabc; rename -top top; async2sync; dffunmap; dfflegalize -cell $$_DFF_P_ x -cell $$_DFF_N_ x; write_rtlil $*.unoptimized.rtl; write_verilog -norename $*.unoptimized.v; write_blif $*.unoptimized.blif; stat' | ${TEE} $*.unoptimized.log
 
 # This works in limited circumstances due to flip-flops
 %.aig %.aig.log &: %.rtl
@@ -151,7 +151,7 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 ######################### PARTITION ############################
 ################################################################
 
-%.direct.parts : %.synth.blif
+%.direct.parts : %.unoptimized.blif
 	$(eval TEMP=$(shell mktemp))
 	@ echo "read_blif -a $<" > ${TEMP}
 	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
@@ -164,57 +164,57 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 ################################################################
 
 # TODO add a single internal-to-yosys partition file
-%.redux_ndp.stats.json %.redux_ndp.rtl %.redux_ndp.optimize.log &: %.synth.rtl
-	$(eval TEMP=$*.redux_ndp.script)
+%.mixed_ndp.stats.json %.mixed_ndp.rtl %.mixed_ndp.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_ndp.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
-	@ echo "optimization_redux --ndp --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "optimize --ndp --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_stats -g --name $(shell basename $*) --optimization redux_ndp $*.redux_ndp.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.redux_ndp.rtl" | ${TEE} $*.redux_ndp.optimize.log
+	@ echo "write_stats -g --name $(shell basename $*) --optimization mixed_ndp $*.mixed_ndp.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_ndp.rtl" | ${TEE} $*.mixed_ndp.optimize.log
 
-%.redux_depth.stats.json %.redux_depth.rtl %.redux_depth.optimize.log &: %.synth.rtl
-	$(eval TEMP=$*.redux_depth.script)
+%.mixed_depth.stats.json %.mixed_depth.rtl %.mixed_depth.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_depth.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
-	@ echo "optimization_redux --depth --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "optimize --depth --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_blif -g $*.redux_depth.internal.blif"
-	@ echo "write_stats --name $(shell basename $*) --optimization redux_depth -g $*.redux_depth.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -nonames -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.redux_depth.rtl" | ${TEE} $*.redux_depth.optimize.log
+	@ echo "write_blif -g $*.mixed_depth.internal.blif"
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_depth -g $*.mixed_depth.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -nonames -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_depth.rtl" | ${TEE} $*.mixed_depth.optimize.log
 
-%.redux_nodes.stats.json %.redux_nodes.rtl %.redux_nodes.optimize.log &: %.synth.rtl
-	$(eval TEMP=$*.redux_nodes.script)
+%.mixed_nodes.stats.json %.mixed_nodes.rtl %.mixed_nodes.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_nodes.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
-	@ echo "optimization_redux --nodes --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "optimize --nodes --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization redux_nodes -g $*.redux_nodes.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.redux_nodes.rtl" | ${TEE} $*.redux_nodes.optimize.log
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_nodes -g $*.mixed_nodes.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_nodes.rtl" | ${TEE} $*.mixed_nodes.optimize.log
 
-%.redux_resynth.stats.json %.redux_resynth.rtl %.redux_resynth.optimize.log &: %.synth.rtl
-	$(eval TEMP=$*.redux_resynth.script)
+%.mixed_resynth.stats.json %.mixed_resynth.rtl %.mixed_resynth.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.mixed_resynth.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "kahypar --size ${PART_SIZE} --epsilon 0.05" >> ${TEMP}
-	@ echo "budget_simple --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "optimize --resynth --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization redux_resynth -g $*.redux_resynth.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.redux_resynth.rtl" | ${TEE} $*.redux_resynth.optimize.log
+	@ echo "write_stats --name $(shell basename $*) --optimization mixed_resynth -g $*.mixed_resynth.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_resynth.rtl" | ${TEE} $*.mixed_resynth.optimize.log
 
-%.lsoracle.stats.json %.lsoracle.rtl %.lsoracle.optimize.log &: %.synth.rtl
-	$(eval TEMP=$*.lsoracle.script)
+%.lsoracle_old.stats.json %.lsoracle_old.rtl %.lsoracle_old.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.lsoracle_old.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "partitioning" >> ${TEMP}
 	@ echo "optimization" >> ${TEMP}
 	@ echo "ps -m" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization lsoracle -m $*.lsoracle.stats.json" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.lsoracle.rtl" | ${TEE} $*.lsoracle.optimize.log
+	@ echo "write_stats --name $(shell basename $*) --optimization lsoracle -m $*.lsoracle_old.stats.json" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.lsoracle_old.rtl" | ${TEE} $*.lsoracle_old.optimize.log
 
-%.xmgscript.stats.json %.xmgscript.rtl %.xmgscript.optimize.log &: %.synth.rtl
+%.xmgscript.stats.json %.xmgscript.rtl %.xmgscript.optimize.log &: %.unoptimized.rtl
 	$(eval TEMP=$*.xmgscript.script)
 	@ echo "ps -a" > ${TEMP}
 	@ echo "xmg_convert -a" >> ${TEMP}
-	@ echo "xmgscript2" >> ${TEMP}
+	@ echo "xmgscript" >> ${TEMP}
 	@ echo "function_stats -g" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 	@ echo "xmgscript" >> ${TEMP}
@@ -226,27 +226,27 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 %.abc.stats.json: %.abc.blif
 	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization abc -a $@"
 
-%.unoptimized.stats.json: %.synth.blif
+%.unoptimized.stats.json: %.unoptimized.blif
 	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization unoptimized -a $@"
 
-%.aigscript.rtl %.aigscript.blif %.aigscript.optimize.log &: %.synth.rtl
+%.aigscript.rtl %.aigscript.blif %.aigscript.optimize.log &: %.unoptimized.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -aig -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.aigscript.rtl; write_blif $*.aigscript.blif" | ${TEE} $*.aigscript.optimize.log
 
 %.aigscript.stats.json: %.aigscript.blif
 	${LSORACLE} -e -c "read_blif -a $<; write_stats --name $(shell basename $*) --optimization aigscript -a $@"
 
-%.migscript.rtl %.migscript.blif %.migscript.optimize.log &: %.synth.rtl
+%.migscript.rtl %.migscript.blif %.migscript.optimize.log &: %.unoptimized.rtl
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -lso_exe ${LSORACLE} -mig; techmap; opt -purge; stat; write_rtlil $*.migscript.rtl; write_blif $*.migscript.blif" | ${TEE} $*.migscript.optimize.log
 
 %.migscript.stats.json: %.migscript.blif
 	${LSORACLE} -e -c "read_blif -m $<; write_stats --name $(shell basename $*) --optimization migscript -m $@"
 
-%.direct_ndp.stats.json %.direct_ndp.blif %.direct_ndp.optimize.log &: %.synth.blif %.direct.parts
+%.mixed_ndp_direct.stats.json %.direct_ndp.blif %.direct_ndp.optimize.log &: %.unoptimized.blif %.direct.parts
 	$(eval TEMP=$*.direct_ndp.script)
 	@ echo "read_blif -a $<" > ${TEMP}
 	@ echo "ps -a" >> ${TEMP}
 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-	@ echo "optimization_redux --ndp --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "optimize --ndp --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 	@ echo "write_blif -g --filename $*.direct_ndp.blif" >> ${TEMP}
 	@ echo "write_stats -g --name $(shell basename $*) --optimization direct_ndp $*.direct_ndp.stats.json" >> ${TEMP}
@@ -255,66 +255,40 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 %.direct_ndp.rtl &: %.direct_ndp.blif
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_ndp.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_ndp.rtl" | ${TEE} $*.direct_ndp.optimize_rtl.log
 
-TECHLIB := sky130_fd_sc_hd__tt_025C_1v80
-# TODO clock signal name, multiple library
-%.timing_direct_indep_internal.${TECHLIB}.v %.timing_direct_indep.optimize.log %.timing_direct_indep.stats.json %.timing_direct_indep_internal.stats.json %.timing_direct_indep.blif &: %.synth.blif %.timing_direct_indep.${TECHLIB}.sdc %.direct.parts
+define TIMING_SYNTH =
+# Yosys name mangling is causing conflicts, not currently working.
+# %.timing_yosys_internal.${2}.v %.timing_yosys.optimize.log %.timing_yosys.stats.json %.timing_yosys.rtl &: %.unoptimized.rtl %.timing_yosys.${2}.sdc %.direct.parts
+# 	$(eval TEMP=$*.timing_yosys.script)
+# 	@ echo "ps -a" > ${TEMP}
+# 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
+# 	@ echo "optimize_timing --clock clk --sdc $*.timing_yosys.${2}.sdc --output $*.timing_yosys_internal.${2}.v --abc_exec ${ABC} --liberty ${1}" >> ${TEMP}
+# 	@ echo "ps -g" >> ${TEMP}
+# 	@ echo "write_blif -g --filename $*.timing_yosys.blif" >> ${TEMP}
+# 	@ echo "write_stats --name $(shell basename $*) --optimization timing -g $*.timing_yosys.stats.json" >> ${TEMP}
+# 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.timing_yosys.rtl" | ${TEE} $*.timing_yosys.optimize.log
+
+%.timing_direct_internal.${2}.v %.timing_direct.optimize.log %.timing_direct.stats.json %.timing_direct_internal.stats.json %.timing_direct.blif &: %.unoptimized.blif %.timing_direct.${2}.sdc %.direct.parts
 #	$(eval TEMP=$(shell mktemp))
-	$(eval TEMP=$*.timing_direct_indep.script)
+	$(eval TEMP=$*.timing_direct.script)
 	@ echo "read_blif -a $<" > ${TEMP}
 	@ echo "ps -a" >> ${TEMP}
 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-	@ echo "budget_script --tech-independent --clock clk --sdc $*.timing_direct_indep.${TECHLIB}.sdc --output $*.timing_direct_indep_internal.${TECHLIB}.v --abc_exec ${ABC} --liberty techmapping/skywater/${TECHLIB}.lib" >> ${TEMP}
+	@ echo "optimize_timing --clock clk --sdc $*.timing_direct.${2}.sdc --output $*.timing_direct_internal.${2}.v --abc_exec ${ABC} --liberty ${1}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_blif -g --filename $*.timing_direct_indep.blif" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization timing_direct_indep -g $*.timing_direct_indep.stats.json" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization timing_direct_indep_internal -g $*.timing_direct_indep_internal.stats.json" >> ${TEMP}
-	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.timing_direct_indep.optimize.log
+	@ echo "write_blif -g --filename $*.timing_direct.blif" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization timing_direct -g $*.timing_direct.stats.json" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization timing_direct_internal -g $*.timing_direct_internal.stats.json" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.timing_direct.optimize.log
+endef
+$(foreach SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(call TIMING_SYNTH,$(SCRIPT),$(shell basename $(SCRIPT) .synth.tcl))))
 
-%.timing_direct_indep.rtl &: %.timing_direct_indep.blif
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct_indep.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.timing_direct_indep.rtl" | ${TEE} $*.timing_direct_indep.optimize_rtl.log
+%.timing_direct.rtl &: %.timing_direct.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.timing_direct.rtl" | ${TEE} $*.timing_direct.optimize_rtl.log
 
-%.timing_direct_indep_internal.rtl: %.timing_direct_indep.rtl
+%.timing_direct_internal.rtl: %.timing_direct.rtl
 	cp $< $@
 
-# TODO clock signal name, library
-%.timing_direct_depen_internal.${TECHLIB}.v %.timing_direct_depen.optimize.log %.timing_direct_depen.stats.json %.timing_direct_depen.rtl &: %.synth.blif %.timing_direct_depen.${TECHLIB}.sdc %.direct.parts
-	$(eval TEMP=$*.timing_direct_depen.script)
-	@ echo "read_blif -a $<" > ${TEMP}
-	@ echo "ps -a" >> ${TEMP}
-	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-	@ echo "budget_script --tech-dependent --clock clk --sdc $*.timing_direct_depen.${TECHLIB}.sdc --output $*.timing_direct_depen_internal.${TECHLIB}.v --abc_exec ${ABC} --liberty techmapping/skywater/${TECHLIB}.lib" >> ${TEMP}
-	@ echo "ps -g" >> ${TEMP}
-	@ echo "write_blif -g --filename $*.timing_direct_depen.blif" >> ${TEMP}
-	@ echo "write_stats --name $(shell basename $*) --optimization timing -g $*.timing_direct_depen.stats.json" >> ${TEMP}
-	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.timing_direct_depen.optimize.log
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct_depen.blif; techmap; opt -purge; stat; write_rtlil $*.timing_direct_depen.rtl"
-
-# # TODO clock signal name, library
-# %.timing_yosys_indep_internal.${TECHLIB}.v %.timing_yosys_indep.optimize.log %.timing_yosys_indep.stats.json %.timing_yosys_indep.rtl &: %.synth.rtl %.timing_yosys_indep.${TECHLIB}.sdc %.direct.parts
-# 	$(eval TEMP=$*.timing_yosys_indep.script)
-# 	@ echo "ps -a" > ${TEMP}
-# 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-# 	@ echo "budget_script --tech-independent --clock clk --sdc $*.timing_yosys_indep.${TECHLIB}.sdc --output $*.timing_yosys_indep_internal.${TECHLIB}.v --abc_exec ${ABC} --liberty techmapping/skywater/${TECHLIB}.lib" >> ${TEMP}
-# 	@ echo "ps -g" >> ${TEMP}
-# 	@ echo "write_blif -g --filename $*.timing_yosys_indep.blif" >> ${TEMP}
-# 	@ echo "write_stats --name $(shell basename $*) --optimization timing -g $*.timing_yosys_indep.stats.json" >> ${TEMP}
-# 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.timing_yosys_indep.rtl" | ${TEE} $*.timing_yosys_indep.optimize.log
-
-# # TODO clock signal name, library
-# %.timing_yosys_depend_internal.${TECHLIB}.v %.timing_yosys_depend.optimize.log %.timing_yosys_depend.stats.json %.timing_yosys_depend.rtl &: %.synth.rtl %.timing_yosys_depend.${TECHLIB}.sdc
-# 	$(eval TEMP=$*.timing_yosys_depend.script)
-# 	@ echo "ps -a" > ${TEMP}
-# 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-# 	@ echo "budget_script --tech-dependent --clock clk --sdc $*.timing_yosys_depend.${TECHLIB}.sdc --output $*.timing_yosys_depend_internal.${TECHLIB}.v --abc_exec ${ABC} --liberty techmapping/skywater/${TECHLIB}.lib" >> ${TEMP}
-# 	@ echo "ps -g" >> ${TEMP}
-# 	@ echo "write_blif -g --filename $*.timing_yosys_depend.blif" >> ${TEMP}
-# 	@ echo "write_stats --name $(shell basename $*) --optimization timing -g $*.timing_yosys_depend.stats.json" >> ${TEMP}
-# 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.timing_yosys_depend.rtl" | ${TEE} $*.timing_yosys_depend.optimize.log
-
-%.unoptimized.rtl: %.synth.rtl
-	cp $< $@
-
-%.abc.rtl %.abc.blif %.abc.optimize.log &: %.synth.rtl
+%.abc.rtl %.abc.blif %.abc.optimize.log &: %.unoptimized.rtl
 	${YOSYS} -Q -p "read_rtlil $<; abc -script techmapping/resyn2rs.abc; techmap; stat; write_rtlil $*.abc.rtl; write_blif $*.abc.blif" | ${TEE} $*.abc.optimize.log
 
 ################################################################
@@ -336,8 +310,8 @@ $(foreach SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(call TECHMAPPING,$(SCRIPT),$(sh
 %.flatten.v: %.v
 	${YOSYS} -p "read_verilog $<; flatten; hierarchy -auto-top; rename -top top; write_verilog  -noattr $@"
 
-#TODO add per run copies of %.synth.v, all targets
-%.sky130_fd_sc_hd__tt_025C_1v80.formality.log: %.sky130_fd_sc_hd__tt_025C_1v80.flatten.v %.synth.v
+#TODO add per run copies of %.unoptimized.v, all targets
+%.sky130_fd_sc_hd__tt_025C_1v80.formality.log: %.sky130_fd_sc_hd__tt_025C_1v80.flatten.v %.unoptimized.v
 	$(eval TEMP=$(shell mktemp))
 	@ echo "read_verilog -r ${word 2,$^}" > ${TEMP}
 	@ echo "set_top top" >> ${TEMP}
@@ -357,7 +331,7 @@ $(foreach SCRIPT,${TECHMAPPING_SCRIPTS},$(eval $(call TECHMAPPING,$(SCRIPT),$(sh
 # # 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
 # # 		equiv_make -inames gold gate equiv; hierarchy -top equiv; equiv_simple; equiv_status -assert" | ${TEE} $@
 
-# %.lsoracle.equiv.log: %.lsoracle.rtl %.synth.rtl
+# %.lsoracle_old.equiv.log: %.lsoracle_old.rtl %.unoptimized.rtl
 # 	${YOSYS} -p "read_rtlil ${word 2,$^}; rename -top gold; prep -top gold; splitnets -ports; design -stash gold;\
 # # 		read_rtlil $<; rename -top gate; prep -top gate; design -stash gate; \
 # # 		design -copy-from gold -as gold gold; design -copy-from gate -as gate gate; \
