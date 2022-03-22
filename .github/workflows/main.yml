@@ -27,7 +27,7 @@ jobs:
         run: |
           ccache -p
           ccache -z
-          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/usr/local/share/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
           cmake --build build
           ccache -s
       - name: Upload artifacts
