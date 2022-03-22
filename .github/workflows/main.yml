@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build LSOracle
-    container: ghcr.io/lnis-uofu/lsoracle-build:jammy
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
@@ -27,14 +27,16 @@ jobs:
         run: |
           ccache -p
           ccache -z
-          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/usr/share/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
-          cmake --build build -j$(nproc)
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/usr/local/share/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
+          cmake --build build
           ccache -s
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-binary
-          path: build/core/lsoracle
+          path: |
+            build/core/lsoracle
+            build/yosys-plugin/oracle.so
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
