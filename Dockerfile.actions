@@ -1,4 +1,4 @@
-FROM ubuntu:20.10 as runtime
+FROM ubuntu:20.04 as runtime
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         apt-get install -y --no-install-recommends\
@@ -6,7 +6,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         python3.9-distutils \
         python3-pip \
         graphviz \
-        libffi8ubuntu1 \
+        swig \
+        libffi7 \
         zlib1g \
         libboost-filesystem1.71.0 \
         libboost-system1.71.0 \
@@ -26,7 +27,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
     apt-get update && \
     apt-get install -y tzdata \
-	bison \
+        bison \
         build-essential \
         clang  \
         cmake \
@@ -42,11 +43,11 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         libboost-python-dev \
         libboost-system-dev \
         libffi-dev \
-	libpython3.9-dev \
-	libreadline-dev \
-	make \
+        libpython3.9-dev \
+        libreadline-dev \
+        make \
         pkg-config \
-	pybind11-dev \
+        pybind11-dev \
         swig  \
         tcl-dev \
         xdot \
