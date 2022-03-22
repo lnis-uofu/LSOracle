@@ -405,7 +405,7 @@ everything.tsv: ${JSON_REPORTS}
 
 
 define GRAPHS =
-${LIB}.png ${LIB}.pdf: ${JSON_REPORTS}
-	python3 plot_bars.py $@ **/*.${LIB}.report.json
+${LIB}.pdf: ${JSON_REPORTS}
+	python3 plot_bars.py $$@.pdf **/*.${LIB}.report.json
 endef
 $(foreach LIB,$(LIBERTY_LIBS),$(eval ${GRAPHS}))
