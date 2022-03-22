@@ -48,9 +48,9 @@ LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib #\
 #	techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib \
 #	techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
-TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.unoptimized.tcl,${LIBERTY_FILES})
+TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
 
-RUNS := abc lsoracle migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
+RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
 
 ################################################################
 ######################## Targets ###############################

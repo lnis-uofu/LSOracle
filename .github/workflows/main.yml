@@ -85,11 +85,10 @@ jobs:
             benchmarks/everything.tsv
             benchmarks/*/*.log
             benchmarks/*/*.rtl
-            benchmarks/*/*.mapped.v
-            benchmarks/*/*.synth_report
-            benchmarks/*/*.timing
-            benchmarks/*/*.report
-            benchmarks/*/*.everything
+            benchmarks/*/*.v
+            benchmarks/*/*.json
+            benchmarks/*/*.gates
+            benchmarks/*/*.sdc
       #- name: Get previous results
       #  uses: dsaltares/fetch-gh-release-asset@master
       #  with:
@@ -101,13 +100,13 @@ jobs:
         continue-on-error: true
         run: |
           cd benchmarks
-          make everything.pdf
+          make sky130_fd_sc_hd__tt_025C_1v80.pdf
       - name: Archive graph
         uses: actions/upload-artifact@v2
         with:
           name: benchmark-graphs
           path: |
-            benchmarks/everything.pdf
+            benchmarks/sky130_fd_sc_hd__tt_025C_1v80.pdf
       - name: Publish results
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/master'
@@ -116,13 +115,11 @@ jobs:
         with:
           files: |
             benchmarks/everything.tsv
-            benchmarks/everything.png
-            benchmarks/everything.pdf
+            benchmarks/sky130_fd_sc_hd__tt_025C_1v80.pdf
             benchmarks/*/*.log
             benchmarks/*/*.rtl
-            benchmarks/*/*.mapped.v
-            benchmarks/*/*.synth_report
-            benchmarks/*/*.timing
-            benchmarks/*/*.report
-            benchmarks/*/*.everything
+            benchmarks/*/*.v
+            benchmarks/*/*.json
+            benchmarks/*/*.gates
+            benchmarks/*/*.sdc
           prerelease: true

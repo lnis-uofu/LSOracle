@@ -3,18 +3,13 @@
 *.migscript.*
 *.abc.*
 
-*.direct_ndp.*
-*.mixed.*
+*.direct_*.*
+*.mixed_*.*
 *.unoptimized.*
 *.xmgscript.*
-*.redux.*
-*.timing2.*
-*.timing.*
+*.lsoracle_old.*
 *.timing_direct*.*
 *.timing_yosys*.*
-*.redux_*.*
-*.xmg2.*
-*.xmg3.*
 *.mapped.v
 *.aig
 *.report
@@ -24,7 +19,6 @@
 *.pdf
 *.log
 *.rtl
-*_timing.*
 *.lsoracle.script
 *.yosys.script
 *.abc.script
@@ -33,7 +27,6 @@
 *.synth.v
 *.json
 *.gates
-*.script
 formality_workdir
 techmapping/gf12/*.lib
 techmapping/gf12/*.db
