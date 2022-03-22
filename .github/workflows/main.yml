@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build LSOracle
-    container: ghcr.io/lnis-uofu/lsoracle-build:focal
+    container: ghcr.io/lnis-uofu/lsoracle-build:jammy
     env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
@@ -42,7 +42,7 @@ jobs:
           path: build/core/unit_tests
   test:
     runs-on: ubuntu-latest
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:focal
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     needs: build
     steps:
       - name: Check out the repo
@@ -58,7 +58,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:focal
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     needs: build
     steps:
       - name: Checkout the repo
