@@ -270,7 +270,7 @@ TEST(partition_manager_junior_test, pmj_partition_generation)
 //    mockturtle::write_dot(pm.get_network(), "pmj_final.dot");
     ASSERT_EQ(pm.get_network().num_cis(), 15);
     ASSERT_EQ(pm.get_network().num_cos(), 12);
-    ASSERT_EQ(pm.get_network().num_gates(), 17); // one gate is optimized out.
+    ASSERT_EQ(pm.get_network().num_gates(), 16); // one gate is optimized out.
 }
 
 TEST(partition_manager_junior_test, pmj_partition_xmg_minimal)
