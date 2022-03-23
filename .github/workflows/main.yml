@@ -30,14 +30,17 @@ jobs:
           cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
           cmake --build build
           ccache -s
-      - name: Upload artifacts
+      - name: Upload binary artifacts
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-binary
-          path: |
-            build/core/lsoracle
-            build/yosys-plugin/oracle.so
-      - name: Upload artifacts
+          path: build/core/lsoracle
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-plugin
+          path: build/yosys-plugin/oracle.so
+      - name: Upload unit test artifacts
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-tests
@@ -69,6 +72,10 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: lsoracle-binary
+      - name: Get plugin
+        uses: actions/download-artifact@v2
+        with:
+          name: lsoracle-plugin
 #      - name: Prep previous
 #        run: |
 #          mkdir -p benchmarks/previous
