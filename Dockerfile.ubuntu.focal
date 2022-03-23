@@ -19,16 +19,17 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         g++-10 \
         cmake \
         libboost-program-options-dev \
-	libreadline-dev \
-	libpython3-dev \
-	pybind11-dev \
+        libreadline-dev \
+        libpython3-dev \
+        pybind11-dev \
         lcov \
         gcovr \
-	git \
-	bison \
-	make \
-	libpython3.9-dev \
-	python3.9-distutils \
+        git \
+        bison \
+        make \
+        libpython3.9-dev \
+        python3.9-distutils \
+        swig \
         flex && \
     apt-get clean
 ENV CC=gcc-10 CXX=g++-10

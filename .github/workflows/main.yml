@@ -74,9 +74,12 @@ jobs:
 #          mkdir -p benchmarks/previous
       - name: Run synthesis
         run: |
+          ls
           cp lsoracle /usr/local/bin
           chmod +x /usr/local/bin/lsoracle
           mkdir -p /usr/local/share/lsoracle
+          mkdir -p /usr/local/share/yosys/plugins
+          cp oracle.so /usr/local/share/yosys/plugins/
           cd benchmarks
           make everything.tsv -j $(nproc)
       - name: Archive results
