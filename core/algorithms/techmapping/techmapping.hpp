@@ -631,6 +631,9 @@ struct graph {
 struct mapping_settings {
     unsigned int cut_input_limit;
     unsigned int node_cut_count;
+    unsigned int lut_area[8];
+    unsigned int lut_delay[8];
+    unsigned int wire_delay;
 };
 
 
@@ -667,6 +670,25 @@ public:
         assert(settings.cut_input_limit >= 2 && "invalid argument: mapping for less than 2 inputs is impossible");
         assert(settings.node_cut_count >= 1 && "invalid argument: must store at least one cut per node");
 
+        // For now:
+        std::fill(settings.lut_area, settings.lut_area + 9, 1);
+        settings.lut_area[5] = 2;
+        settings.lut_area[6] = 4;
+        settings.lut_area[7] = 8;
+        settings.lut_area[8] = 16;
+
+        std::fill(settings.lut_delay, settings.lut_delay + 9, 1);
+
+        settings.lut_delay[1] = 141;
+        settings.lut_delay[2] = 275;
+        settings.lut_delay[3] = 379;
+        settings.lut_delay[4] = 379;
+        settings.lut_delay[5] = 477;
+        settings.lut_delay[6] = 618;
+        settings.lut_delay[7] = 759;
+
+        settings.wire_delay = 300;
+
         std::fill(info.begin(), info.end(), mapping_info{});
     }
 
@@ -700,8 +722,10 @@ public:
 
         enumerate_cuts(true, true);
 
+        print_stats();
+
         std::cout << "Deriving the final mapping of the network.\n";
-        return derive_mapping();
+        return derive_mapping(true);
     }
 
 private:
@@ -728,33 +752,6 @@ private:
             // Find the node cut set.
             std::vector<cut> cut_set = node_cut_set(node, frontier);
 
-            // Prune cuts which exceed the node slack in area optimisation mode.
-            if (area_optimisation) {
-                if (std::all_of(cut_set.begin(), cut_set.end(), [&](cut const& c) {
-                    return cut_depth(c, info) > info[node].required;
-                })) {
-                    std::cout << "Required time of node " << node << " is " << info[node].required << '\n';
-                    std::cout << "Depth of cuts:\n";
-                    for (cut const& c : cut_set) {
-                        std::cout << "[";
-                        for (size_t input : c.inputs) {
-                            std::cout << input << " @ " << cut_depth(*info[input].selected_cut, info) << ", ";
-                        }
-                        std::cout << "] -> " << c.output << " = " << cut_depth(c, info) << '\n';
-                    }
-                }
-
-                cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
-                    return cut_depth(c, info) > info[node].required;
-                }), cut_set.end());
-
-                // Because the previous cut is included in the set and must meet required times
-                // we must have at least one cut left from this.
-                if (cut_set.empty()) {
-                    throw std::logic_error{"bug: no cuts meet node required time"};
-                }
-            }
-
             // Sort the cuts by desired characteristics.
             if (!area_optimisation) {
                 std::sort(cut_set.begin(), cut_set.end(), [&](cut const& a, cut const& b) {
@@ -778,6 +775,34 @@ private:
 
             // Deduplicate cuts to ensure diversity.
             cut_set.erase(std::unique(cut_set.begin(), cut_set.end()), cut_set.end());
+
+            // Prune cuts which exceed the node slack in area optimisation mode.
+            if (area_optimisation) {
+                if (std::all_of(cut_set.begin(), cut_set.end(), [&](cut const& c) {
+                    return cut_depth(c, info) > info[node].required;
+                })) {
+                    std::cout << "Required time of node " << node << " is " << info[node].required << '\n';
+                    std::cout << "Depth of cuts:\n";
+                    for (cut const& c : cut_set) {
+                        std::cout << "[";
+                        for (size_t input : c.inputs) {
+                            std::cout << input << " @ " << cut_depth(*info[input].selected_cut, info) << ", ";
+                        }
+                        std::cout << "] -> " << c.output << " = " << cut_depth(c, info) << '\n';
+                    }
+                    fflush(stdout);
+                }
+
+                cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
+                    return cut_depth(c, info) > info[node].required;
+                }), cut_set.end());
+
+                // Because the previous cut is included in the set and must meet required times
+                // we must have at least one cut left from this.
+                if (cut_set.empty()) {
+                    throw std::logic_error{"bug: no cuts meet node required time"};
+                }
+            }
 
             // Keep only the specified good cuts.
             if (cut_set.size() > settings.node_cut_count) {
@@ -841,23 +866,98 @@ private:
 
         // Then work from PO to PI, propagating required times.
         for (size_t node : g.compute_reverse_topological_ordering()) {
-            //std::cout << "Visiting node " << node << '\n';
+            if (g.is_primary_output(node)) {
+                info[node].required = max_depth;
+            } else if (std::holds_alternative<cell>(g.nodes[node])) {
+                if (!info[node].selected_cut.has_value()) {
+                    throw std::logic_error{"bug: cell has no selected cut"};
+                }
+                unsigned int required = info[node].required - settings.lut_delay[info[node].selected_cut->input_count()];
+                for (size_t cut_input : info[node].selected_cut->inputs) {
+                    //std::cout << "Setting required time of node " << cut_input << " to " << std::min(info[cut_input].required, required) << '\n';
+                    info[cut_input].required = std::min(info[cut_input].required, required);
 
-            unsigned int required = info[node].required - 1;
-            for (size_t cut_input : info[node].selected_cut->inputs) {
-                //std::cout << "Setting required time of node " << cut_input << " to " << std::min(info[cut_input].required, required) << '\n';
-                info[cut_input].required = std::min(info[cut_input].required, required);
+                    if (info[cut_input].required >= info[node].required) {
+                        throw std::logic_error{"bug: cut input has greater required time than cut output"};
+                    }
 
-                // If we end up with a negative required time, we have a bug. For instance, this might fire if:
-                // - the maximum depth isn't actually the maximum depth
-                // - the graph has a loop
-                assert(info[cut_input].required >= 0 && "bug: node has negative arrival time");
+                    // If we end up with a negative required time, we have a bug. For instance, this might fire if:
+                    // - the maximum depth isn't actually the maximum depth
+                    // - the graph has a loop
+                    if (info[cut_input].required < 0) {
+                        throw std::logic_error{"bug: node has negative required time"};
+                    }
+                }
             }
         }
         std::cout << "done\n";
     }
 
-    graph<lut> derive_mapping() const
+    void print_stats() const
+    {
+        // The mapping frontier is the list of all nodes which do not have selected cuts.
+        // We start with the primary outputs and work downwards.
+        std::vector<size_t> frontier;
+        std::transform(g.primary_outputs.begin(), g.primary_outputs.end(), std::back_inserter(frontier), [](size_t po) {
+            return po;
+        });
+
+        std::unordered_map<size_t, bool> gate_graph_to_lut_graph;
+
+        // Populate the LUT graph with the primary inputs and outputs of the gate graph.
+        gate_graph_to_lut_graph.insert({0, true});
+        gate_graph_to_lut_graph.insert({1, true});
+
+        for (size_t pi : g.primary_inputs) {
+            gate_graph_to_lut_graph.insert({pi, true});
+        }
+
+        for (size_t po : g.primary_outputs) {
+            gate_graph_to_lut_graph.insert({po, true});
+        }
+
+        std::vector<size_t> lut_stats;
+
+        for (int i = 0; i <= settings.cut_input_limit; i++) {
+            lut_stats.push_back(0);
+        }
+
+        // While there are still nodes to be mapped:
+        while (!frontier.empty()) {
+            // Pop a node from the mapping frontier.
+            size_t node = frontier.back();
+            frontier.pop_back();
+
+            // Add the node to the mapping graph.
+            if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
+                gate_graph_to_lut_graph.insert({node, true});
+                lut_stats[info[node].selected_cut->input_count()]++;
+            }
+
+            // Add all the inputs in that cut which are not primary inputs or already-discovered nodes to the mapping frontier.
+            if (g.is_primary_output(node)) {
+                for (size_t input : g.compute_node_fanin_nodes(node)) {
+                    frontier.push_back(input);
+                    break;
+                }
+            }
+
+            for (size_t input : info[node].selected_cut->inputs) {
+                if (!g.is_primary_input(input) && !gate_graph_to_lut_graph.count(input)) {
+                    frontier.push_back(input);
+                }
+            }
+        }
+
+        size_t total_luts = 0;
+        for (int lut_size = 1; lut_size <= settings.cut_input_limit; lut_size++) {
+            std::cout << "LUT" << lut_size << ": " << lut_stats[lut_size] << '\n';
+            total_luts += lut_stats[lut_size];
+        }
+        std::cout << "LUTs: " << total_luts << '\n';
+    }
+
+    graph<lut> derive_mapping(bool simulate) const
     {
         // The mapping frontier is the list of all nodes which do not have selected cuts.
         // We start with the primary outputs and work downwards.
@@ -883,12 +983,6 @@ private:
             gate_graph_to_lut_graph.insert({po, index});
         }
 
-        std::vector<size_t> lut_stats;
-
-        for (int i = 0; i < 7; i++) {
-            lut_stats.push_back(0);
-        }
-
         // While there are still nodes to be mapped:
         while (!frontier.empty()) {
             // Pop a node from the mapping frontier.
@@ -897,10 +991,12 @@ private:
 
             // Add the node to the mapping graph.
             if (!g.is_primary_input(node) && !g.is_primary_output(node)) {
-                kitty::dynamic_truth_table tt = g.simulate(*info[node].selected_cut);
+                kitty::dynamic_truth_table tt{};
+                if (simulate) {
+                    tt = g.simulate(*info[node].selected_cut);
+                }
                 size_t index = mapping.add_cell(lut{tt});
                 gate_graph_to_lut_graph.insert({node, index});
-                lut_stats[info[node].selected_cut->input_count()]++;
             }
 
             // Add all the inputs in that cut which are not primary inputs or already-discovered nodes to the mapping frontier.
@@ -947,13 +1043,6 @@ private:
                 }
             }
         }
-
-        size_t total_luts = 0;
-        for (int lut_size = 1; lut_size < 7; lut_size++) {
-            std::cout << "LUT" << lut_size << ": " << lut_stats[lut_size] << '\n';
-            total_luts += lut_stats[lut_size];
-        }
-        std::cout << "LUTs: " << total_luts << '\n';
 
         return mapping;
     }
@@ -1032,7 +1121,7 @@ private:
                 depth = info.at(input).depth;
             }
         }
-        return depth + 1;
+        return depth + settings.lut_delay[c.input_count()];
     }
 
     // It is better to prefer smaller cuts over bigger cuts because it allows more cuts to be mapped
@@ -1057,11 +1146,11 @@ private:
     // Area flow estimates how much this cone of logic is shared within the current mapping.
     float cut_area_flow(cut const& c, std::vector<mapping_info> const& info)
     {
-        float sum_area_flow = 0.0f;
+        float sum_area_flow = float(settings.lut_area[c.input_count()]);
         for (size_t input : c.inputs) {
             sum_area_flow += info.at(input).area_flow;
         }
-        return (sum_area_flow + 1.0f) / std::max(1.0f, float(info.at(c.output).references));
+        return sum_area_flow / std::max(1.0f, float(info.at(c.output).references));
     }
 
     // Exact area calculates the number of LUTs that would be added to the mapping if this cut was selected.
@@ -1092,13 +1181,14 @@ private:
 
     unsigned int exact_area_deref(cut const& c)
     {
-        unsigned int area = 1;
+        unsigned int area = settings.lut_area[c.input_count()];
 
         for (size_t cut_input : c.inputs) {
             if (std::holds_alternative<cell>(g.nodes[cut_input])) {
                 if (info.at(cut_input).references <= 0) {
                     std::cout << "At node " << cut_input << ":\n";
-                    throw std::logic_error{"bug: decremented node reference below zero"};
+                    fflush(stdout);
+                    throw std::logic_error{"exact_area_deref: bug: decremented node reference below zero"};
                 }
 
                 info.at(cut_input).references--;
@@ -1113,7 +1203,7 @@ private:
 
     unsigned int exact_area_ref(cut const& c)
     {
-        unsigned int area = 1;
+        unsigned int area = settings.lut_area[c.input_count()];
 
         for (size_t cut_input : c.inputs) {
             if (std::holds_alternative<cell>(g.nodes[cut_input])) {
@@ -1132,7 +1222,9 @@ private:
         for (size_t cut_input : c.inputs) {
             if (std::holds_alternative<cell>(g.nodes[cut_input])) {
                 if (info.at(cut_input).references <= 0) {
-                    throw std::logic_error{"bug: decremented node reference below zero"};
+                    std::cout << "At node " << cut_input << ":\n";
+                    fflush(stdout);
+                    throw std::logic_error{"cut_deref: bug: decremented node reference below zero"};
                 }
 
                 info.at(cut_input).references--;
@@ -1234,7 +1326,6 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
 
     for (size_t po : g.primary_outputs) {
         for (size_t fanin : g.compute_node_fanin_nodes(po)) {
-            // BUG: exporting to MIG breaks here; for later.
             if (node_to_mockturtle.find(fanin) == node_to_mockturtle.end()) {
                 std::cout << "Node " << fanin << " not in node_to_mockturtle\n";
             }
