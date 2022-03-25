@@ -50,7 +50,7 @@ LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib #\
 LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
 TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
 
-RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
+RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp direct_resynth unoptimized
 
 ################################################################
 ######################## Targets ###############################
@@ -241,7 +241,7 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 %.migscript.stats.json: %.migscript.blif
 	${LSORACLE} -e -c "read_blif -m $<; write_stats --name $(shell basename $*) --optimization migscript -m $@"
 
-%.mixed_ndp_direct.stats.json %.direct_ndp.blif %.direct_ndp.optimize.log &: %.unoptimized.blif %.direct.parts
+%.direct_ndp.stats.json %.direct_ndp.blif %.direct_ndp.optimize.log &: %.unoptimized.blif %.direct.parts
 	$(eval TEMP=$*.direct_ndp.script)
 	@ echo "read_blif -a $<" > ${TEMP}
 	@ echo "ps -a" >> ${TEMP}
@@ -254,6 +254,20 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 
 %.direct_ndp.rtl &: %.direct_ndp.blif
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_ndp.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_ndp.rtl" | ${TEE} $*.direct_ndp.optimize_rtl.log
+
+%.direct_resynth.stats.json %.direct_resynth.blif %.direct_resynth.optimize.log &: %.unoptimized.blif %.direct.parts
+	$(eval TEMP=$*.direct_resynth.script)
+	@ echo "read_blif -a $<" > ${TEMP}
+	@ echo "ps -a" >> ${TEMP}
+	@ echo "external_partition $*.direct.parts" >> ${TEMP}
+	@ echo "optimize --resynth --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_blif -g --filename $*.direct_resynth.blif" >> ${TEMP}
+	@ echo "write_stats -g --name $(shell basename $*) --optimization direct_resynth $*.direct_resynth.stats.json" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.direct_resynth.optimize.log
+
+%.direct_resynth.rtl &: %.direct_resynth.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_resynth.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_resynth.rtl" | ${TEE} $*.direct_resynth.optimize_rtl.log
 
 define TIMING_SYNTH =
 # Yosys name mangling is causing conflicts, not currently working.
@@ -406,6 +420,6 @@ everything.tsv: ${JSON_REPORTS}
 
 define GRAPHS =
 ${LIB}.pdf: ${JSON_REPORTS}
-	python3 plot_bars.py $$@.pdf **/*.${LIB}.report.json
+	python3 plot_bars.py $$@ **/*.${LIB}.report.json
 endef
 $(foreach LIB,$(LIBERTY_LIBS),$(eval ${GRAPHS}))
