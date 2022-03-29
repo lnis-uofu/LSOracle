@@ -1,0 +1,431 @@
+ 
+                             Library Compiler (TM)
+                                 DesignWare (R)
+
+             Version S-2021.06-SP3 for linux64 - Oct 12, 2021 -SLE
+
+                    Copyright (c) 1988 - 2021 Synopsys, Inc.
+   This software and the associated documentation are proprietary to Synopsys,
+ Inc. This software may only be used in accordance with the terms and conditions
+ of a written license agreement with Synopsys, Inc. All other use, reproduction,
+   or distribution of this software is strictly prohibited.  Licensed Products
+     communicate with Synopsys servers for the purpose of providing software
+    updates, detecting software piracy and verifying that customers are using
+    Licensed Products in conformity with the applicable License Key for such
+  Licensed Products. Synopsys will use information gathered in connection with
+    this process to deliver software updates and pursue software pirates and
+                                   infringers.
+
+ Inclusivity & Diversity - Visit SolvNetPlus to read the "Synopsys Statement on
+            Inclusivity and Diversity" (Refer to article 000036315 at
+                        https://solvnetplus.synopsys.com)
+
+Initializing...
+lc_shell> read_lib sclib_tigfet10_hpnw1_tt_0p70v_25c.lib
+Reading '/research/ece/lnis/Share/TIGFET_SCLIB/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib' ...
+Warning: Line 1, The 'default_inout_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_input_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_leakage_power_density' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 1, The 'internal_power_calculation' attribute in char_config group is required for NLPM library. 
+        No default can be applied to this attribute. (LBDB-366)
+Warning: Line 64, Cell 'AND2_HPNW1', The cell_leakage_power attribute of the 'AND2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 380, Cell 'AOI21_HPNW1', The cell_leakage_power attribute of the 'AOI21_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 1203, Cell 'BUF1_HPNW1', The cell_leakage_power attribute of the 'BUF1_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 1358, Cell 'DFFNQ1_HPNW1', The cell_leakage_power attribute of the 'DFFNQ1_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 1394, Cell 'DFFNQ1_HPNW1', pin 'Q', There is an extra timing arc between 'CKN' and 
+        'Q' pins in the 'DFFNQ1_HPNW1' cell. (LBDB-75)
+Error: Line 1400, Cell 'DFFNQ1_HPNW1', pin 'Q', A bad 'IQ' pin name in the 'DFFNQ1_HPNW1' cell. (LIBG-3)
+Warning: Line 1402, Cell 'DFFNQ1_HPNW1', pin 'Q', The 'DFFNQ1_HPNW1' combinational cell has a 'Q' pin with
+        a sequential timing arc containing the 'falling_edge' timing_type. (LBDB-243)
+Warning: Line 1418, Cell 'DFFNQ1_HPNW1', pin 'Q', The 'values' attribute has a '-28.662600' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 1446, Cell 'DFFNQ1_HPNW1', pin 'Q', The 'values' attribute has a '-55.185699' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 1507, Cell 'DFFNQ1_HPNW1', pin 'CKN', The 'DFFNQ1_HPNW1' combinational cell has a 'CKN' pin with
+        a sequential timing arc containing the 'min_pulse_width' timing_type. (LBDB-243)
+Warning: Line 1611, Cell 'DFFNQ1_HPNW1', pin 'D', The 'DFFNQ1_HPNW1' combinational cell has a 'D' pin with
+        a sequential timing arc containing the 'hold_falling' timing_type. (LBDB-243)
+Warning: Line 1635, Cell 'DFFNQ1_HPNW1', pin 'D', The 'DFFNQ1_HPNW1' combinational cell has a 'D' pin with
+        a sequential timing arc containing the 'setup_falling' timing_type. (LBDB-243)
+Warning: Line 1740, Cell 'DFFQ1_HPNW1', The cell_leakage_power attribute of the 'DFFQ1_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 1776, Cell 'DFFQ1_HPNW1', pin 'Q', There is an extra timing arc between 'CK' and 
+        'Q' pins in the 'DFFQ1_HPNW1' cell. (LBDB-75)
+Error: Line 1782, Cell 'DFFQ1_HPNW1', pin 'Q', A bad 'IQ' pin name in the 'DFFQ1_HPNW1' cell. (LIBG-3)
+Warning: Line 1784, Cell 'DFFQ1_HPNW1', pin 'Q', The 'DFFQ1_HPNW1' combinational cell has a 'Q' pin with
+        a sequential timing arc containing the 'rising_edge' timing_type. (LBDB-243)
+Warning: Line 1828, Cell 'DFFQ1_HPNW1', pin 'Q', The 'values' attribute has a '-54.870399' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 1889, Cell 'DFFQ1_HPNW1', pin 'CK', The 'DFFQ1_HPNW1' combinational cell has a 'CK' pin with
+        a sequential timing arc containing the 'min_pulse_width' timing_type. (LBDB-243)
+Warning: Line 1993, Cell 'DFFQ1_HPNW1', pin 'D', The 'DFFQ1_HPNW1' combinational cell has a 'D' pin with
+        a sequential timing arc containing the 'hold_rising' timing_type. (LBDB-243)
+Warning: Line 2017, Cell 'DFFQ1_HPNW1', pin 'D', The 'DFFQ1_HPNW1' combinational cell has a 'D' pin with
+        a sequential timing arc containing the 'setup_rising' timing_type. (LBDB-243)
+Warning: Line 2122, Cell 'INV1_HPNW1', The cell_leakage_power attribute of the 'INV1_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 2277, Cell 'MAJ3_HPNW1', The cell_leakage_power attribute of the 'MAJ3_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 2537, Cell 'MAJ3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 2686, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-128.914001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2847, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-15.573100' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2847, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-159.216995' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2847, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-75.186699' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2864, Cell 'MAJ3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 2943, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-132.044006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2943, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-35.422798' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2978, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-24.359200' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2978, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-156.895996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 2978, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-82.934303' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3013, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-127.002998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3013, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-22.525600' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3174, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-7.679080' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3174, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-152.740005' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3174, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-70.572899' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3191, Cell 'MAJ3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 3270, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-16.111000' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3270, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-142.281006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3270, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-54.605701' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3305, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-36.181599' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3305, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-163.477997' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3305, Cell 'MAJ3_HPNW1', pin 'Y', The 'values' attribute has a '-94.677002' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3840, Cell 'MIN3_HPNW1', The cell_leakage_power attribute of the 'MIN3_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-24.992001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-94.922096' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-62.724499' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-229.376007' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-201.516006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3922, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-138.475006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-4.201920' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-83.094704' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-29.050501' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-218.181000' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-181.376007' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3957, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-78.988701' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 3974, Cell 'MIN3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'negative_unate'. (LBDB-318)
+Warning: Line 4053, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-14.549600' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4053, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-150.195999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4053, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-69.125504' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4214, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-112.762001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4214, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-4.884270' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-12.706400' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-93.255096' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-45.379200' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-228.723007' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-199.356995' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4249, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-113.292999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4284, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-79.521400' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4284, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-3.396580' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4284, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-217.214996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4284, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-177.143997' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4284, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-29.955601' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4301, Cell 'MIN3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'negative_unate'. (LBDB-318)
+Warning: Line 4380, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-9.615200' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4380, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-150.231995' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4380, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-65.877502' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4541, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-113.068001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4541, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-3.756330' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-30.194901' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-96.254097' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-69.973999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-7.421060' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-229.990997' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-203.391006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-150.126007' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4576, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-30.968599' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-14.571000' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-85.594299' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-45.406700' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-219.067993' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-184.641998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4611, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-106.208000' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4628, Cell 'MIN3_HPNW1', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'negative_unate'. (LBDB-318)
+Warning: Line 4707, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-17.930901' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4707, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-150.158997' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4707, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-71.729599' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4868, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-112.453003' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 4868, Cell 'MIN3_HPNW1', pin 'Y', The 'values' attribute has a '-5.944090' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 5403, Cell 'MUX2_HPNW1', The cell_leakage_power attribute of the 'MUX2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 6367, Cell 'MUXI2_HPNW1', The cell_leakage_power attribute of the 'MUXI2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 7331, Cell 'NAND2_HPNW1', The cell_leakage_power attribute of the 'NAND2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 7647, Cell 'NOR2_HPNW1', The cell_leakage_power attribute of the 'NOR2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 7963, Cell 'OAI21_HPNW1', The cell_leakage_power attribute of the 'OAI21_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 8786, Cell 'OR2_HPNW1', The cell_leakage_power attribute of the 'OR2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 9102, Cell 'XNOR2_HPNW1', The cell_leakage_power attribute of the 'XNOR2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 9508, Cell 'XNOR3_HPNW1', The cell_leakage_power attribute of the 'XNOR3_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 11083, Cell 'XOR2_HPNW1', The cell_leakage_power attribute of the 'XOR2_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 11489, Cell 'XOR3_HPNW1', The cell_leakage_power attribute of the 'XOR3_HPNW1' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 1394, Cell 'DFFNQ1_HPNW1', pin 'Q', The 'Q' Pin/bus on the 'DFFNQ1_HPNW1' cell has no 'function' attribute.
+        The cell becomes a black box. (LIBG-16)
+Warning: Line 1776, Cell 'DFFQ1_HPNW1', pin 'Q', The 'Q' Pin/bus on the 'DFFQ1_HPNW1' cell has no 'function' attribute.
+        The cell becomes a black box. (LIBG-16)
+0
+lc_shell> read_lib sclib_tigfet10_hpnw4_tt_0p70v_25c.lib
+Reading '/research/ece/lnis/Share/TIGFET_SCLIB/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib' ...
+Warning: Line 1, The 'default_inout_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_input_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_leakage_power_density' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 1, The 'internal_power_calculation' attribute in char_config group is required for NLPM library. 
+        No default can be applied to this attribute. (LBDB-366)
+Warning: Line 64, Cell 'AND2_HPNW4', The cell_leakage_power attribute of the 'AND2_HPNW4' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.069200' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.614700' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.626801' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.667999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.751999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-53.908798' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.787003' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.882996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.128006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.096001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 206, Cell 'AND2_HPNW4', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.085100' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.612099' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.747601' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.683998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.808701' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-54.103802' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.798996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.936005' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.220993' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.232002' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 365, Cell 'AND2_HPNW4', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.084900' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.612301' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.746799' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.683998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.808601' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-54.103100' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.798996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.936005' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.220993' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.231003' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Technology library 'sclib_tigfet10_hpnw4_tt_0p70v_25c' read successfully
+1
+lc_shell> write_lib and2 -f db -o and2.lib
+Warning: The 'and2' library has not been read in yet. (UIL-3)
+0
+lc_shell> read_lib sclib_tigfet10_hpnw4_tt_0p70v_25c.lib
+Reading '/research/ece/lnis/Share/TIGFET_SCLIB/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib' ...
+Warning: Line 1, The 'default_inout_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_input_pin_cap' attribute is not specified. Using 1.00. (LBDB-172)
+Warning: Line 1, The 'default_leakage_power_density' attribute is not specified. Using 0.00. (LBDB-172)
+Warning: Line 1, The 'internal_power_calculation' attribute in char_config group is required for NLPM library. 
+        No default can be applied to this attribute. (LBDB-366)
+Warning: Line 64, Cell 'AND2_HPNW4', The cell_leakage_power attribute of the 'AND2_HPNW4' cell is redundant
+        and not used in the leakage_power modeling. (LBDB-644)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.069200' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.614700' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.626801' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.667999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.751999' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-53.908798' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.787003' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.882996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.128006' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 189, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.096001' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 206, Cell 'AND2_HPNW4', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.085100' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.612099' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.747601' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.683998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.808701' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-54.103802' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.798996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.936005' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.220993' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 285, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.232002' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 365, Cell 'AND2_HPNW4', pin 'Y', the user specified timing sense 'non_unate' is different 
+        from the function calculated timing_sense 'positive_unate'. (LBDB-318)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-13.084900' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-46.612301' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-26.746799' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-113.683998' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-93.808601' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-54.103100' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-247.798996' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-227.936005' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-188.220993' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Line 444, Cell 'AND2_HPNW4', pin 'Y', The 'values' attribute has a '-111.231003' value,
+        which is less than '0.000000' the minimum recommended value of this attribute. (LBDB-272)
+Warning: Overwriting an old technology library '/research/ece/lnis/Share/TIGFET_SCLIB/sclib_tigfet10_hpnw4_tt_0p70v_25c.db' file with a new one. (UIL-2)
+1
+lc_shell> write_lib and2 -f db -o and2.db
+Warning: The 'and2' library has not been read in yet. (UIL-3)
+0
+lc_shell> write_lib sclib_tigfet10_hpnw4_tt_0p70v_25c -f db -o and2.db
+Wrote the 'sclib_tigfet10_hpnw4_tt_0p70v_25c' library to '/research/ece/lnis/Share/TIGFET_SCLIB/and2.db' successfully
+1
+lc_shell> ll
+Error: unknown command 'll' (CMD-005)
+lc_shell> write_lib sclib_tigfet10_hpnw4_tt_0p70v_25c -f lib -o and2.lib
+Error: Invalid output format 'lib'. (UIL-23)
+0
+lc_shell> write_lib sclib_tigfet10_hpnw4_tt_0p70v_25c -o and2.lib
+Wrote the 'sclib_tigfet10_hpnw4_tt_0p70v_25c' library to '/research/ece/lnis/Share/TIGFET_SCLIB/and2.lib' successfully
+1
+lc_shell> write_lib -h
+Error: unknown option '-h' (CMD-010)
+Error: Required argument 'library_name' was not found (CMD-007)
+lc_shell> write_lib --help
+Warning: The '--help' library has not been read in yet. (UIL-3)
+0
+lc_shell> ls
+.  ..  lc_command.log  lc_output.txt  sclib_tigfet10_hpnw12_tt_0p70v_25c.lib  sclib_tigfet10_hpnw1_tt_0p70v_25c.lib  sclib_tigfet10_hpnw4_tt_0p70v_25c.db  sclib_tigfet10_hpnw4_tt_0p70v_25c.lib  sclib_tigfet10_hpnw8_tt_0p70v_25c.lib
+lc_shell> 

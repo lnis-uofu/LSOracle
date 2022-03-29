@@ -58,7 +58,6 @@
 #include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
-#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xag_script.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
@@ -84,6 +83,11 @@
 #include "commands/input/read_verilog.hpp"
 #include "commands/input/read_bench.hpp"
 
+#include "commands/conversion/xmg.hpp"
+#include "commands/conversion/xag.hpp"
+#include "commands/conversion/aig.hpp"
+#include "commands/conversion/mig.hpp"
+
 //LUT_Map
 #include "commands/lut_map/lut_map.hpp"
 #include "commands/lut_map/new_lut_map.hpp"
@@ -96,6 +100,7 @@
 #include "commands/output/write_hypergraph.hpp"
 #include "commands/output/show_ntk.hpp"
 #include "commands/output/disjoint_clouds.hpp"
+#include "commands/output/write_partition.hpp"
 //#include "commands/output/get_all_partitions.hpp" //need to add a write_toplevel_verilog method to recover this feature
 //#include "commands/output/print_karnaugh_map.hpp" //removed because of frugally deep dependence; will get back to it
 
@@ -104,11 +109,20 @@
 #include "commands/stats/depth.hpp"
 #include "commands/stats/get_cones.hpp"
 #include "commands/stats/ntk_stats.hpp"
+#include "commands/stats/skip_histogram.hpp"
+#include "commands/stats/fanout_histogram.hpp"
+#include "commands/stats/level_size.hpp"
+#include "commands/stats/fanin_histogram.hpp"
+#include "commands/stats/function_stats.hpp"
+#include "commands/stats/critical_path.hpp"
+#include "commands/stats/write_stats.hpp"
 
 //Partitioning
 #include "commands/partitioning/partitioning.hpp"
 #include "commands/partitioning/partition_detail.hpp"
-
+#include "commands/partitioning/kahypar.hpp"
+#include "commands/partitioning/external_partition.hpp"
+#include "commands/partitioning/write_metis.hpp"
 //Classification
 //#include "commands/classification/generate_truth_tables.hpp"
 
@@ -121,12 +135,15 @@
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
+#include "commands/optimization/optimize_timing.hpp"
+#include "commands/optimization/optimize.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/oracle.hpp"
 #include "commands/optimization/xmgscript.hpp"
 #include "commands/optimization/xagscript.hpp"
+
 
 
 /* these were commented out in previous master */
@@ -152,4 +169,34 @@
 #include "kahypar_config.hpp"
 #include "config.h"
 
-ALICE_MAIN(lsoracle)
+#ifdef ENABLE_OPENSTA
+#include <sta/Sta.hh>
+#include <tcl.h>
+#include <sta/StaMain.hh>
+namespace sta {
+extern const char *tcl_inits[];
+}
+extern "C" {
+extern int Sta_Init(Tcl_Interp *interp);
+}
+#endif
+
+int main(int argc, char ** argv)
+{
+#ifdef ENABLE_OPENSTA
+
+    sta::Sta *test = new sta::Sta;
+    sta::Sta::setSta(test);
+    sta::initSta();
+    sta::Sta::sta()->makeComponents();
+    Tcl_Interp *tcl_interp = Tcl_CreateInterp();
+    test->setTclInterp(tcl_interp);
+    Sta_Init(tcl_interp);
+    sta::evalTclInit(tcl_interp, sta::tcl_inits);
+    Tcl_Eval(tcl_interp, "sta::define_sta_cmds");
+    Tcl_Eval(tcl_interp, "namespace import sta::*");
+
+#endif
+    _ALICE_MAIN_BODY(lsoracle)
+    return cli.run(argc, argv);
+}

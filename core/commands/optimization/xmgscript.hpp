@@ -24,6 +24,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -53,17 +54,18 @@ protected:
 
         if (!store<xmg_ntk>().empty()) {
             auto &opt = *store<xmg_ntk>().current();
-            mockturtle::depth_view xmg_depth{opt};
-            env->out() << "AIG logic depth " << xmg_depth.depth() << " nodes " <<
-                       opt.num_gates() << std::endl;
+            mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> xmg_depth(opt);
+            env->out() << "XMG logic depth " << xmg_depth.depth() << " nodes " <<
+                       xmg_depth.num_gates() << std::endl;
             auto start = std::chrono::high_resolution_clock::now();
             oracle::xmg_script xmgopt;
             opt = xmgopt.run(opt);
-
-            mockturtle::depth_view new_xmg_depth{opt};
-            env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " << new_xmg_depth.depth() << "\n";
-            env->out() << "Area Delay Product = " << opt.num_gates() * new_xmg_depth.depth() << "\n";
             auto stop = std::chrono::high_resolution_clock::now();
+
+            mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> new_xmg_depth(opt);
+            env->out() << "Final ntk size = " << new_xmg_depth.num_gates() << " and depth = " << new_xmg_depth.depth() << "\n";
+            env->out() << "NDP = " << opt.num_gates() * new_xmg_depth.depth() << "\n";
+
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                             (stop - start);
             env->out() << "Full Optimization: " << duration.count() << "ms\n";

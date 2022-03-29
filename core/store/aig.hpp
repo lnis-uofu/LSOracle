@@ -35,13 +35,15 @@
 #include <mockturtle/mockturtle.hpp>
 
 #include <fmt/format.h>
-
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 namespace alice
 {
 using aig_names = mockturtle::names_view<mockturtle::aig_network>;
 using aig_ntk = std::shared_ptr<aig_names>;
 using part_man_aig = oracle::partition_manager<aig_names>;
 using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
+using part_man_jr_aig = oracle::partition_manager_junior<mockturtle::aig_network>;
+using part_man_jr_aig_ntk = std::shared_ptr<part_man_jr_aig>;
 
 ALICE_ADD_STORE(aig_ntk, "aig", "a", "aig", "AIGs")
 
@@ -57,9 +59,9 @@ ALICE_LOG_STORE_STATISTICS(aig_ntk, aig)
     mockturtle::depth_view depth{*aig};
     return {
         {"nodes", aig->size()},
-        {"inputs", aig->num_pis() - aig->num_latches()},
+        {"inputs", aig->num_pis()},
         {"latches", aig->num_latches()},
-        {"outputs", aig->num_pos() - aig->num_latches()},
+        {"outputs", aig->num_pos()},
         {"AIG nodes", aig->num_gates()},
         {"AIG level", depth.depth()}};
 }
@@ -68,9 +70,9 @@ ALICE_PRINT_STORE_STATISTICS(aig_ntk, os, aig)
 {
     mockturtle::depth_view depth{*aig};
     os << "nodes: " << aig->size() << std::endl;
-    os << "inputs: " << aig->num_pis() - aig->num_latches() << std::endl;
+    os << "inputs: " << aig->num_pis() << std::endl;
     os << "latches: " << aig->num_latches() << std::endl;
-    os << "outputs: " << aig->num_pos() - aig->num_latches() << std::endl;
+    os << "outputs: " << aig->num_pos() << std::endl;
     os << "AIG nodes: " << aig->num_gates() << std::endl;
     os << "AIG level: " << depth.depth() << std::endl;
 
@@ -100,5 +102,32 @@ ALICE_LOG_STORE_STATISTICS(part_man_aig_ntk, part_man)
 ALICE_PRINT_STORE_STATISTICS(part_man_aig_ntk, os, part_man)
 {
     os << "partition number: " << part_man->get_part_num() << std::endl;
+}//end partition manager<mig_network> print store statistics
+
+
+ALICE_ADD_STORE(part_man_jr_aig_ntk, "part_man_jr_aig", "pm_a", "part_man_jr_aig",
+                "PART_MAN_JR_AIGs")
+
+/* Implements the short string to describe a store element in store -a */
+ALICE_DESCRIBE_STORE(part_man_jr_aig_ntk, part_man_jr)
+{
+
+    const auto name = "partition manager for Named MIG networks";
+    const auto part_num = part_man_jr->count();
+
+    return fmt::format("{} # partitions = {}", name, part_num);
+}//end partition manager<mig_network> describe store
+
+ALICE_LOG_STORE_STATISTICS(part_man_jr_aig_ntk, part_man_jr)
+{
+
+    return {
+        {"partition number", part_man_jr->count()}};
+}//end partition manager<mig_network> log store statistics
+
+/* Implements the functionality of ps -b */
+ALICE_PRINT_STORE_STATISTICS(part_man_jr_aig_ntk, os, part_man_jr)
+{
+    os << "partition number: " << part_man_jr->count() << std::endl;
 }//end partition manager<mig_network> print store statistics
 }

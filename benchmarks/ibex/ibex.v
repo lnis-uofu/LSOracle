@@ -1475,7 +1475,7 @@ module ibex_controller (
 	end
 endmodule
 module ibex_core (
-	clk_i,
+	clk,
 	rst_ni,
 	test_en_i,
 	hart_id_i,
@@ -1528,7 +1528,7 @@ module ibex_core (
 	parameter [0:0] SecureIbex = 1'b0;
 	parameter [31:0] DmHaltAddr = 32'h1a110800;
 	parameter [31:0] DmExceptionAddr = 32'h1a110808;
-	input wire clk_i;
+	input wire clk;
 	input wire rst_ni;
 	input wire test_en_i;
 	input wire [31:0] hart_id_i;
@@ -1715,16 +1715,16 @@ module ibex_core (
 	wire perf_store;
 	wire illegal_insn_id;
 	wire unused_illegal_insn_id;
-	wire clk;
+	wire clk_o;
 	wire clock_en;
 	assign core_busy_d = (ctrl_busy | if_busy) | lsu_busy;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			core_busy_q <= 1'b0;
 		else
 			core_busy_q <= core_busy_d;
 	reg fetch_enable_q;
-	always @(posedge clk_i or negedge rst_ni)
+	always @(posedge clk or negedge rst_ni)
 		if (!rst_ni)
 			fetch_enable_q <= 1'b0;
 		else if (fetch_enable_i)
@@ -1732,10 +1732,10 @@ module ibex_core (
 	assign clock_en = fetch_enable_q & (((core_busy_q | debug_req_i) | irq_pending) | irq_nm_i);
 	assign core_sleep_o = ~clock_en;
 	prim_clock_gating core_clock_gate_i(
-		.clk_i(clk_i),
+		.clk_i(clk),
 		.en_i(clock_en),
 		.test_en_i(test_en_i),
-		.clk_o(clk)
+		.clk_o(clk_o)
 	);
 	localparam [31:0] ibex_pkg_PMP_I = 0;
 	ibex_if_stage #(
@@ -1747,7 +1747,7 @@ module ibex_core (
 		.PCIncrCheck(PCIncrCheck),
 		.BranchPredictor(BranchPredictor)
 	) if_stage_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.boot_addr_i(boot_addr_i),
 		.req_i(instr_req_int),
@@ -1805,7 +1805,7 @@ module ibex_core (
 		.WritebackStage(WritebackStage),
 		.BranchPredictor(BranchPredictor)
 	) id_stage_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.ctrl_busy_o(ctrl_busy),
 		.illegal_insn_o(illegal_insn_id),
@@ -1923,7 +1923,7 @@ module ibex_core (
 		.RV32B(RV32B),
 		.BranchTargetALU(BranchTargetALU)
 	) ex_block_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.alu_operator_i(alu_operator_ex),
 		.alu_operand_a_i(alu_operand_a_ex),
@@ -1954,7 +1954,7 @@ module ibex_core (
 	assign data_req_o = data_req_out & ~pmp_req_err[ibex_pkg_PMP_D];
 	assign lsu_resp_err = lsu_load_err | lsu_store_err;
 	ibex_load_store_unit load_store_unit_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.data_req_o(data_req_out),
 		.data_gnt_i(data_gnt_i),
@@ -1985,7 +1985,7 @@ module ibex_core (
 		.perf_store_o(perf_store)
 	);
 	ibex_wb_stage #(.WritebackStage(WritebackStage)) wb_stage_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.en_wb_i(en_wb),
 		.instr_type_wb_i(instr_type_wb),
@@ -2068,7 +2068,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk_i(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2087,7 +2087,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk_i(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2106,7 +2106,7 @@ module ibex_core (
 				.DataWidth(RegFileDataWidth),
 				.DummyInstructions(DummyInstructions)
 			) register_file_i(
-				.clk_i(clk_i),
+				.clk_i(clk),
 				.rst_ni(rst_ni),
 				.test_en_i(test_en_i),
 				.dummy_instr_id_i(dummy_instr_id),
@@ -2143,7 +2143,7 @@ module ibex_core (
 		.RV32E(RV32E),
 		.RV32M(RV32M)
 	) cs_registers_i(
-		.clk_i(clk),
+		.clk_i(clk_o),
 		.rst_ni(rst_ni),
 		.hart_id_i(hart_id_i),
 		.priv_mode_id_o(priv_mode_id),
@@ -2228,7 +2228,7 @@ module ibex_core (
 				.PMPNumChan(PMP_NUM_CHAN),
 				.PMPNumRegions(PMPNumRegions)
 			) pmp_i(
-				.clk_i(clk),
+				.clk_i(clk_o),
 				.rst_ni(rst_ni),
 				.csr_pmp_cfg_i(csr_pmp_cfg),
 				.csr_pmp_addr_i(csr_pmp_addr),

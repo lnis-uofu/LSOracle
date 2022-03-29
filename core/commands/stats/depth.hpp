@@ -46,9 +46,10 @@ public:
     explicit depth_command(const environment::ptr &env)
         : command(env, "Displays the depth of the stored network")
     {
-
+        add_flag("--aig,-a", "Display depth of stored AIG (AIG is default)");
         add_flag("--mig,-m", "Display depth of stored MIG (AIG is default)");
         add_flag("--xag,-x", "Display depth of stored XAG (AIG is default)");
+        add_flag("--xmg,-g", "Display depth of stored XMG (AIG is default)");
     }
 
 protected:
@@ -72,6 +73,15 @@ protected:
                 env->out() << "XAG level " << xag_depth.depth()  << std::endl;
             } else {
                 env->err() << "There is not an XAG network stored.\n";
+            }
+        } else if (is_set("xmg")) {
+            if (!store<xmg_ntk>().empty()) {
+                auto &xmg = *store<xmg_ntk>().current();
+                mockturtle::depth_view xmg_depth{xmg};
+
+                env->out() << "XMG level " << xmg_depth.depth()  << std::endl;
+            } else {
+                env->err() << "There is not an XMG network stored.\n";
             }
         } else {
             if (!store<aig_ntk>().empty()) {

@@ -33,6 +33,7 @@
 #pragma once
 #include <stdio.h>
 #include <mockturtle/traits.hpp>
+#include "utility.hpp"
 
 namespace oracle
 {

@@ -55,7 +55,7 @@ public:
 
     explicit ntk_stats_command(const environment::ptr &env)
         : command(env,
-                  "Determines the number of Majority nodes and AND nodes internally in the stored MIG")
+                  "Determines the number of Majority nodes and AND nodes internally in the stored MIG\nDEPRECATED: please use function_stats command.")
     {
 
     }

@@ -24,13 +24,14 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         g++-8 \
         cmake \
         libboost-program-options-dev \
-	libreadline-dev \
-	libpython3-dev \
-	pybind11-dev \
+        libreadline-dev \
+        libpython3-dev \
+        pybind11-dev \
         lcov \
         gcovr \
-	git \
-	bison \
+        git \
+        bison \
+        swig \
         flex && \
     apt-get clean
 ENV CC=/usr/bin/gcc-8 CXX=/usr/bin/g++-8

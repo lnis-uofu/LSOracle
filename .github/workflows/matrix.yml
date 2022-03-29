@@ -15,7 +15,7 @@ jobs:
           submodules: recursive
       - name: Build
         run: |
-          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
           cmake --build build -j$(nproc)
   centos-compat:
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
       - name: Build
         run: |
           source ${{ matrix.config.scl }}
-          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
           cmake --build build -j$(nproc)
   ubuntu-compat:
     runs-on: ubuntu-latest
@@ -101,7 +101,7 @@ jobs:
           ccache -z
       - name: Build
         run: |
-          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
           cmake --build build -j$(nproc)
       - name: Cache stats
         if: ${{ matrix.config.ccache }}

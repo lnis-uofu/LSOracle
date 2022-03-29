@@ -35,11 +35,13 @@
 #include <mockturtle/mockturtle.hpp>
 
 #include <fmt/format.h>
-
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 namespace alice
 {
 using xag_names = mockturtle::names_view<mockturtle::xag_network>;
 using xag_ntk = std::shared_ptr<xag_names>;
+using part_man_jr_xag = oracle::partition_manager_junior<mockturtle::xag_network>;
+using part_man_jr_xag_ntk = std::shared_ptr<part_man_jr_xag>;
 
 ALICE_ADD_STORE(xag_ntk, "xag", "x", "xag", "XAGs")
 
@@ -57,6 +59,7 @@ ALICE_LOG_STORE_STATISTICS(xag_ntk, xag)
         {"nodes", xag->size()},
         {"inputs", xag->num_pis()},
         {"outputs", xag->num_pos()},
+        {"latches", xag->num_latches()},
         {"XAG nodes", xag->num_gates()},
         {"XAG level", depth.depth()}};
 }
@@ -67,8 +70,37 @@ ALICE_PRINT_STORE_STATISTICS(xag_ntk, os, xag)
     os << "nodes: " << xag->size() << std::endl;
     os << "inputs: " << xag->num_pis() << std::endl;
     os << "outputs: " << xag->num_pos() << std::endl;
+    os << "latches: " << xag->num_latches() << std::endl;
     os << "XAG nodes: " << xag->num_gates() << std::endl;
     os << "XAG level: " << depth.depth() << std::endl;
 
 }
+
+ALICE_ADD_STORE(part_man_jr_xag_ntk, "part_man_jr_xag", "pm_x", "part_man_jr_xag",
+                "PART_MAN_JR_XAGs")
+
+/* Implements the short string to describe a store element in store -a */
+ALICE_DESCRIBE_STORE(part_man_jr_xag_ntk, part_man_jr)
+{
+
+    const auto name = "partition manager for Named XAG networks";
+    const auto part_num = part_man_jr->count();
+
+    return fmt::format("{} # partitions = {}", name, part_num);
+}//end partition manager<xag_network> describe store
+
+ALICE_LOG_STORE_STATISTICS(part_man_jr_xag_ntk, part_man_jr)
+{
+
+    return {
+        {"partition number", part_man_jr->count()}};
+}//end partition manager<xag_network> log store statistics
+
+/* Implements the functionality of ps -b */
+ALICE_PRINT_STORE_STATISTICS(part_man_jr_xag_ntk, os, part_man_jr)
+{
+    os << "partition number: " << part_man_jr->count() << std::endl;
+}//end partition manager<xag_network> print store statistics
+
+
 }

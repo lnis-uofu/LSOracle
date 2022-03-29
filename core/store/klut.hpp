@@ -54,9 +54,9 @@ ALICE_LOG_STORE_STATISTICS(klut_ntk, klut)
     mockturtle::depth_view depth{*klut};
     return {
         {"nodes", klut->size()},
-        {"inputs", klut->num_pis() - klut->num_latches()},
+        {"inputs", klut->num_pis()},
         {"latches", klut->num_latches()},
-        {"outputs", klut->num_pos() - klut->num_latches()},
+        {"outputs", klut->num_pos()},
         {"klut nodes", klut->num_gates()},
         {"klut level", depth.depth()}};
 }
@@ -65,9 +65,9 @@ ALICE_PRINT_STORE_STATISTICS(klut_ntk, os, klut)
 {
     mockturtle::depth_view depth{*klut};
     os << "nodes: " << klut->size() << std::endl;
-    os << "inputs: " << klut->num_pis() - klut->num_latches() << std::endl;
+    os << "inputs: " << klut->num_pis() << std::endl;
     os << "latches: " << klut->num_latches() << std::endl;
-    os << "outputs: " << klut->num_pos() - klut->num_latches() << std::endl;
+    os << "outputs: " << klut->num_pos() << std::endl;
     os << "klut nodes: " << klut->num_gates() << std::endl;
     os << "klut level: " << depth.depth() << std::endl;
 

@@ -24,6 +24,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
+
 #include <kitty/kitty.hpp>
 #include <mockturtle/mockturtle.hpp>
 
@@ -61,7 +63,6 @@ public:
         aig = mockturtle::cleanup_dangling(aig);
         
         //rf
-        std::cout << "rf\n";
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
 
