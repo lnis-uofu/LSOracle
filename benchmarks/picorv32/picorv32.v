@@ -2838,7 +2838,7 @@ module picorv32_wb #(
 
 	// Wishbone interfaces
 	input wb_rst_i,
-	input wb_clk_i,
+	input clk,
 
 	output reg [31:0] wbm_adr_o,
 	output reg [31:0] wbm_dat_o,
@@ -2901,7 +2901,6 @@ module picorv32_wb #(
 	wire clk;
 	wire resetn;
 
-	assign clk = wb_clk_i;
 	assign resetn = ~wb_rst_i;
 
 	picorv32 #(
@@ -2990,7 +2989,7 @@ module picorv32_wb #(
 	wire we;
 	assign we = (mem_wstrb[0] | mem_wstrb[1] | mem_wstrb[2] | mem_wstrb[3]);
 
-	always @(posedge wb_clk_i) begin
+	always @(posedge clk) begin
 		if (wb_rst_i) begin
 			wbm_adr_o <= 0;
 			wbm_dat_o <= 0;

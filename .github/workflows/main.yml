@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build LSOracle
-    container: ghcr.io/lnis-uofu/lsoracle-build:groovy
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     env:
       CCACHE_COMPRESS: "true"
       CCACHE_COMPRESSLEVEL: "6"
@@ -27,22 +27,27 @@ jobs:
         run: |
           ccache -p
           ccache -z
-          cmake -DCMAKE_BUILD_TYPE=RELEASE -B build .
-          cmake --build build -j$(nproc)
+          cmake -B build . -D CMAKE_BUILD_TYPE=RELEASE -D YOSYS_INCLUDE_DIR=/yosys -D YOSYS_PLUGIN=ON -D ENABLE_OPENSTA=ON -DENABLE_ABC=ON
+          cmake --build build
           ccache -s
-      - name: Upload artifacts
+      - name: Upload binary artifacts
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-binary
           path: build/core/lsoracle
-      - name: Upload artifacts
+      - name: Upload plugin artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: lsoracle-plugin
+          path: build/yosys-plugin/oracle.so
+      - name: Upload unit test artifacts
         uses: actions/upload-artifact@v2
         with:
           name: lsoracle-tests
           path: build/core/unit_tests
   test:
     runs-on: ubuntu-latest
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     needs: build
     steps:
       - name: Check out the repo
@@ -58,7 +63,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     name: Benchmarks
-    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:groovy
+    container: ghcr.io/lnis-uofu/lsoracle-benchmarks:jammy
     needs: build
     steps:
       - name: Checkout the repo
@@ -67,14 +72,21 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: lsoracle-binary
+      - name: Get plugin
+        uses: actions/download-artifact@v2
+        with:
+          name: lsoracle-plugin
 #      - name: Prep previous
 #        run: |
 #          mkdir -p benchmarks/previous
       - name: Run synthesis
         run: |
+          ls
           cp lsoracle /usr/local/bin
           chmod +x /usr/local/bin/lsoracle
           mkdir -p /usr/local/share/lsoracle
+          mkdir -p /usr/local/share/yosys/plugins
+          cp oracle.so /usr/local/share/yosys/plugins/
           cd benchmarks
           make everything.tsv -j $(nproc)
       - name: Archive results
@@ -85,11 +97,10 @@ jobs:
             benchmarks/everything.tsv
             benchmarks/*/*.log
             benchmarks/*/*.rtl
-            benchmarks/*/*.mapped.v
-            benchmarks/*/*.synth_report
-            benchmarks/*/*.timing
-            benchmarks/*/*.report
-            benchmarks/*/*.everything
+            benchmarks/*/*.v
+            benchmarks/*/*.json
+            benchmarks/*/*.gates
+            benchmarks/*/*.sdc
       #- name: Get previous results
       #  uses: dsaltares/fetch-gh-release-asset@master
       #  with:
@@ -101,13 +112,13 @@ jobs:
         continue-on-error: true
         run: |
           cd benchmarks
-          make everything.pdf
+          make sky130_fd_sc_hd__tt_025C_1v80.pdf
       - name: Archive graph
         uses: actions/upload-artifact@v2
         with:
           name: benchmark-graphs
           path: |
-            benchmarks/everything.pdf
+            benchmarks/sky130_fd_sc_hd__tt_025C_1v80.pdf
       - name: Publish results
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/master'
@@ -116,13 +127,11 @@ jobs:
         with:
           files: |
             benchmarks/everything.tsv
-            benchmarks/everything.png
-            benchmarks/everything.pdf
+            benchmarks/sky130_fd_sc_hd__tt_025C_1v80.pdf
             benchmarks/*/*.log
             benchmarks/*/*.rtl
-            benchmarks/*/*.mapped.v
-            benchmarks/*/*.synth_report
-            benchmarks/*/*.timing
-            benchmarks/*/*.report
-            benchmarks/*/*.everything
+            benchmarks/*/*.v
+            benchmarks/*/*.json
+            benchmarks/*/*.gates
+            benchmarks/*/*.sdc
           prerelease: true

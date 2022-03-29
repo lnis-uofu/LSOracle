@@ -55,9 +55,12 @@ public:
 
     explicit crit_path_stats_command(const environment::ptr &env)
         : command(env,
-                  "Determines the number of Majority nodes and AND nodes along the critical path in MIG")
+                  "Determines the number of Majority nodes and AND nodes along the critical path in MIG.\nDEPRECATED: please use critical_path command.")
     {
-
+        add_flag("--mig,-m", "Display stats for stored MIG (AIG is default)");
+        add_flag("--xag,-x", "Display stats for stored XAG (AIG is default)");
+        add_flag("--xmg,-g", "Display stats for stored XMG (AIG is default)");
+        add_flag("--aig,-a", "Display stats for stored AIG (AIG is default)");
     }
 
 protected:

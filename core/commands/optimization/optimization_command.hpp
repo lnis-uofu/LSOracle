@@ -24,6 +24,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#pragma once
 #include <alice/alice.hpp>
 
 #include <mockturtle/mockturtle.hpp>
@@ -127,6 +128,7 @@ protected:
 
 
                 mockturtle::depth_view new_depth{ntk_mig};
+                store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
                 if (ntk_mig.size() != ntk_aig.size()
                         || orig_depth.depth() != new_depth.depth()) {
                     env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " <<
@@ -138,7 +140,6 @@ protected:
                                     (stop - start);
                     env->out() << "Full Optimization: " << duration.count() << "ms\n";
                     env->out() << "Finished optimization\n";
-                    store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
 
                     if (out_file != "") {
                         if (oracle::checkExt(out_file, "v")) {
