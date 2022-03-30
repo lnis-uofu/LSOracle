@@ -25,6 +25,7 @@ add_custom_command(
 set(LSORACLE_SOURCE
   ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   kahypar_temp_config.cpp
+  algorithms/optimization/optimizer.cpp
   algorithms/optimization/resynthesis.cpp
   utility.cpp
 )
