@@ -74,22 +74,26 @@ public:
 
     void integrate(xmg_names &output, xmg_names &optim)
     {
-        mockturtle::node_map<typename xmg_names::node, xmg_names> map(optim);
+        mockturtle::node_map<typename xmg_names::signal, xmg_names> map(optim);
         auto topo = mockturtle::topo_view(optim);
         topo.foreach_pi([&](auto p, auto i) {
-            map[p] = output.pi_at(i);
+            map[p] = output.make_signal(output.pi_at(i));
         });
         topo.foreach_gate([&](auto g) {
             std::vector<typename xmg_names::signal> fin;
             topo.foreach_fanin(g, [&](const typename xmg_names::signal f){
-                auto n = output.make_signal(map[topo.get_node(f)]);
+                auto n = map[topo.get_node(f)];
                 if (optim.is_complemented(f)) {
                     fin.push_back(output.create_not(n));
                 } else {
                     fin.push_back(n);
                 }
             });
-            map[g] = output.get_node(output.clone_node(output, g, fin));
+            map[g] = output.clone_node(output, g, fin);
+            auto signal = optim.make_signal(g);
+            if (optim.has_name(signal)) {
+                output.set_name(map[g], optim.get_name(signal));
+            }
         });
         topo.foreach_po([&](const typename xmg_names::signal f) {
             auto n = map[topo.get_node(f)];
