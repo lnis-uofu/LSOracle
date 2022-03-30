@@ -133,6 +133,7 @@
 #include "commands/optimization/testscript.hpp"
 #include "commands/optimization/optimization_command.hpp"
 #include "commands/optimization/depthr.hpp"
+#include "commands/optimization/exploderize.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/optimize_timing.hpp"

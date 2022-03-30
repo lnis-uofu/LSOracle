@@ -50,7 +50,7 @@ LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib #\
 LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
 TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
 
-RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp direct_resynth unoptimized
+RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp direct_resynth direct_depth exploded unoptimized
 
 ################################################################
 ######################## Targets ###############################
@@ -192,6 +192,15 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 	@ echo "write_stats --name $(shell basename $*) --optimization mixed_nodes -g $*.mixed_nodes.stats.json" >> ${TEMP}
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.mixed_nodes.rtl" | ${TEE} $*.mixed_nodes.optimize.log
 
+%.exploded.stats.json %.exploded.rtl %.exploded.optimize.log &: %.unoptimized.rtl
+	$(eval TEMP=$*.exploded.script)
+	@ echo "ps -a" > ${TEMP}
+	@ echo "exploderize --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_stats --name $(shell basename $*) --optimization exploded -g $*.exploded.stats.json" >> ${TEMP}
+	@ echo "write_blif -g $*.exploded.blif" >> ${TEMP}
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.exploded.rtl" | ${TEE} $*.exploded.optimize.log
+
 %.mixed_resynth.stats.json %.mixed_resynth.rtl %.mixed_resynth.optimize.log &: %.unoptimized.rtl
 	$(eval TEMP=$*.mixed_resynth.script)
 	@ echo "ps -a" > ${TEMP}
@@ -254,6 +263,20 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 
 %.direct_ndp.rtl &: %.direct_ndp.blif
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_ndp.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_ndp.rtl" | ${TEE} $*.direct_ndp.optimize_rtl.log
+
+%.direct_depth.stats.json %.direct_depth.blif %.direct_depth.optimize.log &: %.unoptimized.blif %.direct.parts
+	$(eval TEMP=$*.direct_depth.script)
+	@ echo "read_blif -a $<" > ${TEMP}
+	@ echo "ps -a" >> ${TEMP}
+	@ echo "external_partition $*.direct.parts" >> ${TEMP}
+	@ echo "optimize --depth --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "ps -g" >> ${TEMP}
+	@ echo "write_blif -g --filename $*.direct_depth.blif" >> ${TEMP}
+	@ echo "write_stats -g --name $(shell basename $*) --optimization direct_depth $*.direct_depth.stats.json" >> ${TEMP}
+	${LSORACLE} -e -f ${TEMP} | ${TEE} $*.direct_depth.optimize.log
+
+%.direct_depth.rtl &: %.direct_depth.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.direct_depth.blif; stat; techmap; stat; opt -purge; stat; write_rtlil $*.direct_depth.rtl" | ${TEE} $*.direct_depth.optimize_rtl.log
 
 %.direct_resynth.stats.json %.direct_resynth.blif %.direct_resynth.optimize.log &: %.unoptimized.blif %.direct.parts
 	$(eval TEMP=$*.direct_resynth.script)

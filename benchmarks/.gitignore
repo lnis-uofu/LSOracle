@@ -6,6 +6,7 @@
 *.direct_*.*
 *.mixed_*.*
 *.unoptimized.*
+*.exploded.*
 *.xmgscript.*
 *.lsoracle_old.*
 *.timing_direct*.*
