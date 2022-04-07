@@ -155,7 +155,9 @@ protected:
                     if (oracle::checkExt(out_file, "bench")) {
                         mockturtle::write_bench(names_view, out_file);
                     } else if (oracle::checkExt(out_file, "blif")) {
-                        mockturtle::write_blif(names_view, out_file);
+                        mockturtle::write_blif_params pm; 
+                        pm.skip_feedthrough = 1u;
+                        mockturtle::write_blif(names_view, out_file, pm);
                     } else {
                         env->err() << "Not valid output file\n";
                     }

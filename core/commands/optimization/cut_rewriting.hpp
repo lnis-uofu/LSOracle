@@ -38,17 +38,20 @@
 
 namespace alice
 {
-class cut_rewriting_command : public alice::command
+class rw_command : public alice::command
 {
 
 public:
-    explicit cut_rewriting_command(const environment::ptr &env)
+    explicit rw_command(const environment::ptr &env)
         : command(env, "Perform cut rewriting on stored network")
     {
 
-        opts.add_option("--cut_size,-c", cut_size, "Cut size (4 is the default)");
-        add_flag("--mig,-m",
-                 "Performs cut rewriting on stored MIG network (AIG is default)");
+        opts.add_option("--cut_size,-k", cut_size, "Cut size (4 is the default)");
+        add_flag("--mig,-m", "Performs cut rewriting on stored MIG network (AIG is default)");
+        add_flag("--algebraic,-a", "Performs algebraic depth-oriented rewriting only for MIGs.");
+        add_flag("--zero,-z", "Allows zero-gain.");
+        add_flag("--dc,-d", "Performs don't care base optimization.");
+        add_flag("--depth,-l", "Preserves depth.");
     }
 
 protected:
@@ -58,14 +61,30 @@ protected:
         mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
         mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
 
+        mockturtle::cut_rewriting_params ps;
+        ps.cut_enumeration_ps.cut_size = cut_size;
+        ps.progress = true; 
+        if (is_set("zero"))
+            ps.allow_zero_gain = true; 
+        if (is_set("depth"))
+            ps.preserve_depth = true; 
+        if (is_set("dc"))
+            ps.use_dont_cares = true; 
+
         if (is_set("mig")) {
-            if (!store<mig_ntk>().empty()) {
+            if (!store<mig_ntk>().empty() && !is_set("algebraic")) {
                 auto &ntk_mig = *store<mig_ntk>().current();
                 mockturtle::mig_npn_resynthesis resyn;
                 mockturtle::cut_rewriting_params ps;
-                ps.cut_enumeration_ps.cut_size = cut_size;
-
+                
                 mockturtle::cut_rewriting(ntk_mig, resyn, ps);
+                ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
+            } else if (!store<mig_ntk>().empty() && is_set("algebraic")) {
+                auto &ntk_mig = *store<mig_ntk>().current();
+                mockturtle::depth_view mig_depth{ntk_mig};
+                mockturtle::mig_algebraic_depth_rewriting_params pm;
+
+                mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
                 ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
             } else {
                 env->err() << "No MIG stored\n";
@@ -74,26 +93,16 @@ protected:
             if (!store<aig_ntk>().empty()) {
                 auto &ntk_aig = *store<aig_ntk>().current();
                 mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-                mockturtle::cut_rewriting_params ps;
-                ps.cut_enumeration_ps.cut_size = cut_size;
-
-                mockturtle::cut_rewriting(ntk_aig, resyn, ps);
-                // ntk_aig.foreach_pi([&](auto pi){
-                //   env->out() << "PI: " << pi << "\n";
-                // });
-                // ntk_aig.foreach_gate([&](auto gate){
-                //   env->out() << "Gate: " << gate << "\n";
-                //   if(ntk_aig.is_po(gate))
-                //     env->out() << "IS PO\n";
-                //   ntk_aig.foreach_fanin(gate, [&](auto conn, auto i){
-                //     env->out() << "child[" << i << "] = " << conn.index << "\n";
-                //   });
-                // });
+            
+                //env->out() << "CP1 ntk size = " << ntk_aig.num_gates() << "\n";
+                //mockturtle::cut_rewriting(ntk_aig, resyn, ps);
+                mockturtle::cut_rewriting_with_compatibility_graph( ntk_aig, resyn, ps );
+                //env->out() << "CP2 ntk size = " << ntk_aig.num_gates() << "\n";
                 ntk_aig = mockturtle::cleanup_dangling(ntk_aig);
 
-                mockturtle::depth_view depth{ntk_aig};
-                env->out() << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " <<
-                           depth.depth() << "\n";
+                // mockturtle::depth_view depth{ntk_aig};
+                // env->out() << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " <<
+                //            depth.depth() << "\n";
             } else {
                 env->err() << "No AIG stored\n";
             }
@@ -102,7 +111,8 @@ protected:
     }
 private:
     int cut_size = 4;
+    bool algebraic = false; 
 };
 
-ALICE_ADD_COMMAND(cut_rewriting, "Optimization");
+ALICE_ADD_COMMAND(rw, "Optimization");
 }

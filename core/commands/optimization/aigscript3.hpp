@@ -37,9 +37,18 @@
 
 namespace alice
 {
-ALICE_COMMAND(aigscript3, "Optimization",
-              "Based on ABC resyn2 script without AIG balancing")
+class aigscript3_command : public alice::command
 {
+
+public:
+    explicit aigscript3_command(const environment::ptr &env)
+        : command(env, "test")
+    {
+    }
+
+protected:
+    void execute()
+    {
     if (!store<aig_ntk>().empty()) {
         auto &opt = *store<aig_ntk>().current();
 
@@ -70,6 +79,9 @@ ALICE_COMMAND(aigscript3, "Optimization",
     } else {
         env->err() << "There is not an AIG network stored.\n";
     }
+    }
+};
 
-}
+ALICE_ADD_COMMAND(aigscript3, "Optimization");
+
 }
