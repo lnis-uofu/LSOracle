@@ -43,6 +43,7 @@ public:
 
     xmg_names exploderize()
     {
+        mockturtle::depth_view depth(ntk);
         xmg_names output;
         ntk.foreach_pi([&](typename network_names::node pi) {
             output.create_pi();
@@ -50,24 +51,30 @@ public:
         optimization_strategy_comparator<network> *strategy =  new d_strategy<network>;
         ntk.foreach_po([&](auto po, auto i) {
             auto cone = extract_cone(po);
-            std::cout << "********************************"
-                      << " pis " << cone.num_pis()
-                      << " pos " << cone.num_pos()
-                      << " gates " << cone.num_gates() << std::endl;
-            optimizer<network> *optimized = optimize(
-                *strategy,
-                optimization_strategy::depth,
-                cone,
-                i,
-                abc_exec);
-            xmg_names optim = optimized->export_superset();
-            integrate(output, optim);
-            delete optimized;
-            std::cout << "******************************** updated result with"
-                      << " pis " << output.num_pis()
-                      << " pos " << output.num_pos()
-                      << " gates " << output.num_gates() << std::endl;
+            if (depth.level(ntk.get_node(po)) < 10) {
+                mockturtle::direct_resynthesis<xmg_names> resyn;
+                auto copy = mockturtle::node_resynthesis<xmg_names, network_names>(cone, resyn);
+                integrate(output, copy);
+            } else {
+                std::cout << "********************************"
+                          << " pis " << cone.num_pis()
+                          << " pos " << cone.num_pos()
+                          << " gates " << cone.num_gates() << std::endl;
+                optimizer<network> *optimized = optimize(
+                    *strategy,
+                    optimization_strategy::depth,
+                    cone,
+                    i,
+                    abc_exec);
+                xmg_names optim = optimized->export_superset();
+                integrate(output, optim);
+                delete optimized;
+                std::cout << "******************************** updated result with"
+                          << " pis " << output.num_pis()
+                          << " pos " << output.num_pos()
+                          << " gates " << output.num_gates() << std::endl;
 
+            }
         });
         return output;
     }
@@ -82,22 +89,27 @@ public:
         topo.foreach_gate([&](auto g) {
             std::vector<typename xmg_names::signal> fin;
             topo.foreach_fanin(g, [&](const typename xmg_names::signal f){
-                auto n = map[topo.get_node(f)];
-                if (optim.is_complemented(f)) {
-                    fin.push_back(output.create_not(n));
+                if (optim.is_constant(optim.get_node(f))) {
+                    auto fanin = output.get_constant(optim.is_complemented(f));
+                    fin.push_back(fanin);
                 } else {
-                    fin.push_back(n);
+                    auto mapped = map[f];
+                    auto fanin = optim.is_complemented(f) ? output.create_not(mapped) : mapped;
+                    fin.push_back(fanin);
                 }
             });
-            map[g] = output.clone_node(output, g, fin);
+            map[g] = output.clone_node(optim, g, fin);
             auto signal = optim.make_signal(g);
+            auto csignal = optim.create_not(optim.make_signal(g));
             if (optim.has_name(signal)) {
                 output.set_name(map[g], optim.get_name(signal));
+            } else if (optim.has_name(csignal)) {
+                output.set_name(map[g], optim.get_name(csignal));
             }
         });
         topo.foreach_po([&](const typename xmg_names::signal f) {
             auto n = map[topo.get_node(f)];
-            if (optim.is_complemented(f)) {
+            if (optim.is_complemented(f) != output.is_complemented(n)) {
                 output.create_po(output.create_not(n));
             } else {
                 output.create_po(n);

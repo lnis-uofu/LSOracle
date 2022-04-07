@@ -62,7 +62,7 @@ TEST(exploderizer_test, disjoint_cones)
 
     aig_names::signal w0 = net.create_nand(pi0, pi1);
     net.set_name(w0, "w0");
-    aig_names::signal w1 = net.create_nand(pi1, pi2);
+    aig_names::signal w1 = net.create_and(pi1, pi2);
     net.set_name(w1, "w1");
     aig_names::signal w2 = net.create_nand(w0, w1);
     net.set_name(w2, "w2");
@@ -115,7 +115,7 @@ TEST(exploderizer_test, strashable_cones)
     net.set_name(w1, "w1");
     aig_names::signal w2 = net.create_nand(pi2, pi3);
     net.set_name(w2, "w2");
-    aig_names::signal w4 = net.create_nand(w0, w1);
+    aig_names::signal w4 = net.create_and(w0, w1);
     net.set_name(w4, "w4");
     aig_names::signal w5 = net.create_nand(w1, w2);
     net.set_name(w5, "w5");
@@ -140,7 +140,6 @@ TEST(exploderizer_test, strashable_cones)
     ASSERT_EQ(result.num_pis(), 4);
     mockturtle::write_dot(net, "strash_net.dot");
     mockturtle::write_dot(result, "strash_result.dot");
-
 
     const auto miter = *mockturtle::miter<xmg_names>(net, result);
     const auto valid = mockturtle::equivalence_checking(miter);
