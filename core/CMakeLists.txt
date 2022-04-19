@@ -27,6 +27,7 @@ set(LSORACLE_SOURCE
   kahypar_temp_config.cpp
   algorithms/optimization/optimizers.cpp
   algorithms/optimization/resynthesis.cpp
+  algorithms/optimization/exploder.cpp
   utility.cpp
 )
 

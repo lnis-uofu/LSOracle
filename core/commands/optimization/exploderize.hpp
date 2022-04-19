@@ -42,6 +42,8 @@ public:
     {
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
+        opts.add_option("--depth", target,
+                        "Target depth to apply optimization.");
     }
 protected:
     void execute()
@@ -63,7 +65,7 @@ protected:
         std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
         auto start = std::chrono::high_resolution_clock::now();
         oracle::exploderizer<network> boom(ntk, abc_exec);
-        mockturtle::names_view<mockturtle::xmg_network> ntk_result = boom.exploderize();
+        mockturtle::names_view<mockturtle::xmg_network> ntk_result = boom.exploderize(target);
         std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << std::endl;
         auto stop = std::chrono::high_resolution_clock::now();
 
@@ -89,6 +91,7 @@ protected:
     }
 
     string abc_exec{"abc"};
+    uint32_t target = 0;
 };
 ALICE_ADD_COMMAND(exploderize, "Optimization");
 }

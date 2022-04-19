@@ -33,6 +33,7 @@ TEE := cat - >
 FM := fm_shell
 
 PART_SIZE := 2048
+EXPLODE := 10
 
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
@@ -195,11 +196,11 @@ skywater: sky130_fd_sc_hd__tt_025C_1v80.pdf
 %.exploded.stats.json %.exploded.rtl %.exploded.optimize.log &: %.unoptimized.rtl
 	$(eval TEMP=$*.exploded.script)
 	@ echo "ps -a" > ${TEMP}
-	@ echo "exploderize --abc_exec ${ABC}" >> ${TEMP}
+	@ echo "exploderize --abc_exec ${ABC} --depth ${EXPLODE}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 	@ echo "write_stats --name $(shell basename $*) --optimization exploded -g $*.exploded.stats.json" >> ${TEMP}
 	@ echo "write_blif -g $*.exploded.blif" >> ${TEMP}
-	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; techmap; opt -purge; stat; write_rtlil $*.exploded.rtl" | ${TEE} $*.exploded.optimize.log
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_rtlil $<; lsoracle -xmg_out -lso_exe ${LSORACLE} -script ${TEMP}; stat; techmap; opt -purge; stat; write_rtlil $*.exploded.rtl" | ${TEE} $*.exploded.optimize.log
 
 %.mixed_resynth.stats.json %.mixed_resynth.rtl %.mixed_resynth.optimize.log &: %.unoptimized.rtl
 	$(eval TEMP=$*.mixed_resynth.script)
