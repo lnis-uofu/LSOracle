@@ -38,10 +38,12 @@ class optimize_command : public alice::command
 
 public:
     explicit optimize_command(const environment::ptr &env)
-        : command(env, "Perform timing driven mixed synthesis.")
+        : command(env, "Perform mixed synthesis.")
     {
+        #ifdef ENABLE_ABC
         opts.add_option("--abc_exec", abc_exec,
                         "ABC executable, defaults to using path.");
+        #endif
         opts.add_flag("--ndp", "Node Depth Product target");
         opts.add_flag("--nodes", "Node Count target");
         opts.add_flag("--depth", "Depth target");
@@ -73,7 +75,11 @@ protected:
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result;
 	if (is_set("resynth")) {
-	    ntk_result = oracle::optimize_resynthesis<mockturtle::aig_network>(partitions_jr, abc_exec);
+	    ntk_result = oracle::optimize_resynthesis<mockturtle::aig_network>(partitions_jr
+#ifdef ENABLE_ABC
+                                                                           , abc_exec
+#endif
+            );
 	} else {
 	    oracle::optimization_strategy strategy;
 	    if (is_set("depth")) {
@@ -84,7 +90,11 @@ protected:
 		strategy = oracle::optimization_strategy::balanced;
 	    }
 
-            ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy);
+            ntk_result = oracle::optimize_basic<network>(partitions_jr,
+#ifdef ENABLE_ABC
+                                                         abc_exec,
+#endif
+                                                         strategy);
 	}
         auto stop = std::chrono::high_resolution_clock::now();
 
@@ -107,8 +117,9 @@ protected:
         store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
 			      std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
     }
-
+#ifdef ENABLE_ABC
     string abc_exec{"abc"};
+#endif
 };
 ALICE_ADD_COMMAND(optimize, "Optimization");
 }

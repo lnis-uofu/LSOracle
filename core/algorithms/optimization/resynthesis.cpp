@@ -24,11 +24,12 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifdef ENABLE_OPENSTA
-#ifdef ENABLE_ABC
 
 #include <stdlib.h>
 #include <mockturtle/mockturtle.hpp>
+#include "algorithms/output/verilog_utilities.hpp"
+
+#ifdef ENABLE_STA
 #include <sta/Sta.hh>
 #include <sta/ConcreteNetwork.hh>
 #include <sta/Corner.hh>
@@ -42,15 +43,13 @@
 #include <sta/VerilogReader.hh>
 #include <sta/StaMain.hh>
 
-#include "algorithms/output/verilog_utilities.hpp"
-
 namespace sta {
 extern const char *tcl_inits[];
 }
 extern "C" {
 extern int Sta_Init(Tcl_Interp *interp);
 }
-
+#endif
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -68,6 +67,7 @@ extern int Sta_Init(Tcl_Interp *interp);
 #include "algorithms/optimization/xag_script.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/partitioning/slack_view.hpp"
+#include "algorithms/partitioning/partition_manager_junior.hpp"
 #include "utility.hpp"
 // TODO replace "pi/po" with "ci/co"
 namespace oracle
@@ -79,6 +79,7 @@ using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 using xmg_manager = partition_manager_junior<mockturtle::xmg_network>;
 using xmg_partition = mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>>;
 
+#ifdef ENABLE_ABC
 template<typename T>
 std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
 {
@@ -131,6 +132,7 @@ template std::string basic_techmap<aig_names>(const std::string &, const std::st
 template std::string basic_techmap<xag_names>(const std::string &, const std::string &, const xag_names &, const std::string &);
 template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &, const std::string &);
 template std::string basic_techmap<xmg_names>(const std::string &, const std::string &, const xmg_names &, const std::string &);
+#endif
 
 template <typename network> std::string get_po_name_or_default(const network &ntk, const typename network::signal &signal)
 {
@@ -240,17 +242,18 @@ mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_ma
     return part;
 }
 
-template <typename network>
-class noop: public optimizer<network>
+template <typename network> class noop: public optimizer<network>
 {
     using names = mockturtle::names_view<network>;
     using partition = mockturtle::window_view<names>;
     // using manager = partition_manager_junior<network>;
 
 public:
-    noop(int index, const partition &part, optimization_strategy target, const std::string &abc_exec): index(index), original(part), strategy(target), abc_exec(abc_exec)
-    {
-    }
+#ifdef ENABLE_ABC
+    noop(int index, const partition &part, optimization_strategy target, const std::string &abc_exec): index(index), original(part), strategy(target), abc_exec(abc_exec) {}
+#else
+    noop(int index, const partition &part, optimization_strategy target): index(index), original(part), strategy(target) {}
+#endif
 
     const std::string optimizer_name()
     {
@@ -260,7 +263,11 @@ public:
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new noop<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new noop<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
 
@@ -300,7 +307,7 @@ public:
     void optimize()
     {
     }
-
+#ifdef ENABLE_ABC
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
@@ -311,6 +318,7 @@ public:
         }
         return techmapped;
     }
+#endif
 
     node_depth independent_metric()
     {
@@ -327,7 +335,9 @@ private:
     node_depth metric;
     optimization_strategy strategy;
     std::string techmapped;
+#ifdef ENABLE_ABC
     const std::string &abc_exec;
+#endif
 };
 template class noop<mockturtle::aig_network>;
 template class noop<mockturtle::mig_network>;
@@ -342,9 +352,11 @@ class mig_optimizer: public optimizer<network>
     using manager = mockturtle::window_view<names>;
 
 public:
-    mig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
-    {
-    }
+#ifdef ENABLE_ABC
+    mig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec) {}
+#else
+    mig_optimizer(int index, const partition &original, optimization_strategy target): index(index), original(original), strategy(target) {}
+#endif
 
     xmg_names export_superset()
     {
@@ -378,6 +390,7 @@ public:
         return metric;
     }
 
+#ifdef ENABLE_ABC
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
@@ -388,6 +401,7 @@ public:
         }
         return techmapped;
     }
+#endif
 
     optimization_strategy target()
     {
@@ -402,7 +416,9 @@ protected:
     string techmapped;
     string name;
     optimization_strategy strategy;
+#ifdef ENABLE_ABC
     const std::string &abc_exec;
+#endif
 };
 template class mig_optimizer<mockturtle::aig_network>;
 
@@ -411,9 +427,11 @@ class aig_optimizer: public optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
-    {
-    }
+#ifdef ENABLE_ABC
+    aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec) {}
+#else
+    aig_optimizer(int index, const partition &original, optimization_strategy target): index(index), original(original), strategy(target) {}
+#endif
 
     xmg_names export_superset()
     {
@@ -442,6 +460,7 @@ public:
         return metric;
     }
 
+#ifdef ENABLE_ABC
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
@@ -454,6 +473,7 @@ public:
         }
         return techmapped;
     }
+#endif
 
     optimization_strategy target()
     {
@@ -467,12 +487,15 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+#ifdef ENABLE_ABC
     const std::string &abc_exec;
+#endif
 };
 template class aig_optimizer<mockturtle::aig_network>;
 
 
-template< typename network>
+#ifdef ENABLE_ABC
+template<typename network>
 class abc_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
@@ -521,15 +544,18 @@ public:
         this->optimal.set_network_name(this->converted.get_network_name());
     }
 };
+#endif
 
 template <typename network>
 class xag_optimizer: public optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    xag_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
-    {
-    }
+#ifdef ENABLE_ABC
+    xag_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec) {}
+#else
+    xag_optimizer(int index, const partition &original, optimization_strategy target): index(index), original(original), strategy(target) {}
+#endif
 
     xmg_names export_superset()
     {
@@ -537,9 +563,13 @@ public:
         return mockturtle::node_resynthesis<xmg_names, xag_names>(optimal, resyn);
     }
 
-        optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new xag_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new xag_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     void convert()
@@ -563,6 +593,7 @@ public:
         return metric;
     }
 
+#ifdef ENABLE_ABC
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
@@ -575,6 +606,7 @@ public:
         }
         return techmapped;
     }
+#endif
 
     const std::string optimizer_name()
     {
@@ -600,7 +632,9 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+#ifdef ENABLE_ABC
     const std::string &abc_exec;
+#endif
 };
 template class xag_optimizer<mockturtle::xag_network>;
 
@@ -609,13 +643,19 @@ class xmg_optimizer: public optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
-    xmg_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
-    {
-    }
+#ifdef ENABLE_ABC
+    xmg_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec) {}
+#else
+    xmg_optimizer(int index, const partition &original, optimization_strategy target): index(index), original(original), strategy(target) {}
+#endif
 
-        optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new xmg_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new xmg_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     xmg_names export_superset()
@@ -645,6 +685,7 @@ public:
         return metric;
     }
 
+#ifdef ENABLE_ABC
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
         if (techmapped.empty()) {
@@ -656,6 +697,7 @@ public:
         }
         return techmapped;
     }
+#endif
 
     const std::string optimizer_name()
     {
@@ -681,7 +723,9 @@ protected:
     node_depth metric;
     string techmapped;
     optimization_strategy strategy;
+#ifdef ENABLE_ABC
     const std::string &abc_exec;
+#endif
 };
 template class xmg_optimizer<mockturtle::xmg_network>;
 
@@ -690,7 +734,12 @@ class migscript_optimizer: public mig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     migscript_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    migscript_optimizer(int index, const partition &original, optimization_strategy target): mig_optimizer<network>(index, original, target) {}
+#endif
+
 
     const std::string optimizer_name()
     {
@@ -699,7 +748,11 @@ public:
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new migscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new migscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     void optimize()
@@ -714,7 +767,12 @@ class migscript2_optimizer: public mig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     migscript2_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    migscript2_optimizer(int index, const partition &original, optimization_strategy target): mig_optimizer<network>(index, original, target) {}
+#endif
+
 
     const std::string optimizer_name()
     {
@@ -723,7 +781,11 @@ public:
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new migscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new migscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     void optimize()
@@ -738,11 +800,19 @@ class migscript3_optimizer: public mig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     migscript3_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): mig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    migscript3_optimizer(int index, const partition &original, optimization_strategy target): mig_optimizer<network>(index, original, target) {}
+#endif
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new migscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new migscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -762,11 +832,20 @@ class aigscript_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     aigscript_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    aigscript_optimizer(int index, const partition &original, optimization_strategy target): aig_optimizer<network>(index, original, target) {}
+#endif
+
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new aigscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new aigscript_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -786,11 +865,20 @@ class aigscript2_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     aigscript2_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    aigscript2_optimizer(int index, const partition &original, optimization_strategy target): aig_optimizer<network>(index, original, target) {}
+#endif
+
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new aigscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new aigscript2_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -810,11 +898,19 @@ class aigscript3_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     aigscript3_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    aigscript3_optimizer(int index, const partition &original, optimization_strategy target): aig_optimizer<network>(index, original, target) {}
+#endif
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new aigscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new aigscript3_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -834,11 +930,19 @@ class aigscript4_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     aigscript4_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    aigscript4_optimizer(int index, const partition &original, optimization_strategy target): aig_optimizer<network>(index, original, target) {}
+#endif
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new aigscript4_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new aigscript4_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -858,11 +962,19 @@ class aigscript5_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
 public:
+#ifdef ENABLE_ABC
     aigscript5_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+#else
+    aigscript5_optimizer(int index, const partition &original, optimization_strategy target): aig_optimizer<network>(index, original, target) {}
+#endif
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
+#ifdef ENABLE_ABC
         return new aigscript5_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+#else
+        return new aigscript5_optimizer<mockturtle::xmg_network>(index, part, this->strategy);
+#endif
     }
 
     const std::string optimizer_name()
@@ -917,29 +1029,30 @@ class d_strategy : public optimization_strategy_comparator<T>
     }
 };
 
- template <typename T>
- class n_strategy : public optimization_strategy_comparator<T>
- {
-     bool operator()(optimizer<T> &a, optimizer<T> &b)
-     {
-         node_depth x = a.independent_metric();
-         node_depth y = b.independent_metric();
-
+template <typename T>
+class n_strategy : public optimization_strategy_comparator<T>
+{
+    bool operator()(optimizer<T> &a, optimizer<T> &b)
+    {
+        node_depth x = a.independent_metric();
+        node_depth y = b.independent_metric();
          return x.nodes < y.nodes;
-     }
-     const string name()
-     {
-         return "node";
-     }
+    }
+    const string name()
+    {
+        return "node";
+    }
 };
 
 template <typename network>
 optimizer<network> *optimize(optimization_strategy_comparator<network> &comparator,
                              optimization_strategy strategy,
                              partition_manager_junior<network> &partman,
-                             int index,
-                             const std::string &abc_exec)
-
+                             int index
+#ifdef ENABLE_ABC
+                             , const std::string &abc_exec
+#endif
+)
 {
     std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
@@ -951,6 +1064,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     // todo remove double network.
     // fix_names(partman, part, partman.get_network(), index);
     const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partman, index);
+#ifdef ENABLE_ABC
     std::vector<optimizer<network>*>optimizers {
         new noop<network>(index, part, strategy, abc_exec),
         new migscript_optimizer<network>(index, part, strategy, abc_exec),
@@ -965,6 +1079,21 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
         new xag_optimizer<network>(index, part, strategy, abc_exec),
         // new abc_optimizer<network>(index, part, strategy, abc_exec),
    };
+#else
+    std::vector<optimizer<network>*>optimizers {
+        new noop<network>(index, part, strategy),
+        new migscript_optimizer<network>(index, part, strategy),
+        new migscript2_optimizer<network>(index, part, strategy),
+        new migscript3_optimizer<network>(index, part, strategy),
+        new aigscript_optimizer<network>(index, part, strategy),
+        new aigscript2_optimizer<network>(index, part, strategy),
+        new aigscript3_optimizer<network>(index, part, strategy),
+        new aigscript4_optimizer<network>(index, part, strategy),
+        new aigscript5_optimizer<network>(index, part, strategy),
+        new xmg_optimizer<network>(index, part, strategy),
+        new xag_optimizer<network>(index, part, strategy),
+   };
+#endif
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
         std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
@@ -1042,6 +1171,7 @@ std::set<std::string> get_wire_names(oracle::partition_manager_junior<network> &
     return wires;
 }
 
+#ifdef ENABLE_STA
 template <typename network>
 void write_child(int index,
                  partition_manager_junior<network> &partman,
@@ -1066,7 +1196,9 @@ void write_child(int index,
     verilog.seekp(verilog.tellp() - 2L); // Truncate last comma
     verilog << "\n);\n" << std::endl;
 }
+#endif
 
+#ifdef ENABLE_ABC
 template <typename network>
 string techmap(
     oracle::partition_manager_junior<network> partitions,
@@ -1119,7 +1251,9 @@ string techmap(
     return output_file;
 
 }
+#endif
 
+#ifdef ENABLE_STA
 void print_path(sta::ConcreteInstance *i)
 {
     if (sta::ConcreteInstance *p = i->parent()) {
@@ -1369,6 +1503,7 @@ void reset_sta()
     Tcl_Eval(tcl_interp, "sta::define_sta_cmds");
     Tcl_Eval(tcl_interp, "namespace import sta::*");
 }
+#endif
 
 
 template <typename network>
@@ -1436,6 +1571,8 @@ xmg_names setup_output(
     return partitions_out.get_network();
 }
 
+#ifdef ENABLE_ABC
+#ifdef ENABLE_STA
 /*
  * Mixed synthesis followed by XMG resynthesis and combination.
  */
@@ -1500,19 +1637,30 @@ template <typename network> xmg_names optimize_timing(
     // Output network
     return setup_output(partitions, optimized);
 }
-
+#endif
+#endif
 
 /*
 Mixed synthesis followed by XMG resynthesis and combiniation
 */
-template <typename network> xmg_names optimize_resynthesis(
-    oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
+template <typename network>
+#ifdef ENABLE_ABC
+xmg_names optimize_resynthesis(oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
+#else
+xmg_names optimize_resynthesis(oracle::partition_manager_junior<network> &partitions)
+#endif
 {
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
         n_strategy<network> strategy;
+
+#ifdef ENABLE_ABC
         optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec);
+#else
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i);
+#endif
+
     }
     assert(num_parts == optimized.size());
 
@@ -1534,10 +1682,22 @@ template <typename network> xmg_names optimize_resynthesis(
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
             ndp_strategy<network> strategy;
+
+#ifdef ENABLE_ABC
             optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part, abc_exec);
+#else
+            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part);
+#endif
+
         } else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
             d_strategy<network> strategy;
+
+#ifdef ENABLE_ABC
             optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec);
+#else
+            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part);
+#endif
+
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
@@ -1554,10 +1714,13 @@ template <typename network> xmg_names optimize_resynthesis(
  * Mixed synthesis optimization followed by XMG resynthesis and combination.
  */
 template <typename network>
-xmg_names optimize_basic (
-    oracle::partition_manager_junior<network> &partitions,
-    const string &abc_exec,
-    optimization_strategy strategy)
+#ifdef ENABLE_ABC
+xmg_names optimize_basic (oracle::partition_manager_junior<network> &partitions,
+                          const string &abc_exec, optimization_strategy strategy)
+#else
+xmg_names optimize_basic (oracle::partition_manager_junior<network> &partitions,
+                          optimization_strategy strategy)
+#endif
 {
   int num_parts = partitions.count();
   std::vector<optimizer<network>*> optimized(num_parts);
@@ -1575,7 +1738,11 @@ xmg_names optimize_basic (
   }
   std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
-    optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);
+#ifdef ENABLE_ABC
+      optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);
+#else
+      optimized[i] = optimize(*target, strategy, partitions, i);
+#endif
   }
   delete target;
   assert(num_parts == optimized.size());
@@ -1584,12 +1751,7 @@ xmg_names optimize_basic (
 }
 
 /**************** Template instances ****************/
-template xmg_names
-optimize_timing<mockturtle::aig_network>
-(
-    oracle::partition_manager_junior<mockturtle::aig_network> &,
-    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
-
+#ifdef ENABLE_ABC
 template xmg_names
 optimize_basic<mockturtle::aig_network>
 (
@@ -1604,5 +1766,26 @@ optimize_resynthesis<mockturtle::aig_network>
     const std::string &);
 
 }
+#else
+template xmg_names
+optimize_basic<mockturtle::aig_network>
+(
+    oracle::partition_manager_junior<mockturtle::aig_network> &, const optimization_strategy);
+
+template xmg_names
+optimize_resynthesis<mockturtle::aig_network>
+(
+    oracle::partition_manager_junior<mockturtle::aig_network> &);
+
+}
+#endif
+
+#ifdef ENABLE_STA
+#ifdef ENABLE_ABC
+template xmg_names
+optimize_timing<mockturtle::aig_network>
+(
+    oracle::partition_manager_junior<mockturtle::aig_network> &,
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 #endif
 #endif
