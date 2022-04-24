@@ -26,7 +26,6 @@
  */
 #pragma once
 
-#ifdef ENABLE_ABC
 #include <mockturtle/mockturtle.hpp>
 #include "algorithms/partitioning/partition_manager_junior.hpp"
 #include "utility.hpp"
@@ -48,12 +47,18 @@ enum optimization_strategy { size, balanced, depth };
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     oracle::partition_manager_junior<network> &partitions,
+#ifdef ENABLE_ABC
     const std::string &abc_exec,
+#endif
     const optimization_strategy strategy);
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
-    oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec);
+    oracle::partition_manager_junior<network> &partitions
+#ifdef ENABLE_ABC
+    , const std::string &abc_exec
+#endif
+    );
 
 struct node_depth {
     int nodes;
@@ -85,10 +90,12 @@ public:
      * List the type of optimization: area, delay, or balanced.
      */
     virtual optimization_strategy target() = 0;
+#ifdef ENABLE_ABC
     /**
      * Techmap, then return a path to a file containing the techmapped verilog.
      */
     virtual std::string techmap(const std::string &liberty_file, const std::string &temp_prefix) = 0;
+#endif
     /**
      * convert the network to the superset.
      */
@@ -99,5 +106,3 @@ public:
     virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
 };
 }
-
-#endif
