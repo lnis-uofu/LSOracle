@@ -161,7 +161,7 @@ for graph, title, ax, db, label in [
         ax.set_yticklabels([])
     ax.axvline(1, color="black")
     ax.xaxis.set_major_formatter("{x:.1f}")
-fig.set_figheight(20)
+fig.set_figheight(100)
 fig.set_figwidth(12)
 
 fig.tight_layout()

@@ -1,9 +1,3 @@
-create_clock -name clk -period 10 {clk}
-set_input_delay -clock clk 0 {
-rstn
-ce
-}
-set_output_delay -clock clk 0 {
-valid_out
-data_out
-}
+create_clock -name clk -period 1 {clk}
+set_input_delay -clock clk -max 0 [all_inputs]
+set_output_delay -clock clk -max 0 [all_outputs]
