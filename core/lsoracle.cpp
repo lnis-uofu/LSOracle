@@ -58,8 +58,13 @@
 #include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
+#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xag_script.hpp"
+#include "algorithms/optimization/mab.hpp"
+#include "algorithms/optimization/deep.hpp"
+#include "algorithms/optimization/parser.hpp"
+#include "algorithms/optimization/optimization_test.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
 //#include "algorithms/output/part_verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
@@ -129,6 +134,8 @@
 //Optimization
 #include "commands/optimization/rwscript.hpp"
 #include "commands/optimization/aigscript.hpp"
+#include "commands/optimization/aigscript3.hpp"
+#include "commands/optimization/migtune.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
 #include "commands/optimization/optimization_command.hpp"
@@ -142,10 +149,11 @@
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
+#include "commands/optimization/resub.hpp"
 #include "commands/optimization/oracle.hpp"
 #include "commands/optimization/xmgscript.hpp"
 #include "commands/optimization/xagscript.hpp"
-
+#include "commands/optimization/deep.hpp"
 
 
 /* these were commented out in previous master */

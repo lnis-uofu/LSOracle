@@ -3,12 +3,13 @@
 *.migscript.*
 *.abc.*
 
-*.*_direct.*
 *.unoptimized.*
 *.exploded.*
 *.xmgscript.*
 *.lsoracle_old.*
 *.*_plugin.*
+*.timing_direct*.*
+*.timing_yosys*.*
 *.mapped.v
 *.aig
 *.report

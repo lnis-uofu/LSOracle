@@ -39,53 +39,56 @@
 
 namespace alice
 {
-class refactor_command : public alice::command
+class resub_command : public alice::command
 {
 
 public:
-    explicit refactor_command(const environment::ptr &env)
-        : command(env, "Perform refactoring on stored network")
+    explicit resub_command(const environment::ptr &env)
+        : command(env, "Perform resubstitution on stored network")
     {
         opts.add_option("--cut_size,-k", cut_size, "Number of inputs in the MFFC. Default = 4.");
-        add_flag("--zero,-z", "Allow zero-gain substitution");
-        add_flag("--mig,-m", "Refactoring an MIG");
-        add_flag("--dc,-d", "Uses dont care.");
+        opts.add_option("--insert,-i", insert, "Maximum number of insertions");
+        add_flag("--mig,-m", "Resubs a MIG");
+        add_flag("--sim,-s", "Simulation based resubstitution");
     }
 
 protected:
     void execute()
     {
-
-        mockturtle::refactoring_params ps;
-        if (is_set("zero"))
-            ps.allow_zero_gain = true;
-        
-        if (is_set("dc"))
-            ps.use_dont_cares = true;
-
         if (is_set("mig")) {
             if (!store<mig_ntk>().empty()) {
-                mockturtle::mig_npn_resynthesis resyn;
+                mockturtle::resubstitution_params ps;
                 ps.max_pis = cut_size;
-                auto &ntk = *store<mig_ntk>().current();
-                mockturtle::refactoring(ntk, resyn, ps);
-                ntk = mockturtle::cleanup_dangling(ntk);
+                ps.max_inserts = insert; 
+
+                auto &mig = *store<mig_ntk>().current();
+                mockturtle::depth_view depth_mig{mig};
+                mockturtle::fanout_view fanout_mig{depth_mig};
+                 
+                mockturtle::mig_resubstitution( fanout_mig, ps );
+                mig = mockturtle::cleanup_dangling( mig );
             } else {
                 env->err() << "There is no MIG network stored\n";
             }
         } else {
             if (!store<aig_ntk>().empty()) {
-                auto &ntk = *store<aig_ntk>().current();
-                // mockturtle::shannon_resynthesis<mockturtle::aig_network> fallback;
-                // mockturtle::dsd_resynthesis<mockturtle::aig_network, decltype( fallback )> resyn( fallback );
-                mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-                ps.max_pis = cut_size;
-                mockturtle::refactoring(ntk, resyn, ps);
-                ntk = mockturtle::cleanup_dangling(ntk);
+                auto &aig = *store<aig_ntk>().current();
 
-                // mockturtle::depth_view depth{ntk};
-                // env->out() << "Final ntk size = " << ntk.num_gates() << " and depth = " <<
-                //            depth.depth() << "\n";
+                mockturtle::resubstitution_params ps;
+                mockturtle::resubstitution_stats st;
+
+                ps.max_pis = cut_size;
+                ps.max_inserts = insert;
+                ps.progress = false;
+
+                if (is_set("sim")) {
+                    mockturtle::sim_resubstitution( aig, ps, &st );
+                }
+                else 
+                    mockturtle::aig_resubstitution( aig, ps, &st );
+
+                aig = mockturtle::cleanup_dangling( aig );
+
             } else {
                 env->err() << "There is no AIG network stored\n";
             }
@@ -93,8 +96,8 @@ protected:
     }
 private:
     int cut_size = 4;
-
+    int insert = 1;
 };
 
-ALICE_ADD_COMMAND(refactor, "Refactoring");
+ALICE_ADD_COMMAND(resub, "Resubstitution");
 }

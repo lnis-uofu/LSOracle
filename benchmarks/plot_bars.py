@@ -66,7 +66,7 @@ def read_files(files):
             tech = d["liberty_file"]
             if "optimization" in d:
                 optim = d["optimization"]["name"]
-            else:
+else:
                 optim = "unknown"
             if design not in designs:
                 designs[design] = {}
@@ -153,15 +153,15 @@ for graph, title, ax, db, label in [
     bars = ax.barh(y, db, width, color=colors)
     ax.bar_label(bars, [f"{f:.2f}x" for f in db], padding=3, fontsize='x-small')
     if label:
-        ax.set_xlabel("% improvement over original circuit")
+    ax.set_xlabel("% improvement over original circuit")
         ax.set_yticks(y)
-        ax.set_yticklabels(labels)
+    ax.set_yticklabels(labels)
     else:
         ax.set_yticks([])
         ax.set_yticklabels([])
     ax.axvline(1, color="black")
     ax.xaxis.set_major_formatter("{x:.1f}")
-fig.set_figheight(100)
+fig.set_figheight(20)
 fig.set_figwidth(12)
 
 fig.tight_layout()

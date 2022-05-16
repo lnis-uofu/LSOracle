@@ -26,6 +26,7 @@
 CLK_PERIOD := 10
 STA := sta
 LSORACLE := lsoracle
+LSORACLE_PLUGIN := oracle
 ABC := yosys-abc
 YOSYS := yosys
 YOSYS_PLUGIN := oracle
@@ -38,7 +39,7 @@ EXPLODE := 10
 ISCAS85 := iscas85/c432.v iscas85/c880a.v iscas85/c3540a.v iscas85/c5288.v iscas85/c2670a.v iscas85/c5315a.v iscas85/c3540.v iscas85/c1908a.v iscas85/c7552.v iscas85/c499.v iscas85/c2670.v iscas85/c1908.v iscas85/c5315.v iscas85/c1335.v
 ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
-EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/max.v EPFL/multiplier.v EPFL/mem_ctrl.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v EPFL/log2.v
+EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
 
 DESIGNS :=   ${EPFL} ${ISCAS85} ${ISCAS89} ${OPDB} picorv32/picorv32.v
 
@@ -77,7 +78,7 @@ EQUIV_OUTPUTS := $(patsubst %.formality.log,%.mapped.v,${TECHMAP_OUTPUTS})
 ######################## Phony targets #########################
 ################################################################
 
-all: synth optimize techmap timing reports equivalence
+all: synth optimize techmap timing reports equivalence skywater
 
 clean: clean_synth clean_synth clean_optimize clean_techmap clean_timing clean_reports clean_equivalence
 
