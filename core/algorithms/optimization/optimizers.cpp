@@ -56,7 +56,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
         new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
         new xmg_optimizer<network>(index, part, strategy, abc_exec),
         new xag_optimizer<network>(index, part, strategy, abc_exec),
-        // new abc_optimizer<network>(index, part, strategy, abc_exec),
+        new abc_optimizer<network>(index, part, strategy, abc_exec, prefix),
    };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {

@@ -138,6 +138,7 @@
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/optimize_timing.hpp"
 #include "commands/optimization/optimize.hpp"
+#include "commands/optimization/abc.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"

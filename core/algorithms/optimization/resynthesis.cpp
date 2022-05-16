@@ -555,15 +555,52 @@ void reset_sta()
     Tcl_Eval(tcl_interp, "namespace import sta::*");
 }
 
+template <typename network>
+std::vector<typename network::node> critical_path(mockturtle::topo_view<network> &net)
+{
+    mockturtle::node_map<uint32_t, mockturtle::topo_view<network>> crits(net, 0);
+
+    net.foreach_gate([&](auto n) {
+        uint32_t worst = 0;
+        net.foreach_fanin(n, [&](auto f) {
+            if (crits[f] > worst)
+                worst = crits[f];
+        });
+        crits[n] = worst + 1;
+    });
+    typename network::node worst_out;
+    net.foreach_co([&](auto p, auto i) {
+        auto n = net.get_node(p);
+        if (i == 0 || crits[n] > crits[worst_out])
+            worst_out = n;
+    });
+
+    std::vector<typename network::node> path;
+    path.push_back(worst_out);
+    typename network::node last = worst_out;
+
+    while (!net.is_ci(last)) {
+        typename network::node worst;
+        net.foreach_fanin(last, [&](auto f, auto i) {
+            auto n = net.get_node(f);
+            if (i == 0 || crits[n] > crits[worst])
+                worst = n;
+        });
+        last = worst;
+        path.push_back(last);
+    }
+    return path;
+}
 
 template <typename network>
 const int worst_indep(oracle::partition_manager_junior<network> &partitions,
                       std::vector<optimization_strategy> &optimized)
 {
     oracle::slack_view<mockturtle::names_view<network>> slack(partitions.get_network());
-  auto critical_path = slack.get_critical_path(partitions.get_network()); // TODO why does this pass itself back
+    mockturtle::topo_view<mockturtle::names_view<network>> topo(partitions.get_network());
+    std::vector<typename network::node> path = critical_path(topo);
   std::vector<int> budget(partitions.count(), 0);
-  for (auto i = critical_path.begin(); i != critical_path.end(); i++) {
+  for (auto i = path.begin(); i != path.end(); i++) {
     budget[partitions.node_partition(*i)] += 1;
   }
 
@@ -579,20 +616,12 @@ const int worst_indep(oracle::partition_manager_junior<network> &partitions,
 }
 
 template <typename network>
-xmg_names setup_output(
-        oracle::partition_manager_junior<network> &partitions_in,
-        std::vector<optimizer<network>*> &optimized)
+oracle::partition_manager_junior<mockturtle::xmg_network> setup_output(
+    oracle::partition_manager_junior<network> &partitions_in,
+    std::vector<optimizer<network>*> &optimized)
 {
     int num_parts = partitions_in.count();
-    mockturtle::direct_resynthesis<xmg_names> resyn;
-    mockturtle::names_view<network> &ntk = partitions_in.get_network();
-    xmg_names ntk_out = mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>(ntk, resyn);
-    mockturtle::node_map<int, xmg_names> partitions_out_map(ntk_out);
-    partitions_in.get_network().foreach_node([&](auto n){
-        int i = ntk.node_to_index(n);
-        partitions_out_map[ntk_out.index_to_node(i)] = partitions_in.node_partition(n);
-    });
-    xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
+    xmg_manager partitions_out = partitions_in.convert();
 
     for (int i = 0; i < num_parts; i++) {
         std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
@@ -607,18 +636,18 @@ xmg_names setup_output(
         std::cout << std::endl;
         if (optimized[i]->optimizer_name() != "noop") {
             // const xmg_partition part = fix_names2(partitions_out, i);
-            const xmg_partition part = partitions_out.partition(i);
+            const xmg_partition part = fix_names2(partitions_out, i);
             optimizer<mockturtle::xmg_network> *optim = optimized[i]->reapply(i, part);
             optim->convert();
             optim->optimize();
 
             xmg_names opt = optim->export_superset();
-            partitions_out.integrate(i, partitions_out.partition(i), opt);
+            partitions_out.integrate(i, part, opt);
         }
     }
     partitions_out.substitute_nodes();
     std::cout << "Finished connecting outputs" << std::endl;
-    return partitions_out.get_network();
+    return partitions_out;
 }
 
 /*
@@ -687,7 +716,7 @@ template <typename network> xmg_names optimize_timing(
     std::filesystem::copy(verilog, output_file, std::filesystem::copy_options::overwrite_existing);
 
     // Output network
-    return setup_output(partitions, optimized);
+    return setup_output(partitions, optimized).get_network();
 }
 
 
@@ -713,7 +742,8 @@ template <typename network> xmg_names optimize_resynthesis(
             strats[i] = optimized[i]->target();
         }
         const std::string design = partitions.get_network().get_network_name() != "" ? partitions.get_network().get_network_name() : "top";
-        size_t worst_part = worst_indep<network>(partitions, strats);
+        auto partitions_out = setup_output(partitions, optimized);
+        size_t worst_part = worst_indep(partitions_out, strats);
         // TODO if this is worse than last result, rollback and finish.
         if (worst_part == -1) {
             std::cout << "met timing" << std::endl;
@@ -741,7 +771,7 @@ template <typename network> xmg_names optimize_resynthesis(
     }
 
     // Output network
-    return setup_output(partitions, optimized);
+    return setup_output(partitions, optimized).get_network();
 }
 
 /*
@@ -776,7 +806,7 @@ xmg_names optimize_basic (
   delete target;
   assert(num_parts == optimized.size());
 
-  return setup_output(partitions, optimized);
+  return setup_output(partitions, optimized).get_network();
 }
 
 /**************** Template instances ****************/
