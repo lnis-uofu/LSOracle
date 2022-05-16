@@ -34,7 +34,12 @@ template<typename network> typename exploderizer<network>::xmg_names exploderize
     mockturtle::depth_view depth(ntk);
     xmg_names output;
     ntk.foreach_pi([&](typename exploderizer<network>::network_names::node pi) {
-        output.create_pi();
+        auto n = output.create_pi();
+        auto s = ntk.make_signal( pi );
+        if ( ntk.has_name( s ) )
+        {
+            output.set_name (n, ntk.get_name( s ) );
+        }
     });
     optimization_strategy_comparator<network> *strategy =  new d_strategy<network>;
     ntk.foreach_po([&](auto po, auto i) {
@@ -106,10 +111,14 @@ template<typename network> void exploderizer<network>::integrate(xmg_names &outp
     });
     topo.foreach_po([&](const typename xmg_names::signal f) {
         auto n = map[topo.get_node(f)];
+        uint32_t id;
         if (optim.is_complemented(f) != output.is_complemented(n)) {
-            output.create_po(output.create_not(n));
+            id = output.create_po(output.create_not(n));
         } else {
-            output.create_po(n);
+            id = output.create_po(n);
+        }
+        if ( ntk.has_output_name( id ) ) {
+            output.set_output_name(id, ntk.get_output_name( id ) );
         }
     });
 }
