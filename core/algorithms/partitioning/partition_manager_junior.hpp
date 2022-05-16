@@ -39,6 +39,7 @@ class partition_manager_junior
 {
 public:
     using network = typename mockturtle::names_view<network_base>;
+    using xmg_names = typename mockturtle::names_view<mockturtle::xmg_network>;
     using partition_map = typename mockturtle::node_map<int, network>;
     using storage = typename network::storage;
     using node = typename network::node;
@@ -229,6 +230,55 @@ public:
     int count()
     {
         return partition_count;
+    }
+
+    partition_manager_junior<mockturtle::xmg_network> convert()
+    {
+        mockturtle::direct_resynthesis<xmg_names> resyn;
+        xmg_names ntk_out = mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>(ntk, resyn);
+        mockturtle::node_map<int, xmg_names> partitions_out_map(ntk_out);
+        ntk.foreach_node([&](auto n){
+                             int i = ntk.node_to_index(n);
+                             partitions_out_map[ntk_out.index_to_node(i)] = node_partition(n);
+                         });
+        partition_manager_junior<mockturtle::xmg_network> partitions_out(ntk_out, partitions_out_map, count());
+        return partitions_out;
+    }
+
+    window_view extract_cone(typename network::signal s)
+    {
+        std::vector<typename network::node> gates;
+        std::vector<typename network::node> inputs;
+        std::vector<typename network::signal> outputs;
+        outputs.push_back(s);
+
+        ntk.foreach_pi([&](auto pi) {
+            // relying on mockturtle guarantee of input order.
+            inputs.push_back(pi);
+        });
+        std::queue<typename network::node> traverse;
+        traverse.push(ntk.get_node(s));
+        ntk.incr_trav_id();
+        uint32_t id = ntk.trav_id();
+        while (!traverse.empty()) {
+            auto t = traverse.front();
+            if (ntk.visited(t) != id && !ntk.is_pi(t)) {
+                gates.push_back(t);
+                ntk.foreach_fanin(t, [&](auto f) {
+                    traverse.push(ntk.get_node(f));
+                });
+            }
+            ntk.set_visited(t, id);
+            traverse.pop();
+        }
+        return window_view(ntk, inputs, outputs, gates);
+    }
+
+    template<class optimized_network>
+    void integrate_cone(window_view &cone, mockturtle::names_view<optimized_network> &opt)
+    {
+        partition_count += 1;
+        integrate(partition_count, cone, opt);
     }
 
 private:

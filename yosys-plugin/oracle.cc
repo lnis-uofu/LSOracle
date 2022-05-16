@@ -1128,7 +1128,7 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 
 		printf("Finished LSO\n");
 
-		std::string cec_script = stringf("cec %s %s", aiger_temp_file.c_str(), blif_output_file.c_str());
+		std::string cec_script = stringf("cec -n %s %s", aiger_temp_file.c_str(), blif_output_file.c_str());
 		cec_script = add_echos_to_abc_cmd(cec_script);
 
 		for (size_t i = 0; i+1 < cec_script.size(); i++)
