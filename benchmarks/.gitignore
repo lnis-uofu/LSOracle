@@ -8,6 +8,7 @@
 *.xmgscript.*
 *.lsoracle_old.*
 *.*_plugin.*
+*.*_direct.*
 *.timing_direct*.*
 *.timing_yosys*.*
 *.mapped.v
