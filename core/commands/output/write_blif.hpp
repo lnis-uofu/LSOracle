@@ -69,14 +69,14 @@ protected:
                     auto &mig = *store<mig_ntk>().current();
                     mockturtle::write_blif(mig, filename, ps);
                 } else {
-                    env->err() << "There is not an MIG network stored.\n";
+                    spdlog::error("There is not an MIG network stored.");
                 }
             } else if (is_set("xag")) {
                 if (!store<xag_ntk>().empty()) {
                     auto &xag = *store<xag_ntk>().current();
                     mockturtle::write_blif(xag, filename, ps);
                 } else {
-                    env->err() << "There is not an XAG network stored.\n";
+                    spdlog::error("There is not an XAG network stored.");
                 }
             } else if (is_set("xmg")) {
                 if (!store<xmg_ntk>().empty()) {
@@ -88,18 +88,18 @@ protected:
                         mockturtle::write_blif(xmg, filename, ps);
                     }
                 } else {
-                    env->err() << "There is not an XMG network stored.\n";
+                    spdlog::error("There is not an XMG network stored.");
                 }
             } else {
                 if (!store<aig_ntk>().empty()) {
                     auto &aig = *store<aig_ntk>().current();
                     mockturtle::write_blif(aig, filename, ps);
                 } else {
-                    env->err() << "There is not an AIG network stored.\n";
+                    spdlog::error("There is not an AIG network stored.");
                 }
             }
         } else {
-            env->err() << filename << " is not a valid BLIF file\n";
+            spdlog::error("{} is not a valid BLIF file", filename);
         }
     }
 private:

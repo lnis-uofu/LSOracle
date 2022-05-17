@@ -220,13 +220,12 @@ mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig,
                   mig_parts = partitions_aig.get_mig_parts();
         }
         else{ */
-        //   std::cout << "Must include Neural Network model json file\n";
+        //   spdlog::error("Must include Neural Network model json file\");
         // }
-        std::cout <<
-                  "Neural network driven classification has been disabled during refactoring; please check back soon.\n";
+        spdlog::error("Neural network driven classification has been disabled during refactoring; please check back soon.");
     }
 
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+    spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
 
     if (combine) {
         std::vector<int> visited;
@@ -345,8 +344,8 @@ mig_names optimization(aig_names ntk_aig, part_man_aig partitions_aig,
         }
         aig_parts = comb_aig_parts;
         mig_parts = comb_mig_parts;
-        std::cout << "Scheduled optimization after partition merging\n";
-        std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+        spdlog::info("Scheduled optimization after partition merging");
+        spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
     }
 
     if (!high) {

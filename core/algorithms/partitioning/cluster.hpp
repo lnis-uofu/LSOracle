@@ -125,7 +125,7 @@ public:
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>
                             (stop - start);
-            // std::cout << "Updating IO: " << duration.count() << "us\n";
+            // spdlog::info("Updating IO: {}", duration.count() << "us");;
         }
 
     }
@@ -176,20 +176,20 @@ public:
         std::set<node> connected_nodes;
         mockturtle::fanout_view fanout{ntk};
         for (node curr_output : outputs) {
-            // std::cout << "fanout = " << curr_output << "\n";
+            // spdlog::info("fanout = {}", curr_output);;
             if (nodes.find(curr_output) == nodes.end()
                     && nodes2part.find(curr_output) != nodes2part.end()) {
                 connected_nodes.insert(curr_output);
             }
             // fanout.foreach_fanout( curr_output, [&](const auto& p){
-            //   std::cout << "fanout = " << p << "\n";
+            //   spdlog::info("fanout = {}", p);;
             //   if(nodes.find(p) == nodes.end() && nodes2part.find(p) != nodes2part.end())
             //     connected_nodes.insert(p);
             // });
         }
 
         for (node curr_input : inputs) {
-            // std::cout << "fanin = " << curr_input << "\n";
+            // spdlog::info("fanin = {}", curr_input);;
             if (nodes.find(curr_input) == nodes.end()
                     && nodes2part.find(curr_input) != nodes2part.end()) {
                 connected_nodes.insert(curr_input);
@@ -229,16 +229,16 @@ private:
                 }
             });
         }
-        // std::cout << "inputs = {";
+        // spdlog::info("inputs = {";
         // for( node curr_input : inputs ){
-        //   std::cout << curr_input << " ";
+        //   spdlog::info(curr_input << " ";
         // }
-        // std::cout << "}\n";
-        // std::cout << "output = {";
+        // spdlog::info("}");;
+        // spdlog::info("output = {";
         // for( node curr_output : outputs ){
-        //   std::cout << curr_output << " ";
+        //   spdlog::info(curr_output << " ";
         // }
-        // std::cout << "}\n";
+        // spdlog::info("}");;
     }
 
 };

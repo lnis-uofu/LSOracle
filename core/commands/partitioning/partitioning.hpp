@@ -103,7 +103,7 @@ protected:
             ifs.close();
             return output;
         } else {
-            env->err() << "Unable to open partition data file\n";
+            spdlog::error("Unable to open partition data file");
             throw exception();
         }
     }
@@ -113,12 +113,11 @@ protected:
     {
         auto ntk = *store<gen_ntk>().current();
         if (part_file != "") {
-            env->out() << "Partitioning stored " << type_name <<
-                       " network using external file\n";
+            spdlog::info("Partitioning stored {} network using external file", type_name);
             std::map<node_type, int> part_data;
             std::vector<int> parts = read_file(part_file);
             if (parts.size() != ntk.size()) {
-                env->out() << "Partition file contains the incorrect number of nodes\n";
+                spdlog::info("Partition file contains the incorrect number of nodes");
                 exit(1);
             }
             for (int i = 0; i < parts.size(); i++) {
@@ -129,8 +128,7 @@ protected:
         } else {
 #ifdef ENABLE_GALOIS
             if (is_set("bipart")) {
-                env->out() << "Partitioning stored " << type_name <<
-                           " network using Galois BiPart\n";
+                spdlog::info("Partitioning stored {} network using Galois BiPart", type_name);
                 oracle::hypergraph<gen_names> t(ntk);
                 uint32_t num_vertices = 0;
 
@@ -152,21 +150,21 @@ protected:
             } else
 #endif
             {
-                env->out() << "Partitioning stored " << type_name << " network using KaHyPar\n";
+                spdlog::info("Partitioning stored {} network using KaHyPar", type_name);
 
                 int *node_weights = nullptr;
                 int *edge_weights = nullptr;
                 if (edge_weight_file != "") {
-                    env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
+                    spdlog::info("Reading edge weights from {}",edge_weight_file);
                     std::vector<int> data = read_file(edge_weight_file);
                     edge_weights = &data[0];
                 }
                 if (node_weight_file != "") {
-                    env->out() << "Reading node weights from " << node_weight_file << std::endl;
+                    spdlog::info("Reading node weights from {}",node_weight_file);
                     std::vector<int> data = read_file(node_weight_file);
                     if (data.size() != ntk.size()) {
-                        env->out() << "Node weight file contains the incorrect number of nodes: got " <<
-                                   data.size() << " expected " << ntk.size() << std::endl;
+                        spdlog::info("Node weight file contains the incorrect number of nodes: got {} expected {}",
+                                     data.size(), ntk.size());
                         exit(1);
                     } else {
                         node_weights = &data[0];
@@ -176,15 +174,15 @@ protected:
                 if (num_partitions == 0) {
                     num_partitions = std::max(ntk.size() / size_partitions, 1u);
                 }
-                env->out() << "Using " << num_partitions << " partitions" << std::endl;
+                spdlog::info("Using {} partitions", num_partitions);
 
                 if (config_direc == "") {
                     config_direc = make_temp_config();
                 }
-                env->out() << "Using KaHyPar configuration " << config_direc << std::endl;
+                spdlog::info("Using KaHyPar configuration {}",config_direc);
 
                 if (is_set("sap")) {
-                    env->out() << "Using structure aware partitioning" << std::endl;
+                    spdlog::info("Using structure aware partitioning");
                 }
 
                 oracle::partition_manager<gen_names> partitions(ntk, num_partitions,
@@ -206,7 +204,7 @@ protected:
                     out.open(initial_file);
                     auto init = partitions.get_initial_partitions();
                     for (auto i = init.begin(); i != init.end(); i++) {
-                        out << *i << std::endl;
+                        out << *i << std::endl;;
                     }
                     out.close();
                 }
@@ -222,13 +220,13 @@ protected:
             if (!store<mig_ntk>().empty()) {
                 process_network<mig_ntk, mig_names, part_man_mig, part_man_mig_ntk, mockturtle::mig_network::node>("MIG");
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
                 process_network<aig_ntk, aig_names, part_man_aig, part_man_aig_ntk, mockturtle::aig_network::node>("AIG");
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

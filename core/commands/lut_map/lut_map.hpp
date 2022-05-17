@@ -71,7 +71,7 @@ protected:
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>
                 (mapped, ps);
 
-                env->out() << "number of cells = " << mapped.num_cells() << "\n";
+                spdlog::info("number of cells = {}", mapped.num_cells());
 
                 const auto klut_opt =
                     mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
@@ -89,23 +89,22 @@ protected:
                 });
 
                 mockturtle::depth_view klut_depth{names_view};
-                env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth()
-                           << "\n";
-                env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth()
-                           << "\n";
-                env->out() << "Finshed LUT mapping\n";
+                spdlog::info("LUT = {} lev = {}", mapped.num_cells(), klut_depth.depth());
+
+                spdlog::info("#LUT Level Product = {}", mapped.num_cells() * klut_depth.depth());
+                spdlog::info("Finshed LUT mapping");
                 if (out_file != "") {
-                    env->out() << "filename = " << out_file << "\n";
+                    spdlog::info("filename = {}", out_file);
                     if (oracle::checkExt(out_file, "bench")) {
                         mockturtle::write_bench(names_view, out_file);
                     } else if (oracle::checkExt(out_file, "blif")) {
                         mockturtle::write_blif(names_view, out_file);
                     } else {
-                        env->err() << "Not valid output file\n";
+                        spdlog::error("Not valid output file");
                     }
                 }
             } else {
-                env->err() << "There is not an MIG network stored.\n";
+                spdlog::error("There is not an MIG network stored.");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -120,7 +119,7 @@ protected:
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>
                 (mapped, ps);
 
-                env->out() << "number of cells = " << mapped.num_cells() << "\n";
+                spdlog::info("number of cells = {}", mapped.num_cells());
 
                 const auto klut_opt =
                     mockturtle::collapse_mapped_network<mockturtle::klut_network>(mapped);
@@ -138,32 +137,30 @@ protected:
                 });
 
                 mockturtle::depth_view klut_depth{names_view};
-                // env->out() << "klut size = " << klut.size() << "\n";
+                // spdlog::info("klut size = {}", klut.size());
                 // klut.foreach_node([&](auto node){
-                //   env->out() << "Node = " << node << "\n";
+                //   spdlog::info("Node = {}", node);
                 //   klut.foreach_fanin(node, [&](auto const &conn, auto i){
-                //     env->out() << "child[" << i << "] = " << conn << "\n";
+                //     spdlog::info("child[{}] = {}", i, conn);
                 //   });
                 // });
-                env->out() << "LUT = " << mapped.num_cells() << " lev = " << klut_depth.depth()
-                           << "\n";
-                env->out() << "#LUT Level Product = " << mapped.num_cells() * klut_depth.depth()
-                           << "\n";
-                env->out() << "Finshed LUT mapping\n";
+                spdlog::info("LUT = {} lev = {}", mapped.num_cells(), klut_depth.depth());
+                spdlog::info("#LUT Level Product = {}", mapped.num_cells() * klut_depth.depth());
+                spdlog::info("Finshed LUT mapping");
                 if (out_file != "") {
-                    env->out() << "filename = " << out_file << "\n";
+                    spdlog::info("filename = {}", out_file);
                     if (oracle::checkExt(out_file, "bench")) {
                         mockturtle::write_bench(names_view, out_file);
                     } else if (oracle::checkExt(out_file, "blif")) {
-                        mockturtle::write_blif_params pm; 
+                        mockturtle::write_blif_params pm;
                         pm.skip_feedthrough = 1u;
                         mockturtle::write_blif(names_view, out_file, pm);
                     } else {
-                        env->err() << "Not valid output file\n";
+                        spdlog::error("Not valid output file");
                     }
                 }
             } else {
-                env->err() << "There is not an AIG network stored.\n";
+                spdlog::error("There is not an AIG network stored.");
             }
         }
     }

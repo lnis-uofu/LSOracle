@@ -68,11 +68,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file";
+                    spdlog::error("Unable to read aiger file");
                     return;
                 }
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -83,7 +83,7 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
@@ -96,7 +96,7 @@ protected:
                 const auto klut = *mockturtle::collapse_mapped_network<klut_names>(mapped_aig);
 
                 store<klut_ntk>().extend() = std::make_shared<klut_names>(klut);
-                env->out() << "KLUT network stored\n";
+                spdlog::info("KLUT network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -106,11 +106,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file";
+                    spdlog::error("Unable to read aiger file");
                     return;
                 }
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
-                env->out() << "XAG network stored\n";
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -120,11 +120,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file";
+                    spdlog::error("Unable to read aiger file");
                     return;
                 }
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
-                env->out() << "XMG network stored\n";
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -134,11 +134,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file";
+                    spdlog::error("Unable to read aiger file");
                     return;
                 }
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);
-                env->out() << "AIG network stored\n";
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -152,7 +152,7 @@ protected:
                 auto const result = lorina::read_blif(filename,
                                                       mockturtle::blif_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read blif file";
+                    spdlog::error("Unable to read blif file");
                     return;
                 }
 
@@ -164,7 +164,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(named_dest);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 5, filename.end());
                 names_view.set_network_name(filename);
@@ -174,12 +174,12 @@ protected:
                 auto const result = lorina::read_blif(filename,
                                                       mockturtle::blif_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read blif file";
+                    spdlog::error("Unable to read blif file");
                     return;
                 }
 
                 store<klut_ntk>().extend() = std::make_shared<klut_names>(names_view);
-                env->out() << "KLUT network stored\n";
+                spdlog::info("KLUT network stored");
 
                 filename.erase(filename.end() - 5, filename.end());
                 names_view.set_network_name(filename);
@@ -190,7 +190,7 @@ protected:
                 auto const result = lorina::read_blif(filename,
                                                       mockturtle::blif_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read blif file";
+                    spdlog::error("Unable to read blif file");
                     return;
                 }
 
@@ -202,7 +202,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(named_dest);
-                env->out() << "XAG network stored\n";
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 5, filename.end());
                 names_view.set_network_name(filename);
@@ -212,7 +212,7 @@ protected:
                 auto const result = lorina::read_blif(filename,
                                                       mockturtle::blif_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read blif file";
+                    spdlog::error("Unable to read blif file");
                     return;
                 }
 
@@ -224,7 +224,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(named_dest);
-                env->out() << "XMG network stored\n";
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 5, filename.end());
                 names_view.set_network_name(filename);
@@ -234,7 +234,7 @@ protected:
                 auto const result = lorina::read_blif(filename,
                                                       mockturtle::blif_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read blif file";
+                    spdlog::error("Unable to read blif file");
                     return;
                 }
 
@@ -246,7 +246,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(named_dest);
-                env->out() << "AIG network stored\n";
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 5, filename.end());
                 names_view.set_network_name(filename);
@@ -260,12 +260,12 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
-                env->out() << "MIG network stored" << std::endl;
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -275,7 +275,7 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
@@ -288,7 +288,7 @@ protected:
                 const auto klut = *mockturtle::collapse_mapped_network<klut_names>(mapped_aig);
 
                 store<klut_ntk>().extend() = std::make_shared<klut_names>(klut);
-                env->out() << "KLUT network stored\n";
+                spdlog::info("KLUT network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -299,28 +299,28 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
-                env->out() << "XAG network stored" << std::endl;
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
-            
+
             } else if (is_set("xmg")) {
                 mockturtle::xmg_network ntk;
                 mockturtle::names_view<mockturtle::xmg_network> names_view{ntk};
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
-                env->out() << "XMG network stored" << std::endl;
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -331,18 +331,17 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);
-                env->out() << "AIG network stored" << std::endl;
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
             }
         } else {
-            env->err() << filename <<
-                       " is not a valid input file. Accepted file extensions are .aig, .blif, and .v\n";
+            spdlog::error("{} is not a valid input file. Accepted file extensions are .aig, .blif, and .v", filename);
         }
     }
 private:

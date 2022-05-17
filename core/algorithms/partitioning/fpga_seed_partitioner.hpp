@@ -104,7 +104,7 @@ public:
         *************/
         ntk.foreach_node([&](auto node) {
             int curr_slack = slack(node);
-            std::cout << "Node = " << node << " with slack = " << curr_slack << "\n";
+            spdlog::info("Node = {} with slack {}",node, curr_slack );
             if (curr_slack > max_slack)
                 max_slack = curr_slack;
             if (!ntk.is_constant(node) && !ntk.is_pi(node))
@@ -130,10 +130,10 @@ public:
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>
                             (stop - start);
 
-            std::cout << "Finding seed: " << duration.count() << "us\n";
-            // std::cout << "first seed = " << seed << "\n";
+            spdlog::info("Finding seed: {} us",duration.count());
+            // spdlog::info("first seed = {}",seed );
             curr_cluster.add_to_cluster(ntk, seed);
-            // std::cout << "erasing " << seed << "\n";
+            // spdlog::info("erasing {}",seed );
             nodes2part.erase(seed);
             while (true) {
 
@@ -145,13 +145,13 @@ public:
                 std::set<node> connected_nodes = curr_cluster.get_conn_nodes(ntk, nodes2part);
                 stop = std::chrono::high_resolution_clock::now();
                 duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-                std::cout << "Finding all connected nodes: " << duration.count() << "us\n";
+                spdlog::info("Finding all connected nodes: {} us",duration.count());
 
-                // std::cout << "cluster size = " << curr_cluster.size() << "\n";
-                // std::cout << "number of cluster internal nodes = " << curr_cluster.num_int_nodes() << "\n";
-                // std::cout << "number of cluster inputs = " << curr_cluster.num_pis() << "\n";
-                // std::cout << "number of connected nodes = " << connected_nodes.size() << "\n";
-                // std::cout << "number of nodes to part = " << nodes2part.size() << "\n";
+                // spdlog::info("cluster size = {}",curr_cluster.size() );
+                // spdlog::info("number of cluster internal nodes = {}",curr_cluster.num_int_nodes() );
+                // spdlog::info("number of cluster inputs = {}",curr_cluster.num_pis() );
+                // spdlog::info("number of connected nodes = {}",connected_nodes.size() );
+                // spdlog::info("number of nodes to part = {}",nodes2part.size() );
                 if (connected_nodes.size() == 0)
                     break;
                 node best_node;
@@ -162,8 +162,8 @@ public:
                     double curr_attr = attraction(ntk, curr_node, curr_cluster);
                     stop = std::chrono::high_resolution_clock::now();
                     duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-                    // std::cout << "Determining attraction: " << duration.count() << "us\n";
-                    // std::cout << "curr_node = " << curr_node << " with attraction = " << curr_attr << "\n";
+                    // spdlog::info("Determining attraction: {}",duration.count() << "us");
+                    // spdlog::info("curr_node = {}",curr_node << " with attraction = " << curr_attr );
                     if (curr_attr > best_attr) {
                         best_attr = curr_attr;
                         best_node = curr_node;
@@ -172,39 +172,41 @@ public:
                 }
                 // mapped_part[best_node] = num_partitions;
                 curr_cluster.add_to_cluster(ntk, best_node);
-                // std::cout << "erasing " << best_node << "\n";
+                // spdlog::info("erasing {}",best_node );
                 nodes2part.erase(best_node);
                 auto stop1 = std::chrono::high_resolution_clock::now();
                 auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>
                                  (stop1 - start1);
-                std::cout << "Finding best node to add: " << duration1.count() << "us\n";
-                // std::cout << "done connected nodes\n";
+                spdlog::info("Finding best node to add: {} us",duration1.count());
+                // spdlog::info("done connected nodes");
             }
             std::set<node> curr_cluster_nodes = curr_cluster.get_cluster();
             // std::set<node> curr_cluster_outputs = curr_cluster.get_outputs();
             std::set<node> curr_cluster_inputs = curr_cluster.get_inputs();
-            std::cout << "Partition " << num_partitions << " = {";
+            stringstream ss;
+            ss << "Partition " << num_partitions << " = {";
             for (node curr_node : curr_cluster_nodes) {
-                std::cout << curr_node << " ";
+                ss << curr_node << " ";
                 mapped_part[curr_node] = num_partitions;
             }
-            std::cout << "}\n";
-            // std::cout << "Inputs = {";
+            ss << "}";
+            spdlog::info(ss.str);
+            // spdlog::info("Inputs = {";
             for (node curr_input : curr_cluster_inputs) {
-                // std::cout << curr_input << " ";
+                // spdlog::info(curr_input << " ";
                 if (ntk.is_pi(curr_input))
                     mapped_part[curr_input] = num_partitions;
             }
-            // std::cout << "}\n";
-            // std::cout << "Outputs = {";
+            // spdlog::info("}");
+            // spdlog::info("Outputs = {";
             // for(node curr_output : curr_cluster_outputs){
-            //   std::cout << curr_output << " ";
+            //   spdlog::info(curr_output << " ";
             //   // mapped_part[curr_output] = num_partitions;
             // }
-            // std::cout << "}\n";
+            // spdlog::info("}");
             num_partitions++;
         }
-        std::cout << "Number of partitions = " << num_partitions << "\n";
+        spdlog::info("Number of partitions = {}",num_partitions );
 
     }
 
@@ -256,8 +258,7 @@ public:
         ntk.foreach_gate([&](auto curr_node) {
             if (nodes2part.find(curr_node) != nodes2part.end()) {
                 double conn_crit = connection_crit(curr_node);
-                std::cout << "Node = " << curr_node << " with conn crit = " << conn_crit <<
-                          "\n";
+                spdlog::info("Node = {} with conn crit = ",curr_node,conn_crit);
                 if (conn_crit > max_crit) {
                     max_crit = conn_crit;
                     seed = curr_node;

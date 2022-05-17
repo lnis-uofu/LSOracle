@@ -55,26 +55,25 @@ protected:
         if (!store<xmg_ntk>().empty()) {
             auto &opt = *store<xmg_ntk>().current();
             mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> xmg_depth(opt);
-            env->out() << "XMG logic depth " << xmg_depth.depth() << " nodes " <<
-                       xmg_depth.num_gates() << std::endl;
+            spdlog::info("XMG logic depth {} nodes {}", xmg_depth.depth(),
+                       xmg_depth.num_gates());
             auto start = std::chrono::high_resolution_clock::now();
             oracle::xmg_script xmgopt;
             opt = xmgopt.run(opt);
             auto stop = std::chrono::high_resolution_clock::now();
 
             mockturtle::depth_view<mockturtle::names_view<mockturtle::xmg_network>> new_xmg_depth(opt);
-            env->out() << "Final ntk size = " << new_xmg_depth.num_gates() << " and depth = " << new_xmg_depth.depth() << "\n";
-            env->out() << "NDP = " << opt.num_gates() * new_xmg_depth.depth() << "\n";
+            spdlog::info("Final ntk size = {} and depth = {}", new_xmg_depth.num_gates(), new_xmg_depth.depth());
+            spdlog::info("NDP = {}",opt.num_gates() * new_xmg_depth.depth());
 
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                             (stop - start);
-            env->out() << "Full Optimization: " << duration.count() << "ms\n";
-            env->out() << "Finished optimization\n";
+            spdlog::info("Full Optimization: {}ms", duration.count());
+            spdlog::info("Finished optimization");
         } else {
-            env->err() << "There is not an XMG network stored.\n";
+            spdlog::error("There is not an XMG network stored.");
         }
     }
 }; //class
 ALICE_ADD_COMMAND(xmgscript, "Optimization");
 } //namespace alice
-

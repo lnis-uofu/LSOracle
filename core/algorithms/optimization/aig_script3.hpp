@@ -60,7 +60,6 @@ public:
         mockturtle::functional_reduction(aig);
 //good here
         //b
-      //  std::cout << "b\n";
       //  aig = mockturtle::balancing(aig, {balfn}, bs);
       //  aig = mockturtle::cleanup_dangling(aig);
 

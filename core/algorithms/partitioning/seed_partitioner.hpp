@@ -86,7 +86,7 @@ public:
 
         for (int i = 0; i < nodes2part.size(); i++) {
             auto curr_node = nodes2part.at(i);
-            std::cout << "Current node = " << curr_node << "\n";
+            spdlog::info("Current node = {}",curr_node );
 
             if (visited[curr_node] == true) {
                 continue;
@@ -94,27 +94,27 @@ public:
 
             int new_pi = 0;
             ntk.foreach_fanin(curr_node, [&](auto conn, auto i) {
-                std::cout << "fanin = " << conn.index << "\n";
+                spdlog::info("fanin = {}",conn.index );
                 if (visited[ntk.get_node(conn)] == false) {
                     new_pi = 1;
                 }
             });
 
             if (new_pi == 1 || ntk.is_pi(curr_node)) {
-                std::cout << "increase pi count\n";
+                spdlog::info("increase pi count");
                 num_pi++;
             } else {
-                std::cout << "increase internal node count\n";
+                spdlog::info("increase internal node count");
                 num_int++;
             }
 
             visited[curr_node] = true;
             mapped_part[curr_node] = part_idx;
-            std::cout << "num pi = " << num_pi << "\n";
-            std::cout << "num internal nodes = " << num_int << "\n";
+            spdlog::info("num pi = {}",num_pi );
+            spdlog::info("num internal nodes = {}",num_int );
 
             if (num_pi >= pi_const && num_int >= node_count_const) {
-                std::cout << "Create partition\n";
+                spdlog::info("Create partition");
                 part_idx++;
                 num_partitions++;
                 num_pi = 0;

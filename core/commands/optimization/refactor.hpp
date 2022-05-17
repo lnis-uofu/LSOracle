@@ -59,7 +59,7 @@ protected:
         mockturtle::refactoring_params ps;
         if (is_set("zero"))
             ps.allow_zero_gain = true;
-        
+
         if (is_set("dc"))
             ps.use_dont_cares = true;
 
@@ -71,7 +71,7 @@ protected:
                 mockturtle::refactoring(ntk, resyn, ps);
                 ntk = mockturtle::cleanup_dangling(ntk);
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -84,10 +84,9 @@ protected:
                 ntk = mockturtle::cleanup_dangling(ntk);
 
                 // mockturtle::depth_view depth{ntk};
-                // env->out() << "Final ntk size = " << ntk.num_gates() << " and depth = " <<
-                //            depth.depth() << "\n";
+                // spdlog::info("Final ntk size = {} and depth = {}", ntk.num_gates(),depth.depth());
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

@@ -68,9 +68,9 @@ public:
                 });
                 if (!pure) count++;
             });
-            env->out() << "Pure nodes\t" << count << std::endl;
+            spdlog::info("Pure nodes\t{}",count);
         } else {
-            env->err() << "There is not an " << name << " network stored.\n";
+            spdlog::error("There is not an {} network stored.", name);
         }
     }
 protected:

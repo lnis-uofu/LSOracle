@@ -57,8 +57,8 @@ protected:
             auto start = std::chrono::high_resolution_clock::now();
             mockturtle::depth_view mig_depth{opt};
 
-            env->out() << "Initial MIG depth " << mig_depth.depth() << " and nodes " <<
-                       opt.num_gates() << std::endl;
+            spdlog::info("Initial MIG depth {} and nodes {}", mig_depth.depth(),
+                       opt.num_gates());
 
             std::string ckt_name = "testing_mig.v";
 
@@ -72,31 +72,30 @@ protected:
                 oracle::bayes_flow_tune(ckt_name.c_str(), 4, 1, 2, 5, 10, 0, 0);
                 break;
               }
-              
+
               case 1: {
                 printf("Reducing MIG depth...\n");
                 oracle::bayes_flow_tune(ckt_name.c_str(), 4, 1, 3, 5, 10, 0, 0);
-                break; 
+                break;
                   //
               }
             }
 
             // mockturtle::depth_view new_mig_depth{opt};
-            // env->out() << "MIG logic depth " << new_mig_depth.depth() << " nodes " <<
-            //            opt.num_gates() << std::endl;
+            // spdlog::info("MIG logic depth {} nodes {}", new_mig_depth.depth(),
+            //            opt.num_gates());
 
-            // env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " <<
-            //            new_mig_depth.depth() << "\n";
-            // env->out() << "Area Delay Product = " << opt.num_gates() * new_mig_depth.depth()
-            //            << "\n";
+            // spdlog::info("Final ntk size = {} and depth = {}", opt.num_gates(),new_mig_depth.depth());
+            // spdlog::info("Area Delay Product = " << opt.num_gates() * new_mig_depth.depth()
+            //           );
             // auto stop = std::chrono::high_resolution_clock::now();
             // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
             //                 (stop - start);
-            // env->out() << "Full Optimization: " << duration.count() << "ms\n";
-            // env->out() << "Finished optimization\n";
+            // spdlog::info("Full Optimization: {}ms", duration.count());
+            // spdlog::info("Finished optimization");
 
         } else {
-            env->err() << "There is not an MIG network stored.\n";
+            spdlog::error("There is not an MIG network stored.");
         }
 
     }

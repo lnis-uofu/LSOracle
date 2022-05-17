@@ -69,13 +69,13 @@ protected:
             auto ntk_aig = store<mockturtle::aig_network>().current();
             std::string file_base = ntk_aig._storage->net_name;
             mockturtle::depth_view orig_ntk_depth{ntk_aig};
-            // env->out() << "ntk_aig size = " << ntk_aig.num_gates() << " and depth = " << orig_ntk_depth.depth() << "\n";
+            // spdlog::info("ntk_aig size = {} and depth = {}", ntk_aig.num_gates(), orig_ntk_depth.depth());
             std::string net_name = ntk_aig._storage->net_name;
 
             mockturtle::aig_script aigopt;
             ntk_aig = aigopt.run(ntk_aig);
             mockturtle::depth_view aig_opt_depth{ntk_aig};
-            // env->out() << "optimized aig network size = " << ntk_aig.num_gates() << " and depth = " << aig_opt_depth.depth() << "\n";
+            // spdlog::info("optimized aig network size = {} and depth = {}", ntk_aig.num_gates(), aig_opt_depth.depth());
 
             oracle::partition_manager<mockturtle::aig_network> partitions_aig(ntk_aig,
                     num_parts);
@@ -88,29 +88,29 @@ protected:
                     auto opt_aig = mockturtle::node_resynthesis<mockturtle::aig_network>(part_aig,
                                    resyn_aig);
                     mockturtle::depth_view part_aig_depth{opt_aig};
-                    // env->out() << "aig part size = " << opt_aig.num_gates() << " and depth = " << part_aig_depth.depth() << "\n";
+                    // spdlog::info("aig part size = {} and depth = {}", opt_aig.num_gates(), part_aig_depth.depth());
                     mockturtle::aig_script aigopt;
                     opt_aig = aigopt.run(opt_aig);
                     mockturtle::depth_view part_aig_opt_depth{opt_aig};
                     int aig_opt_size = opt_aig.num_gates();
                     int aig_opt_depth = part_aig_opt_depth.depth();
-                    // env->out() << "optimized aig part size = " << aig_opt_size << " and depth = " << aig_opt_depth << "\n";
+                    // spdlog::info("optimized aig part size = {} and depth = {}", aig_opt_size, aig_opt_depth);
 
                     auto opt_mig = mockturtle::node_resynthesis<mockturtle::mig_network>(part_aig,
                                    resyn_mig);
                     mockturtle::depth_view part_mig_depth{opt_mig};
-                    // env->out() << "mig part size = " << opt_mig.num_gates() << " and depth = " << part_mig_depth.depth() << "\n";
+                    // spdlog::info("mig part size = {} and depth = {}", opt_mig.num_gates(), part_mig_depth.depth());
                     mockturtle::mig_script migopt;
                     opt_mig = migopt.run(opt_mig);
                     mockturtle::depth_view part_mig_opt_depth{opt_mig};
                     int mig_opt_size = opt_mig.num_gates();
                     int mig_opt_depth = part_mig_opt_depth.depth();
-                    // env->out() << "optimized mig part size = " << mig_opt_size << " and depth = " << mig_opt_depth << "\n";
+                    // spdlog::info("optimized mig part size = {} and depth = {}", mig_opt_size, mig_opt_depth);
 
                     if ((aig_opt_size * aig_opt_depth) <= (mig_opt_size * mig_opt_depth)) {
-                        // env->out() << "AIG wins\n";
+                        // spdlog::info("AIG wins");
                     } else {
-                        // env->out() << "MIG wins\n";
+                        // spdlog::info("MIG wins");
                         mig_parts.push_back(i);
                     }
                 }
@@ -121,7 +121,7 @@ protected:
 
                     mig_parts = partitions_aig.get_mig_parts();
                 } else {
-                    env->err() << "Must include CNN model json file\n";
+                    spdlog::error("Must include CNN model json file");
                 }
 
             }
@@ -133,63 +133,64 @@ protected:
                     partitions_aig.get_all_partition_inputs(),
                     partitions_aig.get_all_partition_outputs(), partitions_aig.get_part_num());
 
-            // env->out() << "Scheduled optimization:\n";
-            // env->out() << "MIG Optimization = {";
+            // spdlog::info("Scheduled optimization:");
+            // spdlog::info("MIG Optimization = {";
             // for(int i = 0; i < mig_parts.size(); i++){
-            //     env->out() << mig_parts.at(i) << " ";
+            //     spdlog::info(mig_parts.at(i) << " ";
             // }
-            // env->out() << "}\n";
+            // spdlog::info("}");
 
             for (int i = 0; i < mig_parts.size(); i++) {
-                // env->out() << "Optimize partition " << mig_parts.at(i) << "\n";
+                // spdlog::info("Optimize partition " << mig_parts.at(i));
                 oracle::partition_view<mockturtle::mig_network> part =
                     partitions_mig.create_part(ntk_mig, mig_parts.at(i));
                 mockturtle::depth_view part_depth{part};
-                // env->out() << "part size = " << part.num_gates() << " and depth = " << part_depth.depth() << "\n";
+                // spdlog::info("part size = {} and depth = {}", part.num_gates(), part_depth.depth());
 
                 auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part,
                            resyn_mig);
-                // env->out() << "MIG before optimization\n";
+                // spdlog::info("MIG before optimization");
                 // opt.foreach_node([&](auto node){
-                //     env->out() << "node = " << node << "\n";
+                //     spdlog::info("node = " << node);
                 //     opt.foreach_fanin(node, [&](auto conn, auto i){
-                //         env->out() << "child[" << i << "] = " << conn.index << "\n";
+                //         spdlog::info("child[" << i << "] = " << conn.index);
                 //     });
                 // });
                 mockturtle::mig_script migopt;
                 opt = migopt.run(opt);
-                // env->out() << "MIG after optimization\n";
+                // spdlog::info("MIG after optimization");
                 // opt.foreach_node([&](auto node){
-                //     env->out() << "node = " << node << "\n";
+                //     spdlog::info("node = " << node);
                 //     opt.foreach_fanin(node, [&](auto conn, auto i){
-                //         env->out() << "child[" << i << "] = " << conn.index << "\n";
+                //         spdlog::info("child[" << i << "] = " << conn.index);
                 //     });
                 // });
                 mockturtle::depth_view part_opt_depth{opt};
-                // env->out() << "new part size = " << opt.num_gates() << " and depth = " << part_opt_depth.depth() << "\n";
+                // spdlog::info("new part size = {} and depth = {}", opt.num_gates(), part_opt_depth.depth());
 
                 partitions_mig.synchronize_part(part, opt, ntk_mig);
             }
 
-            env->out() << "MIG partitions = {";
+            stringstream ss = "MIG partitions = {";
             for (int i = 0; i < mig_parts.size(); i++) {
-                env->out() << mig_parts.at(i) << " ";
+                ss << mig_parts.at(i) << " ";
             }
-            env->out() << "}\n";
+            ss << "}";
+            spdlog::info(ss.str());
 
             partitions_mig.connect_outputs(ntk_mig);
 
             ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
             mockturtle::depth_view ntk_depth2{ntk_mig};
-            env->out() << "new ntk size = " << ntk_mig.num_gates() << " and depth = " <<
-                       ntk_depth2.depth() << "\n";
-            env->out() << "Finished optimization\n";
+            spdlog::info("new ntk size = {} and depth = {}", ntk_mig.num_gates(),
+                       ntk_depth2.depth());
+            spdlog::info("Finished optimization");
 
             mockturtle::write_verilog(ntk_mig, out_file);
 
 
         } else {
-            env->err() << "No AIG stored\n";
+            spdlog::error("No AIG stored");
         }
     }
 

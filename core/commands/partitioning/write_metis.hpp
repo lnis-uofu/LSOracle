@@ -59,7 +59,7 @@ namespace alice
         void write(string name)
         {
             if (store<std::shared_ptr<oracle::partition_manager_junior<network>>>().empty()) {
-                env->err() << name << " partitioned network not stored\n";
+                spdlog::error("{} partitioned network not stored", name);
                 return;
             }
 

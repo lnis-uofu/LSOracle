@@ -32,12 +32,12 @@ namespace alice
 
     protected:
         void execute(){
-            
+
           if(is_set("mig")){
             if(!store<mig_ntk>().empty()){
                 auto& mig = *store<mig_ntk>().current();
-                
-                //required to provide the mapping view that mockturtle_to_lut_graph wants; alternatively, could use TTs AND2 = 8, MAJ3 = E8, XOR2 = 6.  
+
+                //required to provide the mapping view that mockturtle_to_lut_graph wants; alternatively, could use TTs AND2 = 8, MAJ3 = E8, XOR2 = 6.
                 //Larger MAJ and XOR are supported in the newest mockturtle, but not a priority
                 mockturtle::mapping_view<mockturtle::mig_network, true> prelim{mig};
                 mockturtle::lut_mapping_params ps;
@@ -58,7 +58,7 @@ namespace alice
                 mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(lut_network);
 
                 if(out_file != ""){
-                  std::cout << "filename = " << out_file << "\n";
+                  spdlog::info("filename = {}", out_file);
                   if(oracle::checkExt(out_file, "bench")){
                     mockturtle::write_bench(result, out_file);
                   }
@@ -66,7 +66,7 @@ namespace alice
                     mockturtle::write_blif(result, out_file);
                   }
                   else{
-                    std::cout << "Not valid output file\n";
+                    spdlog::info("Not valid output file");
                   }
                 }
 
@@ -74,7 +74,7 @@ namespace alice
 
             }
             else{
-              std::cout << "There is not an MIG network stored.\n";
+              spdlog::info("There is not an MIG network stored.");
             }
           } //mig
           else{
@@ -94,24 +94,24 @@ namespace alice
               mapped_network = oracle::techmap::mockturtle_to_lut_graph(prelim);
               oracle::techmap::mapper* m = new oracle::techmap::mapper(mapped_network, map_param);
               oracle::techmap::graph <oracle::techmap::lut> lut_network = m->map();
-              
+
               //return to mockturtle to allow output
               mockturtle::klut_network result = oracle::techmap::lut_graph_to_mockturtle(lut_network);
 
               if(out_file != ""){
-                std::cout << "filename = " << out_file << "\n";
+                spdlog::info("filename = {}", out_file);
                 if(oracle::checkExt(out_file, "bench")){
                     mockturtle::write_bench(result, out_file);
                 } else if(oracle::checkExt(out_file, "blif")) {
                     mockturtle::write_blif(result, out_file);
                 }else{
-                    std::cout << "Not valid output file\n";
+                    spdlog::info("Not valid output file");
                 }
-              } 
+              }
               delete m;
             }
             else {
-                std::cout << "There is not an AIG network stored.\n";
+                spdlog::info("There is not an AIG network stored.");
             }
           } //aig
         }  //execute()

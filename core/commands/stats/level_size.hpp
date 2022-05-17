@@ -48,7 +48,7 @@ public:
     template <typename ntk> void dump_stats(string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<ntk>>>().empty()) {
-            env->err() << name << " network not stored\n";
+            spdlog::error("{} network not stored", name);
             return;
         }
         auto dag =
@@ -59,10 +59,10 @@ public:
 	dag_view.foreach_node([&dag_view, &levels](auto n) {
 	    levels[dag_view.level(n)]++;
 	});
-	env->out() << "Nodes per level" << std::endl;
-	env->out() << "Level\tNodes" << std::endl;
+	spdlog::info("Nodes per level");
+	spdlog::info("Level\tNodes");
 	for (size_t i = 0; i < levels.size(); i++) {
-	    env->out() << i << "\t" << levels[i] << std::endl;
+	    spdlog::info("{}\t{}", i, levels[i]);
 	}
     }
 protected:

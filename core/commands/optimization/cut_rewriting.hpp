@@ -63,20 +63,20 @@ protected:
 
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = cut_size;
-        ps.progress = true; 
+        ps.progress = true;
         if (is_set("zero"))
-            ps.allow_zero_gain = true; 
+            ps.allow_zero_gain = true;
         if (is_set("depth"))
-            ps.preserve_depth = true; 
+            ps.preserve_depth = true;
         if (is_set("dc"))
-            ps.use_dont_cares = true; 
+            ps.use_dont_cares = true;
 
         if (is_set("mig")) {
             if (!store<mig_ntk>().empty() && !is_set("algebraic")) {
                 auto &ntk_mig = *store<mig_ntk>().current();
                 mockturtle::mig_npn_resynthesis resyn;
                 mockturtle::cut_rewriting_params ps;
-                
+
                 mockturtle::cut_rewriting(ntk_mig, resyn, ps);
                 ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
             } else if (!store<mig_ntk>().empty() && is_set("algebraic")) {
@@ -87,31 +87,30 @@ protected:
                 mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
                 ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
             } else {
-                env->err() << "No MIG stored\n";
+                spdlog::error("No MIG stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
                 auto &ntk_aig = *store<aig_ntk>().current();
                 mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
-            
-                //env->out() << "CP1 ntk size = " << ntk_aig.num_gates() << "\n";
+
+                //spdlog::info("CP1 ntk size = " << ntk_aig.num_gates());
                 //mockturtle::cut_rewriting(ntk_aig, resyn, ps);
                 mockturtle::cut_rewriting_with_compatibility_graph( ntk_aig, resyn, ps );
-                //env->out() << "CP2 ntk size = " << ntk_aig.num_gates() << "\n";
+                //spdlog::info("CP2 ntk size = " << ntk_aig.num_gates());
                 ntk_aig = mockturtle::cleanup_dangling(ntk_aig);
 
                 // mockturtle::depth_view depth{ntk_aig};
-                // env->out() << "Final ntk size = " << ntk_aig.num_gates() << " and depth = " <<
-                //            depth.depth() << "\n";
+                // spdlog::info("Final ntk size = {} and depth = {}", ntk_aig.num_gates(),depth.depth());
             } else {
-                env->err() << "No AIG stored\n";
+                spdlog::error("No AIG stored");
             }
         }
 
     }
 private:
     int cut_size = 4;
-    bool algebraic = false; 
+    bool algebraic = false;
 };
 
 ALICE_ADD_COMMAND(rw, "Optimization");

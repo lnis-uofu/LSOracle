@@ -53,25 +53,23 @@ protected:
         if (!store<xag_ntk>().empty()) {
             auto &opt = *store<xag_ntk>().current();
             mockturtle::depth_view xag_depth{opt};
-            env->out() << "XAG logic depth " << xag_depth.depth() << " nodes " <<
-                       opt.num_gates() << std::endl;
+            spdlog::info("XAG logic depth {} nodes {}", xag_depth.depth(), opt.num_gates());
             auto start = std::chrono::high_resolution_clock::now();
             oracle::xag_script xagopt;
             opt = xagopt.run(opt);
 
             mockturtle::depth_view new_xag_depth{opt};
-            env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " << new_xag_depth.depth() << "\n";
-            env->out() << "Area Delay Product = " << opt.num_gates() * new_xag_depth.depth() << "\n";
+            spdlog::info("Final ntk size = {} and depth = {}", opt.num_gates(), new_xag_depth.depth());
+            spdlog::info("Area Delay Product = {}", opt.num_gates() * new_xag_depth.depth());
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                             (stop - start);
-            env->out() << "Full Optimization: " << duration.count() << "ms\n";
-            env->out() << "Finished optimization\n";
+            spdlog::info("Full Optimization: {} ms", duration.count());
+            spdlog::info("Finished optimization");
         } else {
-            env->err() << "There is not an xag network stored.\n";
+            spdlog::error("There is not an xag network stored.");
         }
     }
 }; //class
 ALICE_ADD_COMMAND(xagscript, "Optimization");
 } //namespace alice
-

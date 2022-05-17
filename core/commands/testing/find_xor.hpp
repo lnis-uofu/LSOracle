@@ -45,21 +45,21 @@ ALICE_COMMAND(find_xor, "Testing", "Convert AIG to XAG and find XOR gates")
     mockturtle::direct_resynthesis<mockturtle::xag_network> resyn_xag;
     auto xag = mockturtle::node_resynthesis<mockturtle::xag_network>(ntk,
                resyn_xag);
-    env->out() << "size = " << xag.num_gates() << "\n";
+    spdlog::info("size = " << xag.num_gates());
     xag.foreach_node([&](auto node) {
-        env->out() << "Node = " << node << "\n";
+        spdlog::info("Node = " << node);
         if (xag.is_xor(node)) {
-            env->out() << "XOR\n";
+            spdlog::info("XOR");
         }
     });
     mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
     mockturtle::cut_rewriting(xag, resyn);
     xag = mockturtle::cleanup_dangling(xag);
-    env->out() << "size = " << xag.num_gates() << "\n";
+    spdlog::info("size = " << xag.num_gates());
     xag.foreach_node([&](auto node) {
-        env->out() << "Node = " << node << "\n";
+        spdlog::info("Node = " << node);
         if (xag.is_xor(node)) {
-            env->out() << "XOR\n";
+            spdlog::info("XOR");
         }
     });
     mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
@@ -67,11 +67,11 @@ ALICE_COMMAND(find_xor, "Testing", "Convert AIG to XAG and find XOR gates")
                 resyn_aig);
     // mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn_to_aig;
     // mockturtle::cut_rewriting(aig2, resyn_to_aig);
-    env->out() << "size = " << aig2.num_gates() << "\n";
+    spdlog::info("size = " << aig2.num_gates());
     aig2.foreach_node([&](auto node) {
-        env->out() << "Node = " << node << "\n";
+        spdlog::info("Node = " << node);
         if (aig2.is_xor(node)) {
-            env->out() << "XOR\n";
+            spdlog::info("XOR");
         }
     });
     // mockturtle::write_dot(xag, "xag_test.dot");
@@ -84,9 +84,9 @@ ALICE_COMMAND(find_xor, "Testing", "Convert AIG to XAG and find XOR gates")
     // aig.create_po(e);
 
     // aig.foreach_node([&](auto node){
-    //   env->out() << "Node = " << node << "\n";
+    //   spdlog::info("Node = " << node);
     //   if(aig.is_xor(node)){
-    //     env->out() << "XOR\n";
+    //     spdlog::info("XOR");
     //   }
     // });
 }

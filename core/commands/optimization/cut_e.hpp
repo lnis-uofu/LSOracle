@@ -45,7 +45,9 @@ ALICE_COMMAND(cut_e, "Optimization",
     const mockturtle::network_cuts cuts = cut_enumeration(aig);
     //store<mockturtle::network_cuts>().extend() = cuts;
     aig.foreach_node([&](auto node) {
-        env->out() << cuts.cuts(aig.node_to_index(node)) << "\n";
+        stringstream ss;
+        ss << cuts.cuts(aig.node_to_index(node));
+        spdlog::info(ss.str());
     });
 }
 }

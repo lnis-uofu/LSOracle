@@ -54,7 +54,7 @@ protected:
     template <typename network> void convert(std::string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-            env->err() << name << " network not stored\n";
+            spdlog::error("{} network not stored", name);
             return;
         }
 	mockturtle::names_view<network> src =
@@ -67,7 +67,7 @@ protected:
 
 	store<std::shared_ptr<mockturtle::names_view<mockturtle::aig_network>>>().extend() =
 			      std::make_shared<mockturtle::names_view<mockturtle::aig_network>>(dest);
-	env->out() << "AIG network stored\n";
+	spdlog::info("AIG network stored");
     }
     void execute()
     {

@@ -59,16 +59,16 @@ protected:
             if (!store<mig_ntk>().empty()) {
                 mockturtle::resubstitution_params ps;
                 ps.max_pis = cut_size;
-                ps.max_inserts = insert; 
+                ps.max_inserts = insert;
 
                 auto &mig = *store<mig_ntk>().current();
                 mockturtle::depth_view depth_mig{mig};
                 mockturtle::fanout_view fanout_mig{depth_mig};
-                 
+
                 mockturtle::mig_resubstitution( fanout_mig, ps );
                 mig = mockturtle::cleanup_dangling( mig );
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -84,13 +84,13 @@ protected:
                 if (is_set("sim")) {
                     mockturtle::sim_resubstitution( aig, ps, &st );
                 }
-                else 
+                else
                     mockturtle::aig_resubstitution( aig, ps, &st );
 
                 aig = mockturtle::cleanup_dangling( aig );
 
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

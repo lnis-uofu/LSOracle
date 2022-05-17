@@ -58,7 +58,7 @@ protected:
     void dump_stats(std::string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-	    env->err() << name << " network not stored\n";
+	    spdlog::error("{} network not stored", name);
 	    return;
 	}
 	auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
@@ -70,15 +70,15 @@ protected:
 	for (auto curr_node : critical_path) {
 	    update_counts(counts, ntk, curr_node);
 	}
-	env->out() << "Critical path size = " << critical_path.size() << "\n"
-		   << "MAJ nodes on critical path = " << counts.maj_num << "\n"
-		   << "AND nodes on critical path = " << counts.and_num << "\n"
-		   << "OR nodes on critical path = " << counts.or_num << "\n"
-		   << "XOR3 nodes on critical path = " << counts.xor3_num << "\n"
-		   << "XOR nodes on critical path = " << counts.xor_num << "\n"
-		   << "XNOR nodes on critical path = " << counts.xnor_num << "\n"
-		   << "unknown nodes on critical path = " << counts.unknown_num << "\n"
-		   << "INPUTS on critical path = " << counts.input_num << std::endl;
+	spdlog::info("Critical path size = {}",critical_path.size() );
+    spdlog::info("MAJ nodes on critical path = {}",counts.maj_num );
+    spdlog::info("AND nodes on critical path = {}",counts.and_num );
+    spdlog::info("OR nodes on critical path = {}",counts.or_num );
+    spdlog::info("XOR3 nodes on critical path = {}",counts.xor3_num );
+    spdlog::info("XOR nodes on critical path = {}",counts.xor_num );
+    spdlog::info("XNOR nodes on critical path = {}",counts.xnor_num );
+    spdlog::info("unknown nodes on critical path = {}",counts.unknown_num );
+    spdlog::info("INPUTS on critical path = {}",counts.input_num);
     }
 
     void execute()

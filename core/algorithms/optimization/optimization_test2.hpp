@@ -76,14 +76,14 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
     /*else if(!nn_model.empty()){
-      std::cout << "Performing Classification using Neural Network\n";
+      spdlog::info("Performing Classification using Neural Network");
       partitions_aig.run_classification(ntk_aig, nn_model);
       aig_parts = partitions_aig.get_aig_parts();
       mig_parts = partitions_aig.get_mig_parts();
     }*/
     else {
-        std::cout << "Performing High Effort Classification and Optimization\n";
-        int total_size =0; 
+        spdlog::info("Performing High Effort Classification and Optimization");
+        int total_size =0;
         for (int i = 0; i < num_parts; i++) {
             oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
@@ -109,7 +109,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
              int total_size = 0;
 
             // std::string ckt_name = "x_" + std::to_string(i);
-            // printf("Dumping MIG circuit with name %s\n", ckt_name.c_str()); 
+            // printf("Dumping MIG circuit with name %s\n", ckt_name.c_str());
             // std::string out_file = ckt_name + ".v";
             // mockturtle::write_verilog_params ps;
             // mockturtle::write_verilog(original_mig, out_file, ps);
@@ -122,39 +122,39 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
                     if (!combine) {
                         if ( original_mig.num_gates() == 0 ) {
                             printf("returning, part %d has zero gates!\n", i);
-                            break; 
+                            break;
                         }
 
                         printf("Running AIG for partition %d\n", i);
                         //getchar();
                         std::string ckt_name = "x_" + std::to_string(part_counter);
-                        printf("Dumping circuit with name %s! partition has size %d! part size %d! opt part aig size %d\n", ckt_name, aig_opt_size, part.num_gates(), opt_part_aig.num_gates()); 
-                        
+                        printf("Dumping circuit with name %s! partition has size %d! part size %d! opt part aig size %d\n", ckt_name, aig_opt_size, part.num_gates(), opt_part_aig.num_gates());
+
                         std::string out_file = ckt_name + ".v";
-                        
+
                         mockturtle::write_verilog_params ps;
                         mockturtle::write_verilog(original_mig, out_file, ps);
                         // getchar();
                         part_counter++;
                         oracle::bayes_flow_tune(out_file.c_str(), 4, 1, 0, 5, 10, 0, 0);
-                       oracle::parser script; 
+                       oracle::parser script;
                         auto bayes = script.run_aig( original_aig, out_file.c_str() );
                         printf("Bayes size: %d\n", bayes.num_gates());
                         auto opt_aig_mig = *aig_to_mig(bayes, 0);
                         printf("Part size: %d\n", opt_aig_mig.num_gates());
-                        total_size += opt_aig_mig.num_gates(); 
+                        total_size += opt_aig_mig.num_gates();
                     //     mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
                     //     mockturtle::cut_rewriting_params ps;
 
-                          
+
                     //    ps.cut_enumeration_ps.cut_size = 4;
                     //     printf("beforw rw part size: %d\n", original_aig.num_gates());
-                    //     mockturtle::aig_network test1; 
+                    //     mockturtle::aig_network test1;
                     //     mockturtle::cut_rewriting_with_compatibility_graph( original_aig, resyn, ps );
                     //     original_aig = mockturtle::cleanup_dangling(original_aig);
 
                     //     printf("Part size: %d\n", original_aig.num_gates());
-                    //     total_size += original_aig.num_gates(); 
+                    //     total_size += original_aig.num_gates();
 
                     //     printf("pre mig size: %d\n", original_aig.num_gates());
                     //     auto opt_aig_mig = *aig_to_mig(original_aig, 0);
@@ -167,10 +167,10 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
                 } else {
                     mig_parts.push_back(i);
                     if (!combine) {
-                        
+
                         if ( original_mig.num_gates() == 0 ) {
                             printf("MIG returning, part %d has zero gates!\n", i);
-                            break; 
+                            break;
                         }
                         printf("Running MIG for partition %d\n", i);
                        // getchar();
@@ -184,7 +184,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
                        // ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
                     }
                 }
-                printf("Total size of individual partitions %d\n", total_size); 
+                printf("Total size of individual partitions %d\n", total_size);
             }
             break;
             case 1: {
@@ -222,7 +222,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
 
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+    spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
 
     if (combine) {
         std::vector<int> visited;
@@ -341,8 +341,8 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
         aig_parts = comb_aig_parts;
         mig_parts = comb_mig_parts;
-        std::cout << "Scheduled optimization after partition merging\n";
-        std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+        spdlog::info("Scheduled optimization after partition merging");
+        spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
     }
 
     if (!high) {

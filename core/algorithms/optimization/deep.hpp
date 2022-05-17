@@ -58,61 +58,61 @@ public:
         rp.allow_zero_gain = false;
 
         /* Interleaves AIG (try with XAIG) and MIG based optos */
-        int i = 0; 
+        int i = 0;
 
         for ( i = 0; i < effort; i++ ) {
             //rw
-            // std::cout << "rw\n";
+            // spdlog::debug("rw");
             // mockturtle::cut_rewriting(aig, resyn, ps);
             // aig = mockturtle::cleanup_dangling(aig);
-            
+
             //rf
-            std::cout << "rf\n";
+            spdlog::debug("rf");
             mockturtle::refactoring(aig, rf_resyn, rp);
             aig = mockturtle::cleanup_dangling(aig);
-                    
+
             //rw
-            std::cout << "rw\n";
+            spdlog::debug("rw");
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
             //resub
-            std::cout << "resub\n";
+            spdlog::debug("resub");
             mockturtle::aig_resubstitution(aig);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rf
-            std::cout << "rf\n";
+            spdlog::debug("rf");
             mockturtle::refactoring(aig, rf_resyn, rp);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             //resub
-            std::cout << "resub\n";
+            spdlog::debug("resub");
             mockturtle::aig_resubstitution(aig);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rwz
-            std::cout << "rwz\n";
+            spdlog::debug("rwz");
             ps.allow_zero_gain = true;
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rfz
-            std::cout << "rfz\n";
+            spdlog::debug("rfz");
             rp.allow_zero_gain = true;
             mockturtle::refactoring(aig, rf_resyn, rp);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             //rw
-            std::cout << "rw\n";
+            spdlog::debug("rw");
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             //resub
-            std::cout << "resub\n";
+            spdlog::debug("resub");
             mockturtle::aig_resubstitution(aig);
             aig = mockturtle::cleanup_dangling(aig);
-        
+
             // mockturtle::mapping_view<mockturtle::aig_network, true> mapped_aig{aig};
             // mockturtle::lut_mapping_params ps_lut;
             // ps_lut.cut_enumeration_ps.cut_size = 4;
@@ -128,9 +128,9 @@ public:
 
             // //rw
             // mockturtle::cut_rewriting(mig, resyn_mig, ps);
-            // // std::cout << "done cut rewriting\n";
+            // // spdlog::debug("done cut rewriting");
             // mig = mockturtle::cleanup_dangling(mig);
-            // // std::cout << "2\n";
+            // // spdlog::debug("2");
 
             // //rw depth
             // mockturtle::depth_view mig_ref_depth1{mig};
@@ -160,47 +160,47 @@ public:
             // aig = mockturtle::node_resynthesis<mockturtle::aig_network>( klut, resyn );
 
             //rw
-            std::cout << "rw\n";
+            spdlog::debug("rw");
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rf
-            std::cout << "rf\n";
+            spdlog::debug("rf");
             mockturtle::refactoring(aig, rf_resyn, rp);
             aig = mockturtle::cleanup_dangling(aig);
-                    
+
             //rw
-            std::cout << "rw\n";
+            spdlog::debug("rw");
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
 
             //resub
-            std::cout << "resub\n";
+            spdlog::debug("resub");
             mockturtle::aig_resubstitution(aig);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rf
-            std::cout << "rf\n";
+            spdlog::debug("rf");
             mockturtle::refactoring(aig, rf_resyn, rp);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             //resub
-            std::cout << "resub\n";
+            spdlog::debug("resub");
             mockturtle::aig_resubstitution(aig);
             aig = mockturtle::cleanup_dangling(aig);
 
             //rwz
-            std::cout << "rwz\n";
+            spdlog::debug("rwz");
             ps.allow_zero_gain = true;
             mockturtle::cut_rewriting(aig, resyn, ps);
             aig = mockturtle::cleanup_dangling(aig);
-            
+
             aig = mockturtle::balancing(aig, {balfn}, bs);
             aig = mockturtle::cleanup_dangling(aig);
             // if ( ps_lut.cut_enumeration_ps.cut_size == 8 ) {
             //     ps_lut.cut_enumeration_ps.cut_size = 2;
             // } else {
-            //     ps_lut.cut_enumeration_ps.cut_size += 2; 
+            //     ps_lut.cut_enumeration_ps.cut_size += 2;
             // }
         }
         return aig;

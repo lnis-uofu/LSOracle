@@ -85,7 +85,7 @@ namespace alice
         void partition_network(string name)
         {
             if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-                env->err() << name << " network not stored\n";
+                spdlog::error("{} network not stored", name);
                 return;
             }
             mockturtle::names_view<network> ntk =
@@ -95,21 +95,21 @@ namespace alice
             if (num_partitions == 0) {
                 num_partitions = std::max(ntk.size() / size_partitions, 1u);
             }
-            env->out() << "Using " << num_partitions << " partitions" << std::endl;
+            spdlog::info("Using {} partitions", num_partitions);
 
             int *node_weights = nullptr;
             int *edge_weights = nullptr;
             if (edge_weight_file != "") {
-                env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
+                spdlog::info("Reading edge weights from {}", edge_weight_file);
                 std::vector<int> data = read_integer_file(edge_weight_file);
                 edge_weights = &data[0];
             }
             if (node_weight_file != "") {
-                env->out() << "Reading node weights from " << node_weight_file << std::endl;
+                spdlog::info("Reading node weights from {}",node_weight_file);
                 std::vector<int> data = read_integer_file(node_weight_file);
                 if (data.size() != ntk.size()) {
-                    env->out() << "Node weight file contains the incorrect number of nodes: got " <<
-                        data.size() << " expected " << ntk.size() << std::endl;
+                    spdlog::info("Node weight file contains the incorrect number of nodes: got {} expected {}",
+                                 data.size(), ntk.size());
                     exit(1);
                 } else {
                     node_weights = &data[0];
@@ -119,7 +119,7 @@ namespace alice
             if (config_direc == "") {
                 config_direc = make_temp_config();
             }
-            env->out() << "Using KaHyPar configuration " << config_direc << std::endl;
+            spdlog::info("Using KaHyPar configuration {}",config_direc);
 
             oracle::kahypar_partitioner<network> partitioner(ntk,
                                                                   num_partitions,

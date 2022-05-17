@@ -42,22 +42,20 @@ ALICE_COMMAND(depthr, "Optimization", "Logic depth oriented MIG rewriting")
 {
     if (!store<mig_ntk>().empty()) {
         auto &mig = *store<mig_ntk>().current();
-        env->out() << "Mig gates " << mig.num_gates() << std::endl;
+        spdlog::info("Mig gates {}", mig.num_gates());
 
         //to compute at level
         mockturtle::depth_view mig_depth{mig};
 
-        env->out() << "Mig level " << mig_depth.depth() << " mig gates " <<
-                   mig.num_gates() << std::endl;
+        spdlog::info("Mig level {} mig gates {}", mig_depth.depth(), mig.num_gates());
 
         mockturtle::mig_algebraic_depth_rewriting_params pm;
         mockturtle::mig_algebraic_depth_rewriting(mig_depth, pm);
 
         mig = mockturtle::cleanup_dangling(mig);
-        env->out() << "Mig level after algebraic rewriting " << mig_depth.depth() <<
-                   " Mig gates " << mig.num_gates() << std::endl;
+        spdlog::info("Mig level after algebraic rewriting {} Mig gates {}", mig_depth.depth(), mig.num_gates());
     } else {
-        env->err() << "There is not an MIG network stored.\n";
+        spdlog::error("There is not an MIG network stored.");
     }
 }
 }

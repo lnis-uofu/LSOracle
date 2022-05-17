@@ -70,24 +70,24 @@ protected:
                         oracle::partition_view<mig_names> part = partitions.create_part(ntk, i);
                         auto nodes = part.get_node_list();
                         if (std::find(nodes.begin(), nodes.end(), node_to_find) != nodes.end()) {
-                            env->out() << "Found in partition " << i << " ";
+                            spdlog::info("Found in partition " << i << " ";
                             if (part.is_pi(node_to_find)) {
-                                env->out() << "Input\n";
+                                spdlog::info("Input");
                             } else if (is_po(part, node_to_find)) {
-                                env->out() << "Output\n";
+                                spdlog::info("Output");
                             } else if (part.is_pi(node_to_find) && is_po(part, node_to_find)) {
-                                env->out() << "Input and Output\n";
+                                spdlog::info("Input and Output");
                             } else {
-                                env->out() << "\n";
+                                spdlog::info("");
                             }
                         }
                     }
 
                 } else {
-                    env->err() << "MIG not partitioned yet\n";
+                    spdlog::error("MIG not partitioned yet");
                 }
             } else {
-                env->err() << "No MIG stored\n";
+                spdlog::error("No MIG stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -104,24 +104,24 @@ protected:
                         oracle::partition_view<aig_names> part = partitions.create_part(ntk, i);
                         auto nodes = part.get_node_list();
                         if (std::find(nodes.begin(), nodes.end(), node_to_find) != nodes.end()) {
-                            env->out() << "Found in partition " << i << " ";
+                            spdlog::info("Found in partition " << i << " ";
                             if (part.is_pi(node_to_find)) {
-                                env->out() << "Input\n";
+                                spdlog::info("Input");
                             } else if (is_po(part, node_to_find)) {
-                                env->out() << "Output\n";
+                                spdlog::info("Output");
                             } else if (part.is_pi(node_to_find) && is_po(part, node_to_find)) {
-                                env->out() << "Input and Output\n";
+                                spdlog::info("Input and Output");
                             } else {
-                                env->out() << "\n";
+                                spdlog::info("");
                             }
                         }
                     }
 
                 } else {
-                    env->err() << "AIG not partitioned yet\n";
+                    spdlog::error("AIG not partitioned yet");
                 }
             } else {
-                env->err() << "No AIG stored\n";
+                spdlog::error("No AIG stored");
             }
         }
 

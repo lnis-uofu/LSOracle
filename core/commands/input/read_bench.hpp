@@ -69,7 +69,7 @@ protected:
                                                        mockturtle::bench_reader(klut_name_view));
 
                 if (result != lorina::return_code::success)
-                    env->err() << "parsing failed\n";
+                    spdlog::error("parsing failed");
 
                 mockturtle::mig_npn_resynthesis resyn;
 
@@ -79,7 +79,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
 
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(named_dest);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 6, filename.end());
                 named_dest.set_network_name(filename);
@@ -90,7 +90,7 @@ protected:
                                                        mockturtle::bench_reader(klut_name_view));
 
                 if (result != lorina::return_code::success)
-                    env->err() << "parsing failed\n";
+                    spdlog::error("parsing failed");
 
                 mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
 
@@ -100,7 +100,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
 
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(named_dest);
-                env->out() << "XAG network stored\n";
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 6, filename.end());
                 named_dest.set_network_name(filename);
@@ -111,7 +111,7 @@ protected:
                                                        mockturtle::bench_reader(klut_name_view));
 
                 if (result != lorina::return_code::success)
-                    env->err() << "parsing failed\n";
+                    spdlog::error("parsing failed");
 
                 mockturtle::xmg_npn_resynthesis resyn;
 
@@ -121,7 +121,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, klut_name_view, resyn);
 
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(named_dest);
-                env->out() << "XMG network stored\n";
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 6, filename.end());
                 named_dest.set_network_name(filename);
@@ -133,7 +133,7 @@ protected:
                                                        mockturtle::bench_reader(names_view));
 
                 if (result != lorina::return_code::success)
-                    env->err() << "parsing failed\n";
+                    spdlog::error("parsing failed");
 
                 mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
                 mockturtle::aig_network aig;
@@ -142,7 +142,7 @@ protected:
                 mockturtle::node_resynthesis(named_dest, names_view, resyn);
 
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(named_dest);
-                env->out() << "AIG network stored\n";
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 6, filename.end());
                 named_dest.set_network_name(filename);
@@ -153,16 +153,16 @@ protected:
                                                        mockturtle::bench_reader(names_view));
 
                 if (result != lorina::return_code::success)
-                    env->err() << "parsing failed\n";
+                    spdlog::error("parsing failed");
 
                 store<klut_ntk>().extend() = std::make_shared<klut_names>(names_view);
-                env->out() << "KLUT network stored\n";
+                spdlog::info("KLUT network stored");
 
                 filename.erase(filename.end() - 6, filename.end());
                 names_view.set_network_name(filename);
             }
         } else {
-            env->err() << filename << " is not a valid bench file\n";
+            spdlog::error("{} is not a valid bench file", filename);
         }
 
     }

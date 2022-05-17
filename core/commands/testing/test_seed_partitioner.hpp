@@ -68,19 +68,19 @@ protected:
                     seed_parts.create_part_man(ntk);
                 store<oracle::partition_manager<mockturtle::mig_network>>().extend() = part_man;
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<mockturtle::aig_network>().empty()) {
                 auto ntk = store<mockturtle::aig_network>().current();
                 oracle::seed_partitioner<mockturtle::aig_network> seed_parts(ntk, num_pis,
                         num_int);
-                env->out() << "network partitioned\n";
+                spdlog::info("network partitioned");
                 oracle::partition_manager<mockturtle::aig_network> part_man =
                     seed_parts.create_part_man(ntk);
                 store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

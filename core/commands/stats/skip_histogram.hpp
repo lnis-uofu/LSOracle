@@ -72,14 +72,13 @@ public:
                     mismatch_levels++;
                 }
             });
-            env->out() << "Nodes whose fanout skip levels\t" << mismatch_levels <<
-                       std::endl;
-            env->out() << "Skip Levels\tNodes" << std::endl;
+            spdlog::info("Nodes whose fanout skip levels\t{}", mismatch_levels);
+            spdlog::info("Skip Levels\tNodes");
             for (size_t i = 0; i < skip_histogram.size(); i++) {
-                env->out() << i << "\t" << skip_histogram[i] << std::endl;
+                spdlog::info("{}\t{}", i, skip_histogram[i]);
             }
         } else {
-            env->err() << "There is not an " << name << " network stored.\n";
+            spdlog::error("There is not an {} network stored.", name);
         }
     }
 protected:

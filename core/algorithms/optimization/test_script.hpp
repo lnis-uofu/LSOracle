@@ -57,51 +57,51 @@ public:
         rp.allow_zero_gain = false;
 
         //b
-        std::cout << "b\n";
+        spdlog::debug("b");
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rw
-        std::cout << "rw\n";
+        spdlog::debug("rw");
         oracle::rw_script aigopt;
         aig = aigopt.run(aig);
 
         //rf
-        std::cout << "rf\n";
+        spdlog::debug("rf");
         mockturtle::refactoring(aig, rf_resyn, rp);
         aig = mockturtle::cleanup_dangling(aig);
 
         //b
-        std::cout << "b\n";
+        spdlog::debug("b");
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rw
-        std::cout << "rw\n";
+        spdlog::debug("rw");
         aig = aigopt.run(aig);
 
         //rwz
-        std::cout << "rw\n";
+        spdlog::debug("rw");
         aig = aigopt.run(aig);
 
         //b
-        std::cout << "b\n";
+        spdlog::debug("b");
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 
         //rfz
-        std::cout << "rfz\n";
+        spdlog::debug("rfz");
         rp.allow_zero_gain = true;
         mockturtle::refactoring(aig, rf_resyn, rp);
-        std::cout << "refactored\n";
+        spdlog::debug("refactored");
         aig = mockturtle::cleanup_dangling(aig);
 
         //rwz
-        std::cout << "rwz\n";
+        spdlog::debug("rwz");
         aig = aigopt.run(aig);
 
         //b
-        std::cout << "b\n";
+        spdlog::debug("b");
         aig = mockturtle::balancing(aig, {balfn}, bs);
         aig = mockturtle::cleanup_dangling(aig);
 

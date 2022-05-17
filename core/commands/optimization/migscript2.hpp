@@ -44,28 +44,25 @@ ALICE_COMMAND(migscript2, "Optimization", "Exact NPN MIG rewriting")
         mockturtle::depth_view mig_depth{opt};
 
         //DEPTH REWRITING
-        env->out() << "MIG logic depth " << mig_depth.depth() << " Majority nodes " <<
-                   opt.num_gates() << std::endl;
+        spdlog::info("MIG logic depth {} Majority nodes {}", mig_depth.depth(), opt.num_gates());
 
         oracle::mig_script2 migopt;
         opt = migopt.run(opt);
 
         mockturtle::depth_view new_mig_depth{opt};
-        env->out() << "MIG logic depth " << new_mig_depth.depth() << " Majority nodes "
-                   << opt.num_gates() << std::endl;
+        spdlog::info("MIG logic depth {} Majority nodes {}", opt.num_gates(), new_mig_depth.depth());
 
-        env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " <<
-                   new_mig_depth.depth() << "\n";
-        env->out() << "Area Delay Product = " << opt.num_gates() * new_mig_depth.depth()
-                   << "\n";
+        spdlog::info("Final ntk size = {} and depth = {}", opt.num_gates(), new_mig_depth.depth());
+        spdlog::info("Area Delay Product = {}", opt.num_gates() * new_mig_depth.depth()
+                  );
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);
-        env->out() << "Full Optimization: " << duration.count() << "ms\n";
-        env->out() << "Finished optimization\n";
+        spdlog::info("Full Optimization: {} ms", duration.count());
+        spdlog::info("Finished optimization");
 
     } else {
-        env->err() << "There is not an MIG network stored.\n";
+        spdlog::error("There is not an MIG network stored.");
     }
 }
 }

@@ -42,8 +42,7 @@ public:
 protected:
     void execute()
     {
-        env->out() << "Version " << LSORACLE_VERSION << " Revision " <<
-                   LSORACLE_GIT_REVISION << std::endl;
+        spdlog::info("Version {} Revision {}", LSORACLE_VERSION, LSORACLE_GIT_REVISION);
     }
 
 private:

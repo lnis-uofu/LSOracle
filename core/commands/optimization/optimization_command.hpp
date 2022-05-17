@@ -102,8 +102,7 @@ protected:
                     threshold = calculate_depth_percentile(ntk_aig);
                 }
                 if (strategy == 3) {
-                    env->out() << "Using threshold " << threshold << " max depth for optimization."
-                               << std::endl;
+                    spdlog::info("Using threshold max depth for optimization {} ", threshold);
                 }
 
                 std::copy(aig_parts.begin(), aig_parts.end(),
@@ -131,15 +130,14 @@ protected:
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
                 if (ntk_mig.size() != ntk_aig.size()
                         || orig_depth.depth() != new_depth.depth()) {
-                    env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " <<
-                               new_depth.depth() << "\n";
-                    env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-                    env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth()
-                               << "\n";
+                    spdlog::info("Final ntk size = {} and depth = {}", ntk_mig.num_gates(), new_depth.depth());
+                    spdlog::info("Final number of latches = {}", ntk_mig.num_latches());
+                    spdlog::info("Area Delay Product = {}", ntk_mig.num_gates() * new_depth.depth()
+                              );
                     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                                     (stop - start);
-                    env->out() << "Full Optimization: " << duration.count() << "ms\n";
-                    env->out() << "Finished optimization\n";
+                    spdlog::info("Full Optimization: {} ms", duration.count());
+                    spdlog::info("Finished optimization");
 
                     if (out_file != "") {
                         if (oracle::checkExt(out_file, "v")) {
@@ -150,27 +148,27 @@ protected:
                             //  ps.skip_feedthrough = 1u;
 
                             mockturtle::write_verilog(ntk_mig, out_file, ps);
-                            env->out() << "Resulting network written to " << out_file << "\n";
+                            spdlog::info("Resulting network written to {}",out_file);
                         } else if (oracle::checkExt(out_file, "blif")) {
                             mockturtle::write_blif_params ps;
                             //if(is_set("skip-feedthrough"))
                             //  ps.skip_feedthrough = 1u;
 
                             mockturtle::write_blif(ntk_mig, out_file, ps);
-                            env->out() << "Resulting network written to " << out_file << "\n";
+                            spdlog::info("Resulting network written to {}",out_file);
                         } else {
-                            env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
+                            spdlog::error("{} is not an accepted output file (.v, .blif)", out_file);
                         }
                     }
                 } else {
-                    env->out() << "No change made to network\n";
+                    spdlog::info("No change made to network");
                 }
 
             } else {
-                env->err() << "AIG not partitioned yet\n";
+                spdlog::error("AIG not partitioned yet");
             }
         } else {
-            env->err() << "No AIG stored\n";
+            spdlog::error("No AIG stored");
         }
     }
 private:

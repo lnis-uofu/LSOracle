@@ -72,7 +72,7 @@ public:
                       "Ntk does not implement the make_signal method");
 
 
-        std::cout << "num_partitions: " << part_num << "\n";
+        spdlog::info("num_partitions: {}", part_num);
 
         if (part_num == 1) {
             ntk.foreach_node([&](auto n) { node_partition[n] = 0; });
@@ -105,7 +105,7 @@ public:
         //configures kahypar
         kahypar_context_t* context = kahypar_context_new();
 
-        std::cout << "Using config file " << config_direc << std::endl;
+        spdlog::info("Using config file {}", config_direc);
         kahypar_configure_context_from_file(context, config_direc.c_str());
 
         //set number of hyperedges and vertices. These variables are defined by the hyperG command

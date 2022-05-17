@@ -52,7 +52,7 @@ ALICE_COMMAND(get_cones, "Stats",
         //number of inputs for each cone
         std::unordered_map<int, int> po_ins;
         std::unordered_map<int, int> ri_ins;
-        env->out() << "Name Index Nodes Level Inputs\n";
+        spdlog::info("Name Index Nodes Level Inputs");
         //first processing logical cones for POs
         for (int outIndex = 0; outIndex < aig.num_pos() - aig.num_latches();
                 outIndex++) {
@@ -100,8 +100,7 @@ ALICE_COMMAND(get_cones, "Stats",
             if (it != po_nodes.end())
                 inputs = init->second;
 
-            env->out() << "Output " << outIndex << " " << nodes << " " << level << " " <<
-                       inputs << std::endl;
+            spdlog::info("Output {} {} {} {}",outIndex, nodes,level, inputs);
 
         }
 
@@ -152,11 +151,10 @@ ALICE_COMMAND(get_cones, "Stats",
             if (it != po_nodes.end())
                 inputs = init->second;
 
-            env->out() << "Register " << outIndex << " " << nodes << " " << level << " " <<
-                       inputs << std::endl;
+            spdlog::info("Register {} {} {} {}",outIndex,nodes,level,inputs);
         });
     } else {
-        env->err() << "There is not an AIG network stored.\n";
+        spdlog::error("There is not an AIG network stored.");
     }
 }
 }

@@ -63,7 +63,7 @@ protected:
     void dump_stats(std::string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-	    env->err() << name << " network not stored\n";
+	    spdlog::error("{} network not stored", name);
 	    return;
 	}
 
@@ -89,7 +89,7 @@ protected:
 	// preoptimized stats
 	// TODO make optional
 	if (store<std::shared_ptr<mockturtle::names_view<original>>>().empty()) {
-	    env->err() << "Original AIG network not stored\n";
+	    spdlog::error("Original AIG network not stored");
 	} else {
 	    auto orig = *store<std::shared_ptr<mockturtle::names_view<original>>>().current();
 	    mockturtle::depth_view depth_orig(orig);
@@ -103,7 +103,7 @@ protected:
 	// Optimization stats
 	// TODO store optimization runtime and type.
 
-	stats["optimization"]["name"] = optimization;	
+	stats["optimization"]["name"] = optimization;
 	if (!(store<std::shared_ptr<oracle::partition_manager<mockturtle::names_view<original>>>>().empty())) {
 	    auto partman = *store<std::shared_ptr<oracle::partition_manager<mockturtle::names_view<original>>>>().current();
 	    stats["optimization"]["partitions"]["number"] = partman.get_part_num();
@@ -122,12 +122,12 @@ protected:
 	// TODO write timing.
 	// TODO write power
 	// TODO write techmapped area, gate counts
-	
+
 	std::ofstream output(file);
 	output << stats;
 	output.close();
 
-	env->out() << "Written to " << file << std::endl;
+	spdlog::info("Written to {}",file);
     }
 
     void execute()

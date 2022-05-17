@@ -148,3 +148,9 @@
 [submodule "benchmarks/techmapping/tigfet/sclib"]
 	path = benchmarks/techmapping/tigfet/sclib
 	url = https://github.com/lnis-uofu/TIGFET-10nm-SCLIB.git
+[submodule "lib/spdlog"]
+	path = lib/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "lib/fmt"]
+	path = lib/fmt
+	url = https://github.com/fmtlib/fmt.git

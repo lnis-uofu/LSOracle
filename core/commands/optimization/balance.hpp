@@ -67,9 +67,9 @@ protected:
             if (!store<mig_ntk>().empty()) {
                 auto& ntk = store<mockturtle::mig_network>().current();
                 // oracle::balancing( ntk );
-                env->err() << "Not implemented yet\n";
+                spdlog::error("Not implemented yet");
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -82,10 +82,9 @@ protected:
                 balanced_ntk = mockturtle::cleanup_dangling(balanced_ntk);
 
                 //mockturtle::depth_view depth{balanced_ntk};
-                // env->out() << "Final ntk size = " << ntk.num_gates() << " and depth = " <<
-                //            depth.depth() << "\n";
+                // spdlog::info("Final ntk size = {} and depth = {}", ntk.num_gates(),depth.depth());
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

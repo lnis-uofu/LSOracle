@@ -63,15 +63,14 @@ public:
                     fanout_histogram[fanout]++;
                 }
             });
-            env->out() << "Node counts by number of fanouts" << std::endl;;
-            env->out() << "Fanout\tNodes" << std::endl;
+            spdlog::info("Node counts by number of fanouts");;
+            spdlog::info("Fanout\tNodes");
             for (size_t i = 0; i < fanout_histogram.size() - 1; i++) {
-                env->out() << i << "\t" << fanout_histogram[i] << std::endl;
+                spdlog::info("{}\t{}", i, fanout_histogram[i]);
             }
-            env->out() << ">=" << (fanout_histogram.size() - 1) << "\t" <<
-                       fanout_histogram[fanout_histogram.size() - 1] << std::endl;
+            spdlog::info(">={}\t{}", (fanout_histogram.size() - 1), fanout_histogram[fanout_histogram.size() - 1]);
         } else {
-            env->err() << "There is not an " << name << " network stored.\n";
+            spdlog::error("There is not an {} network stored.", name);
         }
     }
 protected:

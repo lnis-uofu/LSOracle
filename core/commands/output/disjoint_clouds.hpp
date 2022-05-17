@@ -128,11 +128,11 @@ protected:
                 dset << element.second << std::endl;
             }
 
-            env->out() << "Number of disjoint graphs: " << uf.getNumbOfSets() << std::endl;
+            spdlog::info("Number of disjoint graphs: {}",uf.getNumbOfSets());
 
             dset.close();
         } else {
-            env->err() << "There is not an AIG network stored.\n";
+            spdlog::error("There is not an AIG network stored.");
         }
     }
 private:

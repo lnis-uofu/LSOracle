@@ -67,11 +67,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file." << std::endl;
+                    spdlog::error("Unable to read aiger file.");
                     return;
                 }
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -81,11 +81,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file." << std::endl;
+                    spdlog::error("Unable to read aiger file.");
                     return;
                 }
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
-                env->out() << "XAG network stored\n";
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -95,11 +95,11 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file";
+                    spdlog::error("Unable to read aiger file");
                     return;
                 }
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
-                env->out() << "XMG network stored\n";
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
@@ -109,18 +109,18 @@ protected:
                 lorina::return_code result = lorina::read_aiger(filename,
                                              mockturtle::aiger_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read aiger file." << std::endl;
+                    spdlog::error("Unable to read aiger file.");
                     return;
                 }
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);
-                env->out() << "AIG network stored\n";
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 4, filename.end());
                 names_view.set_network_name(filename);
             }
 
         } else {
-            env->err() << filename << " is not a valid aig file\n";
+            spdlog::error("{} is not a valid aig file", filename);
         }
     }
 private:

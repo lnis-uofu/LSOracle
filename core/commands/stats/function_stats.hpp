@@ -57,21 +57,21 @@ protected:
     template <typename network> void dump_stats(string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-            env->err() << name << " network not stored\n";
+            spdlog::error("{} network not stored", name);
             return;
         }
         auto ntk =
             *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
 	oracle::function_counts counts = oracle::node_functions(ntk);
-        env->out() << "MAJ nodes internally = " << counts.maj_num << "\n";
-        env->out() << "AND nodes internally = " << counts.and_num << "\n";
-        env->out() << "OR nodes internally = " << counts.or_num << "\n";
-        env->out() << "XOR3 nodes internally = " << counts.xor3_num << "\n";
-        env->out() << "XOR nodes internally = " << counts.xor_num << "\n";
-        env->out() << "XNOR nodes internally = " << counts.xnor_num << "\n";
-        env->out() << "Unknown nodes internally = " << counts.unknown_num << "\n";
-        env->out() << "Input nodes internally = " << counts.input_num << "\n";
+        spdlog::info("MAJ nodes internally = {}",counts.maj_num);
+        spdlog::info("AND nodes internally = {}",counts.and_num);
+        spdlog::info("OR nodes internally = {}",counts.or_num);
+        spdlog::info("XOR3 nodes internally = {}",counts.xor3_num);
+        spdlog::info("XOR nodes internally = {}",counts.xor_num);
+        spdlog::info("XNOR nodes internally = {}",counts.xnor_num);
+        spdlog::info("Unknown nodes internally = {}",counts.unknown_num);
+        spdlog::info("Input nodes internally = {}",counts.input_num);
     }
     void execute()
     {

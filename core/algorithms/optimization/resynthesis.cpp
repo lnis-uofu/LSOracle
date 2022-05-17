@@ -79,10 +79,24 @@ using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 using xmg_manager = partition_manager_junior<mockturtle::xmg_network>;
 using xmg_partition = mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>>;
 
+std::string strategy_name(optimization_strategy strategy)
+{
+    switch (strategy) {
+    case optimization_strategy::depth:
+        return "depth";
+    case optimization_strategy::balanced:
+        return "balanced";
+    case optimization_strategy::size:
+        return "size";
+    default:
+        return "unknown";
+    }
+}
+
 template<typename T>
 std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
 {
-    std::cout << "starting basic techmapping" << std::endl;
+    spdlog::info("starting basic techmapping" );
     std::string input_blif, output_verilog, abc_script;
     if (temp_prefix.empty()) {
         char *blif = strdup("/tmp/lsoracle_XXXXXX.blif");
@@ -108,14 +122,14 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
         abc_script = fmt::format("{}.{}.tech.abc", temp_prefix, optimal.get_network_name());
     }
 
-    std::cout << "generated blif " << input_blif << std::endl;
-    std::cout << "writing output to " << output_verilog << std::endl;
-    std::cout << "generated ABC script " << abc_script << std::endl;
+    spdlog::info("generated blif {}", input_blif );
+    spdlog::info("writing output to {}", output_verilog );
+    spdlog::info("generated ABC script {}", abc_script );
 
     std::ofstream script(abc_script);
     script << "print_fanio; " << tech_script << "; print_fanio;" << std::endl;
     script.close();
-    std::cout << "calling ABC" << std::endl;
+    spdlog::info("calling ABC" );
     mockturtle::write_blif_params ps;
     ps.skip_feedthrough = 1u;
     mockturtle::write_blif(optimal, input_blif, ps);
@@ -123,7 +137,7 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
                        " -o " + output_verilog +
                        " " + input_blif).c_str());
     assert(code == 0);
-    std::cout << "done techmapping" << std::endl;
+    spdlog::info("done techmapping" );
     // TODO close everything
     return output_verilog;
 };
@@ -140,7 +154,7 @@ template <typename network> std::string get_po_name_or_default(const network &nt
         return ntk.get_output_name(index);
     } else {
         int digits_out = std::to_string(ntk.num_pos()).length();
-        // std::cout << "missing output name for index " << index << std::endl;
+        // spdlog::info("missing output name for index {}", index );
         return fmt::format("po__{0:0{1}}", index, digits_out);
     }
 }
@@ -153,7 +167,7 @@ std::string get_pi_name_or_default(const network &ntk, const typename network::n
     if (ntk.has_name(signal)) {
         return ntk.get_name(signal);
     } else {
-        // std::cout << "missing name for PI node " << node << std::endl;
+        // spdlog::info("missing name for PI node {}", node );
         int digits_in = std::to_string(ntk.num_pis()).length();
         return fmt::format("pi__{0:0{1}}", node, digits_in);
     }
@@ -169,7 +183,7 @@ std::string get_node_name_or_default(const network &ntk, const typename network:
         if (ntk.has_name(signal)) {
             return  ntk.get_name(signal);
         } else {
-            // std::cout << "missing name for non-PI node " << node << std::endl;
+            // spdlog::info("missing name for non-PI node {}", node );
             int digits_gate = std::to_string(ntk.num_gates()).length();
             return fmt::format("node__{0:0{1}}", node, digits_gate);
         }
@@ -183,7 +197,7 @@ std::string get_ri_name_or_default(const network &ntk, const typename network::s
         return ntk.get_name(signal);
     } else {
         typename network::node node = ntk.get_node(signal);
-        // std::cout << "missing name for RI node " << node << std::endl;
+        // spdlog::info("missing name for RI node {}", node );
         int digits_in = std::to_string(ntk.num_registers()).length();
         return fmt::format("ri__{0:0{1}}", node, digits_in);
     }
@@ -210,7 +224,7 @@ template <typename network> void fix_names(partition_manager_junior<network> &pa
         part.set_output_name(i, name);
     });
     if (feedthrough > 0 ) {
-        std::cout << "Skipped renaming for " << feedthrough << " feedthrough." << std::endl;
+        spdlog::info("Skipped renaming for {} feedthrough", feedthrough);
     }
 }
 
@@ -235,7 +249,7 @@ mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_ma
         part.set_output_name(i, name);
     });
     if (feedthrough > 0 ) {
-        std::cout << "Skipped renaming for " << feedthrough << " feedthrough." << std::endl;
+        spdlog::info("Skipped renaming for {} feedthrough", feedthrough);
     }
     return part;
 }
@@ -496,14 +510,14 @@ public:
             throw std::exception();
         }
         std::string blif_name = std::string(blif_name_char);
-        std::cout << "writing blif to " << blif_name  << std::endl;
+        spdlog::info("writing blif to {}", blif_name  );
 
         char *blif_output_name_char = strdup("/tmp/lsoracle_XXXXXX_optimized.blif");
         if (mkstemps(blif_output_name_char, 15) == -1) {
             throw std::exception();
         }
         std::string blif_output_name = std::string(blif_output_name_char);
-        std::cout << "writing abc output to " << blif_output_name  << std::endl;
+        spdlog::info("writing abc output to {}", blif_output_name  );
 
         mockturtle::write_blif_params ps;
         ps.skip_feedthrough = 1u;
@@ -511,7 +525,7 @@ public:
         std::string script = "abc -c \"read_blif " + blif_name + "; resyn2; write_blif " + blif_output_name + " \"";
         int code = system((script).c_str());
         assert(code == 0);
-        std::cout << "optimized with abc" << std::endl;
+        spdlog::info("optimized with abc" );
 
         mockturtle::names_view<mockturtle::klut_network> klut;
         lorina::return_code read_blif_return_code = lorina::read_blif(blif_output_name, mockturtle::blif_reader(klut));
@@ -941,11 +955,11 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
                              const std::string &abc_exec)
 
 {
-    std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
-    std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
+    spdlog::info("******************************** optimizing partition {} ********************************", index);
+    spdlog::info("Optimizing based on strategy {}", comparator.name() );
     // mockturtle::window_view<mockturtle::names_view<network>> orig = partman.partition(index);
     // mockturtle::depth_view part_depth(orig);
-    // std::cout << "Original depth " << part_depth.depth() << " gates " << part_depth.num_gates() << " size " << part_depth.size() << std::endl;
+    // spdlog::info("Original depth {} gates {} size {}", part_depth.depth(), part_depth.num_gates(), part_depth.size() );
     // todo this is gonna leak memory.
     // const mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
     // todo remove double network.
@@ -967,15 +981,14 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
    };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
-        std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
-        // std::cout << "converting network" << std::endl;
+        spdlog::info("running optimization {}", (*opt)->optimizer_name() );
+        // spdlog::info("converting network" );
         (*opt)->convert();
-        // std::cout << "trying to optimize" << std::endl;
+        // spdlog::info("trying to optimize" );
         (*opt)->optimize();
-        // std::cout << "checking tech independent metrics." << std::endl;
+        // spdlog::info("checking tech independent metrics." );
         node_depth result = (*opt)->independent_metric();
-        std::cout << "result depth " << result.depth
-                  << " size " << result.nodes << std::endl;
+        spdlog::info("result depth {} size {}", result.depth, result.nodes );
 
         if (best == nullptr) {
             best = *opt;
@@ -984,11 +997,11 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
 
         if (comparator(**opt, *best)) {
             best = *opt;
-            //std::cout << "found a better result" << std::endl;
+            //spdlog::info("found a better result" );
             continue;
         }
     }
-    std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
+    spdlog::info("using {} for {}", best->optimizer_name(), index );
 
     return best;
 
@@ -1048,7 +1061,7 @@ void write_child(int index,
                  std::ofstream &verilog,
                  optimizer<network> *optimizer)
 {
-    std::cout << "writing out instance for partition " << index << std::endl;
+    spdlog::info("writing out instance for partition {}", index);
     verilog << "partition_" << index << " partition_" << index << "_inst (\n";
     mockturtle::names_view<network> &ntk = partman.get_network();
     mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
@@ -1077,7 +1090,7 @@ string techmap(
     const string &clock,
     const string &temp_prefix)
 {
-    std::cout << "Starting techmap." << std::endl;
+    spdlog::info("Starting techmap." );
     // Write out verilog
     char *output = strdup("/tmp/lsoracle_XXXXXX.combined.v");
     if (mkstemps(output, 11) == -1) {
@@ -1085,7 +1098,7 @@ string techmap(
     }
     std::string output_file = std::string(output);
     // std::string output_file = fmt::format("{}.work.v", temp_prefix);
-    std::cout << "Writing out to " << output_file << std::endl;
+    spdlog::info("Writing out to {}", output_file );
 
     std::ofstream verilog(output_file);
     verilog << "// Generated by LSOracle" << std::endl;
@@ -1093,18 +1106,18 @@ string techmap(
     // add all partition modules to verilog file.
     int num_parts = partitions.count();
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "******************************** techmapping partition " << i << " ********************************" << std::endl;
+        spdlog::info("******************************** techmapping partition {} ********************************", i);
         optimizer<network> *opt = optimized[i];
-        std::cout << "using optimizer " << opt->optimizer_name() << std::endl;
+        spdlog::info("using optimizer {}", opt->optimizer_name() );
         std::string module_file = opt->techmap(liberty_file, temp_prefix);
-        std::cout << "writing results" << std::endl;
+        spdlog::info("writing results" );
         verilog << "// Partition " << i << std::endl;
         std::ifstream module(module_file);
         verilog << module.rdbuf();
         verilog << std::endl;
         module.close();
     }
-    std::cout << "sub-modules written" << std::endl;
+    spdlog::info("sub-modules written" );
 
     verilog << "// Mappings" << std::endl;
     std::ifstream mappings(mappings_file);
@@ -1125,7 +1138,7 @@ void print_path(sta::ConcreteInstance *i)
     if (sta::ConcreteInstance *p = i->parent()) {
         print_path(p);
     }
-    std::cout << "/" << i->name();
+    spdlog::info("/{}", i->name());
 }
 
 const std::regex inst_reg("partition_([0-9]+)_inst");
@@ -1160,7 +1173,7 @@ void write_top(oracle::partition_manager_junior<network> &partitions,
 
     // gather output names
     std::set<std::string> outputs;
-    // std::cout << "gathering po names." << std::endl;
+    // spdlog::info("gathering po names." );
     ntk.foreach_po([&outputs, &ntk](typename network::signal signal) {
         outputs.insert(escape_id(get_po_name_or_default(ntk, signal)));
     });
@@ -1168,7 +1181,7 @@ void write_top(oracle::partition_manager_junior<network> &partitions,
 
     // gather input names
     std::set<std::string> inputs;
-    // std::cout << "gathering pi names." << std::endl;
+    // spdlog::info("gathering pi names." );
     ntk.foreach_pi([&inputs, &ntk](typename network::node node) {
         inputs.insert(escape_id(get_pi_name_or_default(ntk, node)));
     });
@@ -1262,14 +1275,14 @@ size_t run_timing(sta::LibertyLibrary *lib,
     bool linked = sta::Sta::sta()->linkDesign(design.c_str());
     assert(linked); // << "Failed to link";
 
-    std::cout << "Attempting to read sdc " << sdc_file << std::endl;
+    spdlog::info("Attempting to read sdc {}", sdc_file );
     std::string read_sdc = "sta::read_sdc " + sdc_file;
     int a = Tcl_Eval(sta::Sta::sta()->tclInterp(), read_sdc.c_str());
     assert(a == 0);
     int b = Tcl_Eval(sta::Sta::sta()->tclInterp(), "sta::report_checks > /tmp/test.monkey");
     assert(b == 0);
 
-    std::cout << "running timing" << std::endl;
+    spdlog::info("running timing" );
     // sta::MinPeriodCheck *min = sta::Sta::sta()->minPeriodSlack();
     // // sta::MinPeriodCheck min{nullptr, nullptr};
     // sta::MinPeriodCheckSeq viol = sta::Sta::sta()->minPeriodViolations();
@@ -1297,14 +1310,14 @@ size_t run_timing(sta::LibertyLibrary *lib,
     sta::CellSeq cells;
     sta::PatternMatch *pattern = new sta::PatternMatch("**", false, false, nullptr);
     net->findCellsMatching(reinterpret_cast<const sta::Library*>(lib), pattern, &cells);
-    std::cout << "Number of cells " << cells.size() << std::endl;
+    spdlog::info("Number of cells {}", cells.size() );
     double area = 0;
     for (sta::Cell *cell: cells) {
         sta::ConcreteCell *ce = reinterpret_cast<sta::ConcreteCell*>(cell);
         sta::LibertyCell *c = ce->libertyCell();
         area += c->area();
     }
-    std::cout << "Area " << area << std::endl;
+    spdlog::info("Area {}", area );
 
     std::vector<float> budget(parts, 0.0);
     sta::PathRef second = worst_path_slack;
@@ -1312,20 +1325,19 @@ size_t run_timing(sta::LibertyLibrary *lib,
     sta::TimingArc *arc;
     while(!second.isNull()) {
         sta::ConcretePin *pin_2 = reinterpret_cast<sta::ConcretePin*>(second.pin(sta::Sta::sta()));
-        std::cout << "found pin " << pin_2->name();
-        std::cout << " slack " << second.slack(sta::Sta::sta());
-        std::cout << " arrival " << second.arrival(sta::Sta::sta());
+        spdlog::info("found pin {}", pin_2->name());
+        spdlog::info(" slack {}", second.slack(sta::Sta::sta()));
+        spdlog::info(" arrival {}", second.arrival(sta::Sta::sta()));
         if (sta::ConcreteInstance *inst = pin_2->instance()) {
-            std::cout << " on instance ";
+            spdlog::info(" on instance ");
             print_path(inst);
         }
         if (pin_2->net()) {
-            std::cout << " on net " << pin_2->net()->name();
+            spdlog::info(" on net {}", pin_2->net()->name());
         }
         if (pin_2->term()) {
-            std::cout << " on term " << pin_2->term()->name();
+            spdlog::info(" on term {}", pin_2->term()->name());
         }
-        std::cout << std::endl;
 
         int index = get_partition_from_inst(pin_2->instance());
         if (index >= 0) {
@@ -1410,16 +1422,9 @@ xmg_names setup_output(
     xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
 
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
-        switch (optimized[i]->target()) {
-        case optimization_strategy::depth: std::cout << "depth";
-            break;
-        case optimization_strategy::balanced: std::cout << "balanced";
-            break;
-        case optimization_strategy::size: std::cout << "size";
-            break;
-        }
-        std::cout << std::endl;
+
+        std::string name = strategy_name(optimized[i]->target());
+        spdlog::info("Partition {} {} {}", i, optimized[i]->optimizer_name(), name);
         if (optimized[i]->optimizer_name() != "noop") {
             // const xmg_partition part = fix_names2(partitions_out, i);
             const xmg_partition part = partitions_out.partition(i);
@@ -1432,7 +1437,7 @@ xmg_names setup_output(
         }
     }
     partitions_out.substitute_nodes();
-    std::cout << "Finished connecting outputs" << std::endl;
+    spdlog::info("Finished connecting outputs" );
     return partitions_out.get_network();
 }
 
@@ -1465,7 +1470,7 @@ template <typename network> xmg_names optimize_timing(
     while (true) {
         //reset_sta(); // todo not cleaning up
         verilog = techmap(partitions, optimized, abc_exec, liberty_file, mapping_file, clock, temp_prefix);
-        std::cout << "Wrote techmapped verilog to " << verilog << std::endl;
+        spdlog::info("Wrote techmapped verilog to {}", verilog );
         std::vector<optimization_strategy> strats(optimized.size(), optimization_strategy::size);
         for (int i = 0; i < optimized.size(); i++) {
             strats[i] = optimized[i]->target();
@@ -1474,11 +1479,11 @@ template <typename network> xmg_names optimize_timing(
         size_t worst_part = run_timing(lib, liberty_file, verilog, sdc_file, design, partitions.count(), strats);
         // TODO if this is worse than last result, rollback and finish.
         if (worst_part == -1) {
-            std::cout << "met timing" << std::endl;
+            spdlog::info("met timing" );
             break;
         }
         if (worst_part == -2) {  // TODO this is terrible way to use return value
-            std::cout << "exhausted depth optimization for critical path" << std::endl;
+            spdlog::info("exhausted depth optimization for critical path" );
             break;
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
@@ -1488,7 +1493,7 @@ template <typename network> xmg_names optimize_timing(
             d_strategy<network> strategy;
             optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
-            std::cout << "previous result was already the best we can do." << std::endl;
+            spdlog::info("previous result was already the best we can do." );
             break; // met timing, or it's the best we can do.
         } else {
             throw "exhausted types";
@@ -1525,11 +1530,11 @@ template <typename network> xmg_names optimize_resynthesis(
         size_t worst_part = worst_indep<network>(partitions, strats);
         // TODO if this is worse than last result, rollback and finish.
         if (worst_part == -1) {
-            std::cout << "met timing" << std::endl;
+            spdlog::info("met timing" );
             break;
         }
         if (worst_part == -2) {  // TODO this is terrible way to use return value
-            std::cout << "exhausted depth optimization for critical path" << std::endl;
+            spdlog::info("exhausted depth optimization for critical path" );
             break;
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
@@ -1539,7 +1544,7 @@ template <typename network> xmg_names optimize_resynthesis(
             d_strategy<network> strategy;
             optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
-            std::cout << "previous result was already the best we can do." << std::endl;
+            spdlog::info("previous result was already the best we can do." );
             break; // met timing, or it's the best we can do.
         } else {
             throw "exhausted types";
@@ -1563,17 +1568,19 @@ xmg_names optimize_basic (
   std::vector<optimizer<network>*> optimized(num_parts);
   optimization_strategy_comparator<network> *target;
   switch (strategy) {
-  case optimization_strategy::depth: std::cout << "depth";
+  case optimization_strategy::depth:
+      spdlog::info("depth");
       target = new d_strategy<network>();
       break;
-  case optimization_strategy::balanced: std::cout << "balanced";
+  case optimization_strategy::balanced:
+      spdlog::info("balanced");
       target = new ndp_strategy<network>();
       break;
-  case optimization_strategy::size: std::cout << "size";
+  case optimization_strategy::size:
+      spdlog::info("size");
       target = new n_strategy<network>();
       break;
   }
-  std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
     optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);
   }

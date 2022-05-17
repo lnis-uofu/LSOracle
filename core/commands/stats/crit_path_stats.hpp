@@ -76,7 +76,7 @@ protected:
             int and_num = 0;
             int input_num = 0;
 
-            env->out() << "Critical path size = " << critical_path.size() << "\n";
+            spdlog::info("Critical path size = {}", critical_path.size());
             for (auto curr_node : critical_path) {
                 if (ntk.is_pi(curr_node)) {
                     input_num++;
@@ -86,18 +86,18 @@ protected:
                 } else {
                     maj_num++;
                 }
-                // env->out() << "Node = " << curr_node << "\n";
+                // spdlog::info("Node = " << curr_node);
                 // ntk.foreach_fanin(curr_node, [&](auto child, auto i){
-                //   env->out() << "child[" << i << "] = " << child.index << "\n";
+                //   spdlog::info("child[" << i << "] = " << child.index);
                 // });
             }
 
-            env->out() << "MAJ nodes on critical path = " << maj_num << "\n";
-            env->out() << "AND nodes on critical path = " << and_num << "\n";
-            env->out() << "INPUTS on critical path = " << input_num << "\n";
+            spdlog::info("MAJ nodes on critical path = {}",maj_num);
+            spdlog::info("AND nodes on critical path = {}",and_num);
+            spdlog::info("INPUTS on critical path = {}",input_num);
 
         } else {
-            env->err() << "MIG network not stored\n";
+            spdlog::error("MIG network not stored");
         }
 
     }

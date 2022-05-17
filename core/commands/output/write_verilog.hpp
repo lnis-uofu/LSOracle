@@ -67,32 +67,32 @@ protected:
                     auto &mig = *store<mig_ntk>().current();
                     mockturtle::write_verilog(mig, filename, ps);
                 } else {
-                    env->err() << "There is not an MIG network stored.\n";
+                    spdlog::error("There is not an MIG network stored.");
                 }
             } else if (is_set("xag")) {
                 if (!store<xag_ntk>().empty()) {
                     auto &xag = *store<xag_ntk>().current();
                     mockturtle::write_verilog(xag, filename, ps);
                 } else {
-                    env->err() << "There is not an XAG network stored.\n";
+                    spdlog::error("There is not an XAG network stored.");
                 }
             } else if (is_set("xmg")) {
                 if (!store<xmg_ntk>().empty()) {
                     auto &xmg = *store<xmg_ntk>().current();
                     mockturtle::write_verilog(xmg, filename, ps);
                 } else {
-                    env->err() << "There is not an XMG network stored.\n";
+                    spdlog::error("There is not an XMG network stored.");
                 }
             } else {
                 if (!store<aig_ntk>().empty()) {
                     auto &aig = *store<aig_ntk>().current();
                     mockturtle::write_verilog(aig, filename, ps);
                 } else {
-                    env->err() << "There is not an AIG network stored.\n";
+                    spdlog::error("There is not an AIG network stored.");
                 }
             }
         } else {
-            env->err() << filename << " is not a valid verilog file\n";
+            spdlog::error("{} is not a valid verilog file", filename);
         }
     }
 private:

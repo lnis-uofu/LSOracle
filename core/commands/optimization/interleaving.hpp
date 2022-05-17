@@ -51,7 +51,7 @@ ALICE_COMMAND(interleaving, "Optimization", "NPN + depth MIG rewriting")
         mockturtle::cut_rewriting(mig, resyn, ps);
         mig = mockturtle::cleanup_dangling(mig);
     } else {
-        env->err() << "There is not an MIG network stored.\n";
+        spdlog::error("There is not an MIG network stored.");
     }
 
 }

@@ -244,8 +244,7 @@ struct graph {
 
     void freeze()
     {
-        std::cout << "freezing graph...";
-        fflush(stdout);
+        spdlog::debug("freezing graph...");
         node_fanin_nodes = std::vector<std::vector<size_t>>{nodes.size()};
         node_fanout_nodes = std::vector<std::vector<size_t>>{nodes.size()};
 
@@ -254,7 +253,7 @@ struct graph {
         compute_reverse_topological_ordering();
 
         frozen = true;
-        std::cout << "done\n";
+        spdlog::debug("done");
     }
 
     void unfreeze()
@@ -430,7 +429,7 @@ struct graph {
         for (std::optional<connection> const& conn : g.connections) {
             if (conn) {
                 remaining_edges = true;
-                std::cout << conn->from << " -> " << conn->to << '\n';
+                spdlog::debug("{} -> {}",conn->from, conn->to);
             }
         }
 
@@ -477,7 +476,7 @@ struct graph {
         for (std::optional<connection> const& conn : g.connections) {
             if (conn) {
                 remaining_edges = true;
-                std::cout << conn->from << " -> " << conn->to << '\n';
+                spdlog::debug("{} -> {}", conn->from, conn->to);
             }
         }
 
@@ -517,7 +516,7 @@ struct graph {
         for (std::optional<connection> const& conn : g.connections) {
             if (conn) {
                 remaining_edges = true;
-                std::cout << conn->from << " -> " << conn->to << '\n';
+                spdlog::debug("{} -> {}",conn->from, conn->to);
             }
         }
 
@@ -589,12 +588,8 @@ struct graph {
 
                     for (unsigned int fanin_node = 0; fanin_node < fanin.size(); fanin_node++) {
                         if (values.find(fanin[fanin_node]) == values.end()) {
-                            std::cout << "while simulating cut [";
-                            for (size_t input : c.inputs) {
-                                std::cout << input << ", ";
-                            }
-                            std::cout << "] -> " << c.output << ":\n";
-                            std::cout << "at node " << fanin[fanin_node] << ":\n";
+                            stringstream ss;
+                            spdlog::error("while simulating cut [{}] at node {}", c.output, fanin[fanin_node]);
                             throw std::logic_error{"fanin node not in simulation values"};
                         }
                         node_mask |= int{values.at(fanin[fanin_node])} << fanin_node;
@@ -696,9 +691,9 @@ public:
     {
         g.freeze();
 
-        std::cout << "Input graph has " << g.nodes.size() << " nodes and " << g.connections.size() << " edges.\n";
+        spdlog::debug("Input graph has {} nodes and {} edges", g.nodes.size(), g.connections.size());
 
-        std::cout << "Mapping phase 1: prioritise depth.\n";
+        spdlog::debug("Mapping phase 1: prioritise depth.");
         enumerate_cuts(false, false);
 
         // After depth mapping, recalculate node slacks.
@@ -706,7 +701,7 @@ public:
 
         //derive_mapping();
 
-        std::cout << "Mapping phase 2: prioritise global area.\n";
+        spdlog::debug("Mapping phase 2: prioritise global area.");
         enumerate_cuts(true, false);
 
         //derive_mapping();
@@ -715,7 +710,7 @@ public:
 
         //derive_mapping();
 
-        std::cout << "Mapping phase 3: prioritise local area.\n";
+        spdlog::debug("Mapping phase 3: prioritise local area.");
         enumerate_cuts(true, true);
 
         //derive_mapping();
@@ -724,7 +719,7 @@ public:
 
         print_stats();
 
-        std::cout << "Deriving the final mapping of the network.\n";
+        spdlog::debug("Deriving the final mapping of the network.");
         return derive_mapping(true);
     }
 
@@ -781,16 +776,17 @@ private:
                 if (std::all_of(cut_set.begin(), cut_set.end(), [&](cut const& c) {
                     return cut_depth(c, info) > info[node].required;
                 })) {
-                    std::cout << "Required time of node " << node << " is " << info[node].required << '\n';
-                    std::cout << "Depth of cuts:\n";
+                    spdlog::debug("Required time of node {} is {}", node, info[node].required);
+                    stringstream ss;
+                    ss << "Depth of cuts:";
                     for (cut const& c : cut_set) {
-                        std::cout << "[";
+                        ss << "[";
                         for (size_t input : c.inputs) {
-                            std::cout << input << " @ " << cut_depth(*info[input].selected_cut, info) << ", ";
+                            ss <<input << " @ " << cut_depth(*info[input].selected_cut, info) << ", ";
                         }
-                        std::cout << "] -> " << c.output << " = " << cut_depth(c, info) << '\n';
+                        ss << "] -> n" << c.output << " = " << cut_depth(c, info) << '\n';
                     }
-                    fflush(stdout);
+                    spdlog::debug(ss.str());
                 }
 
                 cut_set.erase(std::remove_if(cut_set.begin(), cut_set.end(), [&](cut const& c) {
@@ -854,10 +850,9 @@ private:
             }
         }
 
-        std::cout << "Maximum depth of network is " << max_depth << '\n';
+        spdlog::debug("Maximum depth of network is {}", max_depth);
 
-        std::cout << "Propagating arrival times...";
-        fflush(stdout);
+        spdlog::debug("Propagating arrival times...");
 
         // Next, initialise the node required times.
         for (mapping_info& node : info) {
@@ -874,7 +869,7 @@ private:
                 }
                 unsigned int required = info[node].required - settings.lut_delay[info[node].selected_cut->input_count()];
                 for (size_t cut_input : info[node].selected_cut->inputs) {
-                    //std::cout << "Setting required time of node " << cut_input << " to " << std::min(info[cut_input].required, required) << '\n';
+                    spdlog::debug("Setting required time of node {} to {} {}", cut_input, std::min(info[cut_input].required, required));
                     info[cut_input].required = std::min(info[cut_input].required, required);
 
                     if (info[cut_input].required >= info[node].required) {
@@ -890,7 +885,7 @@ private:
                 }
             }
         }
-        std::cout << "done\n";
+        spdlog::debug("done");
     }
 
     void print_stats() const
@@ -951,10 +946,10 @@ private:
 
         size_t total_luts = 0;
         for (int lut_size = 1; lut_size <= settings.cut_input_limit; lut_size++) {
-            std::cout << "LUT" << lut_size << ": " << lut_stats[lut_size] << '\n';
+            spdlog::debug("LUT {}: {}", lut_size, lut_stats[lut_size]);
             total_luts += lut_stats[lut_size];
         }
-        std::cout << "LUTs: " << total_luts << '\n';
+        spdlog::debug("LUTs: {}", total_luts);
     }
 
     graph<lut> derive_mapping(bool simulate) const
@@ -1059,7 +1054,7 @@ private:
 
         // Start with the cut set of input zero.
         if (node_inputs.empty()) {
-            std::cout << "node: " << node << '\n';
+            spdlog::debug("node: {}", node);
             throw std::logic_error{"node_cut_set called on node without fanin"};
         }
 
@@ -1186,8 +1181,7 @@ private:
         for (size_t cut_input : c.inputs) {
             if (std::holds_alternative<cell>(g.nodes[cut_input])) {
                 if (info.at(cut_input).references <= 0) {
-                    std::cout << "At node " << cut_input << ":\n";
-                    fflush(stdout);
+                    spdlog::error("At node {}: exact_area_deref: bug: decremented node reference below zero", cut_input);
                     throw std::logic_error{"exact_area_deref: bug: decremented node reference below zero"};
                 }
 
@@ -1222,8 +1216,7 @@ private:
         for (size_t cut_input : c.inputs) {
             if (std::holds_alternative<cell>(g.nodes[cut_input])) {
                 if (info.at(cut_input).references <= 0) {
-                    std::cout << "At node " << cut_input << ":\n";
-                    fflush(stdout);
+                    spdlog::debug("At node ", cut_input, ":");
                     throw std::logic_error{"cut_deref: bug: decremented node reference below zero"};
                 }
 
@@ -1327,7 +1320,7 @@ mockturtle::klut_network lut_graph_to_mockturtle(graph<lut> const& g)
     for (size_t po : g.primary_outputs) {
         for (size_t fanin : g.compute_node_fanin_nodes(po)) {
             if (node_to_mockturtle.find(fanin) == node_to_mockturtle.end()) {
-                std::cout << "Node " << fanin << " not in node_to_mockturtle\n";
+                spdlog::debug("Node ", fanin, " not in node_to_mockturtle");
             }
             node_to_mockturtle.insert({po, ntk.create_po(node_to_mockturtle.at(fanin))});
             break;

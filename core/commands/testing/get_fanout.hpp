@@ -60,26 +60,28 @@ protected:
 
                 auto ntk = *store<mig_ntk>().current();
                 mockturtle::fanout_view fanout{ntk};
-                env->out() << "Fanout of " << nodeIdx << " = {";
+                stringstream ss;
+                ss << "Fanout of " << nodeIdx << " = {";
                 fanout.foreach_fanout(ntk.index_to_node(nodeIdx), [&](auto const & p) {
-                    env->out() << p << " ";
+                    ss << p << " ";
                 });
-                env->out() << "}\n";
+                ss << "}";
+                spdlog::info(ss.str());
             } else {
-                env->err() << "No MIG stored\n";
+                spdlog::error("No MIG stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
 
                 auto ntk = *store<aig_ntk>().current();
                 mockturtle::fanout_view fanout{ntk};
-                env->out() << "Fanout of " << nodeIdx << " = {";
+                spdlog::info("Fanout of " << nodeIdx << " = {";
                 fanout.foreach_fanout(ntk.index_to_node(nodeIdx), [&](auto const & p) {
-                    env->out() << p << " ";
+                    spdlog::info(p << " ";
                 });
-                env->out() << "}\n";
+                spdlog::info("}");
             } else {
-                env->err() << "No AIG stored\n";
+                spdlog::error("No AIG stored");
             }
         }
 

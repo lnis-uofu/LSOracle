@@ -156,11 +156,11 @@ public:
             std::vector<node> seed = find_seed(ntk);
             curr_cluster.add_to_cluster(ntk, seed);
 
-            env->out() << "Seed = {";
+            spdlog::info("Seed = {";
             for (int i = 0; i < seed.size(); i++) {
-                env->out() << seed.at(i) << " ";
+                spdlog::info(seed.at(i) << " ";
             }
-            env->out() << "}\n";
+            spdlog::info("}");
 
             while (true) {
                 if ((curr_cluster.num_pis() >= pi_const
@@ -168,19 +168,19 @@ public:
                     break;
 
                 std::set<node> connected_nodes = curr_cluster.get_conn_nodes(ntk, nodes2part);
-                env->out() << "number of connected_nodes = " << connected_nodes.size() << "\n";
+                spdlog::info("number of connected_nodes = " << connected_nodes.size());
                 for (auto node : connected_nodes) {
-                    env->out() << node << " ";
+                    spdlog::info(node << " ";
                 }
-                env->out() << "\n";
+                spdlog::info("");
                 if (connected_nodes.size() == 0)
                     break;
 
                 double best_attr = -1.0;
                 std::vector<node> best_node;
                 for (node curr_node : connected_nodes) {
-                    env->out() << "curr_node = " << curr_node << " in pattern = " <<
-                               in_pattern[curr_node] << "\n";
+                    spdlog::info("curr_node = {} in pattern = {}", curr_node,
+                               in_pattern[curr_node]);
                     if (in_pattern[curr_node]) {
                         std::vector<node> pattern;
                         int pattern_num = 0;
@@ -202,8 +202,8 @@ public:
                         double curr_attr = attraction(ntk, curr_node, curr_cluster);
                         // stop = std::chrono::high_resolution_clock::now();
                         // duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-                        // env->out() << "Determining attraction: " << duration.count() << "us\n";
-                        // env->out() << "curr_node = " << curr_node << " with attraction = " << curr_attr << "\n";
+                        // spdlog::info("Determining attraction: {}us", duration.count());
+                        // spdlog::info("curr_node = {} with attraction = {}", curr_node, curr_attr);
                         if (curr_attr > best_attr) {
                             best_attr = curr_attr;
                             best_node = {curr_node};
@@ -221,28 +221,28 @@ public:
             std::set<node> curr_cluster_nodes = curr_cluster.get_cluster();
             // std::set<node> curr_cluster_outputs = curr_cluster.get_outputs();
             std::set<node> curr_cluster_inputs = curr_cluster.get_inputs();
-            env->out() << "Partition " << num_partitions << " = {";
+            spdlog::info("Partition " << num_partitions << " = {";
             for (node curr_node : curr_cluster_nodes) {
-                env->out() << curr_node << " ";
+                spdlog::info(curr_node << " ";
                 mapped_part[curr_node] = num_partitions;
             }
-            env->out() << "}\n";
-            // env->out() << "Inputs = {";
+            spdlog::info("}");
+            // spdlog::info("Inputs = {";
             for (node curr_input : curr_cluster_inputs) {
-                // env->out() << curr_input << " ";
+                // spdlog::info(curr_input << " ";
                 if (ntk.is_pi(curr_input))
                     mapped_part[curr_input] = num_partitions;
             }
-            // env->out() << "}\n";
-            // env->out() << "Outputs = {";
+            // spdlog::info("}");
+            // spdlog::info("Outputs = {";
             // for(node curr_output : curr_cluster_outputs){
-            //   env->out() << curr_output << " ";
+            //   spdlog::info(curr_output << " ";
             //   // mapped_part[curr_output] = num_partitions;
             // }
-            // env->out() << "}\n";
+            // spdlog::info("}");
             num_partitions++;
         }
-        env->out() << "Number of partitions = " << num_partitions << "\n";
+        spdlog::info("Number of partitions = " << num_partitions);
     }
 
 private:
@@ -514,7 +514,7 @@ private:
             });
 
         } else {
-            env->err() << "circuit too small\n";
+            spdlog::error("circuit too small");
         }
 
         return xor_nodes;
@@ -523,8 +523,8 @@ private:
     double connection_crit(oracle::slack_view<Ntk> slack_view,
                            mockturtle::fanout_view<Ntk> fanout, node curr_node)
     {
-        env->out() << "slack = " << slack_view.slack(curr_node) <<
-                   " and fanout size of " << fanout.fanout(curr_node).size() << "\n";
+        spdlog::info("slack = " << slack_view.slack(curr_node) <<
+                   " and fanout size of " << fanout.fanout(curr_node).size());
         return (1.0 - (slack_view.slack(curr_node) / slack_view.get_max_slack())) +
                fanout.fanout(curr_node).size();
     }
@@ -541,14 +541,14 @@ private:
                     std::sort(xor_groups.at(i).begin(), xor_groups.at(i).end());
                     node output = xor_groups.at(i).back();
                     double conn_crit = connection_crit(slack_view, fanout, output);
-                    env->out() << "Node = " << output << " with conn crit = " << conn_crit << "\n";
+                    spdlog::info("Node = {} with conn crit = {}", output, conn_crit);
                     if (conn_crit > max_crit) {
                         max_crit = conn_crit;
                         seed = xor_groups.at(i);
                     }
                 }
             }
-            env->out() << "Pattern seed added\n";
+            spdlog::info("Pattern seed added");
             patt2part.erase(seed);
             for (int i = 0; i < seed.size(); i++) {
                 nodes2part.erase(seed.at(i));
@@ -557,8 +557,8 @@ private:
             ntk.foreach_gate([&](auto curr_node) {
                 if (nodes2part.find(curr_node) != nodes2part.end()) {
                     double conn_crit = connection_crit(slack_view, fanout, curr_node);
-                    env->out() << "Node = " << curr_node << " with conn crit = " << conn_crit <<
-                               "\n";
+                    spdlog::info("Node = {} with conn crit = {}", curr_node, conn_crit <<
+                               "");
                     if (conn_crit > max_crit) {
                         max_crit = conn_crit;
                         seed = {curr_node};
@@ -566,7 +566,7 @@ private:
                 }
             });
 
-            env->out() << "node seed added = " << seed.at(0) << "\n";
+            spdlog::info("node seed added = " << seed.at(0));
             nodes2part.erase(seed.at(0));
         }
 

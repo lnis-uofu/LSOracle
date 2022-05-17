@@ -102,14 +102,14 @@ public:
             }
         }
 
-        env->out() << "xors found = " << xor_groups.size() << "\n";
+        spdlog::info("xors found = " << xor_groups.size());
         for (int i = 0; i < xor_groups.size(); i++) {
-            env->out() << "XOR group " << i + 1 << " = {";
+            spdlog::info("XOR group " << i + 1 << " = {";
             typename std::set<node>::iterator it;
             for (it = xor_groups.at(i).begin(); it != xor_groups.at(i).end(); ++it) {
-                env->out() << *it << " ";
+                spdlog::info(*it << " ";
             }
-            env->out() << "}\n";
+            spdlog::info("}");
         }
     }
 

@@ -61,11 +61,11 @@ protected:
     void resynth(string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-            env->err() << "No " << name << " stored\n";
+            spdlog::error("No {} stored", name);
             return;
         }
         if (store<std::shared_ptr<oracle::partition_manager_junior<network>>>().empty()) {
-            env->err() << name << " not partitioned yet\n";
+            spdlog::error("{} not partitioned yet", name);
             return;
         }
 
@@ -86,19 +86,16 @@ protected:
         mockturtle::depth_view new_depth{ntk_result};
         if (ntk_result.size() == ntk.size()
                 && orig_depth.depth() == new_depth.depth()) {
-            env->err() << "No change made to network" << std::endl;
+            spdlog::error("No change made to network");
         }
 
-        env->out() << "Final ntk size = " << ntk_result.num_gates() << " and depth = "
-                   << new_depth.depth() << "\n";
-        env->out() << "Final number of latches = " << ntk_result.num_latches() << "\n";
-        env->out() << "Node Depth Product = "
-                   << ntk_result.num_gates() * new_depth.depth()
-                   << "\n";
+        spdlog::info("Final ntk size = {} and depth = {}", ntk_result.num_gates(), new_depth.depth());
+        spdlog::info("Final number of latches = {}", ntk_result.num_latches());
+        spdlog::info("Node Depth Product = {}", ntk_result.num_gates() * new_depth.depth());
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);
-        env->out() << "Full Optimization: " << duration.count() << "ms\n";
-        env->out() << "Finished optimization\n";
+        spdlog::info("Full Optimization: {}ms", duration.count());
+        spdlog::info("Finished optimization");
         store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
 			      std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
     }

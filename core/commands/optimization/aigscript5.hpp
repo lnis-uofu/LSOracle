@@ -47,26 +47,25 @@ ALICE_COMMAND(aigscript5, "Optimization",
         mockturtle::depth_view aig_depth{opt};
 
         //DEPTH REWRITING
-        // env->out() << "AIG logic depth " << aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+        // spdlog::info("AIG logic depth {} nodes {}", aig_depth.depth(), opt.num_gates());
 
         oracle::aig_script5 aigopt;
         opt = aigopt.run(opt);
 
         mockturtle::depth_view new_aig_depth{opt};
-        // env->out() << "AIG logic depth " << new_aig_depth.depth() << " nodes " << opt.num_gates() << std::endl;
+        // spdlog::info("AIG logic depth {} nodes {}", new_aig_depth.depth(), opt.num_gates());
 
-        env->out() << "Final ntk size = " << opt.num_gates() << " and depth = " <<
-                   new_aig_depth.depth() << "\n";
-        env->out() << "Area Delay Product = " << opt.num_gates() * new_aig_depth.depth()
-                   << "\n";
+        spdlog::info("Final ntk size = {} and depth = {}", opt.num_gates(), new_aig_depth.depth());
+        spdlog::info(*"Area Delay Product = ", opt.num_gates() * new_aig_depth.depth()
+                  );
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);
-        // env->out() << "Full Optimization: " << duration.count() << "ms\n";
-        // env->out() << "Finished optimization\n";
+        // spdlog::info("Full Optimization: {}ms", duration.count());
+        // spdlog::info("Finished optimization");
 
     } else {
-        env->err() << "There is not an AIG network stored.\n";
+        spdlog::error("There is not an AIG network stored.");
     }
 
 }

@@ -108,9 +108,7 @@ void read_network_file(std::string input_file)
         alice::store<mockturtle::mig_network>().extend() = mig;
     } else {
         /* unknown file type, error out */
-        std::cout << "Error: Unable to recognize the file type of " << input_file <<
-                  "!\n";
-        std::cout << "Supported files types are [.blif|.bench|.aig]\n";
+        spdlog::error("Error: Unable to recognize the file type of {}! Supported files types are [.blif|.bench|.aig]", input_file);
         exit(GTS_FAIL);
     }
 
@@ -133,7 +131,7 @@ void run_gts(x_gts_opts gts_opts)
         /* Check existence */
         if (FALSE == file_exist(filenames[ifile])) {
             /* error out */
-            std::cout << "Error: File (" << filenames[ifile] << ") does not exist!\n";
+            spdlog::error("File ({}) does not exist!", filenames[ifile]);
             exit(GTS_FAIL);
         }
     }
@@ -142,8 +140,7 @@ void run_gts(x_gts_opts gts_opts)
         read_network_file(filenames[ifile]);
         if (TRUE == alice::store<mockturtle::aig_network>().empty()) {
             /* error out */
-            std::cout << "Error: No logic network read from (" << filenames[ifile] <<
-                      ")!\n";
+            spdlog::error("No logic network read from ({})!", filenames[ifile]);
             exit(GTS_FAIL);
         }
         /* Run partitioner */

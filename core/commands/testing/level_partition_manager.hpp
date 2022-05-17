@@ -77,23 +77,23 @@ public:
         ntk.foreach_node([&](auto node) {
             visited[node] = false;
         });
-        env->out() << "Cutset Variables = {";
+        spdlog::info("Cutset Variables = {";
         typename std::set<node>::iterator it;
         for (it = shared_io.begin(); it != shared_io.end(); ++it) {
-            env->out() << *it << " ";
+            spdlog::info(*it << " ";
             visited[*it] = true;
         }
-        env->out() << "}\n";
+        spdlog::info("}");
         levels[0] = shared_io;
         compute_level_nodes(ntk, shared_io, visited);
-        env->out() << "Number of levels = " << levels.size() << "\n";
+        spdlog::info("Number of levels = " << levels.size());
         for (auto level_it = levels.rbegin(); level_it != levels.rend(); ++level_it) {
             std::set<node> curr_level = level_it->second;
-            env->out() << "\nLevel " << level_it->first << " = {";
+            spdlog::info("\nLevel " << level_it->first << " = {";
             for (it = curr_level.begin(); it != curr_level.end(); ++it) {
-                env->out() << *it << " ";
+                spdlog::info(*it << " ";
             }
-            env->out() << "}\n";
+            spdlog::info("}");
         }
     }
 
@@ -149,11 +149,11 @@ private:
 
         typename std::set<node>::iterator it;
         for (it = prev_level.begin(); it != prev_level.end(); ++it) {
-            // env->out() << "Current node = " << *it << "\n";
+            // spdlog::info("Current node = " << *it);
             fanout_ntk.foreach_fanout(*it, [&](const auto & p) {
                 if (curr_level.find(p) == curr_level.end()
                         && prev_level.find(p) == prev_level.end() && !visited[p]) {
-                    // env->out() << "Adding fanout " << p << " to current level set\n";
+                    // spdlog::info("Adding fanout {} to current level set", p);
                     curr_level.insert(p);
                     visited[p] = true;
                 }
@@ -163,7 +163,7 @@ private:
                 auto node = ntk.get_node(fanin);
                 if (curr_level.find(node) == curr_level.end()
                         && prev_level.find(node) == prev_level.end() && !visited[node]) {
-                    // env->out() << "Adding fanin " << node << " to current level set\n";
+                    // spdlog::info("Adding fanin {} to current level set", node);
                     curr_level.insert(node);
                     visited[node] = true;
                 }

@@ -35,8 +35,22 @@ target_compile_definitions(kahypar PUBLIC "LIN64")
 target_compile_options(kahypar PRIVATE -w)
 
 #Literally everything that isn't KaHyPar goes here
+if (LOCAL_FMT)
+  add_subdirectory(fmt) # must go before mockturtle and alice
+else()
+  find_package(fmt)
+endif()
+
+if (LOCAL_SPDLOG)
+  set(SPDLOG_FMT_EXTERNAL ON)
+  add_subdirectory(spdlog)
+else()
+  find_package(spdlog)
+endif()
+
 add_subdirectory(mockturtle)
 add_subdirectory(alice)
+
 
 if (${ENABLE_GALOIS})
   add_subdirectory(Galois EXCLUDE_FROM_ALL)

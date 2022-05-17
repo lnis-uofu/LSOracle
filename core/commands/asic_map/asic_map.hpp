@@ -79,21 +79,21 @@ protected:
                     });
                     for (std::pair<std::string, int> npnclass : npn_count) {
                         if (npnclass.first.size() > 8)
-                            env->out() << setw(20)  << npnclass.first << ":\t" << npnclass.second << "\n";
+                            spdlog::debug("{}{}:\t{}",setw(20), npnclass.first, npnclass.second);
                     }
                 } else {
-                    env->err() << "There is not an AIG network stored.\n";
+                    spdlog::error("There is not an AIG network stored.");
                 }
             } else {
                 if (!store<mig_ntk>().empty()) {
-                    env->out() << "Beginning tech-mapping\n";
+                    spdlog::info("Beginning tech-mapping");
                     auto &mig = *store<mig_ntk>().current();
                     mockturtle::topo_view mig_topo{mig};
                     mockturtle::mapping_view <mockturtle::mig_network, true> mapped_mig{mig_topo};
                     mockturtle::lut_mapping_params ps;
                     ps.cut_enumeration_ps.cut_size = 6;
                     ps.cut_enumeration_ps.cut_limit = 6;
-                    env->out() << "LUT mapping\n";
+                    spdlog::info("LUT mapping");
                     mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>
                     (mapped_mig, ps);
                     const auto klut_opt =
@@ -114,22 +114,22 @@ protected:
                     });
                     for (std::pair<std::string, int> npnclass : npn_count) {
                         if (npnclass.first.size() > 8)
-                            env->out() << setw(20)  << npnclass.first << ":\t" << npnclass.second << "\n";
+                            spdlog::debug("{}{}:\t{}",setw(20), npnclass.first, npnclass.second);
                     }
                 } else {
-                    env->err() << "There is not an MIG network stored.\n";
+                    spdlog::error("There is not an MIG network stored.");
                 }
             }
         } else if (is_set("aig")) {
             if (!store<aig_ntk>().empty()) {
-                env->out() << "Beginning tech-mapping\n";
+                spdlog::info("Beginning tech-mapping");
                 auto &aig = *store<aig_ntk>().current();
                 mockturtle::topo_view aig_topo{aig};
                 mockturtle::mapping_view <mockturtle::aig_network, true> mapped_aig{aig_topo};
                 mockturtle::lut_mapping_params ps;
                 ps.cut_enumeration_ps.cut_size = 4;
                 ps.cut_enumeration_ps.cut_limit = 4;
-                env->out() << "LUT mapping\n";
+                spdlog::info("LUT mapping");
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::aig_network, true>, true>
                 (mapped_aig, ps);
                 const auto klut_opt =
@@ -142,27 +142,27 @@ protected:
                                        (klut_topo);
                 mockturtle::write_bench(std::get<0>(techmap_test),
                                         filename + "Techmapped.bench");
-                env->out() << "Outputing mapped netlist\n";
+                spdlog::info("Outputing mapped netlist");
                 oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename,
                                                  std::get<1>(techmap_test), "test_top");
                 mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)),
                                         filename + "cleanup.bench");
                 mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
-                // env->out() << "\n\nFinal network size: " << std::get<1>(techmap_test).size() << " Depth: " << mapped_depth.depth()<<"\n";
+                // spdlog::info("Final network size: {} Depth: {}", std::get<1>(techmap_test).size(), mapped_depth.depth());
 
             } else {
-                env->err() << "There is not an AIG network stored.\n";
+                spdlog::error("There is not an AIG network stored.");
             }
         } else {
             if (!store<mig_ntk>().empty()) {
-                env->out() << "Beginning tech-mapping\n";
+                spdlog::info("Beginning tech-mapping");
                 auto &mig = *store<mig_ntk>().current();
                 mockturtle::topo_view mig_topo{mig};
                 mockturtle::mapping_view <mockturtle::mig_network, true> mapped_mig{mig_topo};
                 mockturtle::lut_mapping_params ps;
                 ps.cut_enumeration_ps.cut_size = 4;
                 ps.cut_enumeration_ps.cut_limit = 4;
-                env->out() << "LUT mapping\n";
+                spdlog::info("LUT mapping");
                 mockturtle::lut_mapping<mockturtle::mapping_view<mockturtle::mig_network, true>, true>
                 (mapped_mig, ps);
                 const auto klut_opt =
@@ -175,17 +175,16 @@ protected:
                                        (klut_topo);
                 mockturtle::write_bench(std::get<0>(techmap_test),
                                         filename + "Techmapped.bench");
-                env->out() << "Outputing mapped netlist\n";
+                spdlog::info("Outputing mapped netlist");
                 oracle::write_techmapped_verilog(std::get<0>(techmap_test), filename,
                                                  std::get<1>(techmap_test), "top");
                 mockturtle::write_bench(mockturtle::cleanup_dangling(std::get<0>(techmap_test)),
                                         filename + "cleanup.bench");
                 mockturtle::depth_view mapped_depth {std::get<0>(techmap_test)};
-                env->out() << "\n\nFinal network size: " << std::get<1>(techmap_test).size() <<
-                           " Depth: " << mapped_depth.depth() << "\n";
+                spdlog::info"Final network size: {} Depth: {}",std::get<1>(techmap_test).size(), mapped_depth.depth());
 
             } else {
-                env->err() << "There is not an MIG network stored.\n";
+                spdlog::error("There is not an MIG network stored.");
             }
         }
 

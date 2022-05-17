@@ -63,44 +63,45 @@ protected:
                     double node_num = 0.0;
                     for (int i = 0; i < num_part; i++) {
                         oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
-                        env->out() << "\n\nPartition " << i << "\n";
-                        env->out() << "Number of PI = " << part.num_pis() << "\n";
-                        env->out() << "Number of PO = " << part.num_pos() << "\n";
-                        env->out() << "Number of latches = " << part.num_latches() << "\n";
-                        env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
-                        env->out() << "Partition volume = " << double(part.num_gates()) / double(
-                                       part.num_pis()) << "\n";
+                        spdlog::info("Partition {}",i);
+                        spdlog::info("Number of PI = {}",part.num_pis());
+                        spdlog::info("Number of PO = {}",part.num_pos());
+                        spdlog::info("Number of latches = {}",part.num_latches());
+                        spdlog::info("Number of internal nodes = {}",part.num_gates());
+                        spdlog::info("Partition volume = {}",double(part.num_gates()) / double(part.num_pis()));
                         node_num += double(part.num_gates()) / double(part.num_pis());
-                        // env->out() << "Inputs = {";
+                        // spdlog::info("Inputs = {";
                         // part.foreach_pi([&](auto pi){
-                        //   env->out() << pi << " ";
+                        //   spdlog::info(pi << " ";
                         // });
-                        // env->out() << "}\n";
-                        // env->out() << "Outputs = {";
+                        // spdlog::info("}");
+                        // spdlog::info("Outputs = {";
                         // part.foreach_po([&](auto conn, auto i){
-                        //   env->out() << conn.index << " ";
+                        //   spdlog::info(conn.index << " ";
                         // });
-                        // env->out() << "}\n";
-                        // env->out() << "Nodes = {";
+                        // spdlog::info("}");
+                        // spdlog::info("Nodes = {";
                         // part.foreach_gate([&](auto node){
-                        //   env->out() << node << " ";
+                        //   spdlog::info(node << " ";
                         // });
-                        // env->out() << "}\n";
+                        // spdlog::info("}");
                         std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
                         std::set<int>::iterator it;
-                        env->out() << "connected partitions = {";
+                        stringstream ss;
+                        ss << "connected partitions = {";
                         for (it = connected_parts.begin(); it != connected_parts.end(); ++it) {
-                            env->out() << *it << " ";
+                            ss << *it << " ";
                         }
-                        env->out() << "}\n";
+                        ss << "}";
+                        spdlog::info(ss.str());
                     }
                     node_num = node_num / (double)num_part;
-                    env->out() << "Average nodes per partition: " << node_num << "\n";
+                    spdlog::info("Average nodes per partition: {}",node_num);
                 } else {
-                    env->err() << "MIG not partitioned yet\n";
+                    spdlog::error("MIG not partitioned yet");
                 }
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -111,45 +112,46 @@ protected:
                     double node_num = 0.0;
                     for (int i = 0; i < num_part; i++) {
                         oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
-                        env->out() << "\n\nPartition " << i << "\n";
-                        env->out() << "Number of PI = " << part.num_pis() << "\n";
-                        env->out() << "Number of PO = " << part.num_pos() << "\n";
-                        env->out() << "Number of latches = " << part.num_latches() << "\n";
-                        env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
+                        spdlog::info("\n\nPartition {}",i);
+                        spdlog::info("Number of PI = {}",part.num_pis());
+                        spdlog::info("Number of PO = {}",part.num_pos());
+                        spdlog::info("Number of latches = {}",part.num_latches());
+                        spdlog::info("Number of internal nodes = {}",part.num_gates());
 
-                        env->out() << "Partition volume = " << double(part.num_gates()) / double(
-                                       part.num_pis()) << "\n";
+                        spdlog::info("Partition volume = {}",double(part.num_gates()) / double(
+                                       part.num_pis()));
                         node_num += double(part.num_gates()) / double(part.num_pis());
-                        env->out() << "Inputs = {";
+                        stringstream ss;
+                        ss << "Inputs = {";
                         part.foreach_pi([&](auto pi) {
-                            env->out() << pi << " ";
+                            ss << pi << " ";
                         });
-                        env->out() << "}\n";
-                        env->out() << "Outputs = {";
+                        ss <<"}"<<std::endl;;
+                        ss <<"Outputs = {";
                         part.foreach_po([&](auto conn, auto i) {
-                            env->out() << conn.index << " ";
+                            ss <<conn.index << " ";
                         });
-                        env->out() << "}\n";
-                        env->out() << "Nodes = {";
+                        ss <<"}"<<std::endl;;
+                        ss <<"Nodes = {";
                         part.foreach_gate([&](auto node) {
-                            env->out() << node << " ";
+                            ss <<node << " ";
                         });
-                        env->out() << "}\n";
+                        ss <<"}"<<std::endl;
                         std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
                         std::set<int>::iterator it;
-                        env->out() << "connected partitions = {";
+                        ss <<"connected partitions = {";
                         for (it = connected_parts.begin(); it != connected_parts.end(); ++it) {
-                            env->out() << *it << " ";
+                            ss <<*it << " ";
                         }
-                        env->out() << "}\n";
+                        ss <<"}"<<std::endl;;
                     }
                     node_num = node_num / (double)num_part;
-                    env->out() << "Average partition volume: " << node_num << "\n";
+                    spdlog::info("Average partition volume: {}",node_num);
                 } else {
-                    env->err() << "AIG not partitioned yet\n";
+                    spdlog::error("AIG not partitioned yet");
                 }
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

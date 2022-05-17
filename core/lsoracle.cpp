@@ -32,7 +32,7 @@
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <libkahypar.h>
-
+#include <spdlog/spdlog.h>
 
 /*** low priority ***/
 //#include <fdeep/fdeep.hpp>
@@ -191,7 +191,7 @@ extern int Sta_Init(Tcl_Interp *interp);
 int main(int argc, char ** argv)
 {
 #ifdef ENABLE_OPENSTA
-
+    spdlog::info("Initializing OpenSTA");
     sta::Sta *test = new sta::Sta;
     sta::Sta::setSta(test);
     sta::initSta();

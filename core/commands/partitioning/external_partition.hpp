@@ -60,22 +60,22 @@ namespace alice
         void process_network(string name)
         {
             if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
-                env->err() << name << " network not stored\n";
+                spdlog::error("{} network not stored", name);
                 return;
             }
             mockturtle::names_view<network> ntk =
                 *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
 
-            env->out() << "Partitioning stored " << name << " network using external file" << std::endl;
+            spdlog::info("{} network using external file. Partitioning stored {}",name);
             std::vector<int> parts = read_integer_file(part_file);
             if (parts.size() != ntk.size()) {
-                env->out() << "Partition file contains the incorrect number of nodes" << std::endl;
+                spdlog::info("Partition file contains the incorrect number of nodes");
                 exit(1);
             }
 
             int num_partitions = *std::max_element(parts.begin(), parts.end()) + 1;
-            env->out() << "Found " << num_partitions << " partitions" << std::endl;
+            spdlog::info("Found {} partitions", num_partitions);
 
             mockturtle::node_map<int, mockturtle::names_view<network>> part_data(ntk);
             for (int i = 0; i < parts.size(); i++) {

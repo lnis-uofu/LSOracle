@@ -59,7 +59,7 @@ protected:
             store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
 
         } else {
-            env->err() << "No AIG stored\n";
+            spdlog::error("No AIG stored");
         }
 
     }

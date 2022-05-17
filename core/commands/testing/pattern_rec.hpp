@@ -78,7 +78,7 @@ public:
     inline void find_xor_groups(Ntk const &ntk)
     {
         for (int i = 0; i < xor_patterns.size(); i++) {
-            env->out() << "pattern " << i + 1 << "\n";
+            spdlog::info("pattern " << i + 1);
             Ntk curr_pattern = xor_patterns.at(i);
             mockturtle::default_simulator<kitty::dynamic_truth_table> sim(
                 curr_pattern.num_pis());
@@ -86,8 +86,8 @@ public:
                              sim);
 
             curr_pattern.foreach_po([&](auto const &, auto i) {
-                env->out() << "truth table of node " << i << " is " << kitty::to_hex(
-                               tts[i]) << "\n";
+                spdlog::info("truth table of node {} is {}", i, kitty::to_hex(
+                               tts[i]));
             });
         }
 
@@ -95,9 +95,9 @@ public:
         // const auto tts = mockturtle::simulate_nodes<kitty::dynamic_truth_table>( ntk, sim );
 
         // ntk.foreach_node( [&]( auto const& node, auto i ) {
-        //   env->out() << "truth table of node " << node << " is ";
+        //   spdlog::info("truth table of node " << node << " is ";
         //   kitty::print_hex(tts[node], env->out());
-        //   env->out() << "\n";
+        //   spdlog::info("");
         // } );
 
         mockturtle::topo_view top{ntk};
@@ -106,39 +106,39 @@ public:
 
 
         for (int i = 0; i < xor_patterns.size(); i++) {
-            env->out() << "\n\nPATTERN NUMBER " << i << "\n";
+            spdlog::info("\n\nPATTERN NUMBER " << i);
             Ntk curr_pattern = xor_patterns.at(i);
 
             std::vector<node> xor_nodes;
 
             for (int j = 0; j < reverse_top.size() - ntk.num_pis(); j++) {
                 node ntk_node = reverse_top.at(j);
-                env->out() << "ntk_node = " << ntk_node << "\n";
+                spdlog::info("ntk_node = " << ntk_node);
                 if (!considered[ntk_node])
                     xor_nodes = xor_test(ntk, curr_pattern, ntk_node);
                 // if(xor_nodes.size() != 0){
                 //   xor_groups.push_back(xor_nodes);
-                //   env->out() << "XOR added\n";
+                //   spdlog::info("XOR added");
                 // }
             }
         }
 
-        env->out() << "xors found = " << xor_groups.size() << "\n";
+        spdlog::info("xors found = " << xor_groups.size());
         for (int i = 0; i < xor_groups.size(); i++) {
-            env->out() << "XOR group " << i + 1 << " = {";
+            spdlog::info("XOR group " << i + 1 << " = {";
 
             for (int j = 0; j != xor_groups.at(i).size(); j++) {
-                env->out() << xor_groups.at(i).at(j) << " ";
+                spdlog::info(xor_groups.at(i).at(j) << " ";
             }
-            env->out() << "}\n";
+            spdlog::info("}");
             std::vector<node> inputs = xor_inputs(ntk, xor_groups.at(i));
-            env->out() << "inputs = {";
+            spdlog::info("inputs = {";
             for (int j = 0; j < inputs.size(); j++) {
-                env->out() << inputs.at(j) << " ";
+                spdlog::info(inputs.at(j) << " ";
             }
-            env->out() << "}\n";
+            spdlog::info("}");
 
-            env->out() << "output = " << xor_groups.at(i).back() << "\n";
+            spdlog::info("output = " << xor_groups.at(i).back());
         }
     }
 
@@ -223,10 +223,10 @@ private:
                                          ntk._storage->nodes[ntk_node].children[1]));
         ntk.foreach_fanin(ntk_node, [&](auto conn, auto i) {
             auto curr_patt_child = curr_pattern._storage->nodes[patt_node].children[i];
-            env->out() << "ntk child = " << conn.index << " comp = " << ntk.is_complemented(
-                           conn) << "\n";
-            env->out() << "current pattern child = " << curr_patt_child.index << " comp = "
-                       << curr_pattern.is_complemented(curr_patt_child) << "\n";
+            spdlog::info("ntk child = {} comp = {}", conn.index, ntk.is_complemented(
+                           conn));
+            spdlog::info("current pattern child = " << curr_patt_child.index << " comp = "
+                       << curr_pattern.is_complemented(curr_patt_child));
             if (ntk.is_complemented(conn)) {
                 ntk_comp_count++;
             }
@@ -250,19 +250,19 @@ private:
     {
 
         std::sort(xor_group.begin(), xor_group.end());
-        // env->out() << "xor_group = {";
+        // spdlog::info("xor_group = {";
         // for(int i = 0; i < xor_group.size(); i++){
-        //   env->out() << xor_group.at(i) << " ";
+        //   spdlog::info(xor_group.at(i) << " ";
         // }
-        // env->out() << "}\n";
+        // spdlog::info("}");
         mockturtle::depth_view depth{ntk};
         std::vector<node> inputs;
         if (xor_group.size() >= 2) {
             node node1 = xor_group.at(0);
             node node2 = xor_group.at(1);
 
-            // env->out() << "node1 = " << node1 << "\n";
-            // env->out() << "node2 = " << node2 << "\n";
+            // spdlog::info("node1 = " << node1);
+            // spdlog::info("node2 = " << node2);
 
             if (ntk.is_pi(node1)) {
                 if (std::find(inputs.begin(), inputs.end(), node1) == inputs.end())
@@ -330,13 +330,13 @@ private:
         visited[root_node] = true;
         net_queue.push(root_node);
 
-        env->out() << "BFS\n";
-        env->out() << "curr_pattern size = " << (curr_pattern.size() -
-                   curr_pattern.num_pos()) << "\n";
+        spdlog::info("BFS");
+        spdlog::info("curr_pattern size = " << (curr_pattern.size() -
+                   curr_pattern.num_pos()));
         while (!net_queue.empty()) {
             node curr_node = net_queue.front();
             net_queue.pop();
-            env->out() << curr_node << "\n";
+            spdlog::info(curr_node);
             xor_nodes.push_back(curr_node);
 
             if (xor_nodes.size() > 1
@@ -349,29 +349,29 @@ private:
 
             if (xor_nodes.size() == curr_pattern.size() - curr_pattern.num_pos())
                 break;
-            // env->out() << "patt idx = " << patt_idx << " pattern gate num = " << curr_pattern.num_gates() - 1 << "\n";
+            // spdlog::info("patt idx = {} pattern gate num = {}", patt_idx, curr_pattern.num_gates() - 1);
             // node patt_node = patt_nodes.at(patt_idx);
-            // env->out() << "pattern node = " << patt_node << "\n";
-            // env->out() << "ntk node = " << curr_node << "\n";
-            // env->out() << "ntk fanout size = " << fanout.fanout(curr_node).size() << "\n";
+            // spdlog::info("pattern node = " << patt_node);
+            // spdlog::info("ntk node = " << curr_node);
+            // spdlog::info("ntk fanout size = " << fanout.fanout(curr_node).size());
             // bool equiv = node_equivalence(ntk, curr_pattern, curr_node, patt_node);
-            // env->out() << "node equiv = " << equiv << "\n";
+            // spdlog::info("node equiv = " << equiv);
             // if(!equiv){
             //   patt_idx = 0;
             //   xor_nodes.clear();
-            //   env->out() << "XOR not found for node " << curr_node << "\n";
+            //   spdlog::info("XOR not found for node " << curr_node);
             //   return xor_nodes;
             // }
             // else if(curr_pattern.is_po(patt_node)){
             //   if(equiv){
             //     xor_nodes.push_back(curr_node);
-            //     env->out() << "XOR PO NODE\n";
+            //     spdlog::info("XOR PO NODE");
             //     patt_idx++;
             //   }
             // }
             // else if(equiv && (fanout.fanout(curr_node).size() == 1)){
             //   xor_nodes.push_back(curr_node);
-            //   env->out() << "XOR GATE NODE\n";
+            //   spdlog::info("XOR GATE NODE");
             //   patt_idx++;
             //   if(patt_idx > (curr_pattern.num_gates() - 1)){
             //     return xor_nodes;
@@ -400,31 +400,31 @@ private:
             xor_nodes.erase(xor_nodes.begin());
         }
 
-        env->out() << "xor_nodes = {";
+        spdlog::info("xor_nodes = {";
         for (int i = 0; i < xor_nodes.size(); i++) {
-            env->out() << xor_nodes.at(i) << " ";
+            spdlog::info(xor_nodes.at(i) << " ";
         }
-        env->out() << "}\n";
+        spdlog::info("}");
         std::vector<node> inputs = xor_inputs(ntk, xor_nodes);
         std::vector<node> output = {xor_nodes.back()};
         std::sort(xor_nodes.begin(), xor_nodes.end());
-        env->out() << "xor_nodes = {";
+        spdlog::info("xor_nodes = {";
         for (int i = 0; i < xor_nodes.size(); i++) {
-            env->out() << xor_nodes.at(i) << " ";
+            spdlog::info(xor_nodes.at(i) << " ";
         }
-        env->out() << "}\n";
+        spdlog::info("}");
 
-        env->out() << "xor inputs = {";
+        spdlog::info("xor inputs = {";
         for (int i = 0; i < inputs.size(); i++) {
-            env->out() << inputs.at(i) << " ";
+            spdlog::info(inputs.at(i) << " ";
         }
-        env->out() << "}\n";
+        spdlog::info("}");
 
-        env->out() << "xor output = {";
+        spdlog::info("xor output = {";
         for (int i = 0; i < output.size(); i++) {
-            env->out() << output.at(i) << " ";
+            spdlog::info(output.at(i) << " ";
         }
-        env->out() << "}\n";
+        spdlog::info("}");
 
         if (inputs.size() > 0) {
             mockturtle::fanout_view<Ntk> fanout(ntk);
@@ -432,9 +432,9 @@ private:
             mockturtle::window_view<mockturtle::fanout_view<Ntk>> window(fanout, inputs,
                     output, false);
             window.foreach_node([&](auto node) {
-                env->out() << "Node = " << node << "\n";
+                spdlog::info("Node = " << node);
                 window.foreach_fanin(node, [&](auto conn, auto i) {
-                    env->out() << "child[" << i << "] = " << conn.index << "\n";
+                    spdlog::info("child[" << i << "] = " << conn.index);
                 });
             });
 
@@ -442,7 +442,7 @@ private:
             const auto tts = mockturtle::simulate<kitty::dynamic_truth_table>(window, sim);
 
             window.foreach_po([&](auto const &, auto i) {
-                env->out() << fmt::format("truth table of output {} is {}\n", i,
+                spdlog::info(fmt::format("truth table of output {} is {}\n", i,
                                           kitty::to_hex(tts[i]));
 
                 if (kitty::to_hex(tts[i]) == "6" || kitty::to_hex(tts[i]) == "9") {
@@ -463,7 +463,7 @@ private:
             });
 
         } else {
-            env->err() << "circuit too small\n";
+            spdlog::error("circuit too small");
         }
 
         // Ntk xor_test;
@@ -472,17 +472,17 @@ private:
 
         // for(int i = 0; i < inputs.size(); i++){
         //   node curr_node = inputs.at(i);
-        //   env->out() << "pi = " << curr_node << "\n";
+        //   spdlog::info("pi = " << curr_node);
         //   old_to_new[curr_node] = xor_test.create_pi();
         // }
         // for(int i = inputs.size(); i < xor_nodes.size(); i++){
         //   std::vector<signal> children;
         //   node curr_node = xor_nodes.at(i);
-        //   env->out() << "current node = " << curr_node << "\n";
+        //   spdlog::info("current node = " << curr_node);
 
         //   ntk.foreach_fanin( curr_node, [&]( auto child, auto ) {
         //     const auto f = old_to_new[child];
-        //     env->out() << "fanin = " << child.index << " and data = " << child.data << "\n";
+        //     spdlog::info("fanin = {} and data = {}", child.index, child.data);
         //     if ( ntk.is_complemented( child ) )
         //     {
         //       children.push_back( xor_test.create_not( f ) );
@@ -494,20 +494,20 @@ private:
         //   } );
         //   old_to_new[curr_node] = xor_test.clone_node( ntk, curr_node, children );
         // }
-        // env->out() << "last xor_node = " << xor_nodes.back() << "\n";
+        // spdlog::info("last xor_node = " << xor_nodes.back());
         // xor_test.create_po(old_to_new[xor_nodes.back()]);
 
         // xor_test.foreach_node([&](auto node){
-        //   env->out() << "node = " << node << "\n";
+        //   spdlog::info("node = " << node);
         //   xor_test.foreach_fanin(node, [&](auto conn, auto i){
-        //     env->out() << "child[" << i << "] = " << conn.index << "\n";
+        //     spdlog::info("child[" << i << "] = " << conn.index);
         //   });
         // });
 
         // mockturtle::default_simulator<kitty::dynamic_truth_table> sim( xor_test.num_pis() );
         // const auto tts = mockturtle::simulate<kitty::dynamic_truth_table>( xor_test, sim );
         // xor_test.foreach_po( [&]( auto const&, auto i ) {
-        //   env->out() << "truth table of node " << i << " is " << kitty::to_hex(tts[i]) << "\n";
+        //   spdlog::info("truth table of node {} is {}", i, kitty::to_hex(tts[i]));
         // } );
 
         // if(kitty::to_hex(tts[0]) != "6" && kitty::to_hex(tts[0]) != "9"){

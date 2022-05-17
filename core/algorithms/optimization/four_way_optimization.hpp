@@ -86,13 +86,13 @@ mig_names four_way_optimization(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
     /*else if(!nn_model.empty()){
-      std::cout << "Performing Classification using Neural Network\n";
+      spdlog::info("Performing Classification using Neural Network");
       partitions_aig.run_classification(ntk_aig, nn_model);
       aig_parts = partitions_aig.get_aig_parts();
       mig_parts = partitions_aig.get_mig_parts();
     }*/
     else {
-        std::cout << "Performing High Effort Classification and Optimization\n";
+        spdlog::info("Performing High Effort Classification and Optimization");
         for (int i = 0; i < num_parts; i++) {
             oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
@@ -164,7 +164,7 @@ mig_names four_way_optimization(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
 
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+    spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
 
     if (combine) {
         std::vector<int> visited;
@@ -283,8 +283,8 @@ mig_names four_way_optimization(aig_names ntk_aig, part_man_aig partitions_aig,
         }
         aig_parts = comb_aig_parts;
         mig_parts = comb_mig_parts;
-        std::cout << "Scheduled optimization after partition merging\n";
-        std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+        spdlog::info("Scheduled optimization after partition merging");
+        spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
     }
 
     if (!high) {

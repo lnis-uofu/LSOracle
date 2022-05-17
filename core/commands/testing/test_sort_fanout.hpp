@@ -61,18 +61,17 @@ protected:
                 // std::vector<mockturtle::mig_network::node> nodes = ntk._storage->nodes;
 
                 ntk.foreach_node([&](auto node) {
-                    env->out() << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(
-                                   node).size() << "\n";
+                    spdlog::info("Node = {} fanout_size = {}", node, fanout_ntk.fanout(node).size());
                 });
 
                 // std::sort(ntk._storage->nodes.begin(), ntk._storage->nodes.end(), less_than_fanout());
 
                 // for(int i = 0; i < ntk._storage->nodes.size(); i++){
-                //   env->out() << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
+                //   spdlog::info("Node = {} fanout_size = {}", ntk._storage->nodes[i], fanout_ntk.fanout(ntk._storage->nodes[i]).size());
                 // }
 
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<mockturtle::aig_network>().empty()) {
@@ -82,17 +81,17 @@ protected:
                 // std::vector<mockturtle::mig_network::node> nodes = ntk._storage->nodes;
 
                 ntk.foreach_node([&](auto node) {
-                    env->out() << "Node = " << node << " fanout_size = " << fanout_ntk.fanout(
-                                   node).size() << "\n";
+                    spdlog::info("Node = {} fanout_size = {}", node, fanout_ntk.fanout(
+                                   node).size());
                 });
 
                 // std::sort(ntk._storage->nodes.begin(), ntk._storage->nodes.end(), less_than_fanout());
 
                 // for(int i = 0; i < ntk._storage->nodes.size(); i++){
-                //   env->out() << "Node = " << ntk._storage->nodes[i] << " fanout_size = " << fanout_ntk.fanout(ntk._storage->nodes[i]).size() << "\n";
+                //   spdlog::info("Node = {} fanout_size = {}", ntk._storage->nodes[i], fanout_ntk.fanout(ntk._storage->nodes[i]).size());
                 // }
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

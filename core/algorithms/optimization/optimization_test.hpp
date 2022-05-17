@@ -77,13 +77,13 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
     /*else if(!nn_model.empty()){
-      std::cout << "Performing Classification using Neural Network\n";
+      spdlog::info("Performing Classification using Neural Network");
       partitions_aig.run_classification(ntk_aig, nn_model);
       aig_parts = partitions_aig.get_aig_parts();
       mig_parts = partitions_aig.get_mig_parts();
     }*/
     else {
-        std::cout << "Performing High Effort Classification and Optimization\n";
+        spdlog::info("Performing High Effort Classification and Optimization");
         for (int i = 0; i < num_parts; i++) {
             oracle::partition_view<mig_names> part = partitions_mig.create_part(ntk_mig, i);
 
@@ -92,7 +92,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
 
             auto original_aig = *mig_to_aig(opt_part_aig);
             auto original_mig = *part_to_mig(part, 0);
- 
+
             oracle::aig_script aigopt;
             opt_aig = aigopt.run(opt_aig);
             mockturtle::depth_view part_aig_opt_depth{opt_aig};
@@ -106,7 +106,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
             int mig_opt_size = opt_mig.num_gates();
             int mig_opt_depth = part_mig_opt_depth.depth();
 
-            int total_size = 0; 
+            int total_size = 0;
 
             switch (strategy) {
             default:
@@ -180,7 +180,7 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
     }
 
-    std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+    spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
 
     if (combine) {
         std::vector<int> visited;
@@ -299,8 +299,8 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
         }
         aig_parts = comb_aig_parts;
         mig_parts = comb_mig_parts;
-        std::cout << "Scheduled optimization after partition merging\n";
-        std::cout << aig_parts.size() << " AIGs and " << mig_parts.size() << " MIGs\n";
+        spdlog::info("Scheduled optimization after partition merging");
+        spdlog::info("{} AIGs and {} MIGs", aig_parts.size(), mig_parts.size());
     }
 
     if (!high) {

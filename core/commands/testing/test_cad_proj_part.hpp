@@ -63,7 +63,7 @@ protected:
                 store<oracle::level_partition_manager<mockturtle::mig_network>>().extend() =
                             level_parts;
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<mockturtle::aig_network>().empty()) {
@@ -72,7 +72,7 @@ protected:
                 store<oracle::level_partition_manager<mockturtle::aig_network>>().extend() =
                             level_parts;
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }
@@ -116,34 +116,35 @@ protected:
 
                     int num_partitions = partitions.get_part_num();
                     for (int i = 0; i < num_partitions; i++) {
-                        env->out() << "Partition " << i << "\n";
+                        spdlog::info("Partition " << i);
                         oracle::partition_view<mockturtle::mig_network> part = partitions.create_part(
                                     ntk, i);
 
                         auto opt = mockturtle::node_resynthesis<mockturtle::mig_network>(part,
                                    resyn_mig);
-                        env->out() << "size = " << opt.size() << "\n";
+                        spdlog::info("size = " << opt.size());
                         std::set<mockturtle::mig_network::node> inputs = partitions.get_part_inputs(i);
                         typename std::set<mockturtle::mig_network::node>::iterator it;
-                        env->out() << "Inputs = ";
+                        stringstream ss;
+                        ss << "Inputs = ";
                         for (it = inputs.begin(); it != inputs.end(); ++it) {
-                            env->out() << *it << " ";
+                            ss << *it << " ";
                         }
-                        env->out() << "\n";
+                        spdlog::info(ss.str());
 
-                        std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(
-                                    i);
-                        env->out() << "Outputs = ";
+                        std::set<mockturtle::mig_network::node> outputs = partitions.get_part_outputs(i);
+                        stringstream ss;
+                        ss << "Outputs = ";
                         for (it = outputs.begin(); it != outputs.end(); ++it) {
-                            env->out() << *it << " ";
+                            ss << *it << " ";
                         }
-                        env->out() << "\n";
+                        spdlog.info(ss.str());
                     }
                 } else {
-                    env->err() << "Level parts not created for MIG\n";
+                    spdlog::error("Level parts not created for MIG");
                 }
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<mockturtle::aig_network>().empty()) {
@@ -159,31 +160,31 @@ protected:
 
                     // int num_partitions = partitions.get_part_num();
                     // for(int i = 0; i < num_partitions; i++){
-                    //   // env->out() << "Partition " << i << "\n";
+                    //   // spdlog::info("Partition " << i);
                     //   oracle::partition_view<mockturtle::aig_network> part = partitions.create_part(ntk, i);
 
                     //   auto opt = mockturtle::node_resynthesis<mockturtle::aig_network>( part, resyn_aig );
-                    //   // env->out() << "size = " << opt.size() << "\n";
+                    //   // spdlog::info("size = " << opt.size());
                     //   std::set<mockturtle::aig_network::node> inputs = partitions.get_part_inputs(i);
                     //   typename std::set<mockturtle::aig_network::node>::iterator it;
-                    //   env->out() << "Inputs = ";
+                    //   spdlog::info("Inputs = ";
                     //   for(it = inputs.begin(); it != inputs.end(); ++it){
-                    //     env->out() << *it << " ";
+                    //     spdlog::info(*it << " ";
                     //   }
-                    //   env->out() << "\n";
+                    //   spdlog::info("");
 
                     //   std::set<mockturtle::aig_network::node> outputs = partitions.get_part_outputs(i);
-                    //   env->out() << "Outputs = ";
+                    //   spdlog::info("Outputs = ";
                     //   for(it = outputs.begin(); it != outputs.end(); ++it){
-                    //     env->out() << *it << " ";
+                    //     spdlog::info(*it << " ";
                     //   }
-                    //   env->out() << "\n";
+                    //   spdlog::info("");
                     // }
                 } else {
-                    env->err() << "Level parts not created for AIG\n";
+                    spdlog::error("Level parts not created for AIG");
                 }
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

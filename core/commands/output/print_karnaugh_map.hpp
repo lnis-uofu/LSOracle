@@ -71,19 +71,19 @@ protected:
     {
 
         if (is_set("mig")) {
-            env->err() << "MIG networks not supported yet\n";
+            spdlog::error("MIG networks not supported yet");
         } else {
             if (!store<aig_ntk>().empty()) {
                 auto aig = *store<aig_ntk>().current();
                 if (!store<part_man_aig_ntk>().empty()) {
-                    env->out() << "Writing k-map images for stored AIG network\n";
+                    spdlog::info("Writing k-map images for stored AIG network");
                     auto partitions = *store<part_man_aig_ntk>().current();
                     partitions.write_karnaugh_maps(aig, directory);
                 } else {
-                    env->err() << "AIG not partitioned yet\n";
+                    spdlog::error("AIG not partitioned yet");
                 }
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

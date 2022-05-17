@@ -147,9 +147,9 @@ public:
         static_assert(mockturtle::has_make_signal_v<Ntk>,
                       "Ntk does not implement the make_signal method");
 
-        std::cout << "PARTITION_MANAGER\n";
+        spdlog::info("PARTITION_MANAGER");
         num_partitions = part_num;
-        std::cout << "num_partitions: " << num_partitions << "\n";
+        spdlog::info("num_partitions: {}", num_partitions );
 
         for (int i = 0; i < part_num; ++i)
             _part_scope.push_back(std::set<node>());
@@ -204,7 +204,7 @@ public:
             //configures kahypar
             kahypar_context_t* context = kahypar_context_new();
 
-            std::cout << "Using config file " << config_direc << std::endl;
+            spdlog::info("Using config file {}", config_direc );
             kahypar_configure_context_from_file(context, config_direc.c_str());
 
             //set number of hyperedges and vertices. These variables are defined by the hyperG command
@@ -254,9 +254,9 @@ public:
                 double max_bin = (double) sap.sap_fixed(init_part, avg_part, 3);
                 kahypar_set_fixed_vertices(hypergraph, init_part.data());
                 imbalance = std::max(imbalance, 1.5 * 1 - (double)max_bin / avg_part);
-                std::cout << "Average partition size " << avg_part << std::endl;
-                std::cout << "Max bin size " << max_bin << std::endl;
-                std::cout << "Requested epsilon " << imbalance << std::endl;
+                spdlog::info("Average partition size {}", avg_part );
+                spdlog::info("Max bin size {}", max_bin );
+                spdlog::info("Requested epsilon {}", imbalance );
                 for (int i = 0; i < num_vertices; i++) {
                     initial_partitions[i] = init_part[i];
                 }
@@ -518,7 +518,7 @@ public:
                 auto curr_output = *it;
                 BFS_traversal(ntk, curr_output, i);
                 if (ntk.is_constant(curr_output)) {
-                    std::cout << "CONSTANT\n";
+                    spdlog::info("CONSTANT");
                 } else if (logic_cone_inputs[curr_output].size() <= 16
                            && !ntk.is_constant(curr_output)) {
                     int idx = 0;
@@ -540,8 +540,7 @@ public:
                         ntk._storage->nodes[index].data[1].h1 = 0;
                     });
                 } else {
-                    std::cout << "Logic Cone too big at " << logic_cone_inputs[curr_output].size()
-                              << " inputs\n";
+                    spdlog::info("Logic Cone too big at {} inputs", logic_cone_inputs[curr_output].size());
                 }
             }
         }
@@ -909,10 +908,9 @@ public:
 
     void connect_outputs(Ntk ntk)
     {
-        // std::cout << "Number of output substitutions = " << output_substitutions.size() << "\n";
-        for (auto it = output_substitutions.begin(); it != output_substitutions.end();
-                ++it) {
-            // std::cout << "substituting " << it->first << " with " << it->second.index << "\n";
+        // spdlog::info("Number of output substitutions = {}", output_substitutions.size() );
+        for (auto it = output_substitutions.begin(); it != output_substitutions.end(); ++it) {
+            // spdlog::info("substituting {} with {}", it->first, it->second.index );
             ntk.substitute_node(it->first, it->second);
         }
     }

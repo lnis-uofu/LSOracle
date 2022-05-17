@@ -62,7 +62,7 @@ protected:
         if (is_set("mig")) {
             if (!store<mig_ntk>().empty()) {
                 auto ntk = *store<mig_ntk>().current();
-                env->out() << "\n";
+                spdlog::info("");
                 if (!store<part_man_mig_ntk>().empty()) {
                     auto partitions = *store<part_man_mig_ntk>().current();
                     for (int i = 0; i < partitions.get_part_num(); i++) {
@@ -70,8 +70,7 @@ protected:
                         std::vector<std::string> filenames;
                         int partition = i;
                         auto part_outputs = partitions.get_part_outputs(i);
-                        env->out() << "Partition " << i << ":\n";
-                        env->out() << "Number of Logic Cones = " << part_outputs.size() << "\n";
+                        spdlog::info("Partition {} number of Logic Cones = {}", i, part_outputs.size());
                         mkdir(dir.c_str(), 0777);
 
                         oracle::partition_view<mig_names> part = partitions.create_part(ntk, partition);
@@ -87,18 +86,18 @@ protected:
                         for (int j = 0; j < parts.size(); j++) {
                             mockturtle::write_verilog(parts.at(j), filenames.at(j));
                         }
-                        env->out() << "\n";
+                        spdlog::info("");
                     }
                 } else {
-                    env->err() << "Partitions have not been mapped\n";
+                    spdlog::error("Partitions have not been mapped");
                 }
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
                 auto ntk = *store<aig_ntk>().current();
-                env->out() << "\n";
+                spdlog::info("");
                 if (!store<part_man_aig_ntk>().empty()) {
                     mockturtle::write_verilog_params ps;
                     auto partitions = *store<part_man_aig_ntk>().current();
@@ -112,8 +111,7 @@ protected:
                         std::vector<std::string> filenames;
                         int partition = i;
                         auto part_outputs = partitions.get_part_outputs(i);
-                        env->out() << "Partition " << i << ":\n";
-                        env->out() << "Number of Logic Cones = " << part_outputs.size() << "\n";
+                        spdlog::info("Partition {} number of Logic Cones = {}", i, part_outputs.size());
                         mkdir(dir.c_str(), 0777);
 
                         oracle::partition_view<aig_names> part = partitions.create_part(ntk, partition);
@@ -144,7 +142,7 @@ protected:
                         oracle::call_submodule(ntk, part_ntk, toplevel_file, modulename, i, part,
                                                node_names, input_names);
 
-                        env->out() << "\n";
+                        spdlog::info("");
                     }
                     std::ofstream os(toplevel_file.c_str(), std::ofstream::app);
                     os << "endmodule\n"
@@ -152,10 +150,10 @@ protected:
 
                     os.close();
                 } else {
-                    env->err() << "Partitions have not been mapped\n";
+                    spdlog::error("Partitions have not been mapped");
                 }
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

@@ -67,10 +67,10 @@ protected:
                     t.get_hypergraph(ntk);
                     t.dump(filename);
                 } else {
-                    env->err() << filename << " is not a valid hpg file\n";
+                    spdlog::error("{} is not a valid hpg file", filename);
                 }
             } else {
-                env->err() << "There is no MIG network stored\n";
+                spdlog::error("There is no MIG network stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -84,10 +84,10 @@ protected:
                     t.dump(filename);
 
                 } else {
-                    env->err() << filename << " is not a valid hpg file\n";
+                    spdlog::error("{} is not a valid hpg file", filename);
                 }
             } else {
-                env->err() << "There is no AIG network stored\n";
+                spdlog::error("There is no AIG network stored");
             }
         }
     }

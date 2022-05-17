@@ -1,7 +1,7 @@
 // #include "abc.h"
 #include <iostream>
 #include <fstream>
-#include <algorithm> 
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include <stdio.h>
@@ -29,7 +29,7 @@ namespace oracle
 #define BIASED_MEAN TRUE
 using namespace std;
 
-// lso / abc commands 
+// lso / abc commands
 vector<string> aig_default_options()
 {
     vector<string> default_opts;
@@ -61,11 +61,11 @@ vector<string> mig_default_options()
     default_opts.push_back("resub -m");
     default_opts.push_back("resub -k 8 -m");
     default_opts.push_back("resub -k 6 -m");
-    
+
     //default_opts.push_back("dc2");
     return default_opts;
 }
- 
+
 vector<string> split(string str, string token){
     vector<string>result;
     while(str.size()){
@@ -101,7 +101,7 @@ static void softmax(vector<float> &input, int input_len)
 
     for (i = 0; i < input_len; i++) {
         input[i] = expf(input[i] - m - log(sum));
-    }    
+    }
 }
 
 // logsoftmax function
@@ -124,7 +124,7 @@ static void logsoftmax(vector<float> &input, int input_len)
 
     for (i = 0; i < input_len; i++) {
         input[i] = (expf(input[i] - m - log(sum)));
-    }    
+    }
 }
 
 // random generator function:
@@ -133,7 +133,7 @@ int myrandom (int i) { return std::rand()%i;}
 double norm_dist_num(){
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(5.0,2.0);
-    return distribution(generator); 
+    return distribution(generator);
 }
 
 // clean the string of recommended flow
@@ -238,7 +238,7 @@ int choose_n_k(int n,int k)
       return r;
 }
 
-/* Generate random optization sequence (commands) 
+/* Generate random optization sequence (commands)
     vector<int> v                  :   encode in a integer vector; each element indicates the position of an opt
     vector<string> default_opts    :   default opts vector */
 string vec2command(vector<int> v, vector<string> default_opts)
@@ -253,7 +253,7 @@ string vec2command(vector<int> v, vector<string> default_opts)
     return command;
 }
 
-/* generate constrained random command  
+/* generate constrained random command
         vector<string> default_opts         :
         int repeats                         : number of appearances
         int pos                             : prefix positions (will be used for exhaustive cases splitting */
@@ -277,7 +277,7 @@ string constrain_random_opts(vector<string> default_opts, int repeats, int pos){
 // generate random commands
 vector<string> random_commands(vector<string> default_opts, int repeats, int nCommands){
     vector<string> random_c;
-//#pragma omp parallel for  // depended 
+//#pragma omp parallel for  // depended
     for (int i=0; i<nCommands; i++){
         string command = random_opts(default_opts,repeats);
         if(find(random_c.begin(), random_c.end(), command) == random_c.end() )
@@ -289,35 +289,35 @@ vector<string> random_commands(vector<string> default_opts, int repeats, int nCo
 /* generate prefix initial commands; used for generating constrained commands
     e.g., 0 1 2 0 1 2 ; pos = 2;
         then 2 0 1 2 will be used for random sampling
-             0 1 will be used for all permutation 
+             0 1 will be used for all permutation
              1 0 + randoms or 0 1 + randoms */
 vector<string> create_headers1(int pos, vector<string> default_opts){
     vector<int> vecIndex;
     for(int i=0;i<pos;i++)
         vecIndex.push_back(i);
 
-    vector<string> head; 
+    vector<string> head;
     do {
         string command = vec2command(vecIndex,default_opts);
         head.push_back(command);
     } while ( next_permutation( vecIndex.begin(), vecIndex.end() ) );
-    
+
     return head;
 }
 
 /* generate prefix initial commands; used for generating constrained commands
     e.g., 0 1 2 0 1 2 ; pos = 2;
         then 2 0 1 2 will be used for random sampling
-             0 1 will be used for all permutation 
+             0 1 will be used for all permutation
              1 0 + randoms or 0 1 + randoms */
 vector<string> create_headers2(int pos, vector<string> default_opts){
     vector<int> vecIndex;
     for(int i=0;i<default_opts.size();i++)
         vecIndex.push_back(i);
 
-    vector<string> head; 
+    vector<string> head;
     do {
-        vector<int> first_pos; 
+        vector<int> first_pos;
         for(int i=0;i<pos;i++)
             first_pos.push_back(vecIndex[i]);
         string command = vec2command(first_pos,default_opts);
@@ -325,8 +325,6 @@ vector<string> create_headers2(int pos, vector<string> default_opts){
     } while ( next_permutation( vecIndex.begin(), vecIndex.end() ) );
     auto i = std::unique (head.begin(), head.end());
     head.resize( std::distance(head.begin(),i) );
-    //for(auto& i : head)
-    //    cout<<i<<endl;
     return head;
 }
 
@@ -334,8 +332,8 @@ vector<string> create_headers2(int pos, vector<string> default_opts){
 /* exhaustive perm with headers2 */
 vector<string> create_headers(int pos, vector<string> default_opts){
     vector<string> v;
-    v = create_headers2(pos, default_opts); 
-    //v = create_headers2(pos, default_opts); 
+    v = create_headers2(pos, default_opts);
+    //v = create_headers2(pos, default_opts);
     return v;
 }
 
@@ -343,7 +341,7 @@ vector<string> create_headers(int pos, vector<string> default_opts){
 // generate Quality-of-Result commands
 // -- which_opt=0/1 => AIG minimization;  so it will append "strash;print_stats"
 // -- which_opt=2/3 => STA tech-map tuning;  so it will append "upsize;dnsize;stime" to perform Gate-sizing and STA evaluation
-// -- which_opt=4/5 => FPGA tech-map tuning;  so it will append "if -K 6;print_stats" to get levels and number of LUTs 
+// -- which_opt=4/5 => FPGA tech-map tuning;  so it will append "if -K 6;print_stats" to get levels and number of LUTs
 string abc_stats_commmands(int h, int i, int which_opt)
 {
     if (which_opt == 0 || which_opt == 1) //AIG minimization
@@ -356,11 +354,11 @@ string abc_stats_commmands(int h, int i, int which_opt)
     //     return ";strash;ifraig;dch -f;map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     // else if(which_opt == 4 || which_opt == 5) // FPGA Technology mapping tuning
     //     return ";strash;ifraig;scorr;dc2;strash;dch -f;if -K 6;mfs2;lutpack -S 1;print_stats;\" | grep \"nd =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
-    // else if(which_opt == 6 || which_opt == 7) // CNF Minimization 
+    // else if(which_opt == 6 || which_opt == 7) // CNF Minimization
     //     return ";strash;ifraig;write_cnf test.cnf\" | grep \"CNF stats\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     // else if(which_opt == 8 || which_opt == 9) // Standard-cell LIB Technology mapping tuning
     //     return ";strash;ifraig;dch -f;map;print_stats;\" | grep \"delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
-    // else 
+    // else
     //     return ";strash;print_stats;\" | grep \"and =\" > " + to_string(h)+"_"+to_string(i)+".result\n"; //default as AIG minimization
 	/* with retiming
     if (which_opt == 0 || which_opt == 1) //AIG minimization
@@ -373,34 +371,34 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return ";strash;ifraig;strash;write_cnf test.cnf\" | grep \"CNF stats\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if(which_opt == 8 || which_opt == 9) // FPGA Technology mapping tuning
         return ";strash;retime;strash;ifraig;dch -f;map;print_stats;\" | grep \"delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
-    else 
+    else
         return ";strash;print_stats;\" | grep \"and =\" > " + to_string(h)+"_"+to_string(i)+".result\n"; //default as AIG minimization
 */
 
 }
 
 // generate initial random constrained commands (stored in vector of strings)
-vector<string> constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, 
+vector<string> constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos,
         string design, int which_opt, string lib ){
-    
+
     vector<string> random_c; //final vector return
     //initialization
     vector<string> head = create_headers(pos, default_opts);
     string begin;
-    
+
     if ( which_opt  <= 1 )
       begin="./lsoracle -c \"read " + design + " ; " ;
-    else 
+    else
       begin="./lsoracle -c \"read -m " + design + " ; ";
-  
-    cout<<"begin:"<<begin<<endl;
-    
+
+    spdlog::info("begin: '{}'", begin);
+
     for (int h=0; h<head.size(); h++){
         for (int i=0; i<nCommands; i++){
             string command_unix = begin + head[h]+" ; " + constrain_random_opts(default_opts, repeats,pos);
             command_unix += abc_stats_commmands(h,i,which_opt);
             printf("Command unix : %s\n", command_unix.c_str());
-            random_c.push_back(command_unix); 
+            random_c.push_back(command_unix);
         }
     }
     return random_c;
@@ -423,7 +421,7 @@ float get_area_from_result(string resultFile)
         area.assign(input, find_area+6, find_level - find_area - 6);
         return stof(area);
     }
-    else{ return 0.0; } //error message TBD 
+    else{ return 0.0; } //error message TBD
     return 0.0;
 }
 
@@ -441,7 +439,7 @@ float get_sta_delay_from_result(string resultFile)
             break;
     }
     int find_sta_delay = input.find("Delay =",0);
-    int find_level = 0; 
+    int find_level = 0;
     string sta_delay;
     if ( find_sta_delay >0 ){
         find_level = input.find("ps",find_sta_delay);
@@ -463,7 +461,7 @@ float get_sta_area_from_result(string resultFile)
             break;
     }
     int find_sta_delay = input.find("Area =",0);
-    int find_level = 0; 
+    int find_level = 0;
     string sta_delay;
     if ( find_sta_delay >0 ){
         find_level = input.find(" (",find_sta_delay);
@@ -501,7 +499,7 @@ float get_aig_size_from_result(string resultFile)
         //printf("stof is %d\n",stof(aig) ); getchar();
         return stof(aig);
     }
-    
+
     else{ /*printf("get aig size c3\n");*/ return 0.0; } //error message
     //printf("get aig size c4\n");
     return 0.0;
@@ -612,7 +610,7 @@ float get_CNF_literals_from_result(string resultFile)
     }
     else{ return 0.0; } //error message
     return 0.0;
-} 
+}
 //###  END   ####//
 
 
@@ -658,7 +656,7 @@ float get_area_noSTA_from_result(string resultFile)
     }
     else{ return 0.0; } //error message
     return -1;
-} 
+}
 //###  END   ####//
 
 float get_results_universe(string resultFile, int which_opt)
@@ -671,7 +669,7 @@ float get_results_universe(string resultFile, int which_opt)
     else if (which_opt == 2) // aig #nodes
         res = get_aig_size_from_result(resultFile);
     else if(which_opt==3) // aig #lev
-        res = get_aig_level_from_result(resultFile);    
+        res = get_aig_level_from_result(resultFile);
     // else if (which_opt==2) //sta delay
     //     res = get_sta_delay_from_result(resultFile);
     // else if (which_opt==3) // sta area
@@ -695,7 +693,7 @@ float get_results_universe(string resultFile, int which_opt)
     else if (res == 0)
 	return 999999999.0;
     else
-	return res;	
+	return res;
 }
 
 vector<float> to_vec_float(vector<vector<float> > v){
@@ -758,7 +756,7 @@ float mean_so_far(vector<vector<float> > v){
 
 
 template <typename T>
-void logging (int iter, float best, T const& v, string logfile) 
+void logging (int iter, float best, T const& v, string logfile)
 {
     typename T::const_iterator pos;  // iterator to iterate over coll
     ofstream outfile(logfile.c_str(), std::ofstream::out | std::ofstream::app);
@@ -768,18 +766,6 @@ void logging (int iter, float best, T const& v, string logfile)
     }
     outfile<<endl;
     outfile.close();
-}
-
-
-template <typename T>
-void printvec (T const& v) 
-{
-    typename T::const_iterator pos;  // iterator to iterate over coll
-
-    for (pos=v.begin(); pos!=v.end(); ++pos) {
-        std::cout << *pos << ", ";
-    }
-    std::cout << std::endl;
 }
 
 float update_prob(vector<float> v, float global_mean){
@@ -808,30 +794,28 @@ vector<float> update_prob_global(vector<vector<float> > v, int fSoftmax){
         prob.push_back(update_prob(v[i],global_mean ));
 #endif
     }
-    //for (auto p:prob){ cout<<p<<", "; } cout<<"\n";
     if(fSoftmax==1)
         softmax(prob, prob.size());
     else
         logsoftmax(prob, prob.size());
-    //for (auto p:prob){ cout<<p<<", "; } cout<<"\n";
     return prob;
 }
 
 vector<float> update_prob_short_term(vector<vector<float> > v, float Tstart, int fSoftmax){
     //get global mean
     if(Tstart>=v[0].size()){
-        cout<<"Warining: Short term forget time steps are greater than gobal size\n";
+        spdlog::warn("Short term forget time steps are greater than gobal size");
         return update_prob_global(v, fSoftmax);
     }
     vector<float> temp;
     for(int i=0;i<v.size();i++){
         int nforget = int(std::round(Tstart*v[i].size()));
-        //cout<<"How much forgot "<<nforget<<endl;
+        //spdlog.info(<<"How much forgot "<<nforget);
         for(int i2=nforget;i2<v[i].size();i2++){
             temp.push_back(v[i][i2]);
         }
     }
-    float global_mean = mean_vec_float(temp); 
+    float global_mean = mean_vec_float(temp);
     float global_stdev = stdev_vec_float(temp);
     temp.clear();
     vector<float> prob;
@@ -869,14 +853,14 @@ vector<float> update_prob_short_term_random(vector<vector<float> > v, int Tstart
     repeats                     : each command allowed appearance
     nCommands                   : number of commands of each arm at initial step; also refers to total number of samples
                                             at each round
-    pos                         : prefix position = number of commands to be exhaustive permuted (currently only 
+    pos                         : prefix position = number of commands to be exhaustive permuted (currently only
                                             at the head of flows)
     design                      : design name (e.g., *.blif/aig)
     global_prob_area/delay      : global probability of wining rewards
     which_opt                   : switch for area/delay opt (==0 => area) (==1 ==> delay) */
 
 vector<string> biased_constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, string design,
-    vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc, 
+    vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc,
     int which_opt, int fSoftmax, string lib, string output){
     vector<string> random_c; //final vector return
     //initialization
@@ -892,7 +876,7 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     vector<float> global_prob_area,global_prob_delay;
     #pragma omp parallel num_threads(2)
     {
-    	global_prob_area =  update_prob_global(global_area, fSoftmax);  
+    	global_prob_area =  update_prob_global(global_area, fSoftmax);
     	global_prob_delay = update_prob_global(global_delay, fSoftmax);
     }
     float sum_prob_area = 0.0;float sum_prob_delay = 0.0;
@@ -902,7 +886,7 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     	for (auto& m : global_prob_delay) { sum_prob_delay += m; }
     }
     if (!(global_area.size() == head.size() && global_delay.size() == head.size())){
-        cout<<"Error: "<<global_area.size()<< "," << global_delay.size() <<"," <<head.size()<<endl;
+        spdlog::error("{},{},{}", global_area.size(), global_delay.size(), head.size());
         assert(0);
     }
     for(int i=0;i<head.size();i++){
@@ -933,7 +917,7 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
         for (int i=0; i<new_sample_constr[h]; i++){
             string command_unix = begin + head[h]+" ; " + constrain_random_opts(default_opts, repeats,pos);
             command_unix += abc_stats_commmands(h,i,which_opt);
-            random_c.push_back(command_unix); 
+            random_c.push_back(command_unix);
         }
     }
     return random_c;
@@ -945,7 +929,7 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     repeats                     : each command allowed appearance
     nCommands                   : number of commands of each arm at initial step; also refers to total number of samples
                                             at each round
-    pos                         : prefix position = number of commands to be exhaustive permuted (currently only 
+    pos                         : prefix position = number of commands to be exhaustive permuted (currently only
                                             at the head of flows)
     design                      : design name (e.g., *.blif/aig)
     global_prob_area/delay      : global probability of wining rewards
@@ -962,14 +946,14 @@ vector<string> biased_constr_random_commands_forget(vector<string> default_opts,
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     int nTotal = head.size()*nCommands;         // calculate total number of samples at this round
     vector<int> new_sample_constr(head.size()); // each arm has its own prob/constrain
-    vector<float> global_prob_area =  update_prob_short_term(global_area, SHORT_TERM_RATE, fSoftmax); 
-    float sum_prob_area = 0.0; 
+    vector<float> global_prob_area =  update_prob_short_term(global_area, SHORT_TERM_RATE, fSoftmax);
+    float sum_prob_area = 0.0;
     for (auto& n : global_prob_area) { sum_prob_area += n; }
-    vector<float> global_prob_delay = update_prob_short_term(global_delay, SHORT_TERM_RATE, fSoftmax); 
+    vector<float> global_prob_delay = update_prob_short_term(global_delay, SHORT_TERM_RATE, fSoftmax);
     float sum_prob_delay = 0.0;
     for (auto& n : global_prob_delay) { sum_prob_delay += n; }
     if (!(global_area.size() == head.size() && global_delay.size() == head.size())){
-        cout<<"Error:"<<global_area.size()<< "," << global_delay.size() <<"," <<head.size()<<endl;
+        spdlog::error("{},{},{}", global_area.size(), global_delay.size(), head.size());
         assert(0);
     }
     for(int i=0;i<head.size();i++){
@@ -982,7 +966,7 @@ vector<string> biased_constr_random_commands_forget(vector<string> default_opts,
     }
 #ifdef DETAIL_VERBOSE
     for(int i=0;i<head.size();i++){
-        cout<<"Number of samples at arm-"<<new_sample_constr[i]<<","<<global_prob_delay[i]<<","<< nTotal <<endl;
+        spdlog::info("Number of samples at arm-{},{},{}",new_sample_constr[i],global_prob_delay[i],nTotal);
     }
 #endif
     res_file_loc.clear();
@@ -994,7 +978,7 @@ vector<string> biased_constr_random_commands_forget(vector<string> default_opts,
                 command_unix += ";map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
             else
                 command_unix += ";map;print_stats;\" | grep \"delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
-            random_c.push_back(command_unix); 
+            random_c.push_back(command_unix);
         }
     }
     return random_c;
@@ -1004,19 +988,19 @@ vector<string> biased_constr_random_commands_forget(vector<string> default_opts,
 /* Function: get results and update the global probability distribution
     int nCommands, int repeats, int prefix_pos
     string output                        :  output result file
-    vector<vector<float> > &global_area   :  area global history  
+    vector<vector<float> > &global_area   :  area global history
     vector<vector<float> > &global_delay  :  delay global history  */
 
-vector<float> get_results(int nCommands, int repeats, int prefix_pos, string output, 
+vector<float> get_results(int nCommands, int repeats, int prefix_pos, string output,
     vector<vector<float> > &global_area, vector<vector<float> > &global_delay, int which_opt)
 {
     vector<float> res_of_this_iter;
     //int head_size = create_headers(prefix_pos, default_options()).size();
-    int head_size = choose_n_k(nCommands, prefix_pos); 
+    int head_size = choose_n_k(nCommands, prefix_pos);
     ofstream outfile(output.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
     map<int,vector<float> > prefix_res_area;
     map<int,vector<float> > prefix_res_delay;
-    for (int i=0; i<head_size;i++) //i is first order result indicator; this should match "head.size" 
+    for (int i=0; i<head_size;i++) //i is first order result indicator; this should match "head.size"
     {
         vector<float> res_area, res_delay;
         for (int i2=0; i2<nCommands;i2++){
@@ -1048,7 +1032,7 @@ vector<float> get_results(int nCommands, int repeats, int prefix_pos, string out
 #else
         outfile<<i->first<<": mean="<<temp_mean<<"; stdev="<<temp_stdev<<"; current_epoch_win_rate : "
                 << update_prob(i->second, global_mean_area) <<endl;
-#endif    
+#endif
     }
 
     /*
@@ -1072,15 +1056,15 @@ vector<float> get_results(int nCommands, int repeats, int prefix_pos, string out
 /* Function: get results and update the global probability distribution
     int nCommands, int repeats, int prefix_pos
     string output                        :  output result file
-    vector<vector<float> > &global_area   :  area global history  
-    vector<vector<float> > &global_delay  :  delay global history  
-    vector<int> &res_file_loc            :  recorded the biased number of samples */ 
+    vector<vector<float> > &global_area   :  area global history
+    vector<vector<float> > &global_delay  :  delay global history
+    vector<int> &res_file_loc            :  recorded the biased number of samples */
 
-vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, string output, 
+vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, string output,
     vector<vector<float> > &global_area, vector<vector<float> > &global_delay, vector<int> &res_file_loc, int which_opt)
 {
     vector<float> res_of_this_iter;
-    int head_size = choose_n_k(nCommands, prefix_pos); 
+    int head_size = choose_n_k(nCommands, prefix_pos);
     ofstream outfile(output.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
     map<int,vector<float> > prefix_res_area;
     map<int,vector<float> > prefix_res_delay;
@@ -1137,33 +1121,33 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
     int iter                            : current iteration of play
     int forget                          : forget/non-forget function applied switch
     int which_opt                       : area/delay switch  */
-vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design, 
+vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design,
         string out, vector<vector<float> > &global_area, vector<vector<float> > &global_delay,
         vector<string> &global_commands,    int iter, int forget, int which_opt, int fSoftmax, string lib)
 {
-    //printf("forget setup: %d\n", forget); 
+    //printf("forget setup: %d\n", forget);
 
     vector<int> res_file_loc;
     vector<string> commands_vec;
 
-    if (iter==0 ) // initial with random 
-        commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos 
+    if (iter==0 ) // initial with random
+        commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos
     else
         if(!forget) {
             //printf("c1\n");
-            commands_vec = biased_constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt, fSoftmax, lib, out);  //
         }
         else
-            commands_vec = biased_constr_random_commands_forget(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands_forget(default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt,fSoftmax,lib);   //
 
-    //cout<<"Number of Samples: "<<commands_vec.size()<<endl;
-    
+    //spdlog::debug("Number of Samples: "<<commands_vec.size());
+
     int no_arm_win=0;
     if(commands_vec.size() == 0) // in case no arm win anything ; need a threthold (number of iters) of trying this
     {
-         cout<<"Warning: Trying uniform random samples again since all arms wining rate is 0\n";
+         spdlog::warn("Trying uniform random samples again since all arms wining rate is 0");
          commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib);
          no_arm_win = 1;
     }
@@ -1174,13 +1158,13 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
 
 //#pragma omp for
     for (int i=0; i<commands_vec.size();++i){
-        //if(find(global_commands.begin(), global_commands.end(), commands_vec[i]) != global_commands.end() ) 
+        //if(find(global_commands.begin(), global_commands.end(), commands_vec[i]) != global_commands.end() )
         //    assert(0);
         global_commands.push_back(commands_vec[i]);
     }
 
     vector<float> res_of_this_iter;
-    if (iter==0 || commands_vec.size() == 0 || no_arm_win) // initial with random 
+    if (iter==0 || commands_vec.size() == 0 || no_arm_win) // initial with random
     {
         res_of_this_iter = get_results(nCommands, repeats, prefix_pos, out, global_area, global_delay, which_opt);
     }
@@ -1189,13 +1173,12 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
     }
     if(1){
         logging(iter, best_so_far(global_area), update_prob_global(global_area, fSoftmax), design+".log");
-        cout <<iter<<","<< best_so_far(global_area)<<endl;
+        spdlog::debug("{},{}",iter,best_so_far(global_area));
     }
     string clean_result = "rm *.result";
     //system(clean_result.c_str());
     if(!(global_commands.size() == to_vec_float(global_area).size())){
-        cout<<"Error: global_cmd != results; error message "<<global_commands.size()<<","<<to_vec_float(global_area).size()<<
-            ","<<to_vec_float(global_delay).size()<<endl;
+        spdlog::error("global_cmd != results; error message {},{},{}",global_commands.size(),to_vec_float(global_area).size(),to_vec_float(global_delay).size());
         assert(0);
     }
 
@@ -1216,69 +1199,68 @@ void best_so_far_command(vector<string> global_commands, vector<vector<float> > 
             break;
         }
     }
-    ofstream outfile(logfile.c_str(), std::ofstream::out | std::ofstream::app);   
+    ofstream outfile(logfile.c_str(), std::ofstream::out | std::ofstream::app);
     if(index != -1){
-        //cout<<"One of the best command(s) found:\n"<<global_commands[index]<<endl;
-        cout<<"One of the best command(s) found (Result = "<<best<<")\n"<<clean_grep(global_commands[index])<<endl;
+        spdlog::info("One of the best command(s) found (Result = {})\n{}",best, clean_grep(global_commands[index]));
         outfile<<"One of the best command(s) found (Result = "<<best<<")\n"<<clean_grep(global_commands[index])<<endl;
     }
     else{
-        cout<<"Error\n";
+        spdlog::error("Error");
         assert(0);
     }
     outfile.close();
 }
 
 
-void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target, int nSamples, 
+void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target, int nSamples,
                      int mab_iter, int fForget, int fSoftmax ) {
     string design = Design;
     string lib = "dontCare";
-    
+
     int forget = fForget;  // enable long-short-term memory for probability upate
                      // check the long-short-term rate at top of the file : global var => SHORT_TERM_RATE
     int which_opt = 0; //default(0) as AIG minimization (#nodes)
     which_opt = target;
 
-    /*   
+    /*
      *   target=0   => AIG minimization : #nodes
      *   target=1   => AIG minimization : #lev
      *   target=2   => MIG minimization : #nodes
      *   target=3   => MIG minimization : #lev
     */
 
-    string out = ".temp.result.txt"; 
+    string out = ".temp.result.txt";
     int rm_log = system( ("rm "+out).c_str());
 
     vector<string> default_opts;
     if ( target == 0 || target == 1)
       default_opts = aig_default_options();
-    else 
+    else
       default_opts = mig_default_options();
 
-    int sel_head = 1; 
+    int sel_head = 1;
     int init_global=0; // has to be fixed later, sel_head is now manually set
-    
+
     if(sel_head == 0)
         init_global = (factorial(prefix_pos));
     else
         init_global = choose_n_k(default_opts.size(), prefix_pos);
-    
-    int nCommands = init_global; // number of opts 
-    
+
+    int nCommands = init_global; // number of opts
+
     //initialize global results vectors
     vector<vector<float> > global_delay(init_global,vector<float>(0));
     vector<vector<float> > global_area(init_global, vector<float>(0));
 
-    // global commands; used to give best found command at the end 
-    vector<string> global_commands(0); 
-    
-    vector<float> seq_global_delay;    
+    // global commands; used to give best found command at the end
+    vector<string> global_commands(0);
+
+    vector<float> seq_global_delay;
     string remove_log = "rm "+design+".log"; system(remove_log.c_str()); //remove log file if exists
     {
         vector<float> res_of_this_iter;
         for (int i=0;i<mab_iter;i++){
-            res_of_this_iter = sample(nCommands, repeats, prefix_pos, default_opts, design, out, 
+            res_of_this_iter = sample(nCommands, repeats, prefix_pos, default_opts, design, out,
                                       global_area, global_delay, global_commands, i, forget, which_opt, fSoftmax, lib);
             for( int res_i = 0; res_i<res_of_this_iter.size();res_i++){
                 seq_global_delay.push_back(res_of_this_iter[res_i]);
@@ -1292,17 +1274,18 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     int rm_temp_result = system(remove_result.c_str());
     assert(seq_global_delay.size() == global_commands.size());
     ofstream outfile(design+".log", std::ofstream::out | std::ofstream::app);
-    // End of tuning; printing out the best flow(s) found 
-    cout<<"Best Flow(s) (#max=5):\n"; outfile<<"Best Flow(s) (#max=5):\n";
+    // End of tuning; printing out the best flow(s) found
+    spdlog::info("Best Flow(s) (#max=5):");
+    outfile<<"Best Flow(s) (#max=5):"<<endl;
     ofstream save_for_vtr(design+".script");
     int num_recomd_cmds = 0;
     if (which_opt != 2 && which_opt != 1 && which_opt != 0
 	&& which_opt !=3 /*&& which_opt !=4*/	) // 2 sta-delay, 1 aig-level, 4 lut-level
-    { 
+    {
 	    for (int i=0;i<seq_global_delay.size();i++)
 	    {
 		    if(seq_global_delay[i]==best_res){
-			    cout<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
+                spdlog::info(clean_flow_only_cmd_yosys(clean_grep(global_commands[i])));
 			    outfile<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    //save_for_vtr<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;
@@ -1317,7 +1300,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
 	    for (int i=0;i<seq_global_delay.size();i++)
 	    {
 		    if(seq_global_delay[i]==best_res){
-			    cout<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
+                spdlog::info(clean_flow_no_mapping(clean_grep(global_commands[i])));
 			    outfile<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    //save_for_vtr<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;

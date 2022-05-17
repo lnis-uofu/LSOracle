@@ -45,7 +45,7 @@ public:
                                 bool zero_gain = false)
     {
 
-        // std::cout << "HERE\n";
+        // spdlog::debug("HERE");
         mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = 4;
@@ -53,146 +53,145 @@ public:
             ps.allow_zero_gain = true;
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "1\n";
+        // spdlog::debug("1");
         // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
+        //   spdlog::debug("PI: {}",pi);
         // });
         // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
+        //   spdlog::debug("Gate: {}",gate);
         //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
+        //     spdlog::debug("IS PO");
         //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
         //   });
         // });
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "1 clean\n";
+        // spdlog::debug("1 clean");
         // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
+        //   spdlog::debug("PI: {}",pi);
         // });
         // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
+        //   spdlog::debug("Gate: {}",gate);
         //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
+        //     spdlog::debug("IS PO");
         //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
-        //   });
-        // });
-
-        mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "2\n";
-        // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
-        // });
-        // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
-        //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
-        //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
-        //   });
-        // });
-        aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "2 clean\n";
-        // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
-        // });
-        // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
-        //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
-        //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
         //   });
         // });
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "3\n";
+        // spdlog::debug("2");
         // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
+        //   spdlog::debug("PI: {}",pi);
         // });
         // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
+        //   spdlog::debug("Gate: {}",gate);
         //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
+        //     spdlog::debug("IS PO");
         //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
         //   });
         // });
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "3 clean\n";
+        // spdlog::debug("2 clean");
         // aig.foreach_pi([&](auto pi){
-        //   std::cout << "PI: " << pi << "\n";
+        //   spdlog::debug("PI: {}",pi);
         // });
         // aig.foreach_gate([&](auto gate){
-        //   std::cout << "Gate: " << gate << "\n";
+        //   spdlog::debug("Gate: {}",gate);
         //   if(aig.is_po(gate))
-        //     std::cout << "IS PO\n";
+        //     spdlog::debug("IS PO");
         //   aig.foreach_fanin(gate, [&](auto conn, auto i){
-        //     std::cout << "child[" << i << "] = " << conn.index << "\n";
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
         //   });
         // });
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "4\n";
+        // spdlog::debug("3");
+        // aig.foreach_pi([&](auto pi){
+        //   spdlog::debug("PI: {}",pi);
+        // });
+        // aig.foreach_gate([&](auto gate){
+        //   spdlog::debug("Gate: {}",gate);
+        //   if(aig.is_po(gate))
+        //     spdlog::debug("IS PO");
+        //   aig.foreach_fanin(gate, [&](auto conn, auto i){
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
+        //   });
+        // });
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "4 clean\n";
+        // spdlog::debug("3 clean");
+        // aig.foreach_pi([&](auto pi){
+        //   spdlog::debug("PI: {}",pi);
+        // });
+        // aig.foreach_gate([&](auto gate){
+        //   spdlog::debug("Gate: {}",gate);
+        //   if(aig.is_po(gate))
+        //     spdlog::debug("IS PO");
+        //   aig.foreach_fanin(gate, [&](auto conn, auto i){
+        //     spdlog::debug("child[{}",i << "] = {}",conn.index);
+        //   });
+        // });
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "5\n";
+        // spdlog::debug("4");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "5 clean\n";
+        // spdlog::debug("4 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "6\n";
+        // spdlog::debug("5");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "6 clean\n";
+        // spdlog::debug("5 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "7\n";
+        // spdlog::debug("6");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "7 clean\n";
+        // spdlog::debug("6 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "8\n";
+        // spdlog::debug("7");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "8 clean\n";
+        // spdlog::debug("7 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "9\n";
+        // spdlog::debug("8");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "9 clean\n";
+        // spdlog::debug("8 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "10\n";
+        // spdlog::debug("9");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "10 clean\n";
+        // spdlog::debug("9 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "11\n";
+        // spdlog::debug("10");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "11 clean\n";
+        // spdlog::debug("10 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "12\n";
+        // spdlog::debug("11");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "12 clean\n";
+        // spdlog::debug("11 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "13\n";
+        // spdlog::debug("12");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "13 clean\n";
+        // spdlog::debug("12 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "14\n";
+        // spdlog::debug("13");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "14 clean\n";
+        // spdlog::debug("13 clean");
 
         mockturtle::cut_rewriting(aig, resyn, ps);
-        // std::cout << "15\n";
+        // spdlog::debug("14");
         aig = mockturtle::cleanup_dangling(aig);
-        // std::cout << "15 clean\n";
+        // spdlog::debug("14 clean");
 
+        mockturtle::cut_rewriting(aig, resyn, ps);
+        // spdlog::debug("15");
+        aig = mockturtle::cleanup_dangling(aig);
+        // spdlog::debug("15 clean");
         return aig;
     }
 };

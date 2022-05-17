@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 #include <mockturtle/mockturtle.hpp>
+#include <spdlog/spdlog.h>
 
 namespace oracle
 {
@@ -113,41 +114,43 @@ public:
     }
 
     template<class network>
-    void print_network(network &ntk) {
-        std::cout << "Network raw:" << std::endl;
+    void log_network(network &ntk) {
+        std::stringstream ss;
+        ss << "Network raw:" << std::endl;
         for (int i = 0; i < ntk._storage->nodes.size(); i++) {
             auto n = ntk.index_to_node(i);
-            std::cout << " (" << n;
+            ss << " (" << n;
             ntk.foreach_fanin(n, [&](auto c) {
-                                          std::cout << "|" << c.index;
+                                          ss << "|" << c.index;
                                       });
-            std::cout << ")";
+            ss << ")";
         }
-        std::cout << std::endl << "Nodes:";
+        ss << std::endl << "Nodes:";
         ntk.foreach_node([&](node n) {
-                             std::cout << " " << n;
+                             ss << " " << n;
                          });
-        std::cout << std::endl;
-        std::cout << "Gates:";
+        ss << std::endl;
+        ss << "Gates:";
         ntk.foreach_gate([&](node n) {
-                             std::cout << " " << n;
+                             ss << " " << n;
                          });
-        std::cout << std::endl;
-        std::cout << "CIs:";
+        ss << std::endl;
+        ss << "CIs:";
         ntk.foreach_ci([&](node s, int i) {
-                           std::cout << " " << s << "|" << i;
+                           ss << " " << s << "|" << i;
                        });
-                std::cout << std::endl;
-        std::cout << "COs" << std::endl;
+                ss << std::endl;
+        ss << "COs" << std::endl;
         ntk.foreach_co([&](signal s, int i) {
-                           std::cout << s.index << " " << i << " " << s.complement << std::endl;
+                           ss << s.index << " " << i << " " << s.complement << std::endl;
                        });
+        spdlog::info(ss.str());
 
     }
     template<class optimized_network>
     void integrate(int partition_id, const window_view &part, mockturtle::names_view<optimized_network> &opt)
     {
-        std::cout << "Running integration" << std::endl;
+        spdlog::info("Running integration" );
         assert(opt.num_cis() == part.num_cis());
         assert(opt.num_cos() == part.num_cos());
         mockturtle::node_map<signal, mockturtle::names_view<optimized_network>> old_to_new(opt, ntk.get_constant(false));
@@ -159,7 +162,7 @@ public:
             auto o = opt.ci_at(i);
             old_to_new[o] = ntk.make_signal(n);
         });
-        std::cout << "Setup PIs" << std::endl;
+        spdlog::info("Setup PIs" );
         mockturtle::topo_view opt_topo{opt};
 
         opt_topo.foreach_gate([&](auto node) {
@@ -183,7 +186,7 @@ public:
                 ntk.set_name(old_to_new[node], opt_topo.get_name(signal));
             }
         });
-        std::cout << "Inserted new nodes" << std::endl;
+        spdlog::info("Inserted new nodes" );
         partitions.resize();
         opt_topo.foreach_gate([&](auto node) {
             partitions[old_to_new[node]] = partition_id;
@@ -204,21 +207,21 @@ public:
                 substitutions[orig_node] = new_out;
             }
         });
-        std::cout << "Calculated substitutions" << std::endl;
+        spdlog::info("Calculated substitutions" );
     }
 
     void substitute_nodes()
     {
-        std::cout << "Begin node substitution for " << substitutions.size() << " nodes" << std::endl;
+        spdlog::info("Begin node substitution for {} nodes", substitutions.size());
         // std::list<std::pair<node, signal>> substitution_list(substitutions.begin(), substitutions.end());
         // ntk.substitute_nodes(substitution_list);
         for (auto substitution = substitutions.begin(); substitution != substitutions.end(); substitution++) {
             ntk.substitute_node(substitution->first, substitution->second);
 
         }
-        std::cout << "Substituted nodes." << std::endl;
+        spdlog::info("Substituted nodes." );
         ntk = mockturtle::cleanup_dangling_with_registers(ntk);
-        std::cout << "Cleaned up dangling." << std::endl;
+        spdlog::info("Cleaned up dangling." );
         substitutions.clear();
     }
     int node_partition(const node &n)

@@ -61,36 +61,36 @@ protected:
                 auto &mig = *store<mig_ntk>().current();
                 mockturtle::depth_view mig_depth{mig};
 
-                env->out() << "MIG level " << mig_depth.depth()  << std::endl;
+                spdlog::info("MIG level {}",mig_depth.depth() );
             } else {
-                env->err() << "There is not an MIG network stored.\n";
+                spdlog::error("There is not an MIG network stored.");
             }
         } else if (is_set("xag")) {
             if (!store<xag_ntk>().empty()) {
                 auto &xag = *store<xag_ntk>().current();
                 mockturtle::depth_view xag_depth{xag};
 
-                env->out() << "XAG level " << xag_depth.depth()  << std::endl;
+                spdlog::info("XAG level {}",xag_depth.depth() );
             } else {
-                env->err() << "There is not an XAG network stored.\n";
+                spdlog::error("There is not an XAG network stored.");
             }
         } else if (is_set("xmg")) {
             if (!store<xmg_ntk>().empty()) {
                 auto &xmg = *store<xmg_ntk>().current();
                 mockturtle::depth_view xmg_depth{xmg};
 
-                env->out() << "XMG level " << xmg_depth.depth()  << std::endl;
+                spdlog::info("XMG level {}",xmg_depth.depth() );
             } else {
-                env->err() << "There is not an XMG network stored.\n";
+                spdlog::error("There is not an XMG network stored.");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
                 auto &aig = *store<aig_ntk>().current();
                 mockturtle::depth_view aig_depth{aig};
 
-                env->out() << "AIG level " << aig_depth.depth()  << std::endl;
+                spdlog::info("AIG level {}",aig_depth.depth() );
             } else {
-                env->err() << "There is not an AIG network stored.\n";
+                spdlog::error("There is not an AIG network stored.");
             }
         }
     }

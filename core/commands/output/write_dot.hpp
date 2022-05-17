@@ -61,19 +61,19 @@ protected:
                     auto &mig = *store<mig_ntk>().current();
                     mockturtle::write_dot(mig, filename);
                 } else {
-                    env->err() << "There is not an MIG network stored.\n";
+                    spdlog::error("There is not an MIG network stored.");
                 }
             } else {
                 if (!store<aig_ntk>().empty()) {
                     auto &aig = *store<aig_ntk>().current();
                     mockturtle::write_dot(aig, filename);
                 } else {
-                    env->err() << "There is not an AIG network stored.\n";
+                    spdlog::error("There is not an AIG network stored.");
                 }
             }
 
         } else {
-            env->err() << filename << " is not a valid dot file\n";
+            spdlog::error("{} is not a valid dot file", filename);
         }
     }
 

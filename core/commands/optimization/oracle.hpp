@@ -75,35 +75,33 @@ protected:
     {
 
         if (!store<aig_ntk>().empty()) {
-            env->out() << "\n\n\n1\n";
+            spdlog::info("\n\n\n1");
             auto ntk = *store<aig_ntk>().current();
-            env->out() << "\n\n\n2\n";
+            spdlog::info("\n\n\n2");
 
             //If number of partitions is not specified
             if (num_partitions == 0) {
-                env->out() << "\n\n\nif1\n";
+                spdlog::info("\n\n\nif1");
 
                 double size = ((double) ntk.size()) / 300.0;
                 num_partitions = ceil(size);
             }
-            env->out() << "\n\n\n3\n";
+            spdlog::info("\n\n\n3");
 
             mockturtle::depth_view orig_depth{ntk};
             if (config_file == "") {
                 config_file = make_temp_config();
             }
-            env->out() << "\n\n\n4\n";
-            env->out() << "constructing partition manager with " << num_partitions <<
-                       " partitionis and config_file: " << config_file << "\n";
+            spdlog::info("\n\n\n4");
+            spdlog::info("constructing partition manager with partitions and config_file: {}", num_partitions, config_file);
 
             oracle::partition_manager<aig_names> partitions(ntk, num_partitions,
                     config_file);
-            env->out() << "\n\n\n5\n";
+            spdlog::info("\n\n\n5");
 
             store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>(partitions);
 
-            env->out() << ntk.get_network_name() << " partitioned " << num_partitions <<
-                       " times\n";
+            spdlog::info("{} partitioned {} times", ntk.get_network_name(), num_partitions);
             if (!nn_model.empty())
                 high = false;
             else
@@ -124,16 +122,15 @@ protected:
 
             mockturtle::depth_view new_depth{ntk_mig};
             if (ntk_mig.size() != ntk.size() || orig_depth.depth() != new_depth.depth()) {
-                env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " <<
-                           new_depth.depth() << "\n";
-                env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-                // env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
+                spdlog::info("Final ntk size = {} and depth = {}", ntk_mig.num_gates(), new_depth.depth());
+                spdlog::info("Final number of latches = {}",ntk_mig.num_latches());
+                // spdlog::info("Area Delay Product = {}",ntk_mig.num_gates() * new_depth.depth());
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                                 (stop - start);
-                env->out() << "Full Optimization: " << duration.count() << "ms\n";
-                // env->out() << "Finished optimization\n";
+                spdlog::info("Full Optimization: {}ms", duration.count());
+                // spdlog::info("Finished optimization");
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
 
                 if (out_file != "") {
                     if (oracle::checkExt(out_file, "v")) {
@@ -143,25 +140,25 @@ protected:
                         //ps.skip_feedthrough = 1u;
 
                         mockturtle::write_verilog(ntk_mig, out_file, ps);
-                        env->out() << "Resulting network written to " << out_file << "\n";
+                        spdlog::info("Resulting network written to {}",out_file);
                     } else if (oracle::checkExt(out_file, "blif")) {
                         mockturtle::write_blif_params ps;
                         //if(is_set("skip-feedthrough"))
                         //ps.skip_feedthrough = 1u;
 
                         mockturtle::write_blif(ntk_mig, out_file, ps);
-                        env->out() << "Resulting network written to " << out_file << "\n";
+                        spdlog::info("Resulting network written to {}",out_file);
                     } else {
-                        env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
+                        spdlog::error("{} is not an accepted output file {.v, .blif}", out_file);
                     }
                 }
             } else {
-                env->out() << "No change made to network\n";
+                spdlog::info("No change made to network");
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
-                env->out() << "MIG network stored\n";
+                spdlog::info("MIG network stored");
             }
         } else {
-            env->err() << "AIG network not stored\n";
+            spdlog::error("AIG network not stored");
         }
     }
 private:

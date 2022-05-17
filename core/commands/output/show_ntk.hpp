@@ -35,7 +35,6 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-
 namespace alice
 {
 class show_ntk_command : public alice::command
@@ -58,37 +57,35 @@ protected:
 
                 for (int j = 1; j < mig._storage->nodes.size(); j++) {
                     for (int i = 0; i < mig._storage->nodes.data()->children.size(); i++) {
-                        env->out() << "node index " << j << " node fan in " <<
-                                   mig._storage->nodes[j].children[i].index << " and data " <<
-                                   mig._storage->nodes[j].children[i].data << std::endl;
+                        stringstream ss;
+                        ss << "node index " << j
+                           << " node fan in " << mig._storage->nodes[j].children[i].index
+                           << " and data " << mig._storage->nodes[j].children[i].data;
+                        spdlog::info(ss.str());
                     }
                 }
                 for (unsigned k = mig.num_pis() + 1; k <= mig._storage->inputs.size(); k++) {
                     auto node = mig.index_to_node(k);
-                    env->out() << " reg " << k << " fan out size " << mig.fanout_size(
-                                   node) << std::endl;
+                    spdlog::info(" reg {} fan out size {}", k, mig.fanout_size(node));
                 }
                 for (unsigned l = 0; l < mig._storage->outputs.size(); l++) {
-                    env->out() << " outputs " << std::endl;
-                    env->out() << " node fan in data " << mig._storage->outputs[l].data <<
-                               std::endl;
+                    spdlog::info("outputs node fan in data {}", mig._storage->outputs[l].data);
                 }
 
-                env->out() << "Inputs:\n";
+                spdlog::info("Inputs:");
                 mig.foreach_pi([&](auto pi, auto i) {
                     if (i < mig.num_pis() - mig.num_latches())
-                        env->out() << "PI: " << pi << " name: " << mig.get_name(mig.make_signal(
-                                       pi)) << "\n";
+                        spdlog::info("PI: {} name: {}", pi, mig.get_name(mig.make_signal(pi)));
                 });
 
-                env->out() << "Outputs:\n";
+                spdlog::info("Outputs:");
                 mig.foreach_po([&](auto po, auto i) {
                     if (i < mig.num_pos() - mig.num_latches())
-                        env->out() << "PO: " << po.index << " name: " << mig.get_output_name(i) << "\n";
+                        spdlog::info("PO: {} name: {}", (size_t)po.index, mig.get_output_name(i));
                 });
 
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<aig_ntk>().empty()) {
@@ -97,45 +94,45 @@ protected:
 
                 for (int j = 1; j < aig._storage->nodes.size(); j++) {
                     for (int i = 0; i < aig._storage->nodes.data()->children.size(); i++) {
-                        env->out() << "node index " << j << " node fan in " <<
-                                   aig._storage->nodes[j].children[i].index << " and data " <<
-                                   aig._storage->nodes[j].children[i].data << std::endl;
+                        stringstream ss;
+                        ss << "node index " << j
+                           << " node fan in " << aig._storage->nodes[j].children[i].index
+                           << " and data " << aig._storage->nodes[j].children[i].data;
+                        spdlog::info(ss.str());
                     }
                 }
 
                 for (unsigned k = aig.num_pis() + 1;
                         k <= (aig._storage->inputs.size() - aig.num_latches()); k++) {
                     auto node = aig.index_to_node(k);
-                    env->out() << " reg " << k << " fan out size " << aig.fanout_size(
-                                   node) << std::endl;
+                    spdlog::info(" reg {} fan out size {}", k, aig.fanout_size(
+                                   node));
                 }
 
                 for (int outIndex = 0; outIndex < aig.num_pos() - aig.num_latches();
                         outIndex++) {
-                    env->out() << "Output " << outIndex << " data " <<
-                               aig._storage->outputs[outIndex].data << std::endl;
+                    spdlog::info("Output {} data {}", outIndex,
+                               aig._storage->outputs[outIndex].data);
                 }
 
                 aig.foreach_ri([&](auto fi) {
-                    env->out() << "Register " << aig.ri_index(fi) << " data " << fi.data <<
-                               std::endl;
+                    spdlog::info("Register {} data {}", aig.ri_index(fi), fi.data);
                 });
 
-                env->out() << "Inputs:\n";
+                spdlog::info("Inputs:");
                 aig.foreach_pi([&](auto pi, auto i) {
                     if (i < aig.num_pis() - aig.num_latches())
-                        env->out() << "PI: " << pi << " name: " << aig.get_name(aig.make_signal(
-                                       pi)) << "\n";
+                        spdlog::info("PI: {} name: {}", pi, aig.get_name(aig.make_signal(pi)));
                 });
 
-                env->out() << "Outputs:\n";
+                spdlog::info("Outputs:");
                 aig.foreach_po([&](auto po, auto i) {
                     if (i < aig.num_pos() - aig.num_latches())
-                        env->out() << "PO: " << po.index << " name: " << aig.get_output_name(i) << "\n";
+                        spdlog::info("PO: {} name: {}", (size_t)po.index, aig.get_output_name(i));
                 });
 
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

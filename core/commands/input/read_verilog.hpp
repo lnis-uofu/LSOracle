@@ -65,12 +65,12 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<mig_ntk>().extend() = std::make_shared<mig_names>(names_view);
-                env->out() << "MIG network stored" << std::endl;
+                spdlog::info("MIG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -80,7 +80,7 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
@@ -93,7 +93,7 @@ protected:
                 const auto klut = *mockturtle::collapse_mapped_network<klut_names>(mapped_aig);
 
                 store<klut_ntk>().extend() = std::make_shared<klut_names>(klut);
-                env->out() << "KLUT network stored\n";
+                spdlog::info("KLUT network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -104,28 +104,28 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<xag_ntk>().extend() = std::make_shared<xag_names>(names_view);
-                env->out() << "XAG network stored" << std::endl;
+                spdlog::info("XAG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
-            
+
             } else if (is_set("xmg")) {
                 mockturtle::xmg_network ntk;
                 mockturtle::names_view<mockturtle::xmg_network> names_view{ntk};
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
 
                 store<xmg_ntk>().extend() = std::make_shared<xmg_names>(names_view);
-                env->out() << "XMG network stored" << std::endl;
+                spdlog::info("XMG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
@@ -136,17 +136,17 @@ protected:
                 lorina::return_code result = lorina::read_verilog(filename,
                                              mockturtle::verilog_reader(names_view));
                 if (result != lorina::return_code::success) {
-                    env->err() << "Unable to read verilog file";
+                    spdlog::error("Unable to read verilog file");
                     return;
                 }
                 store<aig_ntk>().extend() = std::make_shared<aig_names>(names_view);
-                env->out() << "AIG network stored" << std::endl;
+                spdlog::info("AIG network stored");
 
                 filename.erase(filename.end() - 2, filename.end());
                 names_view.set_network_name(filename);
             }
         } else {
-            env->err() << filename << " is not a valid Verilog file\n";
+            spdlog::error("{} is not a valid Verilog file", filename);
         }
     }
 private:

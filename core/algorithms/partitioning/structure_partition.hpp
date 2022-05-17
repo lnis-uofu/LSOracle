@@ -28,6 +28,8 @@
 #include <vector>
 #include <libkahypar.h>
 #include <mockturtle/mockturtle.hpp>
+#include <spdlog/spdlog.h>
+
 namespace oracle
 {
 template<typename Ntk>
@@ -55,7 +57,7 @@ private:
         std::vector<typename Ntk::node> max_cone;
 
         ntk.foreach_po([this, &max_depth, &max_po, &max_cone](auto po) {
-            //        std::cout << "PO " << po.index << std::endl;
+            //        spdlog::debug("PO {}",po.index);
             ntk.incr_trav_id();
             uint32_t trav_id = ntk.trav_id();
             ntk.clear_visited();
@@ -98,7 +100,7 @@ private:
         while (true) {
 
             auto [po, cone, max_depth] = deepest_po();
-            std::cout << max_depth << std::endl;
+            spdlog::debug(max_depth);
             if (cone.size() == 0 || max_depth <= 0) {
                 break;
             }

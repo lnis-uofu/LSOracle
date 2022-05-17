@@ -71,7 +71,7 @@ protected:
                 store<oracle::partition_manager<mockturtle::mig_network>>().extend() = part_man;
 
             } else {
-                env->err() << "MIG network not stored\n";
+                spdlog::error("MIG network not stored");
             }
         } else {
             if (!store<mockturtle::aig_network>().empty()) {
@@ -82,13 +82,13 @@ protected:
                 auto stop = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                                 (stop - start);
-                env->out() << "Partitioning time: " << duration.count() << "ms\n";
+                spdlog::info("Partitioning time: {} ms{}",duration.count());
                 oracle::partition_manager<mockturtle::aig_network> part_man =
                     partitioner.create_part_man(ntk);
                 store<oracle::partition_manager<mockturtle::aig_network>>().extend() = part_man;
 
             } else {
-                env->err() << "AIG network not stored\n";
+                spdlog::error("AIG network not stored");
             }
         }
     }

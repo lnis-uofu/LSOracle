@@ -82,11 +82,11 @@ protected:
                 }
             });
 
-            env->out() << "MAJ nodes internally = " << maj_num << "\n";
-            env->out() << "AND nodes internally = " << and_num << "\n";
+            spdlog::info("MAJ nodes internally = {}",maj_num);
+            spdlog::info("AND nodes internally = {}",and_num);
 
         } else {
-            env->err() << "MIG network not stored\n";
+            spdlog::error("MIG network not stored");
         }
 
     }

@@ -154,7 +154,7 @@ public:
     }
     void echo_options()
     {
-        std::cout << "Output label filename: " << output_label_file << "\n";
+        spdlog::info("Output label filename: {}",output_label_file );
     }
 protected:
     void execute()
@@ -188,14 +188,14 @@ public:
     /* Function to echo options */
     void echo_options()
     {
-        std::cout << "Echo options for confirmation:\n";
-        std::cout << "Benchmark list filename: " << benchmark_list << "\n";
-        std::cout << "Output label filename: " << output_label_file << "\n";
-        std::cout << "Input size of each training sample circuit: " << partition_size <<
-                  "\n";
-        std::cout << "Type of training set: " << training_set_type << "\n";
-        std::cout << "Label AIG optimizer: " << is_set("label_aig") << "\n";
-        std::cout << "Label MIG optimizer: " << is_set("label_mig") << "\n";
+        spdlog::info("Echo options for confirmation:");
+        spdlog::info("Benchmark list filename: {}",benchmark_list );
+        spdlog::info("Output label filename: {}",output_label_file );
+        spdlog::info("Input size of each training sample circuit: {}",partition_size <<
+                  "");
+        spdlog::info("Type of training set: {}",training_set_type );
+        spdlog::info("Label AIG optimizer: {}",is_set("label_aig") );
+        spdlog::info("Label MIG optimizer: {}",is_set("label_mig") );
     }
 protected:
     void execute()

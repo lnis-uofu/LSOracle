@@ -82,20 +82,20 @@ public:
         });
 
         /* LUT nodes */
-        std::cout << "Rewriting LUTs\n";
+        spdlog::info("Rewriting LUTs");
         ntk.foreach_node([&](auto const n) {
             if (ntk.is_constant(n) || ntk.is_pi(n)) {
                 ++netlistcount;
                 return;
             }
             auto func = ntk.node_function(n);
-            // std::cout << "LUT Function before NPN canonization: " << kitty::to_hex(func) << "\t";
+            // spdlog::debug("LUT Function before NPN canonization: {}", kitty::to_hex(func));
             auto NPNconfig = kitty::exact_npn_canonization(func);
             std::string tempstr = kitty::to_hex(std::get<0>(NPNconfig));
             std::transform(tempstr.begin(), tempstr.end(), tempstr.begin(), ::toupper);
             std::string json_lookup = fmt::format("out_{}", tempstr);
             std::vector<mockturtle::signal<NtkDest>> cell_children;
-            // std::cout << "NPN Class: " << tempstr << "\n";
+            // spdlog::debug("NPN Class: {}", tempstr);
 
             ntk.foreach_fanin(n, [&](auto fanin) {
                 cell_children.push_back(node_to_signal[fanin]);
@@ -115,7 +115,7 @@ public:
                         ++netlistcount;
                         ++new_count;
                     } else {
-                        // std::cout << "ERROR: Not placing 1 input function, INVx2_ASAP7_75t_R.  Equivalent already exists.\n";
+                        // spdlog::debug("ERROR: Not placing 1 input function, INVx2_ASAP7_75t_R.  Equivalent already exists.");
                     }
                 } else if (json_lookup == "out_0" || json_lookup == "out_00") {
                     node_to_signal[n] = dest.get_constant(false);
@@ -138,7 +138,7 @@ public:
                         ++netlistcount;
                         ++new_count;
                     } else {
-                        // std::cout << "equivalent node already exists.  Not placing. (input negation)\n";
+                        // spdlog::debug("equivalent node already exists.  Not placing. (input negation)");
                     }
                 }
             }
@@ -188,9 +188,9 @@ public:
                                             auto int_wire = gate_tmp_outputs.at(arg_match[2]);
                                             gate_children.push_back(int_wire);
                                         } catch (const std::exception &e) {
-                                            std::cout << "Techmapping failed.  No signal corresponding to wire name " <<
-                                                      arg_match[2] << " in NPN class " << json_lookup << "\n";
-                                            std::cout << "Guru Meditation: " << e.what() << "\n";
+                                            spdlog::info("Techmapping failed.  No signal corresponding to wire name {} in NPN class {}",
+                                                         arg_match[2], json_lookup);
+                                            spdlog::info("Guru Meditation: {}", e.what());
                                         }
                                     }
 
@@ -210,8 +210,8 @@ public:
                                             ++new_count;
                                         } else {
                                             std::string stcell = node_gates.at(i).substr(0, node_gates.at(i).find(" "));
-                                            // std::cout << "Equivalent cell already exists at LUT end:\t";
-                                            // std::cout << "node: " << i << " in parent klut node " << n <<"\n";
+                                            // spdlog::debug("Equivalent cell already exists at LUT end:\t";
+                                            // spdlog::debug("node: {} in parent klut node", i, n);
                                         }
                                         if (((std::get<1>(NPNconfig) >> cell_children.size()) & 1)) {
                                             int before = dest.size();
@@ -225,7 +225,7 @@ public:
                                                 ++netlistcount;
                                                 ++new_count;
                                             } else {
-                                                // std::cout << "Gate equivalent to negated klut output already exists.  Not placing not gate.\n";
+                                                // spdlog::debug("Gate equivalent to negated klut output already exists.  Not placing not gate.");
                                             }
                                         }
                                     } else {
@@ -242,32 +242,32 @@ public:
                                             ++netlistcount;
                                             ++new_count;
                                         } else {
-                                            // std::cout << "Reusing equivalent cell" << "\n";
+                                            // spdlog::debug("Reusing equivalent cell");
                                         }
                                     }
                                     /***************************/
                                     //error handling
                                 } else {
-                                    // std::cout << "Error: assignment to standard cell must be A, B, C, D, or Y. Techmapper was passed: " << arg_match[1] << "\n";
+                                    // spdlog::debug("Error: assignment to standard cell must be A, B, C, D, or Y. Techmapper was passed: {}", arg_match[1]);
                                     break;
                                 } //done with i/o mapping
                             } else {
-                                // std::cout << "Internal error during techmapping. Attempted to access regex result when not ready.\n";
+                                // spdlog::debug("Internal error during techmapping. Attempted to access regex result when not ready.");
                                 break;
                             } //arg_match.ready()
                         } else {
-                            // std::cout << "Bad token in NPN-class json file!\n";
+                            // spdlog::debug("Bad token in NPN-class json file!");
                             break;
                         } //regex_search
                     } //regex_token_iterator
                 } // node_gates for loop
             } catch (nlohmann::json::type_error &er) {
-                // std::cout << "\n" << er.what() << '\n'<< "guru meditation: " << er.id << std::endl;
-                // std::cout << "Perhaps truth table "<<json_lookup<<" is not found in the techmapping library?\n\n";
+                spdlog::error("{}\n guru meditation: {}", er.what(), er.id);
+                spdlog::error("Perhaps truth table {} is not found in the techmapping library?", json_lookup);
             } catch (std::out_of_range exc) {
-                // std::cout << "Attempting to create a 4 input standard cell with a fanin less  than 4\n";
+                spdlog::error("Attempting to create a 4 input standard cell with a fanin less  than 4");
             } catch (const std::exception &ex) {
-                // std::cout << "caught other exception: "<< ex.what() << "\n";
+                spdlog::error("caught other exception: {}", ex.what());
             }
 
         });  //foreach node
@@ -276,18 +276,18 @@ public:
             dest.create_po(node_to_signal[f]);
         });
 
-        // std::cout << "###################\nLOOPING THROUGH DEST NTK (DEBUG)\n\n";
+        // spdlog::debug("###################\nLOOPING THROUGH DEST NTK (DEBUG)");
         // dest.foreach_node( [&]( auto const& n ) {
         //   if (cell_names.find(n) != cell_names.end()){
-        //     std::cout << "\t" << n << "\t" << cell_names.at(n) << " \n";
+        //     spdlog::("\t{}",n << "\t{}",cell_names.at(n) << " ");
         //   } else {
-        //     std::cout << "\tno cell found for " << n << "\n";
+        //     spdlog::info("\tno cell found for {}",n);
         //   }
         //   });
 
         int dup_count = 0;
 
-        std::cout << "Performing post techmapping optimization\n";
+        spdlog::info("Performing post techmapping optimization");
         dest.foreach_node([&](auto const & n) {
             if (dest.is_constant(n) || dest.is_pi(n)) {
                 return;
@@ -307,7 +307,7 @@ public:
                         });
                         if (check_node_grandchildren.size() == 1) {
                             dup_count += 2;
-                            // std::cout << "Duplicated NOT gates.  Signal: " << n << " child: " << check_node_children.at(0) << " original signal before double inversion: " << check_node_grandchildren.at(0) << "\n";
+                            // spdlog::debug("Duplicated NOT gates.  Signal: {}",n << " child: {}",check_node_children.at(0) << " original signal before double inversion: {}",check_node_grandchildren.at(0));
                             if (dest.fanout_size(check_node_children.at(0)) == 1) {
                                 cell_names.erase(check_node_children.at(0));
                             }
