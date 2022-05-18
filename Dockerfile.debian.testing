@@ -3,8 +3,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends\
     libboost-program-options1.74.0 \
     libreadline8 \
+    libfmt8 \
+    tcl \
+    libspdlog1 \
     python3-numpy \
-    python3-matplotlib && \
+    python3-matplotlib \
+    yosys && \
     apt-get clean
 
 FROM runtime AS builder
@@ -21,14 +25,18 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         libboost-program-options-dev \
         libreadline-dev \
         libpython3-dev \
+        libfmt-dev \
         python3-distutils \
         pybind11-dev \
+        libspdlog-dev \
         lcov \
+        tcl-dev \
         gcovr \
         git \
         swig \
         bison \
-        flex && \
+        flex \
+        yosys-dev && \
     apt-get clean
 ENV CC=/usr/bin/gcc-10 CXX=/usr/bin/g++-10
 
@@ -41,11 +49,24 @@ RUN mkdir -p /LSOracle/build
 COPY . /LSOracle/
 WORKDIR /LSOracle
 
-RUN cmake -B build -D CMAKE_BUILD_TYPE=RELEASE . && cmake --build build -j$(nproc)
+RUN cmake \
+    -D CMAKE_BUILD_TYPE=RELEASE \
+    -D ENABLE_OPENSTA=ON \
+    -D ENABLE_ABC=ON \
+    -D YOSYS_PLUGIN=ON \
+    -D YOSYS_INCLUDE_DIR=/usr/share/yosys/include \
+    -D YOSYS_PLUGIN_DIR=/usr/share/yosys/plugins \
+    -D LOCAL_PYBIND=OFF \
+    -D LOCAL_SPDLOG=OFF \
+    -D LOCAL_FMT=OFF \
+    -D LOCAL_BOOST=OFF \
+    -D LOCAL_GTEST=OFF \
+    -B build . && \
+    cmake --build build -j$(nproc) && \
+    cmake --install build
 
 FROM runtime AS dist
-RUN mkdir -p /LSOracle
-WORKDIR /LSOracle
-COPY --from=compiled /LSOracle /LSOracle
-ENV PATH="/LSOracle/build/core:${PATH}"
+COPY --from=compiled /usr/share/lsoracle /usr/share/lsoracle
+COPY --from=compiled /usr/bin/lsoracle /usr/bin/lsoracle
+COPY --from=compiled /usr/share/yosys/plugins/oracle.so /usr/share/yosys/plugins/oracle.so
 CMD ["lsoracle"]

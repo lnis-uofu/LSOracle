@@ -38,6 +38,7 @@ target_compile_options(kahypar PRIVATE -w)
 if (LOCAL_FMT)
   add_subdirectory(fmt) # must go before mockturtle and alice
 else()
+  add_custom_command(fmt) # add this so that mockturtle detects an externally supplied version.
   find_package(fmt)
 endif()
 
