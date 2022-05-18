@@ -8,6 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     libspdlog1 \
     python3-numpy \
     python3-matplotlib \
+    libgtest-dev \
     yosys && \
     apt-get clean
 
