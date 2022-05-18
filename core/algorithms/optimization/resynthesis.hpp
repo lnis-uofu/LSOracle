@@ -49,7 +49,14 @@ template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     oracle::partition_manager_junior<network> &partitions,
     const std::string &abc_exec,
+    const optimization_strategy strategy,bool reoptimize_bool);
+
+template <typename network>
+mockturtle::names_view<mockturtle::xmg_network> optimize_reoptimize(
+    oracle::partition_manager_junior<network> &partitions,
+    const std::string &abc_exec,
     const optimization_strategy strategy);
+
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
@@ -77,6 +84,7 @@ public:
      * Perform optimization
      */
     virtual void optimize() = 0;
+    virtual void reoptimize() = 0;
      /**
      * Calculate tech independent depth and nodes metrics.
      */

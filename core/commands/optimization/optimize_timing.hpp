@@ -71,7 +71,6 @@ protected:
 
         auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
         mockturtle::depth_view orig_depth{ntk};
-
         oracle::partition_manager_junior<network> partitions_jr =
             *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
 
@@ -82,6 +81,7 @@ protected:
                 liberty_file, mapping_file, sdc_file, clock_name,
                 output_file, abc_exec, temp_prefix);
         auto stop = std::chrono::high_resolution_clock::now();
+   
 
         mockturtle::depth_view new_depth{ntk_result};
         if (ntk_result.size() == ntk.size()

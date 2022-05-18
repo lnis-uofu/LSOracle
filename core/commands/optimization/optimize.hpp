@@ -46,6 +46,7 @@ public:
         opts.add_flag("--nodes", "Node Count target");
         opts.add_flag("--depth", "Depth target");
 	opts.add_flag("--resynth", "Resynthesis for depth");
+    opts.add_option("--convergence",strategyconvergence, "Reoptimization until convergence with the strategy wanted (balanced, nodes, depth)");
     }
 protected:
     void execute()
@@ -55,7 +56,8 @@ protected:
 
     template <typename network>
     void synth(string name)
-    {
+    {   
+        auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
             env->err() << "No " << name << " stored\n";
             return;
@@ -69,12 +71,30 @@ protected:
             *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
 
         mockturtle::depth_view orig_depth(partitions_jr.get_network());
-
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result;
+        mockturtle::names_view<mockturtle::xmg_network> ntk2_result;
+
 	if (is_set("resynth")) {
 	    ntk_result = oracle::optimize_resynthesis<mockturtle::aig_network>(partitions_jr, abc_exec);
-	} else {
+	} 
+       
+    if (is_set("convergence")){
+        //oracle::optimization_strategy strategy;
+        //strategy = oracle::optimization_strategy::balanced;
+        oracle::optimization_strategy strategy;
+        if (strategyconvergence=="depth") {
+		strategy = oracle::optimization_strategy::depth;
+	    } else if (strategyconvergence=="nodes") {
+		strategy = oracle::optimization_strategy::size;
+	    } else {
+		strategy = oracle::optimization_strategy::balanced;
+	    }
+        bool reoptimize_bool = true;
+        ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy, true);
+    }
+
+    else {
 	    oracle::optimization_strategy strategy;
 	    if (is_set("depth")) {
 		strategy = oracle::optimization_strategy::depth;
@@ -83,32 +103,36 @@ protected:
 	    } else {
 		strategy = oracle::optimization_strategy::balanced;
 	    }
-
-            ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy);
-	}
+    
+        ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy,false);
+    }
         auto stop = std::chrono::high_resolution_clock::now();
-
         mockturtle::depth_view new_depth(ntk_result);
+
+
         if (ntk_result.size() == partitions_jr.get_network().size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
         }
 
         env->out() << "Final ntk size = " << ntk_result.num_gates() << " and depth = "
-                   << new_depth.depth() << "\n";
+                    << new_depth.depth() << "\n";
         env->out() << "Final number of latches = " << ntk_result.num_latches() << "\n";
         env->out() << "Node Depth Product = "
-                   << ntk_result.num_gates() * new_depth.depth()
-                   << "\n";
+                    << ntk_result.num_gates() * new_depth.depth()
+                    << "\n";
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
                         (stop - start);
         env->out() << "Full Optimization: " << duration.count() << "ms\n";
         env->out() << "Finished optimization\n";
         store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
-			      std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
+                    std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
     }
 
     string abc_exec{"abc"};
+private:
+    std:: string strategyconvergence={""};
+
 };
 ALICE_ADD_COMMAND(optimize, "Optimization");
 }
