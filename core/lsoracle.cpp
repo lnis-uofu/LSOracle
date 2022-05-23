@@ -148,6 +148,7 @@
 #include "commands/optimization/refactor.hpp"
 #include "commands/optimization/resub.hpp"
 #include "commands/optimization/oracle.hpp"
+#include "commands/optimization/oracle_test.hpp"
 #include "commands/optimization/xmgscript.hpp"
 #include "commands/optimization/xagscript.hpp"
 #include "commands/optimization/deep.hpp"

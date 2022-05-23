@@ -131,8 +131,8 @@ mig_names optimization_test(aig_names ntk_aig, part_man_aig partitions_aig,
                         printf("pre mig size: %d\n", original_aig.num_gates());
                         auto opt_aig_mig = *aig_to_mig(original_aig, 0);
                         printf("post mig part size: %d\n", opt_aig_mig.num_gates());
-
                         partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
+                        
                         //ntk_mig = mockturtle::cleanup_dangling(ntk_mig);
                         printf("Part synch size: %d\n", partitions_mig.num_gates());
                         partitions_mig.synchronize_part(part, opt_aig_mig, ntk_mig);
