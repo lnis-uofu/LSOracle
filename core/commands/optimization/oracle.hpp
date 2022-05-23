@@ -32,11 +32,12 @@
 
 #include <stdio.h>
 #include <fstream>
-
-#include <sys/stat.h>
 #include <stdlib.h>
 #include <math.h>
 #include "algorithms/optimization/optimization_test.hpp"
+#include <sys/stat.h>
+#include "algorithms/optimization/resynthesis.hpp"
+
 
 namespace alice
 {
@@ -44,141 +45,194 @@ class oracle_command : public alice::command
 {
 
 public:
-    explicit oracle_command(const environment::ptr &env)
-        : command(env,
-                  "Partitions Stored AIG network, and Performs Mixed Synthesis on Network")
-    {
+        using aig_names = mockturtle::names_view<mockturtle::aig_network>;
+        using aig_ntk = std::shared_ptr<aig_names>;
+        using part_man_aig = oracle::partition_manager<aig_names>;
+        using part_man_aig_ntk = std::shared_ptr<part_man_aig>;
 
-        opts.add_option("--partition,partition", num_partitions,
-                        "Number of partitions (Network Size / 300 set as partitition number if not specified)");
-        opts.add_option("--nn_model,-n", nn_model,
-                        "Trained neural network model for classification");
-        opts.add_option("--out,-o", out_file,
+        using mig_names = mockturtle::names_view<mockturtle::mig_network>;
+        using mig_ntk = std::shared_ptr<mig_names>;
+        using part_man_mig = oracle::partition_manager<mig_names>;
+        using part_man_mig_ntk = std::shared_ptr<part_man_mig>;
+
+        explicit oracle_command(const environment::ptr &env)
+            : command(env,
+                      "Partitions current network using KaHyPar k-means hypergraph partitioner")
+            {
+                add_flag("--aig,-a", "Partition stored AIG (Default)");
+                add_flag("--mig,-m", "Partition stored MIG");
+                add_flag("--xag,-x", "Partition stored XAG");
+                add_flag("--xmg,-g", "Partition stored XMG");
+
+                auto num_opt = opts.add_option("--num,num", num_partitions,
+                                               "Number of desired partitions");
+                opts.add_option("--abc_exec", abc_exec,
+                        "ABC executable, defaults to using path.");
+                opts.add_option("--size", size_partitions,
+                                "Number of desired average nodes per partition.")->excludes(num_opt);
+                opts.add_option("--config_direc,-c", config_direc,
+                                "Path to the configuration file for KaHyPar.");
+                opts.add_option("--initial,-i", initial_file,
+                                "External file to write the initial partitions to.");
+                opts.add_option("--node_weights,-n", node_weight_file,
+                                "External file containing node weights");
+                opts.add_option("--edge_weights,-e", edge_weight_file,
+                                "External file containing edge weights");
+                add_flag("--sap,-s", "Apply Structure Aware Partitioning");
+                opts.add_option("--epsilon", imbalance,
+                                "Hypergraph partitioning epsilon imbalance parameter.");
+                opts.add_option("--strategy",strategych, "Strategy for optimization");
+                opts.add_option("--out,-o", out_file,
                         "output file to write resulting network to [.v, .blif]");
-        opts.add_option("--strategy,-s", strategy,
-                        "classification strategy [area delay product{DEFAULT}=0, area=1, delay=2]");
-        opts.add_option("--config,-f", config_file, "Config file", true);
-        // add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
-        add_flag("--aig,-a", "Perform only AIG optimization on all partitions");
-        add_flag("--mig,-m", "Perform only MIG optimization on all partitions");
-        add_flag("--combine,-c",
-                 "Combine adjacent partitions that have been classified for the same optimization");
-        //add_flag("--skip-feedthrough", "Do not include feedthrough nets when writing out the file");
-#ifdef ENABLE_GALOIS
-	// TODO replace this flag with a different letter, g is going to be xmg
-        add_flag("--bipart,-g", "Use BiPart from the Galois system for partitioning");
-#endif
-    }
+                
+            }
 
-protected:
-    void execute()
-    {
+    protected:
 
-        if (!store<aig_ntk>().empty()) {
-            env->out() << "\n\n\n1\n";
-            auto ntk = *store<aig_ntk>().current();
-            env->out() << "\n\n\n2\n";
+        template <typename network>
+        void partition_network(string name)
+        {
+            if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
+                env->err() << name << " network not stored\n";
+                return;
+            }
+            mockturtle::names_view<network> ntk =
+                *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
-            //If number of partitions is not specified
+
             if (num_partitions == 0) {
-                env->out() << "\n\n\nif1\n";
-
-                double size = ((double) ntk.size()) / 300.0;
-                num_partitions = ceil(size);
+                num_partitions = std::max(ntk.size() / size_partitions, 1u);
             }
-            env->out() << "\n\n\n3\n";
+            env->out() << "Using " << num_partitions << " partitions" << std::endl;
 
-            mockturtle::depth_view orig_depth{ntk};
-            if (config_file == "") {
-                config_file = make_temp_config();
+            int *node_weights = nullptr;
+            int *edge_weights = nullptr;
+            if (edge_weight_file != "") {
+                env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
+                std::vector<int> data = read_integer_file(edge_weight_file);
+                edge_weights = &data[0];
             }
-            env->out() << "\n\n\n4\n";
-            env->out() << "constructing partition manager with " << num_partitions <<
-                       " partitionis and config_file: " << config_file << "\n";
+            if (node_weight_file != "") {
+                env->out() << "Reading node weights from " << node_weight_file << std::endl;
+                std::vector<int> data = read_integer_file(node_weight_file);
+                if (data.size() != ntk.size()) {
+                    env->out() << "Node weight file contains the incorrect number of nodes: got " <<
+                        data.size() << " expected " << ntk.size() << std::endl;
+                    exit(1);
+                } else {
+                    node_weights = &data[0];
+                }
+            }
 
-            oracle::partition_manager<aig_names> partitions(ntk, num_partitions,
-                    config_file);
-            env->out() << "\n\n\n5\n";
+            if (config_direc == "") {
+                config_direc = make_temp_config();
+            }
+            env->out() << "Using KaHyPar configuration " << config_direc << std::endl;
 
-            store<part_man_aig_ntk>().extend() = std::make_shared<part_man_aig>(partitions);
+            oracle::kahypar_partitioner<network> partitioner(ntk,
+                                                                  num_partitions,
+                                                                  config_direc,
+                                                                  node_weights,
+                                                                  edge_weights,
+                                                                  imbalance);
 
-            env->out() << ntk.get_network_name() << " partitioned " << num_partitions <<
-                       " times\n";
-            if (!nn_model.empty())
-                high = false;
-            else
-                high = true;
-            if (is_set("aig"))
-                aig = true;
-            if (is_set("mig"))
-                mig = true;
-            if (is_set("combine"))
-                combine = true;
+            store<std::shared_ptr<oracle::partition_manager_junior<network>>>().extend() =
+                std::make_shared<oracle::partition_manager_junior<network>>(partitioner.partition_manager());
 
-            auto start = std::chrono::high_resolution_clock::now();
+        }
+        
+        void execute()
+        {
+        synth<mockturtle::aig_network>("AIG");
+        }
 
-            auto ntk_mig = oracle::optimization_test(ntk, partitions, strategy, nn_model,
-                           high, aig, mig, combine);
+        template <typename network>
+        void synth(string name){
 
-            auto stop = std::chrono::high_resolution_clock::now();
+        if (is_set("mig")) {
+            partition_network<mockturtle::mig_network>("MIG");
+        } else if (is_set("xag")) {
+            partition_network<mockturtle::xag_network>("XAG");
+        } else if (is_set("xmg")) {
+            partition_network<mockturtle::xmg_network>("XMG");
+        } else {
+            partition_network<mockturtle::aig_network>("AIG");
+        }
 
-            mockturtle::depth_view new_depth{ntk_mig};
-            if (ntk_mig.size() != ntk.size() || orig_depth.depth() != new_depth.depth()) {
-                env->out() << "Final ntk size = " << ntk_mig.num_gates() << " and depth = " <<
-                           new_depth.depth() << "\n";
-                env->out() << "Final number of latches = " << ntk_mig.num_latches() << "\n";
-                // env->out() << "Area Delay Product = " << ntk_mig.num_gates() * new_depth.depth() << "\n";
-                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
-                                (stop - start);
-                env->out() << "Full Optimization: " << duration.count() << "ms\n";
-                // env->out() << "Finished optimization\n";
-                store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
-                env->out() << "MIG network stored\n";
+        auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
+        oracle::partition_manager_junior<network> partitions_jr =
+            *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
 
-                if (out_file != "") {
+        mockturtle::depth_view orig_depth(partitions_jr.get_network());
+        auto start = std::chrono::high_resolution_clock::now();
+        mockturtle::names_view<mockturtle::xmg_network> ntk_result;
+
+	    oracle::optimization_strategy strategy;
+        if (strategych=="depth") {
+		strategy = oracle::optimization_strategy::depth;
+	    } else if (strategych=="nodes") {
+		strategy = oracle::optimization_strategy::size;
+	    } else {
+		strategy = oracle::optimization_strategy::balanced;
+	    }
+        ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy,false);
+
+        auto stop = std::chrono::high_resolution_clock::now();
+        mockturtle::depth_view new_depth(ntk_result);
+
+
+        if (ntk_result.size() == partitions_jr.get_network().size()
+                && orig_depth.depth() == new_depth.depth()) {
+            env->err() << "No change made to network" << std::endl;
+        }
+
+        env->out() << "Final ntk size = " << ntk_result.num_gates() << " and depth = "
+                    << new_depth.depth() << "\n";
+        env->out() << "Final number of latches = " << ntk_result.num_latches() << "\n";
+        env->out() << "Node Depth Product = "
+                    << ntk_result.num_gates() * new_depth.depth()
+                    << "\n";
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
+                        (stop - start);
+        env->out() << "Full Optimization: " << duration.count() << "ms\n";
+        env->out() << "Finished optimization\n";
+        store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
+                    std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
+        if (out_file != "") {
                     if (oracle::checkExt(out_file, "v")) {
                         mockturtle::write_verilog_params ps;
                         //might be nice to have again, but for now commenting this out to allow us to use stock mockturtle I/O
                         //if(is_set("skip-feedthrough"))
                         //ps.skip_feedthrough = 1u;
 
-                        mockturtle::write_verilog(ntk_mig, out_file, ps);
+                        mockturtle::write_verilog(ntk_result, out_file, ps);
                         env->out() << "Resulting network written to " << out_file << "\n";
                     } else if (oracle::checkExt(out_file, "blif")) {
                         mockturtle::write_blif_params ps;
                         //if(is_set("skip-feedthrough"))
                         //ps.skip_feedthrough = 1u;
 
-                        mockturtle::write_blif(ntk_mig, out_file, ps);
+                        mockturtle::write_blif(ntk_result, out_file, ps);
                         env->out() << "Resulting network written to " << out_file << "\n";
                     } else {
                         env->err() << out_file << " is not an accepted output file {.v, .blif}\n";
                     }
                 }
-            } else {
-                env->out() << "No change made to network\n";
-                store<mig_ntk>().extend() = std::make_shared<mig_names>(ntk_mig);
-                env->out() << "MIG network stored\n";
-            }
-        } else {
-            env->err() << "AIG network not stored\n";
         }
-    }
-private:
-    std::string filename{};
-    int num_partitions{0u};
-    std::string nn_model{};
-    std::string out_file{};
-    std::string config_file{};
-    unsigned strategy{0u};
-    bool high = false;
-    bool aig = false;
-    bool mig = false;
-    bool combine = false;
-#ifdef ENABLE_GALOIS
-    bool bipart = false;
-#endif
-};
+    private:
+        uint32_t num_partitions = 0;
+        uint32_t size_partitions = 2048;
+        std::string config_direc = "";
+        // std::string output_file = "";
+        std::string initial_file = "";
+        std::string edge_weight_file = "";
+        std::string node_weight_file = "";
+        double imbalance = 0.9;
+        std::string out_file{};
+        std:: string strategych={""};
+        string abc_exec{"abc"};
+        
+    };
 
 ALICE_ADD_COMMAND(oracle, "Optimization");
 }
