@@ -80,8 +80,6 @@ protected:
 	} 
        
     if (is_set("convergence")){
-        //oracle::optimization_strategy strategy;
-        //strategy = oracle::optimization_strategy::balanced;
         oracle::optimization_strategy strategy;
         if (strategyconvergence=="depth") {
 		strategy = oracle::optimization_strategy::depth;

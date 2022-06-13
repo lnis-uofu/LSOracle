@@ -1200,30 +1200,22 @@ vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network>
                 std::cout << "result depth " << result1.depth
                   << " size " << result1.nodes << std::endl;
                 if (best == nullptr) {
-                    best = *opt;
-                    
+                    best = *opt;  
                     continue;
                 }
                 if (comparator(**opt, *best)) {
                     best = *opt;
                     std::cout << "found a better result" << std::endl;
-                    
-                    
-                    
                     continue;
-                    
                 }
             }
-
             node_depth result = best->independent_metric();
-            
             if((result.nodes*result.depth<previous_best_nodes*previous_best_depth)||(i==0)){
                     previous_best_nodes =result.nodes;
                     previous_best_depth =result.depth;
                     
                     optimizersave1.push_back(best);
                     j=i;
-                    
                 }
             
             else if (((result.nodes==previous_best_nodes)&&(result.depth==previous_best_depth))||(i>2)){
@@ -1238,9 +1230,7 @@ vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network>
                     auto l=optimizersave1.back();
                     optimizersave.push_back(l);
                 }
-                //for (int h=0;h<j;h++){
-                //    optimizersave.push_back(best);
-                //}
+
                 break;
             }
             std::cout << "Iteration nº" <<i << ", Current depth " << result.depth << "  Best depth  " << previous_best_depth<< " Current size " << result.nodes  << " Best size " << previous_best_nodes<<std::endl;
@@ -1273,11 +1263,12 @@ vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network>
     }
     std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
     node_depth result2 = best->independent_metric();
-    std::cout << "Best nodes " << result2.nodes << " Best depth " << result2.depth << " " <<j<<std::endl;
+    std::cout << "Best nodes " << result2.nodes << " Best depth " << result2.depth <<std::endl;
+    std::cout << "Best result found with ";
     for(auto k=optimizersave.begin();k!=optimizersave.end();k++){
-                        std::cout <<*k<< (*k)->optimizer_name()<< std::endl;
+                        std::cout <<(*k)->optimizer_name()<<" "<< std::endl;
                     } 
-    
+    std::cout <<std::endl;
 
     return optimizersave;
     
@@ -1334,8 +1325,7 @@ std::set<std::string> get_wire_names(oracle::partition_manager_junior<network> &
 template <typename network>
 void write_child(int index,
                  partition_manager_junior<network> &partman,
-                 std::ofstream &verilog,
-                 optimizer<network> *optimizer)
+                 std::ofstream &verilog)
 {
     std::cout << "writing out instance for partition " << index << std::endl;
     verilog << "partition_" << index << " partition_" << index << "_inst (\n";
@@ -1531,7 +1521,7 @@ void write_top(oracle::partition_manager_junior<network> &partitions,
 
     // write out module instances
     for (int i = 0; i < partitions.count(); i++) {
-        write_child(i, partitions, verilog, optimized[i]);
+        write_child(i, partitions, verilog);
     }
     verilog << "endmodule" << std::endl;
 }
@@ -1699,13 +1689,13 @@ xmg_names setup_output(
     xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
 
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
+        std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << std::endl;
         switch (optimized[i]->target()) {
-        case optimization_strategy::depth: std::cout << "depth";
+        case optimization_strategy::depth: std::cout << "depth\n";
             break;
-        case optimization_strategy::balanced: std::cout << "balanced";
+        case optimization_strategy::balanced: std::cout << "balanced\n";
             break;
-        case optimization_strategy::size: std::cout << "size";
+        case optimization_strategy::size: std::cout << "size\n";
             break;
         }
         std::cout << std::endl;
@@ -1747,32 +1737,23 @@ xmg_names setup_output1(
             
         optimizer<mockturtle::xmg_network> *optim = optimized[i].back()->reapply(i, part);
         for(int j=0;j<optimized[i].size();j++){
-            std::cout << "Partition " << i << " " << optimized[i].back()->optimizer_name() << " ";
-            std::cout << "i" <<i<<"j"<<j<<"optimizd size" <<optimized[i].size()<< std::endl;
+            std::cout << "Partition " << i << " " << optimized[i].back()->optimizer_name() << std::endl;
             switch (optimized[i].back()->target()) {
-            case optimization_strategy::depth: std::cout << "depth";
+            case optimization_strategy::depth: std::cout << "depth\n";
                 break;
-            case optimization_strategy::balanced: std::cout << "balanced";
+            case optimization_strategy::balanced: std::cout << "balanced\n";
                 break;
-            case optimization_strategy::size: std::cout << "size";
+            case optimization_strategy::size: std::cout << "size\n";
                 break;
             }
-
-            
-            std::cout <<"using" <<optimized[i].back()->optimizer_name() << std::endl;
             if (optimized[i][j]->optimizer_name() != "noop") {
-                
-                // const xmg_partition part = fix_names2(partitions_out, i);
-                
                 optim->convert();
                 optim->reoptimize();
                 node_depth result1 = optim->independent_metric();
-                std::cout << "result depth1 " << result1.depth
-                  << " size1 " << result1.nodes << std::endl;
+                std::cout << "Result depth " << result1.depth
+                  << " size " << result1.nodes << std::endl;
                 if(j==(optimized[i].size()-1)){
-                    //std::cout << "Juste apres le opt size "<< std::endl;
                     xmg_names opt = optim->export_superset();
-                    //std::cout << "Juste apres le export"<< std::endl;
                     partitions_out.integrate(i, partitions_out.partition(i), opt);
                 }
                 
@@ -1913,18 +1894,17 @@ xmg_names optimize_basic (
   std::vector <std::vector <optimizer <network>* > > optimized;
   optimization_strategy_comparator<network> *target;
   switch (strategy) {
-  case optimization_strategy::depth: std::cout << "depth";
+  case optimization_strategy::depth: std::cout << "depth\n";
       target = new d_strategy<network>();
       break;
-  case optimization_strategy::balanced: std::cout << "balanced";
+  case optimization_strategy::balanced: std::cout << "balanced\n";
       target = new ndp_strategy<network>();
       break;
-  case optimization_strategy::size: std::cout << "size";
+  case optimization_strategy::size: std::cout << "size\n";
       target = new n_strategy<network>();
       break;
   }
   
-  std::cout <<"numparts"<< num_parts << std::endl;
   for (int i = 0; i < num_parts; i++) {
     optimizersave = optimize1(*target, strategy, partitions, i, abc_exec,reoptimize_bool);
     optimized.push_back(optimizersave);
@@ -1932,30 +1912,10 @@ xmg_names optimize_basic (
 
   }
   delete target;
-  std::cout <<"\n optimized size "<< optimized.size() << std::endl;
 
   return setup_output1(partitions, optimized);
 }
 
-template <typename network>
-xmg_names optimize_reoptimize (
-    oracle::partition_manager_junior<network> &partitions,
-    const string &abc_exec,
-    optimization_strategy strategy)
-{
-  int num_parts = partitions.count();
-  std::vector<optimizer<network>*> optimized(num_parts);
-  optimization_strategy_comparator<network> *target;
-  target = new ndp_strategy<network>();
-  std::cout << std::endl;
-  for (int i = 0; i < num_parts; i++) {
-    optimized[i] = reoptimize(*target, strategy, partitions, i, abc_exec);
-  }
-  delete target;
-  assert(num_parts == optimized.size());
-
-  return setup_output(partitions, optimized);
-}
 
 
 
@@ -1980,6 +1940,24 @@ optimize_resynthesis<mockturtle::aig_network>
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &);
 
+template void 
+write_child<mockturtle::aig_network>( 
+    int, partition_manager_junior<mockturtle::aig_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::mig_network>( 
+    int, partition_manager_junior<mockturtle::mig_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::xmg_network>( 
+    int, partition_manager_junior<mockturtle::xmg_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::xag_network>( 
+    int, partition_manager_junior<mockturtle::xag_network> &, std::ofstream &);
+
 }
+
+
 #endif
 #endif

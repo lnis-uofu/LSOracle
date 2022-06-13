@@ -122,7 +122,6 @@
 #include "commands/stats/write_stats.hpp"
 
 //Partitioning
-#include "commands/partitioning/partitioning.hpp"
 #include "commands/partitioning/partition_detail.hpp"
 #include "commands/partitioning/kahypar.hpp"
 #include "commands/partitioning/external_partition.hpp"
@@ -137,7 +136,6 @@
 #include "commands/optimization/migtune.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
-#include "commands/optimization/optimization_command.hpp"
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"

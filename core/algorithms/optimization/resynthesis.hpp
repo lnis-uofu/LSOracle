@@ -51,16 +51,11 @@ mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     const std::string &abc_exec,
     const optimization_strategy strategy,bool reoptimize_bool);
 
-template <typename network>
-mockturtle::names_view<mockturtle::xmg_network> optimize_reoptimize(
-    oracle::partition_manager_junior<network> &partitions,
-    const std::string &abc_exec,
-    const optimization_strategy strategy);
-
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
     oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec);
+
 
 struct node_depth {
     int nodes;
@@ -106,6 +101,10 @@ public:
      */
     virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
 };
+template <typename network>
+void write_child( 
+    int index, partition_manager_junior<network> &partman, std::ofstream &verilog);
+
 }
 
 #endif

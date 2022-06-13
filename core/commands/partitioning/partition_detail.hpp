@@ -1,5 +1,4 @@
 /* LSOracle: A learning based Oracle for Logic Synthesis
-
  * MIT License
  * Copyright 2019 Laboratory for Nano Integrated Systems (LNIS)
  *
@@ -35,6 +34,11 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+#include <math.h>
+#include "algorithms/optimization/optimization_test.hpp"
+#include "algorithms/optimization/resynthesis.hpp"
+
+
 
 namespace alice
 {
@@ -45,112 +49,74 @@ public:
     explicit partition_detail_command(const environment::ptr &env)
         : command(env, "Display all nodes in each Partition")
     {
-
-        add_flag("--mig,-m", "Use stored MIG network (Default is AIG)");
-        add_flag("--names,-n", "Use stored named networks (Default is Named AIG)");
+        add_flag("--aig,-a", "Partition stored AIG (Default)");
+        add_flag("--mig,-m", "Partition stored MIG");
+        add_flag("--xag,-x", "Partition stored XAG");
+        add_flag("--xmg,-g", "Partition stored XMG");
     }
 
 protected:
-    void execute()
-    {
-
-        if (is_set("mig")) {
-            if (!store<mig_ntk>().empty()) {
-                auto ntk = store<mig_ntk>().current();
-                if (!store<part_man_mig_ntk>().empty()) {
-                    auto partitions = store<part_man_mig_ntk>().current();
-                    int num_part = partitions->get_part_num();
+    template <typename network>
+    void partition_det(string name){
+        if (!store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
+            if (!store<std::shared_ptr<oracle::partition_manager_junior<network>>>().empty()) {
+                mockturtle::names_view<network> ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
+                if (!store<std::shared_ptr<oracle::partition_manager_junior<network>>>().empty()) {
+                    oracle::partition_manager_junior<network> partitions_jr =*store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
+                    mockturtle::depth_view orig_depth(partitions_jr.get_network());
+                    int num_parts = partitions_jr.count();
                     double node_num = 0.0;
-                    for (int i = 0; i < num_part; i++) {
-                        oracle::partition_view<mig_names> part = partitions->create_part(*ntk, i);
-                        env->out() << "\n\nPartition " << i << "\n";
-                        env->out() << "Number of PI = " << part.num_pis() << "\n";
-                        env->out() << "Number of PO = " << part.num_pos() << "\n";
-                        env->out() << "Number of latches = " << part.num_latches() << "\n";
-                        env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
-                        env->out() << "Partition volume = " << double(part.num_gates()) / double(
-                                       part.num_pis()) << "\n";
-                        node_num += double(part.num_gates()) / double(part.num_pis());
-                        // env->out() << "Inputs = {";
-                        // part.foreach_pi([&](auto pi){
-                        //   env->out() << pi << " ";
-                        // });
-                        // env->out() << "}\n";
-                        // env->out() << "Outputs = {";
-                        // part.foreach_po([&](auto conn, auto i){
-                        //   env->out() << conn.index << " ";
-                        // });
-                        // env->out() << "}\n";
-                        // env->out() << "Nodes = {";
-                        // part.foreach_gate([&](auto node){
-                        //   env->out() << node << " ";
-                        // });
-                        // env->out() << "}\n";
-                        std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
-                        std::set<int>::iterator it;
-                        env->out() << "connected partitions = {";
-                        for (it = connected_parts.begin(); it != connected_parts.end(); ++it) {
-                            env->out() << *it << " ";
-                        }
-                        env->out() << "}\n";
-                    }
-                    node_num = node_num / (double)num_part;
-                    env->out() << "Average nodes per partition: " << node_num << "\n";
-                } else {
-                    env->err() << "MIG not partitioned yet\n";
-                }
-            } else {
-                env->err() << "There is no MIG network stored\n";
-            }
-        } else {
-            if (!store<aig_ntk>().empty()) {
-                auto ntk = store<aig_ntk>().current();
-                if (!store<part_man_aig_ntk>().empty()) {
-                    auto partitions = store<part_man_aig_ntk>().current();
-                    int num_part = partitions->get_part_num();
-                    double node_num = 0.0;
-                    for (int i = 0; i < num_part; i++) {
-                        oracle::partition_view<aig_names> part = partitions->create_part(*ntk, i);
-                        env->out() << "\n\nPartition " << i << "\n";
-                        env->out() << "Number of PI = " << part.num_pis() << "\n";
-                        env->out() << "Number of PO = " << part.num_pos() << "\n";
-                        env->out() << "Number of latches = " << part.num_latches() << "\n";
-                        env->out() << "Number of internal nodes = " << part.num_gates() << "\n";
-
-                        env->out() << "Partition volume = " << double(part.num_gates()) / double(
-                                       part.num_pis()) << "\n";
-                        node_num += double(part.num_gates()) / double(part.num_pis());
+                    for (int i =0; i<num_parts;i++){
+                        env->err() << "partitions_jr.get_network().size() \n" <<partitions_jr.get_network().size();
+                        
+                        env->out() << "\n\nPartition " << "\n";
+                        env->out() << "Number of PI = " << partitions_jr.get_network().num_pis() << "\n";
+                        env->out() << "Number of PO = " << partitions_jr.get_network().num_pos() << "\n";
+                        env->out() << "Number of latches = " << partitions_jr.get_network().num_latches() << "\n";
+                        env->out() << "Number of internal nodes = " << partitions_jr.get_network().num_gates() << "\n";
+                        env->out() << "Partition volume = " << double(partitions_jr.get_network().num_gates()) / double(
+                                            partitions_jr.get_network().num_pis()) << "\n";
+                        node_num += double(partitions_jr.get_network().num_gates()) / double(partitions_jr.get_network().num_pis());
                         env->out() << "Inputs = {";
-                        part.foreach_pi([&](auto pi) {
+                        partitions_jr.get_network().foreach_pi([&](auto pi) {
                             env->out() << pi << " ";
                         });
                         env->out() << "}\n";
                         env->out() << "Outputs = {";
-                        part.foreach_po([&](auto conn, auto i) {
+                        
+                        partitions_jr.get_network().foreach_po([&](auto conn, auto i) {
                             env->out() << conn.index << " ";
                         });
                         env->out() << "}\n";
                         env->out() << "Nodes = {";
-                        part.foreach_gate([&](auto node) {
+                        partitions_jr.get_network().foreach_gate([&](auto node) {
                             env->out() << node << " ";
                         });
                         env->out() << "}\n";
-                        std::set<int> connected_parts = partitions->get_connected_parts(*ntk, i);
-                        std::set<int>::iterator it;
-                        env->out() << "connected partitions = {";
-                        for (it = connected_parts.begin(); it != connected_parts.end(); ++it) {
-                            env->out() << *it << " ";
-                        }
-                        env->out() << "}\n";
                     }
-                    node_num = node_num / (double)num_part;
-                    env->out() << "Average partition volume: " << node_num << "\n";
+                    node_num = node_num / (double)num_parts;
+                    env->out() << "Average nodes per partition: " << node_num << "\n";
+
                 } else {
-                    env->err() << "AIG not partitioned yet\n";
+                    env->err() << name <<" not partitioned yet\n";
                 }
-            } else {
-                env->err() << "There is no AIG network stored\n";
             }
+        } else {
+            env->err() << "There is no "<<name<<" network stored\n";
+        }
+    
+
+    }
+    void execute()
+    {   
+        if (is_set("mig")) {
+            partition_det<mockturtle::mig_network>("MIG");
+        } else if (is_set("xag")) {
+            partition_det<mockturtle::xag_network>("XAG");
+        } else if (is_set("xmg")) {
+            partition_det<mockturtle::xmg_network>("XMG");
+        } else {
+            partition_det<mockturtle::aig_network>("AIG");
         }
     }
 private:

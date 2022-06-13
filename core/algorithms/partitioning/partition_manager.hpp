@@ -461,65 +461,44 @@ public:
         int orig_ntk_size = ntk.size();
         mockturtle::node_map<signal, NtkOpt> old_to_new(opt);
         std::vector<signal> pis;
-
         part.foreach_pi([&](auto node) {
             std::cout <<"On va la"<< std::endl;
             pis.push_back(part.make_signal(node));
         });
-
         mockturtle::topo_view part_top{part};
         mockturtle::topo_view opt_top{opt};
         int pi_idx = 0;
         std::set<signal> visited_pis;
         opt_top.foreach_node([&](auto node) {
-            std::cout <<"BUG LA"<< std::endl;
             if (is_po(opt_top, node)) {
             }
             if (opt.is_constant(node) || opt.is_pi(node) || opt.is_ro(node))
                 return;
             /* collect children */
-            std::cout <<"BUG LA101"<< std::endl;
             std::vector<signal> children;
             opt.foreach_fanin(node, [&](auto child, auto) {
-                std::cout <<"BUG LA100"<< std::endl;
                 auto f = old_to_new[child];
-                std::cout <<opt.get_node(child)<<"BUG LA10031 "<< std::endl;
-                std::cout <<opt.is_pi(opt.get_node(child))<<"BUG LA10031 "<< opt.is_ro(opt.get_node(child))<< std::endl;
                 if (opt.is_pi(opt.get_node(child)) || opt.is_ro(opt.get_node(child))) {
-                    std::cout <<"BUG LA10015 "<<child.index<< " "<<pis.size()<<std::endl;
-                    
                     f = pis.at(child.index - 1); //what():  vector::_M_range_check: __n (which is 18446744073709551615) >= this->size() (which is 53)
-                    std::cout <<"BUG LA1004"<< std::endl;
                 }
-                std::cout <<"BUG LA10032"<< std::endl;
                 if (opt.is_complemented(child)) {
                     children.push_back(ntk.create_not(f));
-                    std::cout <<"BUG LA1005"<< std::endl;
                 } else {
                     children.push_back(f);
-                    std::cout <<"BUG LA1006"<< std::endl;
                 }
             });
-            std::cout <<"BUG LA1"<< std::endl;
             old_to_new[node] = ntk.clone_node(opt, node, children);
-            std::cout <<"BUG LA2"<< std::endl;
         });
 
         for (int i = 0; i < opt._storage->outputs.size(); i++) {
-            std::cout <<"BUG LA3"<< std::endl;
             auto opt_node = opt.get_node(opt._storage->outputs.at(i));
-            std::cout <<"BUG LA4"<< std::endl;
             auto opt_out = old_to_new[opt._storage->outputs.at(i)];
-            std::cout <<"BUG LA5"<< std::endl;
             auto part_out = part._roots.at(i);
             if (opt.is_complemented(opt._storage->outputs[i])) {
                 opt_out.data += 1;
-                std::cout <<"BUG LA6"<< std::endl;
             }
-
             if (!opt.is_constant(opt_node) && !opt.is_pi(opt_node)
                     && !opt.is_ro(opt_node)) {
-                        std::cout <<"BUG LA7"<< std::endl;
                 output_substitutions[ntk.get_node(part_out)] = opt_out;
             }
         }
