@@ -63,7 +63,6 @@
 #include "algorithms/optimization/mab.hpp"
 #include "algorithms/optimization/deep.hpp"
 #include "algorithms/optimization/parser.hpp"
-#include "algorithms/optimization/optimization_test.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
 //#include "algorithms/output/part_verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
@@ -122,7 +121,6 @@
 #include "commands/stats/write_stats.hpp"
 
 //Partitioning
-#include "commands/partitioning/partitioning.hpp"
 #include "commands/partitioning/partition_detail.hpp"
 #include "commands/partitioning/kahypar.hpp"
 #include "commands/partitioning/external_partition.hpp"
@@ -137,7 +135,6 @@
 #include "commands/optimization/migtune.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
-#include "commands/optimization/optimization_command.hpp"
 #include "commands/optimization/depthr.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"

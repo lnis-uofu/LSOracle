@@ -461,14 +461,11 @@ public:
         int orig_ntk_size = ntk.size();
         mockturtle::node_map<signal, NtkOpt> old_to_new(opt);
         std::vector<signal> pis;
-
         part.foreach_pi([&](auto node) {
             pis.push_back(part.make_signal(node));
         });
-
         mockturtle::topo_view part_top{part};
         mockturtle::topo_view opt_top{opt};
-
         int pi_idx = 0;
         std::set<signal> visited_pis;
         opt_top.foreach_node([&](auto node) {
@@ -481,7 +478,7 @@ public:
             opt.foreach_fanin(node, [&](auto child, auto) {
                 auto f = old_to_new[child];
                 if (opt.is_pi(opt.get_node(child)) || opt.is_ro(opt.get_node(child))) {
-                    f = pis.at(child.index - 1);
+                    f = pis.at(child.index - 1); //what():  vector::_M_range_check: __n (which is 18446744073709551615) >= this->size() (which is 53)
                 }
                 if (opt.is_complemented(child)) {
                     children.push_back(ntk.create_not(f));
@@ -489,7 +486,6 @@ public:
                     children.push_back(f);
                 }
             });
-
             old_to_new[node] = ntk.clone_node(opt, node, children);
         });
 
@@ -499,9 +495,7 @@ public:
             auto part_out = part._roots.at(i);
             if (opt.is_complemented(opt._storage->outputs[i])) {
                 opt_out.data += 1;
-
             }
-
             if (!opt.is_constant(opt_node) && !opt.is_pi(opt_node)
                     && !opt.is_ro(opt_node)) {
                 output_substitutions[ntk.get_node(part_out)] = opt_out;

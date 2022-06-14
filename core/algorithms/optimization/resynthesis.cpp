@@ -300,6 +300,8 @@ public:
     void optimize()
     {
     }
+    void reoptimize(){
+    }
 
     std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
     {
@@ -520,6 +522,9 @@ public:
         mockturtle::node_resynthesis(this->optimal, klut, resyn);
         this->optimal.set_network_name(this->converted.get_network_name());
     }
+    void reoptimize(){
+        
+    }
 };
 
 template <typename network>
@@ -586,7 +591,17 @@ public:
         oracle::xag_script opt;
         this->optimal = opt.run(this->converted);
     }
-
+ 
+    void reoptimize(){
+        oracle::xag_script opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();    
+        }
+        else{    
+            this->optimal = opt.run(this->optimal);
+        }
+        
+    }
     optimization_strategy target()
     {
         return strategy;
@@ -666,6 +681,18 @@ public:
     {
         oracle::xmg_script opt;
         this->optimal = opt.run(this->converted);
+
+    }
+
+    void reoptimize(){
+        oracle::xmg_script opt;
+        int a = this->optimal.num_gates();
+        if (this->optimal.num_gates() == 0){
+            optimize();  
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
     }
 
     optimization_strategy target()
@@ -703,10 +730,20 @@ public:
     }
 
     void optimize()
-    {
+    {   
         oracle::mig_script migopt;
         this->optimal = migopt.run(this->converted);
     }
+    void reoptimize(){
+        oracle::mig_script migopt;
+        if (this->optimal.num_gates() == 0){
+            optimize(); 
+        }
+        else{
+            this->optimal = migopt.run(this->optimal);
+        }
+     }
+
 };
 
 template <typename network>
@@ -730,6 +767,16 @@ public:
     {
         oracle::mig_script2 migopt;
         this->optimal = migopt.run(this->converted);
+
+    }
+    void reoptimize(){
+        oracle::mig_script2 migopt;
+        if (this->optimal.num_gates() == 0){
+            optimize(); 
+        }
+        else{
+            this->optimal = migopt.run(this->optimal);
+        }
     }
 };
 
@@ -755,6 +802,16 @@ public:
         oracle::mig_script3 migopt;
         this->optimal = migopt.run(this->converted);
     }
+    void reoptimize(){
+        oracle::mig_script3 migopt;
+        if (this->optimal.num_gates() == 0){
+            optimize();
+        }
+        else{
+            this->optimal = migopt.run(this->optimal);
+        }
+
+    }
 };
 
 template <typename network>
@@ -778,6 +835,15 @@ public:
     {
         oracle::aig_script opt;
         this->optimal = opt.run(this->converted);
+    }
+    void reoptimize(){
+        oracle::aig_script opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();  
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
     }
 };
 
@@ -803,6 +869,15 @@ public:
         oracle::aig_script2 opt;
         this->optimal = opt.run(this->converted);
     }
+    void reoptimize(){
+        oracle::aig_script opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
+    }
 };
 
 template <typename network>
@@ -826,6 +901,15 @@ public:
     {
         oracle::aig_script3 opt;
         this->optimal = opt.run(this->converted);
+    }
+    void reoptimize(){
+        oracle::aig_script3 opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
     }
 };
 
@@ -851,6 +935,16 @@ public:
         oracle::aig_script4 opt;
         this->optimal = opt.run(this->converted);
     }
+    void reoptimize(){
+        oracle::aig_script4 opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
+    }
+    
 };
 
 template <typename network>
@@ -875,6 +969,15 @@ public:
         oracle::aig_script5 opt;
         this->optimal = opt.run(this->converted);
     }
+    void reoptimize(){
+        oracle::aig_script5 opt;
+        if (this->optimal.num_gates() == 0){
+            optimize(); 
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
+    }
 };
 
 template <typename T>
@@ -892,7 +995,7 @@ class ndp_strategy : public optimization_strategy_comparator<T>
     {
         node_depth x = a.independent_metric();
         node_depth y = b.independent_metric();
-
+        //std::cout << "Comparator : Current nodes "<< x.nodes << " Current depth " << x.depth << " Best nodes "<<y.nodes<<" Best depth " <<y.depth <<std::endl;
         return x.nodes * x.depth < y.nodes * y.depth;
     }
     const string name()
@@ -924,7 +1027,6 @@ class d_strategy : public optimization_strategy_comparator<T>
      {
          node_depth x = a.independent_metric();
          node_depth y = b.independent_metric();
-
          return x.nodes < y.nodes;
      }
      const string name()
@@ -938,7 +1040,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
                              optimization_strategy strategy,
                              partition_manager_junior<network> &partman,
                              int index,
-                             const std::string &abc_exec)
+                             const std::string &abc_exec, bool reoptimize_bool)
 
 {
     std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
@@ -965,33 +1067,211 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
         new xag_optimizer<network>(index, part, strategy, abc_exec),
         // new abc_optimizer<network>(index, part, strategy, abc_exec),
    };
+    std::vector<optimizer<network>*> optimizersave {};
     optimizer<network> *best = nullptr;
-    for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
-        std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
-        // std::cout << "converting network" << std::endl;
-        (*opt)->convert();
-        // std::cout << "trying to optimize" << std::endl;
-        (*opt)->optimize();
-        // std::cout << "checking tech independent metrics." << std::endl;
-        node_depth result = (*opt)->independent_metric();
-        std::cout << "result depth " << result.depth
-                  << " size " << result.nodes << std::endl;
+    std::vector<optimizer<network>*> *best1 = nullptr;
+    if (reoptimize_bool==true){
+        int previous_best_depth=0;
+        int previous_best_nodes=0;
+        int i = 0;
+        while(true){
+            for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+                std::cout << "running optimization " << (*opt)->optimizer_name() <<" on partition " << index <<std::endl;
+                (*opt)->convert();
+                (*opt)->reoptimize();
+                node_depth result1 = (*opt)->independent_metric();
+                std::cout << "result depth " << result1.depth
+                  << " size " << result1.nodes << std::endl;
+                if (best == nullptr) {
+                    best = *opt;
+                    
+                    continue;
+                }
+                if (comparator(**opt, *best)) {
+                    best = *opt;
+                    std::cout << "found a better result" << std::endl;
+                    optimizersave.push_back(best);
+                    
+                    continue;
+                    
+                }
+            }
+            std::cout << "On est la " 
+                    <<  std::endl;
+            node_depth result = best->independent_metric();
 
-        if (best == nullptr) {
-            best = *opt;
-            continue;
+            if((result.nodes*result.depth<previous_best_nodes*previous_best_depth)||(i==0)){
+                    previous_best_nodes =result.nodes;
+                    previous_best_depth =result.depth;
+                }
+
+            else if (((result.nodes==previous_best_nodes)&&(result.depth==previous_best_depth))||(i>6)){
+                std::cout << "Reoptimization finished, Best depth " << previous_best_depth << " Best size " << previous_best_nodes
+                    <<  std::endl;
+                break;
+            }
+            std::cout << "Iteration nº" <<i << ", Current depth " << result.depth << "  Best depth  " << previous_best_depth<< " Current size " << result.nodes  << " Best size " << previous_best_nodes<<std::endl;
+            std::cout << "BEST nodes " << result.nodes << " BEST depth " << result.depth <<  std::endl;
+
+            i=i+1;
         }
+    }
 
-        if (comparator(**opt, *best)) {
-            best = *opt;
-            //std::cout << "found a better result" << std::endl;
-            continue;
+    else{
+        for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+            std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
+            (*opt)->convert();
+            (*opt)->optimize();
+            node_depth result = (*opt)->independent_metric();
+            std::cout << "result depth " << result.depth
+                    << " size " << result.nodes << std::endl;
+            if (best == nullptr) {
+                best = *opt;
+                continue;
+            }
+            if (comparator(**opt, *best)) {
+                best = *opt;
+                optimizersave.push_back(best);
+                //std::cout << "found a better result" << std::endl;
+                continue;
+            node_depth result3 = best->independent_metric();
+            std::cout << "BEST nodes3 " << result3.nodes << " BEST depth3 " << result3.depth <<  std::endl;
+            }
         }
     }
     std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
+    node_depth result2 = best->independent_metric();
+    std::cout << "BEST nodes2 " << result2.nodes << " BEST depth2 " << result2.depth <<  std::endl;
+    for(auto i=optimizersave.begin();i!=optimizersave.end();i++){
+                        std::cout <<*i<<  std::endl;
+                    } 
 
     return best;
+    
+}
+template <typename network>
+vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network> &comparator,
+                             optimization_strategy strategy,
+                             partition_manager_junior<network> &partman,
+                             int index,
+                             const std::string &abc_exec, bool reoptimize_bool)
 
+{
+    std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
+    std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
+    // mockturtle::window_view<mockturtle::names_view<network>> orig = partman.partition(index);
+    // mockturtle::depth_view part_depth(orig);
+    // std::cout << "Original depth " << part_depth.depth() << " gates " << part_depth.num_gates() << " size " << part_depth.size() << std::endl;
+    // todo this is gonna leak memory.
+    // const mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
+    // todo remove double network.
+    // fix_names(partman, part, partman.get_network(), index);
+    const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partman, index);
+    std::vector<optimizer<network>*>optimizers {
+        new noop<network>(index, part, strategy, abc_exec),
+        new migscript_optimizer<network>(index, part, strategy, abc_exec),
+       // new migscript2_optimizer<network>(index, part, strategy, abc_exec),
+        new migscript3_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript2_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript3_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript4_optimizer<network>(index, part, strategy, abc_exec),
+        new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
+        new xmg_optimizer<network>(index, part, strategy, abc_exec),
+        new xag_optimizer<network>(index, part, strategy, abc_exec),
+        // new abc_optimizer<network>(index, part, strategy, abc_exec),
+   };
+    std::vector<optimizer<network>*> optimizersave {};
+    std::vector<optimizer<network>*> optimizersave1 {};
+    optimizer<network> *best = nullptr;
+    std::vector<optimizer<network>*> *best1 = nullptr;
+    int j=0;
+    if (reoptimize_bool==true){
+        int previous_best_depth=0;
+        int previous_best_nodes=0;
+        int i = 0;
+        
+        while(true){
+            for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+                std::cout << "running optimization " << (*opt)->optimizer_name() <<" on partition " << index <<std::endl;
+                (*opt)->convert();
+                (*opt)->reoptimize();
+                node_depth result1 = (*opt)->independent_metric();
+                std::cout << "result depth " << result1.depth
+                  << " size " << result1.nodes << std::endl;
+                if (best == nullptr) {
+                    best = *opt;  
+                    continue;
+                }
+                if (comparator(**opt, *best)) {
+                    best = *opt;
+                    std::cout << "found a better result" << std::endl;
+                    continue;
+                }
+            }
+            node_depth result = best->independent_metric();
+            if((result.nodes*result.depth<previous_best_nodes*previous_best_depth)||(i==0)){
+                    previous_best_nodes =result.nodes;
+                    previous_best_depth =result.depth;
+                    
+                    optimizersave1.push_back(best);
+                    j=i;
+                }
+            
+            else if (((result.nodes==previous_best_nodes)&&(result.depth==previous_best_depth))||(i>2)){
+                std::cout << "Reoptimization finished, Best depth " << previous_best_depth << " Best size " << previous_best_nodes
+                    <<  std::endl;
+                for(auto k=optimizersave1.begin();k!=optimizersave1.end();k++){
+                        std::cout <<*k<< (*k)->optimizer_name()<< std::endl;
+
+                    } 
+                std::cout <<count(optimizersave1.begin(), optimizersave1.end(), optimizersave1.back())<< std::endl;
+                for (int x=0;x<=j;x++){
+                    auto l=optimizersave1.back();
+                    optimizersave.push_back(l);
+                }
+
+                break;
+            }
+            std::cout << "Iteration nº" <<i << ", Current depth " << result.depth << "  Best depth  " << previous_best_depth<< " Current size " << result.nodes  << " Best size " << previous_best_nodes<<std::endl;
+
+            i=i+1;
+        }
+    }
+
+    else{
+        for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
+            std::cout << "running optimization " << (*opt)->optimizer_name() << std::endl;
+            (*opt)->convert();
+            (*opt)->optimize();
+            node_depth result = (*opt)->independent_metric();
+            std::cout << "result depth " << result.depth
+                    << " size " << result.nodes << std::endl;
+            if (best == nullptr) {
+                best = *opt;
+                optimizersave.push_back(best);
+                continue;
+            }
+            if (comparator(**opt, *best)) {
+                best = *opt;
+                optimizersave[0]=best;
+                //std::cout << "found a better result" << std::endl;
+                continue;
+            node_depth result3 = best->independent_metric();
+            }
+        }
+    }
+    std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
+    node_depth result2 = best->independent_metric();
+    std::cout << "Best nodes " << result2.nodes << " Best depth " << result2.depth <<std::endl;
+    std::cout << "Best result found with ";
+    for(auto k=optimizersave.begin();k!=optimizersave.end();k++){
+                        std::cout <<(*k)->optimizer_name()<<" "<< std::endl;
+                    } 
+    std::cout <<std::endl;
+
+    return optimizersave;
+    
 }
 
 string join(std::string delim, std::set<string> input)
@@ -1045,8 +1325,7 @@ std::set<std::string> get_wire_names(oracle::partition_manager_junior<network> &
 template <typename network>
 void write_child(int index,
                  partition_manager_junior<network> &partman,
-                 std::ofstream &verilog,
-                 optimizer<network> *optimizer)
+                 std::ofstream &verilog)
 {
     std::cout << "writing out instance for partition " << index << std::endl;
     verilog << "partition_" << index << " partition_" << index << "_inst (\n";
@@ -1242,7 +1521,7 @@ void write_top(oracle::partition_manager_junior<network> &partitions,
 
     // write out module instances
     for (int i = 0; i < partitions.count(); i++) {
-        write_child(i, partitions, verilog, optimized[i]);
+        write_child(i, partitions, verilog);
     }
     verilog << "endmodule" << std::endl;
 }
@@ -1410,13 +1689,13 @@ xmg_names setup_output(
     xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
 
     for (int i = 0; i < num_parts; i++) {
-        std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << " ";
+        std::cout << "Partition " << i << " " << optimized[i]->optimizer_name() << std::endl;
         switch (optimized[i]->target()) {
-        case optimization_strategy::depth: std::cout << "depth";
+        case optimization_strategy::depth: std::cout << "depth\n";
             break;
-        case optimization_strategy::balanced: std::cout << "balanced";
+        case optimization_strategy::balanced: std::cout << "balanced\n";
             break;
-        case optimization_strategy::size: std::cout << "size";
+        case optimization_strategy::size: std::cout << "size\n";
             break;
         }
         std::cout << std::endl;
@@ -1436,6 +1715,55 @@ xmg_names setup_output(
     return partitions_out.get_network();
 }
 
+template <typename network>
+xmg_names setup_output1(
+        oracle::partition_manager_junior<network> &partitions_in,
+        std::vector<vector<optimizer<network>*>> &optimized
+        )
+{
+    int num_parts = partitions_in.count();
+    mockturtle::direct_resynthesis<xmg_names> resyn;
+    mockturtle::names_view<network> &ntk = partitions_in.get_network();
+    xmg_names ntk_out = mockturtle::node_resynthesis<xmg_names, mockturtle::names_view<network>>(ntk, resyn);
+    mockturtle::node_map<int, xmg_names> partitions_out_map(ntk_out);
+    partitions_in.get_network().foreach_node([&](auto n){
+        int i = ntk.node_to_index(n);
+        partitions_out_map[ntk_out.index_to_node(i)] = partitions_in.node_partition(n);
+    });
+    xmg_manager partitions_out(ntk_out, partitions_out_map, partitions_in.count());
+
+    for (int i = 0; i < num_parts; i++) {
+        const xmg_partition part = partitions_out.partition(i);
+            
+        optimizer<mockturtle::xmg_network> *optim = optimized[i].back()->reapply(i, part);
+        for(int j=0;j<optimized[i].size();j++){
+            std::cout << "Partition " << i << " " << optimized[i].back()->optimizer_name() << std::endl;
+            switch (optimized[i].back()->target()) {
+            case optimization_strategy::depth: std::cout << "depth\n";
+                break;
+            case optimization_strategy::balanced: std::cout << "balanced\n";
+                break;
+            case optimization_strategy::size: std::cout << "size\n";
+                break;
+            }
+            if (optimized[i][j]->optimizer_name() != "noop") {
+                optim->convert();
+                optim->reoptimize();
+                node_depth result1 = optim->independent_metric();
+                std::cout << "Result depth " << result1.depth
+                  << " size " << result1.nodes << std::endl;
+                if(j==(optimized[i].size()-1)){
+                    xmg_names opt = optim->export_superset();
+                    partitions_out.integrate(i, partitions_out.partition(i), opt);
+                }
+                
+            }
+        } 
+    }
+    partitions_out.substitute_nodes();
+    std::cout << "Finished connecting outputs" << std::endl;
+    return partitions_out.get_network();
+}
 /*
  * Mixed synthesis followed by XMG resynthesis and combination.
  */
@@ -1457,7 +1785,7 @@ template <typename network> xmg_names optimize_timing(
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
         n_strategy<network> strategy;
-        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec);
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec,false);
     }
     assert(num_parts == optimized.size());
 
@@ -1483,10 +1811,10 @@ template <typename network> xmg_names optimize_timing(
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
             ndp_strategy<network> strategy;
-            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part, abc_exec,false);
         } else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
             d_strategy<network> strategy;
-            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec,false);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
@@ -1505,6 +1833,7 @@ template <typename network> xmg_names optimize_timing(
 /*
 Mixed synthesis followed by XMG resynthesis and combiniation
 */
+
 template <typename network> xmg_names optimize_resynthesis(
     oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
 {
@@ -1512,7 +1841,7 @@ template <typename network> xmg_names optimize_resynthesis(
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
         n_strategy<network> strategy;
-        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec);
+        optimized[i] = optimize(strategy, optimization_strategy::size, partitions, i, abc_exec,false);
     }
     assert(num_parts == optimized.size());
 
@@ -1534,10 +1863,10 @@ template <typename network> xmg_names optimize_resynthesis(
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
             ndp_strategy<network> strategy;
-            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, partitions, worst_part, abc_exec,false);
         } else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
             d_strategy<network> strategy;
-            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, partitions, worst_part, abc_exec,false);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
@@ -1557,31 +1886,38 @@ template <typename network>
 xmg_names optimize_basic (
     oracle::partition_manager_junior<network> &partitions,
     const string &abc_exec,
-    optimization_strategy strategy)
+    optimization_strategy strategy,bool reoptimize_bool)
 {
   int num_parts = partitions.count();
-  std::vector<optimizer<network>*> optimized(num_parts);
+  std::vector<optimizer<network>*> optimizersave {};
+
+  std::vector <std::vector <optimizer <network>* > > optimized;
   optimization_strategy_comparator<network> *target;
   switch (strategy) {
-  case optimization_strategy::depth: std::cout << "depth";
+  case optimization_strategy::depth: std::cout << "depth\n";
       target = new d_strategy<network>();
       break;
-  case optimization_strategy::balanced: std::cout << "balanced";
+  case optimization_strategy::balanced: std::cout << "balanced\n";
       target = new ndp_strategy<network>();
       break;
-  case optimization_strategy::size: std::cout << "size";
+  case optimization_strategy::size: std::cout << "size\n";
       target = new n_strategy<network>();
       break;
   }
-  std::cout << std::endl;
+  
   for (int i = 0; i < num_parts; i++) {
-    optimized[i] = optimize(*target, strategy, partitions, i, abc_exec);
+    optimizersave = optimize1(*target, strategy, partitions, i, abc_exec,reoptimize_bool);
+    optimized.push_back(optimizersave);
+ 
+
   }
   delete target;
-  assert(num_parts == optimized.size());
 
-  return setup_output(partitions, optimized);
+  return setup_output1(partitions, optimized);
 }
+
+
+
 
 /**************** Template instances ****************/
 template xmg_names
@@ -1595,7 +1931,8 @@ optimize_basic<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &,
-    const optimization_strategy);
+    const optimization_strategy,bool reoptimize_bool);
+
 
 template xmg_names
 optimize_resynthesis<mockturtle::aig_network>
@@ -1603,6 +1940,24 @@ optimize_resynthesis<mockturtle::aig_network>
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &);
 
+template void 
+write_child<mockturtle::aig_network>( 
+    int, partition_manager_junior<mockturtle::aig_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::mig_network>( 
+    int, partition_manager_junior<mockturtle::mig_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::xmg_network>( 
+    int, partition_manager_junior<mockturtle::xmg_network> &, std::ofstream &);
+
+template void 
+write_child<mockturtle::xag_network>( 
+    int, partition_manager_junior<mockturtle::xag_network> &, std::ofstream &);
+
 }
+
+
 #endif
 #endif
