@@ -63,7 +63,6 @@
 #include "algorithms/optimization/mab.hpp"
 #include "algorithms/optimization/deep.hpp"
 #include "algorithms/optimization/parser.hpp"
-#include "algorithms/optimization/optimization_test.hpp"
 //#include "algorithms/optimization/four_way_optimization.hpp"
 //#include "algorithms/output/part_verilog.hpp"
 #include "algorithms/output/rtlil.hpp"
