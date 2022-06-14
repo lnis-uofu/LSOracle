@@ -35,7 +35,6 @@
 #include <stdlib.h>
 
 #include <math.h>
-#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/resynthesis.hpp"
 
 
