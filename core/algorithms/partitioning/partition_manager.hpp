@@ -462,7 +462,6 @@ public:
         mockturtle::node_map<signal, NtkOpt> old_to_new(opt);
         std::vector<signal> pis;
         part.foreach_pi([&](auto node) {
-            std::cout <<"On va la"<< std::endl;
             pis.push_back(part.make_signal(node));
         });
         mockturtle::topo_view part_top{part};
