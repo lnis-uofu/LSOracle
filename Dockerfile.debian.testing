@@ -8,7 +8,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     libspdlog1 \
     python3-numpy \
     python3-matplotlib \
-    libgtest-dev \
+    opensta \
     yosys && \
     apt-get clean
 
@@ -23,27 +23,26 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         gcc-10 \
         g++-10 \
         cmake \
-        libboost-program-options-dev \
+        libboost-program-options1.74-dev \
         libreadline-dev \
         libpython3-dev \
+        libgtest-dev \
         libfmt-dev \
         python3-distutils \
         pybind11-dev \
         libspdlog-dev \
+        libfmt-dev \
         lcov \
         tcl-dev \
+        yosys-dev \
+        opensta-dev \
         gcovr \
         git \
         swig \
         bison \
-        flex \
-        yosys-dev && \
+        flex && \
     apt-get clean
 ENV CC=/usr/bin/gcc-10 CXX=/usr/bin/g++-10
-
-# RUN git clone https://github.com/berkeley-abc/abc.git &&
-#     cd abc && make && \
-#     cp abc/abc /usr/local/bin/abc
 
 FROM builder AS compiled
 RUN mkdir -p /LSOracle/build
@@ -53,6 +52,9 @@ WORKDIR /LSOracle
 RUN cmake \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D ENABLE_OPENSTA=ON \
+    -D OPENSTA_INCLUDE_DIR=/usr/include \
+    -D OPENSTA_LIB_DIR=/usr/lib/libOpenSTA.a \
+    -D DEBIAN_OPENSTA_COMPATIBILITY=ON \
     -D ENABLE_ABC=ON \
     -D YOSYS_PLUGIN=ON \
     -D YOSYS_INCLUDE_DIR=/usr/share/yosys/include \
@@ -60,6 +62,7 @@ RUN cmake \
     -D LOCAL_PYBIND=OFF \
     -D LOCAL_SPDLOG=OFF \
     -D LOCAL_FMT=OFF \
+    -D LOCAL_OPENSTA=OFF \
     -D LOCAL_BOOST=OFF \
     -D LOCAL_GTEST=OFF \
     -B build . && \
@@ -67,7 +70,7 @@ RUN cmake \
     cmake --install build
 
 FROM runtime AS dist
-COPY --from=compiled /usr/share/lsoracle /usr/share/lsoracle
-COPY --from=compiled /usr/bin/lsoracle /usr/bin/lsoracle
+COPY --from=compiled /usr/local/bin/lsoracle /usr/local/bin/lsoracle
+COPY --from=compiled /usr/local/share/lsoracle/test.ini /usr/local/share/lsoracle/test.ini
 COPY --from=compiled /usr/share/yosys/plugins/oracle.so /usr/share/yosys/plugins/oracle.so
 CMD ["lsoracle"]

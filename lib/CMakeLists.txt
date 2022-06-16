@@ -38,7 +38,7 @@ target_compile_options(kahypar PRIVATE -w)
 if (LOCAL_FMT)
   add_subdirectory(fmt) # must go before mockturtle and alice
 else()
-  add_custom_command(fmt) # add this so that mockturtle detects an externally supplied version.
+  add_custom_target(fmt) # add this so that mockturtle detects an externally supplied version.
   find_package(fmt)
 endif()
 
@@ -62,7 +62,17 @@ if (${ENABLE_ABC})
 endif()
 
 if (${ENABLE_OPENSTA})
-  add_subdirectory(OpenSTA)
+  if (LOCAL_OPENSTA)
+    add_subdirectory(OpenSTA)
+  else()
+    if (NOT DEFINED OPENSTA_INCLUDE_DIR OR NOT DEFINED OPENSTA_LIB_DIR)
+      message(FATAL_ERROR "Either OPENSTA_INCLUDE_DIR or OPENSTA_LIB_DIR was not set, but timing integration was requested. If using a system installed OpenSTA, this is typically located in /usr/include/OpenSTA and /usr/lib/libOpenSTA.a")
+    endif()
+    add_library(OpenSTA STATIC IMPORTED)
+    add_library(sta_swig STATIC IMPORTED)
+    target_include_directories(OpenSTA INTERFACE ${OPENSTA_INCLUDE_DIR})
+    target_link_libraries(OpenSTA INTERFACE ${OPENSTA_LIB_DIR})
+  endif()
 endif()
 
 set(JSON_BuildTests OFF CACHE INTERNAL "")

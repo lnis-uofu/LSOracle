@@ -220,7 +220,7 @@ public:
 
         }
         spdlog::info("Substituted nodes." );
-        ntk = mockturtle::cleanup_dangling_with_registers(ntk);
+        ntk = mockturtle::cleanup_dangling(ntk);
         spdlog::info("Cleaned up dangling." );
         substitutions.clear();
     }

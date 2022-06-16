@@ -1,13 +1,14 @@
-FROM ubuntu:20.04 AS runtime
+FROM ubuntu:22.04 AS runtime
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends\
-    libboost-program-options1.71.0 \
+    libboost-program-options1.74.0 \
     libreadline8 \
+    libfmt8 \
     tcl \
     libspdlog1 \
-    opensta \
     python3-numpy \
     python3-matplotlib \
+    opensta \
     yosys && \
     apt-get clean
 
@@ -19,10 +20,15 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
     echo 'tzdata tzdata/Zones/Etc select UTC' | debconf-set-selections; \
     apt-get update && \
     apt-get install -y tzdata \
-        gcc-10 \
-        g++-10 \
+        gcc-9 g++-9 \
+        gcc-10 g++-10 \
+        clang-11 \
+        clang-12 \
+        clang-13 \
+        clang-14 \
         cmake \
-        libboost-program-options-dev \
+        ccache \
+        libboost-program-options1.74-dev \
         libreadline-dev \
         libpython3-dev \
         libgtest-dev \
@@ -37,15 +43,12 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
         tcl-dev \
         yosys-dev \
         opensta-dev \
-        libpython3.9-dev \
-        python3.9-distutils \
+        libpython3-dev \
+        python3-distutils \
         swig \
         flex && \
     apt-get clean
 ENV CC=gcc-10 CXX=g++-10
-# RUN git clone https://github.com/berkeley-abc/abc.git &&
-#     cd abc && make && \
-#     cp abc/abc /usr/local/bin/abc
 
 FROM builder AS compiled
 RUN mkdir -p /LSOracle/build

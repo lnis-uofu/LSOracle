@@ -2,6 +2,8 @@
 **/.DS_Store
 
 build/
+install
+build_debug
 
 .vscode/
 
@@ -11,3 +13,4 @@ examples/abc/scala/project
 examples/abc/scala/target
 
 tests/**/*.v
+*.dot

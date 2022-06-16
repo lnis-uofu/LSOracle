@@ -177,9 +177,9 @@
 #include "config.h"
 
 #ifdef ENABLE_OPENSTA
-#include <sta/Sta.hh>
+#include <OpenSTA/Sta.hh>
 #include <tcl.h>
-#include <sta/StaMain.hh>
+#include <OpenSTA/StaMain.hh>
 namespace sta {
 extern const char *tcl_inits[];
 }

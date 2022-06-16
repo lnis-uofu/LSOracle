@@ -29,18 +29,19 @@
 
 #include <stdlib.h>
 #include <mockturtle/mockturtle.hpp>
-#include <sta/Sta.hh>
-#include <sta/ConcreteNetwork.hh>
-#include <sta/Corner.hh>
-#include <sta/Graph.hh>
-#include <sta/Liberty.hh>
-#include <sta/Network.hh>
-#include <sta/PathRef.hh>
-#include <sta/PortDirection.hh>
-#include <sta/TimingArc.hh>
-#include <sta/PatternMatch.hh>
-#include <sta/VerilogReader.hh>
-#include <sta/StaMain.hh>
+#include <OpenSTA/Sta.hh>
+#include <OpenSTA/ConcreteNetwork.hh>
+#include <OpenSTA/Corner.hh>
+#include <OpenSTA/Graph.hh>
+#include <OpenSTA/Liberty.hh>
+#include <OpenSTA/Network.hh>
+#include <OpenSTA/PathRef.hh>
+#include <OpenSTA/PortDirection.hh>
+#include <OpenSTA/TimingArc.hh>
+#include <OpenSTA/PatternMatch.hh>
+#include <OpenSTA/Transition.hh>
+#include <OpenSTA/VerilogReader.hh>
+#include <OpenSTA/StaMain.hh>
 
 #include "algorithms/output/verilog_utilities.hpp"
 
@@ -232,6 +233,7 @@ template <typename network>
 mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_manager_junior<network> &partman, int index)
 {
     mockturtle::window_view<mockturtle::names_view<network>> part = partman.partition(index);
+    spdlog::error("Part name {}", part.get_network_name());
     mockturtle::names_view<network> ntk = partman.get_network();
     part.foreach_pi([&part, &ntk](typename network::node n) {
         std::string name = get_node_name_or_default(ntk, n);
@@ -814,8 +816,10 @@ public:
 
     void optimize()
     {
+        spdlog::error("Convert name {}", this->converted.get_network_name());
         oracle::aig_script2 opt;
         this->optimal = opt.run(this->converted);
+        spdlog::error("Optimal name {}", this->optimal.get_network_name());
     }
 };
 
@@ -1301,8 +1305,8 @@ size_t run_timing(sta::LibertyLibrary *lib,
     sta::PathRef worst_path_arrival;
     sta::PathRef worst_path_slack;
 
-    sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::MinMax::max(), worst_path_arrival);
-    sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::MinMax::max(), worst_path_slack);
+    sta::Sta::sta()->vertexWorstArrivalPath(vertex, sta::RiseFall::rise(), sta::MinMax::max(), worst_path_arrival);
+    sta::Sta::sta()->vertexWorstSlackPath(vertex, sta::RiseFall::rise(), sta::MinMax::max(), worst_path_slack);
 
     sta::ConcreteNetwork *net = reinterpret_cast<sta::ConcreteNetwork*>(sta::Sta::sta()->networkReader());
     sta::ConcreteInstance *top = reinterpret_cast<sta::ConcreteInstance*>
@@ -1438,6 +1442,7 @@ xmg_names setup_output(
     }
     partitions_out.substitute_nodes();
     spdlog::info("Finished connecting outputs" );
+
     return partitions_out.get_network();
 }
 

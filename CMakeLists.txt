@@ -19,6 +19,7 @@ endif()
 
 option(YOSYS_PLUGIN "compile the yosys plugin" OFF)
 option(LOCAL_PYBIND "use pybind11 from submodule" ON)
+option(LOCAL_OPENSTA "use OpenSta from submodule" ON)
 option(LOCAL_SPDLOG "use spdlog from submodule" ON)
 option(LOCAL_FMT "use fmt from submodule" ON)
 option(LOCAL_BOOST "use boost from submodules" ON)

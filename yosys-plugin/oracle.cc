@@ -51,12 +51,12 @@
 #define LSO_COMMAND_PART_DEEP_M "ps -a; partitioning {P}; optimization -i {D} -c; ps -m; crit_path_stats; ntk_stats "
 #define LSO_COMMAND_PART_HIGH_EFFORT_M "ps -a; oracle -c; ps -m; crit_path_stats; ntk_stats "
 
-#include "kernel/register.h"
-#include "kernel/sigtools.h"
-#include "kernel/celltypes.h"
-#include "kernel/log.h"
-#include "kernel/yosys.h"
-#include "libs/sha1/sha1.h"
+#include <kernel/register.h>
+#include <kernel/sigtools.h>
+#include <kernel/celltypes.h>
+#include <kernel/log.h>
+#include <kernel/yosys.h>
+#include <libs/sha1/sha1.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

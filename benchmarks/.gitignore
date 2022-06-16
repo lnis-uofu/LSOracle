@@ -30,3 +30,7 @@
 formality_workdir
 techmapping/gf12/*.lib
 techmapping/gf12/*.db
+
+*.*_direct.*
+*.*_timing.*
+*.exploded.*
