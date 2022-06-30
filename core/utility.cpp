@@ -704,9 +704,14 @@ template function_counts node_functions<xmg_names>(const xmg_names&);
 template function_counts node_functions<aig_names>(const aig_names&);
 template function_counts node_functions<xag_names>(const xag_names&);
 }
+bool is_digits(const std::string &str)
+{
+    return std::all_of(str.begin(), str.end(), ::isdigit); // C++11
+}
 
 std::vector<int> read_integer_file(string filename)
 {
+
     std::vector<int> output;
     std::ifstream ifs;
 
@@ -715,12 +720,14 @@ std::vector<int> read_integer_file(string filename)
         while (ifs.good()) {
             std::string part;
             getline(ifs, part);
-            if (part != "")
+            std::cout<<"part:"<<part<<std::endl;
+            if (!part.empty() && is_digits(part))
                 output.push_back(std::stoi(part));
         }
         ifs.close();
         return output;
     } else {
+        std::cout<<"buglaq1";
         throw exception();
     }
 }
