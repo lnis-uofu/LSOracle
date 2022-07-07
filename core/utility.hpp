@@ -139,4 +139,5 @@ void update_counts(function_counts &counts,
 		   const typename network::node &node);
 
     }
+bool is_digits(const std::string &str);
 std::vector<int> read_integer_file(string filename);
