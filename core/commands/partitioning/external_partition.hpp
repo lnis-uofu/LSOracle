@@ -68,9 +68,7 @@ namespace alice
 
 
             env->out() << "Partitioning stored " << name << " network using external file" << std::endl;
-            env->out() << "Partitioning stored tes200 ";
             std::vector<int> parts = read_integer_file(part_file);
-            env->out() << "Partitioning stored tes200 ";
             if (parts.size() != ntk.size()) {
                 env->out() << "Partition file contains the incorrect number of nodes" << std::endl;
                 exit(1);
