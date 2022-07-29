@@ -49,6 +49,7 @@ public:
         opts.add_option("--cut_size,-k", cut_size, "Number of inputs in the MFFC. Default = 4.");
         add_flag("--zero,-z", "Allow zero-gain substitution");
         add_flag("--mig,-m", "Refactoring an MIG");
+        add_flag("--xag,-x", "Refactoring an XAG");
         add_flag("--dc,-d", "Uses dont care.");
     }
 
@@ -73,7 +74,19 @@ protected:
             } else {
                 env->err() << "There is no MIG network stored\n";
             }
-        } else {
+        } 
+        else if (is_set("xag")) {
+            if (!store<xag_ntk>().empty()) {
+                mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+                ps.max_pis = cut_size;
+                auto &ntk = *store<xag_ntk>().current();
+                mockturtle::refactoring(ntk, resyn, ps);
+                ntk = mockturtle::cleanup_dangling(ntk);
+            } else {
+                env->err() << "There is no XAG network stored\n";
+            }
+        } 
+        else {
             if (!store<aig_ntk>().empty()) {
                 auto &ntk = *store<aig_ntk>().current();
                 // mockturtle::shannon_resynthesis<mockturtle::aig_network> fallback;

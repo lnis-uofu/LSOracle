@@ -133,6 +133,7 @@
 #include "commands/optimization/aigscript.hpp"
 #include "commands/optimization/aigscript3.hpp"
 #include "commands/optimization/migtune.hpp"
+#include "commands/optimization/xagmigtune.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
 #include "commands/optimization/depthr.hpp"

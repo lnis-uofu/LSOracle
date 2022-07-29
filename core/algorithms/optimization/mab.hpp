@@ -65,6 +65,24 @@ vector<string> mig_default_options()
     //default_opts.push_back("dc2");
     return default_opts;
 }
+
+vector<string> xag_default_options()
+{
+    vector<string> default_opts;
+    //default_opts.push_back("rw -x");
+    default_opts.push_back("rw -x -a");
+    default_opts.push_back("rw -x -z -a");
+    //default_opts.push_back("balance");
+    default_opts.push_back("refactor -x -d");
+    default_opts.push_back("refactor -x -z");
+    default_opts.push_back("refactor -x -d -z");
+    default_opts.push_back("resub -x");
+    default_opts.push_back("resub -k 8 -x");
+    default_opts.push_back("resub -k 6 -x");
+    
+    //default_opts.push_back("dc2");
+    return default_opts;
+}
  
 vector<string> split(string str, string token){
     vector<string>result;
@@ -352,6 +370,11 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return "; ps -m;\" | grep \"nodes:\" | grep -v \"MAJ\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if (which_opt == 3) //MIG minimization
         return "; ps -m;\" | grep \"level:\" | grep -v \"MIG\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 4) //MIG minimization
+        return "; ps -x;\" | awk \"/nodes/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 5) //MIG minimization
+        return "; ps -x;\" | awk \"/level/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
+    
     // else if(which_opt == 2 || which_opt == 3) // STA Technology mapping tuning
     //     return ";strash;ifraig;dch -f;map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     // else if(which_opt == 4 || which_opt == 5) // FPGA Technology mapping tuning
@@ -390,9 +413,11 @@ vector<string> constr_random_commands(vector<string> default_opts, int repeats, 
     
     if ( which_opt  <= 1 )
       begin="./lsoracle -c \"read " + design + " ; " ;
-    else 
+    else if (which_opt <= 3)
       begin="./lsoracle -c \"read -m " + design + " ; ";
-  
+    else
+      begin="./lsoracle -c \"read -x " + design + " ; ";
+
     cout<<"begin:"<<begin<<endl;
     
     for (int h=0; h<head.size(); h++){
@@ -521,6 +546,8 @@ float get_aig_level_from_result(string resultFile)
     {
         aig.assign(input, find_lev+5, input.length() - find_lev - 5);
         //printf("stof is %d\n",stof(aig) ); getchar();
+        std::cout<<aig<<std::endl;
+
         return stof(aig);
     }
     else{ return 0.0; } //error message
@@ -671,7 +698,11 @@ float get_results_universe(string resultFile, int which_opt)
     else if (which_opt == 2) // aig #nodes
         res = get_aig_size_from_result(resultFile);
     else if(which_opt==3) // aig #lev
-        res = get_aig_level_from_result(resultFile);    
+        res = get_aig_level_from_result(resultFile);
+    else if (which_opt == 4) // aig #nodes
+        res = get_aig_size_from_result(resultFile);
+    else if(which_opt==5) // aig #lev
+        res = get_aig_level_from_result(resultFile);     
     // else if (which_opt==2) //sta delay
     //     res = get_sta_delay_from_result(resultFile);
     // else if (which_opt==3) // sta area
@@ -887,6 +918,8 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
         begin="./lsoracle -c \"read " + design + /*";strash;read "+lib+*/" ; ";
     else if ( which_opt == 2 || which_opt == 3 )
         begin="./lsoracle -c \"read -m " + design + /*";strash;read "+lib+*/" ; ";
+    else if ( which_opt == 4  || which_opt == 5 )
+        begin="./lsoracle -c \"read -x " + design + /*";strash;read "+lib+*/" ; ";
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     vector<int> new_sample_constr(head.size()); // each arm has its own prob/constrain
     vector<float> global_prob_area,global_prob_delay;
@@ -1021,6 +1054,7 @@ vector<float> get_results(int nCommands, int repeats, int prefix_pos, string out
         vector<float> res_area, res_delay;
         for (int i2=0; i2<nCommands;i2++){
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
+            std::cout << "print result_file" << result_file << std::endl;
             res_area.push_back(get_results_universe(result_file,which_opt));
             res_delay.push_back(get_results_universe(result_file,which_opt));
             global_delay[i].push_back(get_results_universe(result_file,which_opt));
@@ -1090,6 +1124,7 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
         vector<float> res_area, res_delay;
         for (int i2=0; i2<res_file_loc[i];i2++){ // the number of samples are now biased; it is recorded in res_file_loc
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
+            std::cout << "print result_file 2" << result_file << std::endl;
             res_area.push_back(get_results_universe(result_file,which_opt));
             res_delay.push_back(get_results_universe(result_file,which_opt));
             global_delay[i].push_back(get_results_universe(result_file,which_opt));
@@ -1245,6 +1280,8 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
      *   target=1   => AIG minimization : #lev
      *   target=2   => MIG minimization : #nodes
      *   target=3   => MIG minimization : #lev
+     *   target=4   => XAG minimization : #nodes
+     *   target=5   => XAG minimization : #lev
     */
 
     string out = ".temp.result.txt"; 
@@ -1253,6 +1290,8 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     vector<string> default_opts;
     if ( target == 0 || target == 1)
       default_opts = aig_default_options();
+    else if ( target == 4 || target == 5)
+      default_opts = xag_default_options();
     else 
       default_opts = mig_default_options();
 
