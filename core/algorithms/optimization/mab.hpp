@@ -371,9 +371,9 @@ string abc_stats_commmands(int h, int i, int which_opt)
     else if (which_opt == 3) //MIG minimization
         return "; ps -m;\" | grep \"level:\" | grep -v \"MIG\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if (which_opt == 4) //MIG minimization
-        return "; ps -x;\" | awk \"/nodes/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+        return "; ps -x;\" | awk \"/nodes:/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if (which_opt == 5) //MIG minimization
-        return "; ps -x;\" | awk \"/level/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
+        return "; ps -x;\" | awk \"/level:/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
     
     // else if(which_opt == 2 || which_opt == 3) // STA Technology mapping tuning
     //     return ";strash;ifraig;dch -f;map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
@@ -522,12 +522,20 @@ float get_aig_size_from_result(string resultFile)
     if(find_aig>0)
     {
         //printf("get aig size c2 \n");
-        aig.assign(input, find_aig+5, find_level - find_aig - 5);
+        std::cout<<"here ?"<<std::endl;
+        std::cout<<"input:"<<input<<" find_aig:"<<find_aig<<" find_level:"<<find_level<<std::endl;
+        aig.assign(input, find_aig+7, 4);
+        std::cout<<"aig :"<<aig<<std::endl;
+
         //printf("stof is %d\n",stof(aig) ); getchar();
         return stof(aig);
     }
     
-    else{ /*printf("get aig size c3\n");*/ return 0.0; } //error message
+    else{ /*printf("get aig size c3\n");*/ 
+        std::cout<<"Going to else"<<std::endl;
+        return 0.0; 
+    } //error message
+    
     //printf("get aig size c4\n");
     return 0.0;
 }
