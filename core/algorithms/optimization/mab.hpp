@@ -70,8 +70,8 @@ vector<string> xag_default_options()
 {
     vector<string> default_opts;
     //default_opts.push_back("rw -x");
-    default_opts.push_back("rw -x -a");
-    default_opts.push_back("rw -x -z -a");
+    default_opts.push_back("rw -x");
+    default_opts.push_back("rw -x -z");
     //default_opts.push_back("balance");
     default_opts.push_back("refactor -x -d");
     default_opts.push_back("refactor -x -z");
@@ -79,6 +79,24 @@ vector<string> xag_default_options()
     default_opts.push_back("resub -x");
     default_opts.push_back("resub -k 8 -x");
     default_opts.push_back("resub -k 6 -x");
+    
+    //default_opts.push_back("dc2");
+    return default_opts;
+}
+
+vector<string> xmg_default_options()
+{
+    vector<string> default_opts;
+    //default_opts.push_back("rw -g");
+    default_opts.push_back("rw -g");
+    default_opts.push_back("rw -g -z");
+    //default_opts.push_back("balance");
+    default_opts.push_back("refactor -g -d");
+    default_opts.push_back("refactor -g -z");
+    default_opts.push_back("refactor -g -d -z");
+    default_opts.push_back("resub -g");
+    default_opts.push_back("resub -k 8 -g");
+    default_opts.push_back("resub -k 6 -g");
     
     //default_opts.push_back("dc2");
     return default_opts;
@@ -374,6 +392,10 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return "; ps -x;\" | awk \"/nodes:/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if (which_opt == 5) //MIG minimization
         return "; ps -x;\" | awk \"/level:/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 6) //MIG minimization
+        return "; ps -g;\" | awk \"/nodes:/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 7) //MIG minimization
+        return "; ps -g;\" | awk \"/level:/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
     
     // else if(which_opt == 2 || which_opt == 3) // STA Technology mapping tuning
     //     return ";strash;ifraig;dch -f;map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
@@ -415,8 +437,10 @@ vector<string> constr_random_commands(vector<string> default_opts, int repeats, 
       begin="./lsoracle -c \"read " + design + " ; " ;
     else if (which_opt <= 3)
       begin="./lsoracle -c \"read -m " + design + " ; ";
-    else
+    else if (which_opt <= 5)
       begin="./lsoracle -c \"read -x " + design + " ; ";
+    else
+      begin="./lsoracle -c \"read -g " + design + " ; ";
 
     cout<<"begin:"<<begin<<endl;
     
@@ -710,6 +734,10 @@ float get_results_universe(string resultFile, int which_opt)
     else if (which_opt == 4) // aig #nodes
         res = get_aig_size_from_result(resultFile);
     else if(which_opt==5) // aig #lev
+        res = get_aig_level_from_result(resultFile);
+    else if (which_opt == 6) // aig #nodes
+        res = get_aig_size_from_result(resultFile);
+    else if(which_opt==7) // aig #lev
         res = get_aig_level_from_result(resultFile);     
     // else if (which_opt==2) //sta delay
     //     res = get_sta_delay_from_result(resultFile);
@@ -1057,9 +1085,11 @@ vector<float> get_results(int nCommands, int repeats, int prefix_pos, string out
     ofstream outfile(output.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
     map<int,vector<float> > prefix_res_area;
     map<int,vector<float> > prefix_res_delay;
+    std::cout << "head_size" << head_size << std::endl;
     for (int i=0; i<head_size;i++) //i is first order result indicator; this should match "head.size" 
     {
         vector<float> res_area, res_delay;
+        std::cout << "nCommands" << nCommands << std::endl;
         for (int i2=0; i2<nCommands;i2++){
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
             std::cout << "print result_file" << result_file << std::endl;
@@ -1132,7 +1162,7 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
         vector<float> res_area, res_delay;
         for (int i2=0; i2<res_file_loc[i];i2++){ // the number of samples are now biased; it is recorded in res_file_loc
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
-            std::cout << "print result_file 2" << result_file << std::endl;
+            std::cout << "print result_file 2 " << result_file << std::endl;
             res_area.push_back(get_results_universe(result_file,which_opt));
             res_delay.push_back(get_results_universe(result_file,which_opt));
             global_delay[i].push_back(get_results_universe(result_file,which_opt));
@@ -1290,6 +1320,8 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
      *   target=3   => MIG minimization : #lev
      *   target=4   => XAG minimization : #nodes
      *   target=5   => XAG minimization : #lev
+     *   target=6   => XMG minimization : #nodes
+     *   target=7   => XMG minimization : #lev
     */
 
     string out = ".temp.result.txt"; 
@@ -1300,6 +1332,8 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
       default_opts = aig_default_options();
     else if ( target == 4 || target == 5)
       default_opts = xag_default_options();
+    else if ( target == 6 || target == 7)
+      default_opts = xmg_default_options();
     else 
       default_opts = mig_default_options();
 
@@ -1336,7 +1370,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     }
     float best_res = best_so_far(global_delay);
     string remove_result = "rm *.result";
-    int rm_temp_result = system(remove_result.c_str());
+    //int rm_temp_result = system(remove_result.c_str());
     assert(seq_global_delay.size() == global_commands.size());
     ofstream outfile(design+".log", std::ofstream::out | std::ofstream::app);
     // End of tuning; printing out the best flow(s) found 

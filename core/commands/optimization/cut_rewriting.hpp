@@ -49,6 +49,7 @@ public:
         opts.add_option("--cut_size,-k", cut_size, "Cut size (4 is the default)");
         add_flag("--mig,-m", "Performs cut rewriting on stored MIG network (AIG is default)");
         add_flag("--xag,-x", "Performs cut rewriting on stored XAG network (AIG is default)");
+        add_flag("--xmg,-g", "Performs cut rewriting on stored XAG network (AIG is default)");
         add_flag("--algebraic,-a", "Performs algebraic depth-oriented rewriting only for MIGs.");
         add_flag("--zero,-z", "Allows zero-gain.");
         add_flag("--dc,-d", "Performs don't care base optimization.");
@@ -62,6 +63,7 @@ protected:
         mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
         mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
         mockturtle::direct_resynthesis<mockturtle::xag_network> resyn_xag;
+        mockturtle::direct_resynthesis<mockturtle::xmg_network> resyn_xmg;
 
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = cut_size;
@@ -101,6 +103,18 @@ protected:
             
             } else {
                 env->err() << "No XAG stored\n";
+            }
+        }
+        else if (is_set("xmg")) {
+            if (!store<xmg_ntk>().empty()) {
+                auto &ntk_xmg = *store<xmg_ntk>().current();
+                mockturtle::xmg_npn_resynthesis resyn;
+                
+                mockturtle::cut_rewriting(ntk_xmg, resyn, ps);
+                ntk_xmg = mockturtle::cleanup_dangling(ntk_xmg);
+            
+            } else {
+                env->err() << "No XMG stored\n";
             }
         } 
         else {

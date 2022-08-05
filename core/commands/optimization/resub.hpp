@@ -49,7 +49,8 @@ public:
         opts.add_option("--cut_size,-k", cut_size, "Number of inputs in the MFFC. Default = 4.");
         opts.add_option("--insert,-i", insert, "Maximum number of insertions");
         add_flag("--mig,-m", "Resubs a MIG");
-        add_flag("--xag,-x", "Resubs a MIG");
+        add_flag("--xag,-x", "Resubs a XAG");
+        add_flag("--xmg,-g", "Resubs a XMG");
         add_flag("--sim,-s", "Simulation based resubstitution");
     }
 
@@ -87,7 +88,23 @@ protected:
             } else {
                 env->err() << "There is no xag network stored\n";
             }
-        }  
+        }
+        else if (is_set("xmg")) {
+            if (!store<xmg_ntk>().empty()) {
+                mockturtle::resubstitution_params ps;
+                ps.max_pis = cut_size;
+                ps.max_inserts = insert; 
+
+                auto &xmg = *store<xmg_ntk>().current();
+                mockturtle::depth_view depth_xmg{xmg};
+                mockturtle::fanout_view fanout_xmg{depth_xmg};
+                 
+                mockturtle::xmg_resubstitution( fanout_xmg, ps );
+                xmg = mockturtle::cleanup_dangling( xmg );
+            } else {
+                env->err() << "There is no xmg network stored\n";
+            }
+        }    
         
         else {
             if (!store<aig_ntk>().empty()) {

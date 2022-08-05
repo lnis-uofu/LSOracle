@@ -50,6 +50,7 @@ public:
         add_flag("--zero,-z", "Allow zero-gain substitution");
         add_flag("--mig,-m", "Refactoring an MIG");
         add_flag("--xag,-x", "Refactoring an XAG");
+        add_flag("--xmg,-g", "Refactoring an XAG");
         add_flag("--dc,-d", "Uses dont care.");
     }
 
@@ -85,7 +86,18 @@ protected:
             } else {
                 env->err() << "There is no XAG network stored\n";
             }
-        } 
+        }
+        else if (is_set("xmg")) {
+            if (!store<xmg_ntk>().empty()) {
+                mockturtle::xmg_npn_resynthesis resyn;
+                ps.max_pis = cut_size;
+                auto &ntk = *store<xmg_ntk>().current();
+                mockturtle::refactoring(ntk, resyn, ps);
+                ntk = mockturtle::cleanup_dangling(ntk);
+            } else {
+                env->err() << "There is no xmg network stored\n";
+            }
+        }  
         else {
             if (!store<aig_ntk>().empty()) {
                 auto &ntk = *store<aig_ntk>().current();
