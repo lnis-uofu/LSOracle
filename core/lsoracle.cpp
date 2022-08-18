@@ -133,8 +133,6 @@
 #include "commands/optimization/aigscript.hpp"
 #include "commands/optimization/aigscript3.hpp"
 #include "commands/optimization/migtune.hpp"
-#include "commands/optimization/xagmigtune.hpp"
-#include "commands/optimization/xmgmigtune.hpp"
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
 #include "commands/optimization/depthr.hpp"
@@ -187,10 +185,12 @@ extern int Sta_Init(Tcl_Interp *interp);
 }
 #endif
 
+string lsoracle_path;
+
 int main(int argc, char ** argv)
 {
+    lsoracle_path = std::string(argv[0]);
 #ifdef ENABLE_OPENSTA
-
     sta::Sta *test = new sta::Sta;
     sta::Sta::setSta(test);
     sta::initSta();

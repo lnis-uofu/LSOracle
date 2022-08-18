@@ -418,14 +418,13 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return ";strash;ifraig;strash;write_cnf test.cnf\" | grep \"CNF stats\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if(which_opt == 8 || which_opt == 9) // FPGA Technology mapping tuning
         return ";strash;retime;strash;ifraig;dch -f;map;print_stats;\" | grep \"delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    */
     else 
         return ";strash;print_stats;\" | grep \"and =\" > " + to_string(h)+"_"+to_string(i)+".result\n"; //default as AIG minimization
-*/
-
 }
 
 // generate initial random constrained commands (stored in vector of strings)
-vector<string> constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, 
+vector<string> constr_random_commands(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos,
         string design, int which_opt, string lib ){
     
     vector<string> random_c; //final vector return
@@ -434,13 +433,13 @@ vector<string> constr_random_commands(vector<string> default_opts, int repeats, 
     string begin;
     
     if ( which_opt  <= 1 )
-      begin="./lsoracle -c \"read " + design + " ; " ;
+      begin = lsoracle + " -c \"read " + design + " ; " ;
     else if (which_opt <= 3)
-      begin="./lsoracle -c \"read -m " + design + " ; ";
+      begin = lsoracle + " -c \"read -m " + design + " ; ";
     else if (which_opt <= 5)
-      begin="./lsoracle -c \"read -x " + design + " ; ";
+      begin = lsoracle + " -c \"read -x " + design + " ; ";
     else
-      begin="./lsoracle -c \"read -g " + design + " ; ";
+      begin = lsoracle + " -c \"read -g " + design + " ; ";
 
     cout<<"begin:"<<begin<<endl;
     
@@ -757,12 +756,14 @@ float get_results_universe(string resultFile, int which_opt)
     //     res = get_area_noSTA_from_result(resultFile);
     else
         res = -1;
-    if (res == -1)
-	assert(0);
-    else if (res == 0)
-	return 999999999.0;
-    else
-	return res;	
+    if (res == -1) {
+        assert(0);
+        return res;
+    } else if (res == 0) {
+        return 999999999.0;
+    } else {
+        return res;
+    }
 }
 
 vector<float> to_vec_float(vector<vector<float> > v){
@@ -942,7 +943,7 @@ vector<float> update_prob_short_term_random(vector<vector<float> > v, int Tstart
     global_prob_area/delay      : global probability of wining rewards
     which_opt                   : switch for area/delay opt (==0 => area) (==1 ==> delay) */
 
-vector<string> biased_constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, string design,
+vector<string> biased_constr_random_commands(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos, string design,
     vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc, 
     int which_opt, int fSoftmax, string lib, string output){
     vector<string> random_c; //final vector return
@@ -951,11 +952,11 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     string begin;
 
     if ( which_opt == 0 || which_opt == 1 )
-        begin="./lsoracle -c \"read " + design + /*";strash;read "+lib+*/" ; ";
+        begin=lsoracle + " -c \"read " + design + /*";strash;read "+lib+*/" ; ";
     else if ( which_opt == 2 || which_opt == 3 )
-        begin="./lsoracle -c \"read -m " + design + /*";strash;read "+lib+*/" ; ";
+        begin=lsoracle + " -c \"read -m " + design + /*";strash;read "+lib+*/" ; ";
     else if ( which_opt == 4  || which_opt == 5 )
-        begin="./lsoracle -c \"read -x " + design + /*";strash;read "+lib+*/" ; ";
+        begin=lsoracle + " -c \"read -x " + design + /*";strash;read "+lib+*/" ; ";
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     vector<int> new_sample_constr(head.size()); // each arm has its own prob/constrain
     vector<float> global_prob_area,global_prob_delay;
@@ -1020,13 +1021,13 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     global_prob_area/delay      : global probability of wining rewards
     which_opt                   : switch for area/delay opt (==0 => area) (==1 ==> delay) */
 
-vector<string> biased_constr_random_commands_forget(vector<string> default_opts, int repeats, int nCommands, int pos, string design,
+vector<string> biased_constr_random_commands_forget(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos, string design,
         vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc, int which_opt, int fSoftmax, string lib){
     vector<string> random_c; //final vector return
     //initialization
     vector<string> head = create_headers(pos, default_opts);  // head.size => number of arms
     string begin;
-    begin="./lsoracle -c \"read " + design + /*+ ";strash;read "+lib+*/" ; ";
+    begin=lsoracle + " -c \"read " + design + /*+ ";strash;read "+lib+*/" ; ";
 
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     int nTotal = head.size()*nCommands;         // calculate total number of samples at this round
@@ -1210,7 +1211,7 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
     int iter                            : current iteration of play
     int forget                          : forget/non-forget function applied switch
     int which_opt                       : area/delay switch  */
-vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design, 
+vector<float> sample(string lsoracle, int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design,
         string out, vector<vector<float> > &global_area, vector<vector<float> > &global_delay,
         vector<string> &global_commands,    int iter, int forget, int which_opt, int fSoftmax, string lib)
 {
@@ -1220,15 +1221,15 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
     vector<string> commands_vec;
 
     if (iter==0 ) // initial with random 
-        commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos 
+        commands_vec = constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos
     else
         if(!forget) {
             //printf("c1\n");
-            commands_vec = biased_constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt, fSoftmax, lib, out);  //
         }
         else
-            commands_vec = biased_constr_random_commands_forget(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands_forget(lsoracle, default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt,fSoftmax,lib);   //
 
     //cout<<"Number of Samples: "<<commands_vec.size()<<endl;
@@ -1237,7 +1238,7 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
     if(commands_vec.size() == 0) // in case no arm win anything ; need a threthold (number of iters) of trying this
     {
          cout<<"Warning: Trying uniform random samples again since all arms wining rate is 0\n";
-         commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib);
+         commands_vec = constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib);
          no_arm_win = 1;
     }
 
@@ -1303,9 +1304,8 @@ void best_so_far_command(vector<string> global_commands, vector<vector<float> > 
 }
 
 
-void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target, int nSamples, 
+string bayes_flow_tune(string lsoracle, string design, int repeats, int prefix_pos, int target, int nSamples,
                      int mab_iter, int fForget, int fSoftmax ) {
-    string design = Design;
     string lib = "dontCare";
     
     int forget = fForget;  // enable long-short-term memory for probability upate
@@ -1359,7 +1359,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     {
         vector<float> res_of_this_iter;
         for (int i=0;i<mab_iter;i++){
-            res_of_this_iter = sample(nCommands, repeats, prefix_pos, default_opts, design, out, 
+            res_of_this_iter = sample(lsoracle, nCommands, repeats, prefix_pos, default_opts, design, out,
                                       global_area, global_delay, global_commands, i, forget, which_opt, fSoftmax, lib);
             for( int res_i = 0; res_i<res_of_this_iter.size();res_i++){
                 seq_global_delay.push_back(res_of_this_iter[res_i]);
@@ -1377,6 +1377,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     cout<<"Best Flow(s) (#max=5):\n"; outfile<<"Best Flow(s) (#max=5):\n";
     ofstream save_for_vtr(design+".script");
     int num_recomd_cmds = 0;
+    string bestest;
     if (which_opt != 2 && which_opt != 1 && which_opt != 0
 	&& which_opt !=3 /*&& which_opt !=4*/	) // 2 sta-delay, 1 aig-level, 4 lut-level
     { 
@@ -1385,6 +1386,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
 		    if(seq_global_delay[i]==best_res){
 			    cout<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    outfile<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
+                bestest = clean_flow_only_cmd_yosys(clean_grep(global_commands[i]));
 			    //save_for_vtr<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;
 			    //save_for_vtr<<global_commands[i]<<endl;
@@ -1400,6 +1402,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
 		    if(seq_global_delay[i]==best_res){
 			    cout<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    outfile<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
+                bestest = clean_flow_only_cmd_yosys(clean_grep(global_commands[i]));
 			    //save_for_vtr<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;
 			    //save_for_vtr<<global_commands[i]<<endl;
@@ -1411,6 +1414,6 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     }
     save_for_vtr.close();
     outfile.close();
-    return ;
+    return bestest;
 }
 }
