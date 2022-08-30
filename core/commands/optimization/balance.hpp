@@ -65,20 +65,20 @@ protected:
     {
         if (is_set("mig")) {
             if (!store<mig_ntk>().empty()) {
-                auto& ntk = store<mockturtle::mig_network>().current();
+                auto& ntk = store<mockturtle::names_view<mockturtle::mig_network>>().current();
                 // oracle::balancing( ntk );
                 env->err() << "Not implemented yet\n";
             } else {
                 env->err() << "There is no MIG network stored\n";
             }
         } else {
-            if (!store<aig_ntk>().empty()) {
-                auto &ntk = *store<aig_ntk>().current();
-                mockturtle::sop_rebalancing<mockturtle::aig_network> balfn;
+            if (!store<mockturtle::names_view<mockturtle::aig_network>>().empty()) {
+                auto &ntk = *store<mockturtle::names_view<mockturtle::aig_network>>().current();
+                mockturtle::sop_rebalancing<mockturtle::names_view<mockturtle::aig_network>> balfn;
                 mockturtle::balancing_params bs;
                 bs.cut_enumeration_ps.cut_size = 4u;
 
-                mockturtle::aig_network balanced_ntk = mockturtle::balancing(ntk, {balfn}, bs);
+                mockturtle::names_view<mockturtle::aig_network> balanced_ntk = mockturtle::balancing(ntk, {balfn}, bs);
                 balanced_ntk = mockturtle::cleanup_dangling(balanced_ntk);
 
                 //mockturtle::depth_view depth{balanced_ntk};

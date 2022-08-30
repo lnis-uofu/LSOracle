@@ -60,10 +60,10 @@ protected:
     void execute()
     {
 
-        mockturtle::direct_resynthesis<mockturtle::mig_network> resyn_mig;
-        mockturtle::direct_resynthesis<mockturtle::aig_network> resyn_aig;
-        mockturtle::direct_resynthesis<mockturtle::xag_network> resyn_xag;
-        mockturtle::direct_resynthesis<mockturtle::xmg_network> resyn_xmg;
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::mig_network>> resyn_mig;
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn_aig;
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xag_network>> resyn_xag;
+        mockturtle::direct_resynthesis<mockturtle::names_view<mockturtle::xmg_network>> resyn_xmg;
 
         mockturtle::cut_rewriting_params ps;
         ps.cut_enumeration_ps.cut_size = cut_size;
@@ -96,7 +96,7 @@ protected:
         else if (is_set("xag")) {
             if (!store<xag_ntk>().empty()) {
                 auto &ntk_xag = *store<xag_ntk>().current();
-                mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+                mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::xag_network>> resyn;
                 
                 mockturtle::cut_rewriting(ntk_xag, resyn, ps);
                 ntk_xag = mockturtle::cleanup_dangling(ntk_xag);
@@ -112,7 +112,6 @@ protected:
                 
                 mockturtle::cut_rewriting(ntk_xmg, resyn, ps);
                 ntk_xmg = mockturtle::cleanup_dangling(ntk_xmg);
-            
             } else {
                 env->err() << "No XMG stored\n";
             }
@@ -120,7 +119,7 @@ protected:
         else {
             if (!store<aig_ntk>().empty()) {
                 auto &ntk_aig = *store<aig_ntk>().current();
-                mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+                mockturtle::xag_npn_resynthesis<mockturtle::names_view<mockturtle::aig_network>> resyn;
             
                 //env->out() << "CP1 ntk size = " << ntk_aig.num_gates() << "\n";
                 //mockturtle::cut_rewriting(ntk_aig, resyn, ps);

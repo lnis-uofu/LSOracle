@@ -52,8 +52,8 @@ public:
     }
 
 protected:
-    template <typename network>
-    void tune(std::string name, int size_strategy, int depth_strategy, string src_flag)
+    template <class network, class node_resynth>
+    void tune(std::string name, int size_strategy, int depth_strategy, string src_flag, node_resynth &&resyn)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
             env->err() << name << " network not stored\n";
@@ -67,10 +67,9 @@ protected:
         env->out() << "Initial " << name << " depth " << mig_depth.depth() << " and nodes " <<
                    opt.num_gates() << std::endl;
 
-        std::string ckt_name = "testing_mig.v";
-
-        mockturtle::write_verilog_params ps;
-        mockturtle::write_verilog(opt, ckt_name, ps);
+        std::string ckt_name = "testing_mig.blif";
+        mockturtle::write_blif_params ps;
+        mockturtle::write_blif(opt, ckt_name, ps);
 
         int target;
         if (strategy == "depth") {
@@ -92,33 +91,40 @@ protected:
                                                 n_samples, mab_iter, f_forget, f_softmax);
 
         string command = lsoracle_path + " -c \"read " + src_flag + " " + ckt_name + " " +
-            recipe + " write_verilog " + src_flag + " " + ckt_name + ".out.v ; \"";
+            recipe + " write_blif " + src_flag + " testing.out.blif ; \"";
         env->out() << command << std::endl;
         system(command.c_str());
 
-        mockturtle::names_view<network> output;
-        lorina::return_code result = lorina::read_verilog(ckt_name + ".out.v",
-                                                          mockturtle::verilog_reader(output));
+        mockturtle::names_view<mockturtle::klut_network> klut_ntk;
+        auto const result = lorina::read_blif("testing.out.blif",
+                                                      mockturtle::blif_reader(klut_ntk));
         if (result != lorina::return_code::success) {
-            env->err() << "Unable to read verilog file" << std::endl;
-            return;
+            env->err() << "Unable to read blif file" << std::endl;
+            throw;
         }
-        output.set_network_name(opt.get_network_name());
 
+        mockturtle::names_view<network> named_dest;
+        mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::names_view<mockturtle::klut_network>, node_resynth>(
+            named_dest, klut_ntk, resyn);
         store<std::shared_ptr<mockturtle::names_view<network>>>().extend() =
-                    std::make_shared<mockturtle::names_view<network>>(output);
+            std::make_shared<mockturtle::names_view<network>>(named_dest);
     }
 
     void execute()
     {
         if (is_set("aig")) {
-            tune<mockturtle::aig_network>("AIG", 0, 1, "");
+            mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+            tune<mockturtle::aig_network>("AIG", 0, 1, "-a", resyn);
         } else if (is_set("xag")) {
-            tune<mockturtle::xag_network>("XAG", 4, 5, "-x");
+            mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+            tune<mockturtle::xag_network>("XAG", 4, 5, "-x", resyn);
         } else if (is_set("xmg")) {
-            tune<mockturtle::xmg_network>("XMG", 6, 7, "-g");
+            mockturtle::xmg_npn_resynthesis resyn;
+            tune<mockturtle::xmg_network>("XMG", 6, 7, "-g", resyn);
         } else {
-            tune<mockturtle::mig_network>("MIG", 2, 3, "-m");
+            mockturtle::mig_npn_resynthesis resyn;
+            tune<mockturtle::mig_network>("MIG", 2, 3, "-m", resyn);
+
         }
     }
 private:
