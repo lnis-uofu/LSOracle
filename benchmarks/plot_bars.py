@@ -66,7 +66,7 @@ def read_files(files):
             tech = d["liberty_file"]
             if "optimization" in d:
                 optim = d["optimization"]["name"]
-else:
+            else:
                 optim = "unknown"
             if design not in designs:
                 designs[design] = {}
@@ -132,7 +132,11 @@ ndp_d = (data['nodes'] * data['level']) / (data['ref_nodes'] * data['ref_level']
 adp_d = (data['area'] * data['arrival']) / (data['ref_arrival'] * data['ref_area'])
 
 fig, ((nodes, depth, ndp), (area, delay, adp))  = plt.subplots(2,3)
+all = np.column_stack((nodes_d, depth_d, area_d, delay_d, ndp_d, adp_d, data['ref_nodes']))
+labels = np.column_stack((data['design'], data['optimization']))
 
+np.savetxt("all.csv", all, delimiter=",")
+np.savetxt("labels.csv", labels, delimiter=",", fmt="%s")
 width = 0.9
 for graph, title, ax, db, label in [
         ("nodes", "Nodes", nodes, nodes_d, True),
@@ -153,9 +157,9 @@ for graph, title, ax, db, label in [
     bars = ax.barh(y, db, width, color=colors)
     ax.bar_label(bars, [f"{f:.2f}x" for f in db], padding=3, fontsize='x-small')
     if label:
-    ax.set_xlabel("% improvement over original circuit")
+        ax.set_xlabel("% improvement over original circuit")
         ax.set_yticks(y)
-    ax.set_yticklabels(labels)
+        ax.set_yticklabels(labels)
     else:
         ax.set_yticks([])
         ax.set_yticklabels([])
