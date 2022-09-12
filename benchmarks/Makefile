@@ -41,20 +41,22 @@ ISCAS89 := iscas89/s1196.v iscas89/s1238.v iscas89/s15850.v iscas89/s298.v
 OPDB := opdb/chip_bridge.pickle.v opdb/fpu.pickle.v opdb/gng.pickle.v # opdb/sparc_core.pickle.v
 EPFL := EPFL/adder.v EPFL/arbiter.v EPFL/bar.v EPFL/i2c.v EPFL/log2.v EPFL/max.v EPFL/mem_ctrl.v EPFL/multiplier.v #EPFL/sin.v EPFL/sqrt.v EPFL/square.v EPFL/voter.v
 
-DESIGNS :=   ${EPFL} ${ISCAS85} ${ISCAS89} ${OPDB} picorv32/picorv32.v
+DESIGNS :=   ${EPFL} ${OPDB} # picorv32/picorv32.v
 
 LIBERTY_FILES := techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
-techmapping/tigfet/sclib_tigfet10_hpall_tt_0p70v_25c.lib \
-techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib \
-techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib \
-techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib \
-techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib
+# techmapping/tigfet/sclib_tigfet10_hpall_tt_0p70v_25c.lib \
+# techmapping/tigfet/sclib_tigfet10_hpnw1_tt_0p70v_25c.lib \
+# techmapping/tigfet/sclib_tigfet10_hpnw4_tt_0p70v_25c.lib \
+# techmapping/tigfet/sclib_tigfet10_hpnw8_tt_0p70v_25c.lib \
+# techmapping/tigfet/sclib_tigfet10_hpnw12_tt_0p70v_25c.lib
 # techmapping/gf12/sc9mcpp84_12lp_base_rvt_c14_tt_nominal_max_0p70v_25c.lib
 
 LIBERTY_LIBS := $(foreach LIB,${LIBERTY_FILES},$(shell basename ${LIB} .lib))
 TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
 
-RUNS := unoptimized abc timing_direct timing_internal_direct ndp_direct resynth_direct depth_direct nodes_direct abc_part_direct nodes_plugin depth_plugin ndp_plugin resynth_plugin migscript aigscript
+RUNS := unoptimized timing_direct timing_direct_old ndp_direct resynth_direct
+# timing_internal_direct timing_internal_direct_old 
+#abc depth_direct nodes_direct abc_part_direct nodes_plugin depth_plugin ndp_plugin resynth_plugin migscript aigscript
 
 ################################################################
 ######################## Targets ###############################
@@ -314,7 +316,7 @@ tigfet12: sclib_tigfet10_hpnw12_tt_0p70v_25c.pdf
 	@ echo "read_blif -a $<" > ${TEMP}
 	@ echo "ps -a" >> ${TEMP}
 	@ echo "external_partition $*.direct.parts" >> ${TEMP}
-	@ echo "optimize --resynth --abc_exec ${ABC} --temp_prefix $*" >> ${TEMP}
+	@ echo "optimize --resynth --abc_exec ${ABC}" >> ${TEMP}
 	@ echo "ps -g" >> ${TEMP}
 	@ echo "write_blif -g --filename $*.resynth_direct.blif" >> ${TEMP}
 	@ echo "write_stats -g --name $(shell basename $*) --optimization resynth_direct $*.resynth_direct.stats.json" >> ${TEMP}
@@ -341,19 +343,40 @@ define TIMING_SYNTH =
 	@ echo "read_blif -a $$<" > $${TEMP}
 	@ echo "ps -a" >> $${TEMP}
 	@ echo "external_partition $$*.direct.parts" >> $${TEMP}
-	@ echo "optimize_timing --clock clk --sdc $$*.timing_direct.${2}.sdc --output $$*.timing_internal_direct.${2}.mapped.v --abc_exec $${ABC} --liberty ${1} --mapping ${3}" >> $${TEMP}
+	@ echo "optimize_timing --clock clk --sdc $$*.timing_direct.${2}.sdc --output $$*.timing_internal_direct.${2}.mapped.v --abc_exec $${ABC} --liberty ${1} --mapping ${3} --temp-prefix $$*.timing_direct" >> $${TEMP}
 	@ echo "ps -g" >> $${TEMP}
 	@ echo "write_blif -g --filename $$*.timing_direct.blif" >> $${TEMP}
 	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_direct -g $$*.timing_direct.stats.json" >> $${TEMP}
 	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_internal_direct -g $$*.timing_internal_direct.stats.json" >> $${TEMP}
 	$${LSORACLE} -e -f $${TEMP} | $${TEE} $$*.timing_direct.optimize.log
+
+
+%.timing_internal_direct_old.${2}.mapped.v %.timing_direct_old.optimize.log %.timing_direct_old.stats.json %.timing_internal_direct_old.stats.json %.timing_direct_old.blif &: %.unoptimized.blif %.timing_direct_old.${2}.sdc %.direct.parts
+#	$$(eval TEMP=$$(shell mktemp))
+	$$(eval TEMP=$$*.timing_direct_old.script)
+	@ echo "read_blif -a $$<" > $${TEMP}
+	@ echo "ps -a" >> $${TEMP}
+	@ echo "external_partition $$*.direct.parts" >> $${TEMP}
+	@ echo "optimize_timing2 --clock clk --sdc $$*.timing_direct_old.${2}.sdc --output $$*.timing_internal_direct_old.${2}.mapped.v --abc_exec $${ABC} --liberty ${1} --mapping ${3} --temp-prefix $$*.timing_direct" >> $${TEMP}
+	@ echo "ps -g" >> $${TEMP}
+	@ echo "write_blif -g --filename $$*.timing_direct_old.blif" >> $${TEMP}
+	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_direct_old -g $$*.timing_direct_old.stats.json" >> $${TEMP}
+	@ echo "write_stats --name $$(shell basename $$*) --optimization timing_internal_direct_old -g $$*.timing_internal_direct_old.stats.json" >> $${TEMP}
+	$${LSORACLE} -e -f $${TEMP} | $${TEE} $$*.timing_direct_old.optimize.log
+
 endef
 $(foreach LIB,${LIBERTY_FILES},$(eval $(call TIMING_SYNTH,${LIB},$(shell basename ${LIB} .lib),$(patsubst %.lib,%.mapping.v,${LIB}))))
 
 %.timing_direct.rtl &: %.timing_direct.blif
 	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct.blif; stat; simplemap; stat; techmap; stat; opt -purge; stat; write_rtlil $*.timing_direct.rtl" | ${TEE} $*.timing_direct.optimize_rtl.log
 
+%.timing_direct_old.rtl &: %.timing_direct_old.blif
+	${YOSYS} -m ${YOSYS_PLUGIN} -Q -p "read_blif $*.timing_direct_old.blif; stat; simplemap; stat; techmap; stat; opt -purge; stat; write_rtlil $*.timing_direct_old.rtl" | ${TEE} $*.timing_direct_old.optimize_rtl.log
+
 %.timing_internal_direct.rtl: %.timing_direct.rtl
+	cp $< $@
+
+%.timing_internal_direct_old.rtl: %.timing_direct_old.rtl
 	cp $< $@
 
 %.abc.rtl %.abc.blif %.abc.optimize.log &: %.unoptimized.rtl
@@ -430,6 +453,9 @@ define TIMING_JSON =
 	@ echo '{ "liberty_file": "$(2)" }' > $$@
 
 %.timing_internal_direct.$(2).gates: %.timing_internal_direct.$(2).mapped.flatten.v
+	${YOSYS} -Q -p "read_verilog $$<; stat -liberty $(1)" > $$@
+
+%.timing_internal_direct_old.$(2).gates: %.timing_internal_direct_old.$(2).mapped.flatten.v
 	${YOSYS} -Q -p "read_verilog $$<; stat -liberty $(1)" > $$@
 
 %.$(2).gates: %.$(2).mapped.v
