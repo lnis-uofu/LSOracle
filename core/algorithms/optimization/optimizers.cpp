@@ -37,7 +37,8 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
                              optimization_strategy strategy,
                              const mockturtle::window_view<mockturtle::names_view<network>> &part,
                              int index,
-                             const std::string &abc_exec)
+                             const std::string &abc_exec,
+                             const std::string &temp_prefix)
 {
     std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
@@ -56,7 +57,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
         new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
         new xmg_optimizer<network>(index, part, strategy, abc_exec),
         new xag_optimizer<network>(index, part, strategy, abc_exec),
-        new abc_optimizer<network>(index, part, strategy, abc_exec, prefix),
+        new abc_optimizer<network>(index, part, strategy, abc_exec, temp_prefix),
    };
     optimizer<network> *best = nullptr;
     for (auto opt = optimizers.begin(); opt != optimizers.end(); opt++) {
@@ -91,5 +92,5 @@ template optimizer<mockturtle::aig_network> *optimize(
     optimization_strategy,
     const mockturtle::window_view<mockturtle::names_view<mockturtle::aig_network>> &,
     int,
-    const std::string &);
+    const std::string &, const std::string &);
 }

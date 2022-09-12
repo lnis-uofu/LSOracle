@@ -50,6 +50,11 @@ public:
     {
     }
 
+    std::string get_network_name()
+    {
+        return "partition_" + std::to_string(index);
+    }
+
     xmg_names export_superset()
     {
         mockturtle::direct_resynthesis<xmg_names> resyn;
@@ -85,7 +90,8 @@ public:
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
             techmapped = basic_techmap<aig_names> (
-                script, abc_exec, optimal, temp_prefix);
+                script, abc_exec, optimal,
+                fmt::format("{}.{}.partition_{}", temp_prefix, this->optimizer_name(), index));
         }
         return techmapped;
     }

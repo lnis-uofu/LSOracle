@@ -45,6 +45,11 @@ public:
         return "noop";
     }
 
+    std::string get_network_name()
+    {
+        return "partition_" + std::to_string(index);
+    }
+
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
@@ -95,7 +100,8 @@ public:
             std::string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c;";
-            techmapped = basic_techmap(script, abc_exec, copy, temp_prefix);
+            techmapped = basic_techmap(script, abc_exec, copy,
+                                       fmt::format("{}.{}.partition_{}", temp_prefix, this->optimizer_name(), index));
         }
         return techmapped;
     }

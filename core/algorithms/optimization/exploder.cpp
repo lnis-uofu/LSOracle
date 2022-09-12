@@ -41,7 +41,7 @@ template<typename network> typename exploderizer<network>::xmg_names exploderize
             output.set_name (n, ntk.get_name( s ) );
         }
     });
-    optimization_strategy_comparator<network> *strategy =  new d_strategy<network>;
+    optimization_strategy_comparator<network> *strategy =  new depth_strategy<network>;
     ntk.foreach_po([&](auto po, auto i) {
         auto cone = extract_cone(po);
 
@@ -67,7 +67,8 @@ template<typename network> typename exploderizer<network>::xmg_names exploderize
                 optimization_strategy::depth,
                 cone,
                 i,
-                abc_exec);
+                abc_exec,
+                "");
             xmg_names optim = optimized->export_superset();
 
             assert(optim.num_pos() == 1);

@@ -144,6 +144,7 @@
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/optimize_timing.hpp"
+#include "commands/optimization/optimize_timing2.hpp"
 #include "commands/optimization/optimize.hpp"
 #include "commands/optimization/abc.hpp"
 #include "commands/optimization/interleaving.hpp"

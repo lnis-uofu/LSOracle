@@ -36,11 +36,11 @@
 
 namespace alice
 {
-class optimize_timing_command : public alice::command
+class optimize_timing2_command : public alice::command
 {
 
 public:
-    explicit optimize_timing_command(const environment::ptr &env)
+    explicit optimize_timing2_command(const environment::ptr &env)
         : command(env, "Perform timing driven mixed synthesis.")
     {
         opts.add_option("--output,-o", output_file, "Verilog output file.")->required();
@@ -77,7 +77,7 @@ protected:
 
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
-            oracle::optimize_timing_tech<network>(
+            oracle::optimize_timing<network>(
                 partitions_jr,
                 liberty_file, mapping_file, sdc_file, clock_name,
                 output_file, abc_exec, temp_prefix);
@@ -110,7 +110,7 @@ protected:
     string temp_prefix;
     string abc_exec{"abc"};
 };
-ALICE_ADD_COMMAND(optimize_timing, "Optimization");
+ALICE_ADD_COMMAND(optimize_timing2, "Optimization");
 }
 
 #endif

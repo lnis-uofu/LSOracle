@@ -40,6 +40,11 @@ public:
     {
     }
 
+    std::string get_network_name()
+    {
+        return "partition_" + std::to_string(index);
+    }
+
     xmg_names export_superset()
     {
         mockturtle::direct_resynthesis<xmg_names> resyn;
@@ -80,7 +85,8 @@ public:
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
             techmapped = basic_techmap<xag_names> (
-                script, abc_exec, optimal, temp_prefix);
+                script, abc_exec, optimal,
+                fmt::format("{}.{}.partition_{}", temp_prefix, this->optimizer_name(), index));
         }
         return techmapped;
     }
@@ -94,6 +100,7 @@ public:
     {
         oracle::xag_script opt;
         this->optimal = opt.run(this->converted);
+        this->optimal.set_network_name(this->original.get_network_name());
     }
 
     optimization_strategy target()

@@ -25,40 +25,36 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#ifdef ENABLE_OPENSTA
-#ifdef ENABLE_ABC
 
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
 #include <sys/stat.h>
 #include "algorithms/optimization/resynthesis.hpp"
-#include "algorithms/partitioning/partition_manager_junior.hpp"
 
 namespace alice
 {
-class optimize_timing_command : public alice::command
+class optimize_tech_command : public alice::command
 {
 
 public:
-    explicit optimize_timing_command(const environment::ptr &env)
+    explicit optimize_tech_command(const environment::ptr &env)
         : command(env, "Perform timing driven mixed synthesis.")
     {
-        opts.add_option("--output,-o", output_file, "Verilog output file.")->required();
-        opts.add_option("--liberty,-l", liberty_file, "Liberty file.");
-	opts.add_option("--mapping", mapping_file, "Mapping verilog for registers and inverters.");
-        opts.add_option("--sdc,-s", sdc_file, "SDC file.");
-        opts.add_option("--clock,-c", clock_name, "Clock net.");
-        opts.add_option("--abc_exec", abc_exec, "ABC executable, defaults to using path.");
-	opts.add_option("--temp-prefix", temp_prefix, "Filename prefix for temporary files. If not set, temporary files will be created by OS.");
-}
+        opts.add_option("--abc_exec", abc_exec,
+                        "ABC executable, defaults to using path.");
+        opts.add_flag("--ndp", "Node Depth Product target");
+        opts.add_flag("--nodes", "Node Count target");
+        opts.add_flag("--depth", "Depth target");
+	opts.add_flag("--resynth", "Resynthesis for depth");
+    }
 protected:
     void execute()
     {
-	resynth<mockturtle::aig_network>("AIG");
+	synth<mockturtle::aig_network>("AIG");
     }
 
     template <typename network>
-    void resynth(string name)
+    void synth(string name)
     {
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
             env->err() << "No " << name << " stored\n";
@@ -69,22 +65,31 @@ protected:
             return;
         }
 
-        auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
-        mockturtle::depth_view orig_depth{ntk};
-
         oracle::partition_manager_junior<network> partitions_jr =
             *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
 
+        mockturtle::depth_view orig_depth(partitions_jr.get_network());
+
         auto start = std::chrono::high_resolution_clock::now();
-        mockturtle::names_view<mockturtle::xmg_network> ntk_result =
-            oracle::optimize_timing_tech<network>(
-                partitions_jr,
-                liberty_file, mapping_file, sdc_file, clock_name,
-                output_file, abc_exec, temp_prefix);
+        mockturtle::names_view<mockturtle::xmg_network> ntk_result;
+	if (is_set("resynth")) {
+	    ntk_result = oracle::optimize_resynthesis<mockturtle::aig_network>(partitions_jr, abc_exec, temp_prefix);
+	} else {
+	    oracle::optimization_strategy strategy;
+	    if (is_set("depth")) {
+		strategy = oracle::optimization_strategy::depth;
+	    } else if (is_set("nodes")) {
+		strategy = oracle::optimization_strategy::size;
+	    } else {
+		strategy = oracle::optimization_strategy::balanced;
+	    }
+
+        ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy, temp_prefix);
+	}
         auto stop = std::chrono::high_resolution_clock::now();
 
-        mockturtle::depth_view new_depth{ntk_result};
-        if (ntk_result.size() == ntk.size()
+        mockturtle::depth_view new_depth(ntk_result);
+        if (ntk_result.size() == partitions_jr.get_network().size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
         }
@@ -102,16 +107,8 @@ protected:
         store<std::shared_ptr<mockturtle::names_view<mockturtle::xmg_network>>>().extend() =
 			      std::make_shared<mockturtle::names_view<mockturtle::xmg_network>>(ntk_result);
     }
-    string liberty_file;
-    string output_file;
-    string sdc_file;
-    string mapping_file;
-    string clock_name;
-    string temp_prefix;
+
     string abc_exec{"abc"};
 };
-ALICE_ADD_COMMAND(optimize_timing, "Optimization");
+ALICE_ADD_COMMAND(optimize, "Optimization");
 }
-
-#endif
-#endif

@@ -176,6 +176,7 @@ mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_ma
     if (feedthrough > 0 ) {
         std::cout << "Skipped renaming for " << feedthrough << " feedthrough." << std::endl;
     }
+    part.set_network_name("partition_" + std::to_string(index));
     return part;
 }
 
@@ -264,12 +265,16 @@ string techmap(
 {
     std::cout << "Starting techmap." << std::endl;
     // Write out verilog
-    char *output = strdup("/tmp/lsoracle_XXXXXX.combined.v");
-    if (mkstemps(output, 11) == -1) {
-        throw std::exception();
+    std::string output_file;
+    if (temp_prefix.empty()) {
+        char *output = strdup("/tmp/lsoracle_XXXXXX.combined.v");
+        if (mkstemps(output, 11) == -1) {
+            throw std::exception();
+        }
+        output_file = std::string(output);
+    } else {
+        output_file = fmt::format("{}.working.v", temp_prefix);
     }
-    std::string output_file = std::string(output);
-    // std::string output_file = fmt::format("{}.work.v", temp_prefix);
     std::cout << "Writing out to " << output_file << std::endl;
 
     std::ofstream verilog(output_file);
@@ -441,7 +446,6 @@ size_t run_timing(sta::LibertyLibrary *lib,
                   const std::vector<optimization_strategy> &optimized)
 {
     bool read_ver = sta::readVerilogFile(verilog_file.c_str(),
-    // bool read_ver = sta::readVerilogFile("/home/snelgrov/code/lsoracle/benchmarks/picorv32/picorv32_lsoracle.mapped.v",
                                          sta::Sta::sta()->networkReader());
     assert(read_ver); // << "failed to read verilog";
     bool linked = sta::Sta::sta()->linkDesign(design.c_str());
@@ -653,11 +657,14 @@ oracle::partition_manager_junior<mockturtle::xmg_network> setup_output(
 /*
  * Mixed synthesis followed by XMG resynthesis and combination.
  */
-template <typename network> xmg_names optimize_timing(
+template <typename network> xmg_names optimize_timing_resynth(
     oracle::partition_manager_junior<network> &partitions,
     const string &liberty_file, const std::string &mapping_file,
     const string &sdc_file, const string &clock,
-    const string &output_file, const string &abc_exec, const string &temp_prefix)
+    const string &output_file, const string &abc_exec, const string &temp_prefix,
+    optimization_strategy_comparator<network> &size_strategy,
+    optimization_strategy_comparator<network> &mixed_strategy,
+    optimization_strategy_comparator<network> &depth_strategy)
 {
     sta::Corner *corner = new sta::Corner("tt", 0);
     sta::MinMaxAll *minmax = sta::MinMaxAll::all();
@@ -670,9 +677,8 @@ template <typename network> xmg_names optimize_timing(
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
-        n_strategy<network> strategy;
         const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, i);
-        optimized[i] = optimize(strategy, optimization_strategy::size, part, i, abc_exec);
+        optimized[i] = optimize(size_strategy, optimization_strategy::size, part, i, abc_exec, temp_prefix);
     }
     assert(num_parts == optimized.size());
 
@@ -697,14 +703,11 @@ template <typename network> xmg_names optimize_timing(
             break;
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
-            ndp_strategy<network> strategy;
             const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, worst_part);
-            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, part, worst_part, abc_exec);
+            optimized[worst_part] = optimize(mixed_strategy, optimization_strategy::balanced, part, worst_part, abc_exec, temp_prefix);
         } else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
-            d_strategy<network> strategy;
             const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, worst_part);
-
-            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, part, worst_part, abc_exec);
+            optimized[worst_part] = optimize(depth_strategy, optimization_strategy::depth, part, worst_part, abc_exec, temp_prefix);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
@@ -721,18 +724,63 @@ template <typename network> xmg_names optimize_timing(
 
 
 /*
+ * Mixed synthesis followed by XMG resynthesis and combination.
+ */
+template <typename network> xmg_names optimize_timing_tech(
+    oracle::partition_manager_junior<network> &partitions,
+    const string &liberty_file, const std::string &mapping_file,
+    const string &sdc_file, const string &clock,
+    const string &output_file, const string &abc_exec, const string &temp_prefix)
+{
+
+    std::cout << "******************************** Doin' the thing ********************************" << std::endl;
+    optimization_strategy_comparator<network> *area = new area_strategy<network>(liberty_file, sdc_file, temp_prefix);
+    optimization_strategy_comparator<network> *mixed = new area_delay_strategy<network>(liberty_file, sdc_file, temp_prefix);
+    optimization_strategy_comparator<network> *delay = new delay_strategy<network>(liberty_file, sdc_file, temp_prefix);
+    return optimize_timing_resynth(partitions, 
+                            liberty_file, mapping_file, sdc_file,
+                            clock, output_file, abc_exec, temp_prefix,
+                            *area, *mixed, *delay);
+    delete area;
+    delete mixed;
+    delete delay;
+}
+
+/*
+ * Mixed synthesis followed by XMG resynthesis and combination.
+ */
+template <typename network> xmg_names optimize_timing(
+    oracle::partition_manager_junior<network> &partitions,
+    const string &liberty_file, const std::string &mapping_file,
+    const string &sdc_file, const string &clock,
+    const string &output_file, const string &abc_exec, const string &temp_prefix)
+{
+
+    optimization_strategy_comparator<network> *node = new node_depth_strategy<network>();
+    optimization_strategy_comparator<network> *ndp = new node_strategy<network>();
+    optimization_strategy_comparator<network> *depth = new depth_strategy<network>();
+    return optimize_timing_resynth(partitions, 
+                            liberty_file, mapping_file, sdc_file,
+                            clock, output_file, abc_exec, temp_prefix,
+                            *node, *ndp, *depth);
+    delete node;
+    delete ndp;
+    delete depth;
+}
+
+/*
 Mixed synthesis followed by XMG resynthesis and combiniation
 */
 template <typename network> xmg_names optimize_resynthesis(
-    oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
+    oracle::partition_manager_junior<network> &partitions, const string &abc_exec, const string &temp_prefix)
 {
     int num_parts = partitions.count();
     std::vector<optimizer<network>*> optimized(num_parts);
     for (int i = 0; i < num_parts; i++) {
-        n_strategy<network> strategy;
+        node_strategy<network> strategy;
         const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, i);
 
-        optimized[i] = optimize(strategy, optimization_strategy::size, part, i, abc_exec);
+        optimized[i] = optimize(strategy, optimization_strategy::size, part, i, abc_exec, temp_prefix);
     }
     assert(num_parts == optimized.size());
 
@@ -754,14 +802,14 @@ template <typename network> xmg_names optimize_resynthesis(
             break;
         }
         if (optimized[worst_part]->target() == optimization_strategy::size) {
-            ndp_strategy<network> strategy;
+            node_depth_strategy<network> strategy;
             const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, worst_part);
 
-            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, part, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::balanced, part, worst_part, abc_exec, temp_prefix);
         } else if (optimized[worst_part]->target() == optimization_strategy::balanced) {
-            d_strategy<network> strategy;
+            depth_strategy<network> strategy;
             const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, worst_part);
-            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, part, worst_part, abc_exec);
+            optimized[worst_part] = optimize(strategy, optimization_strategy::depth, part, worst_part, abc_exec, temp_prefix);
         } else if (optimized[worst_part]->target() == optimization_strategy::depth) {
             std::cout << "previous result was already the best we can do." << std::endl;
             break; // met timing, or it's the best we can do.
@@ -781,27 +829,28 @@ template <typename network>
 xmg_names optimize_basic (
     oracle::partition_manager_junior<network> &partitions,
     const string &abc_exec,
-    optimization_strategy strategy)
+    optimization_strategy strategy,
+    const std::string &temp_prefix)
 {
   int num_parts = partitions.count();
   std::vector<optimizer<network>*> optimized(num_parts);
   optimization_strategy_comparator<network> *target;
   switch (strategy) {
   case optimization_strategy::depth: std::cout << "depth";
-      target = new d_strategy<network>();
+      target = new depth_strategy<network>();
       break;
   case optimization_strategy::balanced: std::cout << "balanced";
-      target = new ndp_strategy<network>();
+      target = new node_depth_strategy<network>();
       break;
   case optimization_strategy::size: std::cout << "size";
-      target = new n_strategy<network>();
+      target = new node_strategy<network>();
       break;
   }
   std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
-            const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, i);
+      const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, i);
 
-    optimized[i] = optimize(*target, strategy, part, i, abc_exec);
+      optimized[i] = optimize(*target, strategy, part, i, abc_exec, temp_prefix);
   }
   delete target;
   assert(num_parts == optimized.size());
@@ -817,16 +866,24 @@ optimize_timing<mockturtle::aig_network>
     const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 
 template xmg_names
+optimize_timing_tech<mockturtle::aig_network>
+(
+    oracle::partition_manager_junior<mockturtle::aig_network> &,
+    const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+
+template xmg_names
 optimize_basic<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &,
-    const optimization_strategy);
+    const optimization_strategy,
+    const std::string &);
 
 template xmg_names
 optimize_resynthesis<mockturtle::aig_network>
 (
     oracle::partition_manager_junior<mockturtle::aig_network> &,
+    const std::string &,
     const std::string &);
 
 }

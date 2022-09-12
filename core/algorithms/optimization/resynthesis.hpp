@@ -42,17 +42,25 @@ mockturtle::names_view<mockturtle::xmg_network> optimize_timing(
     const std::string &liberty_file, const std::string &mapping_file,
     const std::string &sdc_file, const std::string &clock_name,
     const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
+
+template <typename network>
+mockturtle::names_view<mockturtle::xmg_network> optimize_timing_tech(
+    oracle::partition_manager_junior<network> &partitions,
+    const std::string &liberty_file, const std::string &mapping_file,
+    const std::string &sdc_file, const std::string &clock_name,
+    const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
 #endif
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     oracle::partition_manager_junior<network> &partitions,
     const std::string &abc_exec,
-    const optimization_strategy strategy);
+    const optimization_strategy strategy,
+    const std::string &temp_prefix);
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
-    oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec);
+    oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec, const std::string &temp_prefix);
 
 }
 

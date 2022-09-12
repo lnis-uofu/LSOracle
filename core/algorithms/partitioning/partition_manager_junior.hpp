@@ -218,7 +218,7 @@ public:
 
         }
         std::cout << "Substituted nodes." << std::endl;
-        ntk = mockturtle::cleanup_dangling_with_registers(ntk);
+        ntk = mockturtle::cleanup_dangling(ntk);
         std::cout << "Cleaned up dangling." << std::endl;
         substitutions.clear();
     }

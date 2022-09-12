@@ -59,14 +59,15 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
         }
         abc_script = std::string(abc);
     } else {
-        input_blif = fmt::format("{}.{}.tech.blif", temp_prefix, optimal.get_network_name());
-        output_verilog = fmt::format("{}.{}.tech.v", temp_prefix, optimal.get_network_name());
-        abc_script = fmt::format("{}.{}.tech.abc", temp_prefix, optimal.get_network_name());
+        input_blif = fmt::format("{}.tech.blif", temp_prefix);
+        output_verilog = fmt::format("{}.tech.v", temp_prefix);
+        abc_script = fmt::format("{}.tech.abc", temp_prefix);
     }
 
     std::cout << "generated blif " << input_blif << std::endl;
     std::cout << "writing output to " << output_verilog << std::endl;
     std::cout << "generated ABC script " << abc_script << std::endl;
+    std::cout << "writing module " << optimal.get_network_name() << std::endl;
 
     std::ofstream script(abc_script);
     script << "print_fanio; " << tech_script << "; print_fanio;" << std::endl;
