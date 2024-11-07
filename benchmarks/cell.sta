@@ -1,0 +1,5 @@
+read_liberty techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_verilog iscas85/c5288.timing_direct.sky130_fd_sc_hd__tt_025C_1v80.mapped.v
+link top
+read_sdc picorv32/combinational.sdc
+report_checks

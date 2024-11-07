@@ -1303,7 +1303,6 @@ void best_so_far_command(vector<string> global_commands, vector<vector<float> > 
     outfile.close();
 }
 
-
 string bayes_flow_tune(string lsoracle, string design, int repeats, int prefix_pos, int target, int nSamples,
                      int mab_iter, int fForget, int fSoftmax ) {
     string lib = "dontCare";
@@ -1416,4 +1415,95 @@ string bayes_flow_tune(string lsoracle, string design, int repeats, int prefix_p
     outfile.close();
     return bestest;
 }
+
+
+
+template <class network, class node_resynth>
+network bayes_flow_tune_network(string lsoracle_path, network &net,
+                                int repeats, int prefix_pos, int target, int nSamples,
+                                int mab_iter, int fForget, int fSoftmax,
+                                string src_flag, node_resynth &&resyn )
+{
+    std::string ckt_name = "testing_mig.blif";
+    mockturtle::write_blif_params ps;
+    mockturtle::write_blif(net, ckt_name, ps);
+
+    string recipe = bayes_flow_tune(lsoracle_path, ckt_name, repeats,
+                                    prefix_pos, target,
+                                    nSamples, mab_iter, fForget, fSoftmax);
+
+    string command = lsoracle_path + " -c \"read " + src_flag + " " + ckt_name + " " +
+        recipe + " write_blif " + src_flag + " testing.out.blif ; \"";
+    std::cout << command << std::endl;
+    system(command.c_str());
+
+    mockturtle::names_view<mockturtle::klut_network> klut_ntk;
+    auto const result = lorina::read_blif("testing.out.blif",
+                                          mockturtle::blif_reader(klut_ntk));
+    if (result != lorina::return_code::success) {
+        std::cerr << "Unable to read blif file" << std::endl;
+        throw;
+    }
+
+    mockturtle::names_view<network> named_dest;
+    mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::names_view<mockturtle::klut_network>, node_resynth>(named_dest, klut_ntk, resyn);
+    return named_dest;
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::aig_network> bayes_flow_tune_aig(
+    string lsoracle_path, mockturtle::names_view<mockturtle::aig_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 1 : 0;
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-a", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::xmg_network> bayes_flow_tune_xmg(
+    string lsoracle_path, mockturtle::names_view<mockturtle::xmg_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 7: 6;
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-g", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::xag_network> bayes_flow_tune_xag(
+    string lsoracle_path, mockturtle::names_view<mockturtle::xag_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 5: 4;
+    mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-x", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::mig_network> bayes_flow_tune_mig(
+    string lsoracle_path, mockturtle::names_view<mockturtle::mig_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 3 : 2;
+    mockturtle::mig_npn_resynthesis resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-m", resyn);
+}
+
 }

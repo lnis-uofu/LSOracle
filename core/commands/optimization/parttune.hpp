@@ -37,17 +37,17 @@
 extern string lsoracle_path;
 namespace alice
 {
-class migtune_command : public alice::command
+class flowtune_command : public alice::command
 {
 
 public:
-    explicit migtune_command(const environment::ptr &env)
+    explicit parttune_command(const environment::ptr &env)
         : command(env, "Perform automatic optimization script")
     {
-        opts.add_flag("--aig,-a", "Partition stored AIG");
-        opts.add_flag("--mig,-m", "Partition stored MIG (Default)");
-        opts.add_flag("--xag,-x", "Partition stored XAG");
-        opts.add_flag("--xmg,-g", "Partition stored XMG");
+        opts.add_flag("--aig,-a", "Optimize partitioned AIG");
+        opts.add_flag("--mig,-m", "Optimize partitioned MIG");
+        opts.add_flag("--xag,-x", "Optimize partitioned XAG");
+        opts.add_flag("--xmg,-g", "Optimize partitioned XMG");
         opts.add_option("--strategy",strategy, "Strategy for optimization [depth,size]");
     }
 
@@ -59,6 +59,14 @@ protected:
             env->err() << name << " network not stored\n";
             return;
         }
+        if (store<std::shared_ptr<oracle::partition_manager_junior<network>>>().empty()) {
+            env->err() << name << " not partitioned yet\n";
+            return;
+        }
+
+        oracle::partition_manager_junior<network> partitions_jr =
+            *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
+
         mockturtle::names_view<network> opt =
             *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
 
@@ -131,5 +139,5 @@ private:
     std:: string strategy={"depth"};
 };
 
-ALICE_ADD_COMMAND(migtune, "Optimization");
+ALICE_ADD_COMMAND(parttune, "Optimization");
 }

@@ -30,3 +30,5 @@
 formality_workdir
 techmapping/gf12/*.lib
 techmapping/gf12/*.db
+*.*.sdc
+*.*.script

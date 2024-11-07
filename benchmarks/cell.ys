@@ -1,0 +1,8 @@
+read_liberty techmapping/skywater/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_verilog iscas85/c432.timing_internal_direct.sky130_fd_sc_hd__tt_025C_1v80.mapped.v
+flatten
+hierarchy -top top
+opt_clean -purge
+rename -hide
+rename -enumerate
+write_verilog -noattr flattened.v

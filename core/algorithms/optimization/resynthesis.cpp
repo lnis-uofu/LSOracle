@@ -815,6 +815,56 @@ public:
 };
 
 template <typename network>
+class flowtune_aig_optimizer: public aig_optimizer<network>
+{
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
+public:
+    flowtune_aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
+    {
+        return new flowtune_aig_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+    }
+
+    const std::string optimizer_name()
+    {
+        return "flowtune";
+    }
+
+    void optimize()
+    {
+
+        this->optimal = bayes_flow_tune_aig(lsoracle_path,
+                                            this->converted,
+                                            this->target == optimization_strategy::depth,
+                                            repeats,
+                                            prefix_pos,
+                                            n_samples,
+                                            mab_iter,
+                                            f_forget,
+                                            f_softmax);
+    }
+    
+    void reoptimize(){
+        oracle::aig_script opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();  
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
+    }
+private:
+    std::string lsoracle_path;
+    int repeats = 4;
+    int prefix_pos = 1;
+    int n_samples = 5;
+    int mab_iter = 10;
+    int f_forget = 0;
+    int f_softmax = 0;
+};
+
+template <typename network>
 class aigscript_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
@@ -1916,9 +1966,6 @@ xmg_names optimize_basic (
   return setup_output1(partitions, optimized);
 }
 
-
-
-
 /**************** Template instances ****************/
 template xmg_names
 optimize_timing<mockturtle::aig_network>
@@ -1932,7 +1979,6 @@ optimize_basic<mockturtle::aig_network>
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &,
     const optimization_strategy,bool reoptimize_bool);
-
 
 template xmg_names
 optimize_resynthesis<mockturtle::aig_network>
