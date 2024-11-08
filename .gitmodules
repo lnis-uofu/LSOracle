@@ -7,144 +7,190 @@
 [submodule "lib/pybind11"]
 	path = lib/pybind11
 	url = https://github.com/pybind/pybind11.git
+    ignore = dirty
 [submodule "lib/boost/any"]
 	path = lib/boost/any
 	url = https://github.com/boostorg/any.git
+    ignore = dirty
 [submodule "lib/boost/bind"]
 	path = lib/boost/bind
 	url = https://github.com/boostorg/bind.git
+    ignore = dirty
 [submodule "lib/boost/config"]
 	path = lib/boost/config
 	url = https://github.com/boostorg/config.git
+    ignore = dirty
 [submodule "lib/boost/core"]
 	path = lib/boost/core
 	url = https://github.com/boostorg/core.git
+    ignore = dirty
 [submodule "lib/boost/detail"]
 	path = lib/boost/detail
 	url = https://github.com/boostorg/detail.git
+    ignore = dirty
 [submodule "lib/boost/function"]
 	path = lib/boost/function
 	url = https://github.com/boostorg/function.git
+    ignore = dirty
 [submodule "lib/boost/iterator"]
 	path = lib/boost/iterator
 	url = https://github.com/boostorg/iterator.git
+    ignore = dirty
 [submodule "lib/boost/lexical_cast"]
 	path = lib/boost/lexical_cast
 	url = https://github.com/boostorg/lexical_cast.git
+    ignore = dirty
 [submodule "lib/boost/program_options"]
 	path = lib/boost/program_options
 	url = https://github.com/boostorg/program_options.git
+    ignore = dirty
 [submodule "lib/boost/smart_ptr"]
 	path = lib/boost/smart_ptr
 	url = https://github.com/boostorg/smart_ptr.git
+    ignore = dirty
 [submodule "lib/boost/static_assert"]
 	path = lib/boost/static_assert
 	url = https://github.com/boostorg/static_assert.git
+    ignore = dirty
 [submodule "lib/boost/throw_exception"]
 	path = lib/boost/throw_exception
 	url = https://github.com/boostorg/throw_exception.git
+    ignore = dirty
 [submodule "lib/boost/tokenizer"]
 	path = lib/boost/tokenizer
 	url = https://github.com/boostorg/tokenizer.git
+    ignore = dirty
 [submodule "lib/boost/type_traits"]
 	path = lib/boost/type_traits
 	url = https://github.com/boostorg/type_traits.git
+    ignore = dirty
 [submodule "lib/kahypar"]
 	path = lib/kahypar
 	url = https://github.com/lnis-uofu/kahypar.git
 [submodule "lib/boost/assert"]
 	path = lib/boost/assert
 	url = https://github.com/boostorg/assert.git
+    ignore = dirty
 [submodule "lib/boost/type_index"]
 	path = lib/boost/type_index
 	url = https://github.com/boostorg/type_index.git
+    ignore = dirty
 [submodule "lib/boost/preprocessor"]
 	path = lib/boost/preprocessor
 	url = https://github.com/boostorg/preprocessor.git
+    ignore = dirty
 [submodule "lib/boost/integer"]
 	path = lib/boost/integer
 	url = https://github.com/boostorg/integer.git
+    ignore = dirty
 [submodule "lib/boost/range"]
 	path = lib/boost/range
 	url = https://github.com/boostorg/range.git
+    ignore = dirty
 [submodule "lib/boost/mpl"]
 	path = lib/boost/mpl
 	url = https://github.com/boostorg/mpl.git
+    ignore = dirty
 [submodule "lib/boost/array"]
 	path = lib/boost/array
 	url = https://github.com/boostorg/array.git
+    ignore = dirty
 [submodule "lib/boost/move"]
 	path = lib/boost/move
 	url = https://github.com/boostorg/move.git
+    ignore = dirty
 [submodule "lib/boost/utility"]
 	path = lib/boost/utility
 	url = https://github.com/boostorg/utility.git
+    ignore = dirty
 [submodule "lib/boost/io"]
 	path = lib/boost/io
 	url = https://github.com/boostorg/io.git
+    ignore = dirty
 [submodule "lib/boost/numeric_conversion"]
 	path = lib/boost/numeric_conversion
 	url = https://github.com/boostorg/numeric_conversion.git
+    ignore = dirty
 [submodule "lib/boost/container"]
 	path = lib/boost/container
 	url = https://github.com/boostorg/container.git
+    ignore = dirty
 [submodule "lib/boost/concept_check"]
 	path = lib/boost/concept_check
 	url = https://github.com/boostorg/concept_check.git
+    ignore = dirty
 [submodule "lib/boost/container_hash"]
 	path = lib/boost/container_hash
 	url = https://github.com/boostorg/container_hash.git
+    ignore = dirty
 [submodule "lib/boost/regex"]
 	path = lib/boost/regex
 	url = https://github.com/boostorg/regex.git
+    ignore = dirty
 [submodule "lib/boost/optional"]
 	path = lib/boost/optional
 	url = https://github.com/boostorg/optional.git
+    ignore = dirty
 [submodule "lib/boost/tuple"]
 	path = lib/boost/tuple
 	url = https://github.com/boostorg/tuple.git
+    ignore = dirty
 [submodule "lib/boost/intrusive"]
 	path = lib/boost/intrusive
 	url = https://github.com/boostorg/intrusive.git
+    ignore = dirty
 [submodule "lib/boost/predef"]
 	path = lib/boost/predef
 	url = https://github.com/boostorg/predef.git
+    ignore = dirty
 [submodule "lib/boost/winapi"]
 	path = lib/boost/winapi
 	url = https://github.com/boostorg/winapi.git
+    ignore = dirty
 [submodule "lib/boost/conversion"]
 	path = lib/boost/conversion
 	url = https://github.com/boostorg/conversion.git
+    ignore = dirty
 [submodule "lib/boost/typeof"]
 	path = lib/boost/typeof
 	url = https://github.com/boostorg/typeof.git
+    ignore = dirty
 [submodule "lib/boost/fusion"]
 	path = lib/boost/fusion
 	url = https://github.com/boostorg/fusion.git
+    ignore = dirty
 [submodule "lib/boost/function_types"]
 	path = lib/boost/function_types
 	url = https://github.com/boostorg/function_types.git
+    ignore = dirty
 [submodule "lib/boost/dynamic_bitset"]
 	path = lib/boost/dynamic_bitset
 	url = https://github.com/boostorg/dynamic_bitset.git
+    ignore = dirty
 [submodule "lib/boost/algorithm"]
 	path = lib/boost/algorithm
 	url = https://github.com/boostorg/algorithm.git
+    ignore = dirty
 [submodule "lib/boost/unordered"]
 	path = lib/boost/unordered
 	url = https://github.com/boostorg/unordered.git
+    ignore = dirty
 [submodule "lib/boost/exception"]
 	path = lib/boost/exception
 	url = https://github.com/boostorg/exception.git
+    ignore = dirty
 [submodule "lib/googletest"]
 	path = lib/googletest
 	url = https://github.com/google/googletest.git
+    ignore = dirty
 [submodule "lib/OpenSTA"]
 	path = lib/OpenSTA
 	url = https://github.com/The-OpenROAD-Project/OpenSTA.git
+    ignore = dirty
 [submodule "lib/json"]
 	path = lib/json
 	url = https://github.com/nlohmann/json.git
+    ignore = dirty
 [submodule "benchmarks/techmapping/tigfet/sclib"]
 	path = benchmarks/techmapping/tigfet/sclib
 	url = https://github.com/lnis-uofu/TIGFET-10nm-SCLIB.git

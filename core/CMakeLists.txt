@@ -25,7 +25,11 @@ add_custom_command(
 set(LSORACLE_SOURCE
   ${CMAKE_CURRENT_BINARY_DIR}/kahypar_config.cpp
   kahypar_temp_config.cpp
+  algorithms/optimization/optimizer.cpp
+  algorithms/optimization/optimizers.cpp
   algorithms/optimization/resynthesis.cpp
+  algorithms/optimization/abc.cpp
+  algorithms/optimization/exploder.cpp
   utility.cpp
 )
 
@@ -45,6 +49,7 @@ endif()
 set(LSORACLE_TESTS
   algorithms/partitioning/__tests__/sap_test.cpp
   algorithms/partitioning/__tests__/partition_manager_junior_test.cpp
+  algorithms/optimization/__tests__/exploder_test.cpp
 )
 add_executable(unit_tests ${LSORACLE_SOURCE} ${LSORACLE_TESTS})
 target_link_libraries(unit_tests gtest_main alice mockturtle kahypar)
