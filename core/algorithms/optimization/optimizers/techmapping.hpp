@@ -28,7 +28,6 @@
 #include <string>
 #include <mockturtle/mockturtle.hpp>
 
-
 namespace oracle {
 using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
 using aig_names = mockturtle::names_view<mockturtle::aig_network>;
@@ -36,8 +35,9 @@ using mig_names = mockturtle::names_view<mockturtle::mig_network>;
 using xag_names = mockturtle::names_view<mockturtle::xag_network>;
 
 template<typename T>
-std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal, const std::string &temp_prefix)
+std::string basic_techmap(const std::string &tech_script, const std::string &abc_exec, const T &optimal)
 {
+    std::string temp_prefix = "";
     std::cout << "starting basic techmapping" << std::endl;
     std::string input_blif, output_verilog, abc_script;
     if (temp_prefix.empty()) {
@@ -84,9 +84,9 @@ std::string basic_techmap(const std::string &tech_script, const std::string &abc
     // TODO close everything
     return output_verilog;
 };
-template std::string basic_techmap<aig_names>(const std::string &, const std::string &, const aig_names &, const std::string &);
-template std::string basic_techmap<xag_names>(const std::string &, const std::string &, const xag_names &, const std::string &);
-template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &, const std::string &);
-template std::string basic_techmap<xmg_names>(const std::string &, const std::string &, const xmg_names &, const std::string &);
+template std::string basic_techmap<aig_names>(const std::string &, const std::string &, const aig_names &);
+template std::string basic_techmap<xag_names>(const std::string &, const std::string &, const xag_names &);
+template std::string basic_techmap<mig_names>(const std::string &, const std::string &, const mig_names &);
+template std::string basic_techmap<xmg_names>(const std::string &, const std::string &, const xmg_names &);
 
 };

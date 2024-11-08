@@ -1,0 +1,138 @@
+Orphaned
+
+srt_multithreating 2019-07-03 10:52:34 -0600
+Really old, unlikely to be useful.
+
+seq_lut_map, seq_partitions
+2019-12-17 14:49:04 -0700
+
+srt_tech_mapper
+2020-02-12 10:29:20 -0700
+abandoned
+
+dev 2020-03-11 17:50:09 -0600
+demo - intermediate of dev
+
+gh-pages 2020-10-29 09:56:08 -0600
+intermediates:
+yosys-plugin
+yosys_lso
+abc-integration
+srt_abc
+
+srtBipartUpdate 2021-01-14 00:06:39 -0700
+
+opensta 2021-01-26 10:33:41 -0700
+
+lnis-snel_lsoracle/openroad-plugin
+looks like rebased.
+
+lnis-snel_lsoracle/opensta_network
+abandoned AIG direct sta integration
+
+lnissrv_research-lsoracle/by-partition-optimization 2021-05-17 15:45:10 -0600
+abandoned changes in alice parsing
+
+lnissrv_research-lsoracle/cicd-benchmarks 2021-05-26 15:01:50 -0600
+cicd thrashing
+
+lnis-snel_lsoracle/dan/techmapper 2021-06-07 14:59:10 +0100
+wip
+
+origin/timing-resynthesis
+probably rebased
+
+lnis-snel_openroad/master, lnis-snel_openroad/kahypar-config
+trash
+
+lnis-snel_lsoracle/interactive-errors
+wip
+
+lnis-snel_lsoracle/scrub-warnings
+trash
+
+lnis-snel_lsoracle/partition_weighted
+two merge commits, probbly rebased
+
+lnis-snel_lsoracle/partition-command-generics
+trash
+
+lnis-snel_lsoracle/galois-submodule, lnis-snel_lsoracle/kahypar_submodule
+wip, trash
+
+lnis-snel_lsoracle/legacy_cicd_update
+trash
+
+lnis-snel_lsoracle/sap-port
+lnis-snel_lsoracle/RedundantOptimizationReduction
+lnissrv_research-lsoracle/mockturtle_update
+lnis-snel_lsoracle/mockturtle_update
+lnis-snel_test/RedundantOptimizationReduction
+ lnis-snel_lsoracle/whitespace-cleanup
+lnissrv_lsoracle-old/master
+lnis-snel_lsoracle/test
+trash
+
+origin/RedundantOptimizationReduction
+check, is an orphaned merge commit, has a bunch of stuff from nichols
+
+lnis-snel_lsoracle-xmg/xmg_techmap, lnis-snel_lsoracle-xmg/timing_metrics
+trash intermediTe
+
+lnis-snel_lsoracle/buffer_experiment
+probably trash
+
+old/xmg_techmap, lnissrv_lsoracle-old/xmg_techmap, lnis-snel_lsoracle/xmg_techmap
+trash
+
+old/xmg_techmap, lnissrv_lsoracle-old/xmg_techmap, lnis-snel_lsoracle/xmg_techmap
+trash
+
+origin/srt/for_thierry
+maybe something useful
+
+lnis-snel_lsoracle/master
+trash
+
+origin/new_recipes
+stuff from walther to check
+
+origin/techmapper-general-delay-area
+check dan's stuff
+
+
+origin/optimizer_reorg, optimizer_reorg
+just a refactor, i think i did it again in another branching
+
+origin/abc_flag_fix, abc_flag_fix
+orphaned, check
+
+trash
+lnis-snel_lsoracle/pragma_once
+lnis-snel_lsoracle/timing_final
+
+timing_final
+origin/timing_final
+
+
+origin/timing_metrics
+lnis-snel_lsoracle/timing_metrics
+lnis-snel_lsoracle/tigfet_benchmarks
+origin/tigfet_benchmarks
+old/tigfet_benchmarks, lnissrv_lsoracle-old/tigfet_benchmarks, lnis-snel_lsoracle/partition_resynth
+trash intermediates
+
+
+* origin/partition_resynth 2022-03-21 14:14:49 -0600
+old/partition_resynth, lnissrv_lsoracle-old/partition_resynth
+last is the uncommitted WIP contents
+
+origin/updt_migtune
+* updt_migtune 2022-08-30 13:04:53 -0600
+last is the uncommitted WIP contents
+
+* origin/master 2022-07-07 12:45:44 -0600
+
+* timing 2022-09-12 15:43:43 -0600
+* exploder 2022-08-15 11:46:01 -0600
+stuff i was working on

@@ -1,17 +1,19 @@
-#include "algorithms/optimization/optimizer.hpp"
-#include "algorithms/optimization/optimizers/strategy.hpp"
+#include "algorithms/optimization/optimizers.hpp"
+// #include "algorithms/optimization/optimizers/strategy.hpp"
+#include "algorithms/optimization/optimizers/noop.hpp"
 #include "algorithms/optimization/optimizers/aig.hpp"
 #include "algorithms/optimization/optimizers/mig.hpp"
 #include "algorithms/optimization/optimizers/xag.hpp"
 #include "algorithms/optimization/optimizers/xmg.hpp"
 #include "algorithms/optimization/optimizers/abc.hpp"
 
+namespace oracle {
 template <typename network>
 optimizer<network> *optimize(optimization_strategy_comparator<network> &comparator,
                              optimization_strategy strategy,
                              mockturtle::window_view<mockturtle::names_view<network>> &part,
                              int index,
-                             const std::string &abc_exec);
+                             const std::string &abc_exec)
 {
     std::cout << "******************************** optimizing partition " << index << " ********************************" << std::endl;
     std::cout << "Optimizing based on strategy " << comparator.name() << std::endl;
@@ -60,3 +62,4 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     return best;
 
 }
+};

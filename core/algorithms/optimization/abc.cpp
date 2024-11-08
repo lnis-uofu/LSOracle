@@ -115,12 +115,11 @@ mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_ma
 }
 
     void optimize_abc(oracle::partition_manager_junior<mockturtle::aig_network> &partitions,
-                      const std::string &abc_exec,
-                              const std::string &prefix)
+                      const std::string &abc_exec)
 {
     for (int i = 0; i < partitions.count(); i++) {
         auto orig = fix_names2(partitions, i);
-        abc_optimizer<mockturtle::aig_network> optimizer(i, orig, optimization_strategy::depth, abc_exec, prefix);
+        abc_optimizer<mockturtle::aig_network> optimizer(i, orig, optimization_strategy::depth, abc_exec);
         optimizer.convert();
         optimizer.optimize();
         mockturtle::names_view<mockturtle::aig_network> optimal = optimizer.optimized();

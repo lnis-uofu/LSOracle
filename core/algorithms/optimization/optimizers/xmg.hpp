@@ -27,6 +27,8 @@
 #pragma once
 #include <string>
 #include <mockturtle/mockturtle.hpp>
+// #include "config.h"
+extern std::string temp_prefix;
 #include "algorithms/optimization/optimizers/techmapping.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 
@@ -40,7 +42,12 @@ public:
     {
     }
 
-        optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
+    std::string get_network_name()
+    {
+        return "partition_" + std::to_string(index);
+    }
+
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
     {
         return new xmg_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
     }
@@ -72,14 +79,13 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
+    std::string techmap(const std::string &liberty_file)
     {
         if (techmapped.empty()) {
-            string script =
+            std::string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-            techmapped = basic_techmap<xmg_names> (
-                script, abc_exec, optimal, temp_prefix);
+            techmapped = basic_techmap<xmg_names> (script, abc_exec, optimal);
         }
         return techmapped;
     }
@@ -91,13 +97,13 @@ public:
 
     void optimize()
     {
-        oracle::xmg_script opt;
+        xmg_script opt;
         this->optimal = opt.run(this->converted);
 
     }
 
     void reoptimize(){
-        oracle::xmg_script opt;
+        xmg_script opt;
         int a = this->optimal.num_gates();
         if (this->optimal.num_gates() == 0){
             optimize();
@@ -118,7 +124,7 @@ protected:
     xmg_names optimal;
     xmg_names converted;
     node_depth metric;
-    string techmapped;
+    std::string techmapped;
     optimization_strategy strategy;
     const std::string &abc_exec;
 };

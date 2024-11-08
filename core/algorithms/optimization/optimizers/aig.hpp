@@ -27,6 +27,7 @@
 #pragma once
 #include <string>
 #include <mockturtle/mockturtle.hpp>
+// #include "config.h"
 #include "algorithms/optimization/aig_script.hpp"
 #include "algorithms/optimization/aig_script2.hpp"
 #include "algorithms/optimization/aig_script3.hpp"
@@ -82,16 +83,14 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
+    std::string techmap(const std::string &liberty_file)
     {
         if (techmapped.empty()) {
 
             std::string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-            techmapped = basic_techmap<aig_names> (
-                script, abc_exec, optimal,
-                fmt::format("{}.{}.partition_{}", temp_prefix, this->optimizer_name(), index));
+            techmapped = basic_techmap<aig_names> (script, abc_exec, optimal);
         }
         return techmapped;
     }
@@ -112,74 +111,13 @@ protected:
 };
 template class aig_optimizer<mockturtle::aig_network>;
 
-template <typename network>
-class aig_optimizer: public optimizer<network>
-{
-    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
-public:
-    aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): index(index), original(original), strategy(target), abc_exec(abc_exec)
-    {
-    }
 
-    xmg_names export_superset()
-    {
-        mockturtle::direct_resynthesis<xmg_names> resyn;
-        return mockturtle::node_resynthesis<xmg_names, aig_names>(optimal, resyn);
-    }
 
-    void convert()
-    {
-        mockturtle::xag_npn_resynthesis<aig_names> resyn;
-        converted = mockturtle::node_resynthesis<aig_names, partition> (original, resyn);
-        converted.set_network_name("partition_" + std::to_string(index));
-    }
-
-    aig_names optimized()
-    {
-        return optimal;
-    }
-
-    node_depth independent_metric()
-    {
-        mockturtle::depth_view part_aig_opt_depth{optimal};
-        int aig_opt_size = optimal.num_gates();
-        int aig_opt_depth = part_aig_opt_depth.depth();
-        metric = node_depth{aig_opt_size, aig_opt_depth};
-        return metric;
-    }
-
-    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
-    {
-        if (techmapped.empty()) {
-
-            string script =
-                "read_lib " + liberty_file +
-                "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-            techmapped = basic_techmap<aig_names> (
-                script, abc_exec, optimal, temp_prefix);
-        }
-        return techmapped;
-    }
-
-    optimization_strategy target()
-    {
-        return strategy;
-    }
-protected:
-    int index;
-    partition original;
-    aig_names optimal;
-    aig_names converted;
-    node_depth metric;
-    string techmapped;
-    optimization_strategy strategy;
-    const std::string &abc_exec;
-};
-template class aig_optimizer<mockturtle::aig_network>;
 template <typename network>
 class aigscript_optimizer: public aig_optimizer<network>
 {
     using partition = mockturtle::window_view<mockturtle::names_view<network>>;
+    using xmg_partition = mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>>;
 public:
     aigscript_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
 
@@ -340,5 +278,7 @@ public:
             this->optimal = opt.run(this->optimal);
         }
     }
+    std::string temp_prefix = "";
+
 };
 };

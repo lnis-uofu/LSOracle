@@ -33,5 +33,5 @@
 namespace oracle
 {
 void optimize_abc(
-    oracle::partition_manager_junior<mockturtle::aig_network> &partitions, const std::string &abc_exec, const std::string &prefix);
+    oracle::partition_manager_junior<mockturtle::aig_network> &partitions, const std::string &abc_exec);
 }

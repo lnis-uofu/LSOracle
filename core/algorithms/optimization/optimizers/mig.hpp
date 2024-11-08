@@ -27,6 +27,8 @@
 #pragma once
 #include <string>
 #include <mockturtle/mockturtle.hpp>
+// #include "config.h"
+
 #include "algorithms/optimization/optimizers/techmapping.hpp"
 #include "algorithms/optimization/mig_script.hpp"
 #include "algorithms/optimization/mig_script2.hpp"
@@ -82,14 +84,13 @@ public:
         return metric;
     }
 
-    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
+    std::string techmap(const std::string &liberty_file)
     {
         if (techmapped.empty()) {
             std::string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c";
-            techmapped = basic_techmap<mig_names> (script, abc_exec, optimal,
-                                                   fmt::format("{}.{}.partition_{}", temp_prefix, this->optimizer_name(), index));
+            techmapped = basic_techmap<mig_names> (script, abc_exec, optimal);
         }
         return techmapped;
     }
@@ -211,5 +212,7 @@ public:
         }
 
     }
+    std::string temp_prefix = "";
+
 };
 };

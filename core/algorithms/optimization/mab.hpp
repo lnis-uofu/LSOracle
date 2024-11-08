@@ -376,7 +376,7 @@ string abc_stats_commmands(int h, int i, int which_opt)
     else 
         return ";strash;print_stats;\" | grep \"and =\" > " + to_string(h)+"_"+to_string(i)+".result\n"; //default as AIG minimization
 */
-
+    throw;
 }
 
 // generate initial random constrained commands (stored in vector of strings)
@@ -691,10 +691,10 @@ float get_results_universe(string resultFile, int which_opt)
     else
         res = -1;
     if (res == -1)
-	assert(0);
+        assert(0);
     else if (res == 0)
-	return 999999999.0;
-    else
+        return 999999999.0;
+
 	return res;	
 }
 

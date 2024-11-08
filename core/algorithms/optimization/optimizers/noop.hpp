@@ -26,6 +26,8 @@
  */
 #pragma once
 #include "algorithms/optimization/optimizers.hpp"
+#include "algorithms/optimization/optimizers/techmapping.hpp"
+
 namespace oracle {
 
 template <typename network>
@@ -33,6 +35,8 @@ class noop: public optimizer<network>
 {
     using names = mockturtle::names_view<network>;
     using partition = mockturtle::window_view<names>;
+    using xmg_names = mockturtle::names_view<mockturtle::xmg_network>;
+    using xmg_partition = mockturtle::window_view<xmg_names>;
     // using manager = partition_manager_junior<network>;
 
 public:
@@ -43,6 +47,11 @@ public:
     const std::string optimizer_name()
     {
         return "noop";
+    }
+
+    std::string get_network_name()
+    {
+        return "partition_" + std::to_string(index);
     }
 
 
@@ -91,13 +100,13 @@ public:
     void reoptimize(){
     }
 
-    std::string techmap(const std::string &liberty_file, const std::string &temp_prefix)
+    std::string techmap(const std::string &liberty_file)
     {
         if (techmapped.empty()) {
-            string script =
+            std::string script =
                 "read_lib " + liberty_file +
                 "; strash; dch; map -B 0.9; topo; stime -c; buffer -c; upsize -c; dnsize -c;";
-            techmapped = basic_techmap(script, abc_exec, copy, temp_prefix);
+            techmapped = basic_techmap(script, abc_exec, copy);
         }
         return techmapped;
     }

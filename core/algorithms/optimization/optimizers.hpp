@@ -60,7 +60,7 @@ struct area_delay {
     double area;
     double delay;
 };
-    
+
 template<typename network>
 class optimizer
 {
@@ -88,7 +88,7 @@ public:
     /**
      * Techmap, then return a path to a file containing the techmapped verilog.
      */
-    virtual std::string techmap(const std::string &liberty_file, const std::string &temp_prefix) = 0;
+    virtual std::string techmap(const std::string &liberty_file) = 0;
     /**
      * convert the network to the superset.
      */
@@ -98,6 +98,7 @@ public:
      */
     virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
     virtual std::string get_network_name() = 0;
+    virtual void reoptimize() = 0;
 };
 
 template <typename T>
@@ -113,8 +114,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
                              optimization_strategy strategy,
                              const mockturtle::window_view<mockturtle::names_view<network>> &part,
                              int index,
-                             const std::string &abc_exec,
-                             const std::string &temp_prefix);
+                             const std::string &abc_exec);
 
 template <typename T>
 class node_depth_strategy : public optimization_strategy_comparator<T>
@@ -168,7 +168,7 @@ template <typename T>
 class tech_strategy : public optimization_strategy_comparator<T>
 {
 public:
-    tech_strategy(const std::string &liberty_file, const std::string &sdc_file, const std::string &temp_prefix): liberty_file(liberty_file), sdc_file(sdc_file), temp_prefix(temp_prefix) {
+    tech_strategy(const std::string &liberty_file, const std::string &sdc_file): liberty_file(liberty_file), sdc_file(sdc_file) {
     }
 
     bool operator()(optimizer<T> &a, optimizer<T> &b)
@@ -180,8 +180,8 @@ public:
                                                                 minmax,
                                                                 true);
 
-        const std::string at = a.techmap(liberty_file, temp_prefix);
-        const std::string bt = b.techmap(liberty_file, temp_prefix);
+        const std::string at = a.techmap(liberty_file);
+        const std::string bt = b.techmap(liberty_file);
         std::string model = a.get_network_name();
         area_delay x = run_timing(lib, at, "picorv32/combinational.sdc", model);
         area_delay y = run_timing(lib, bt, "picorv32/combinational.sdc", model);
@@ -189,7 +189,7 @@ public:
     }
 private:
     area_delay run_timing(sta::LibertyLibrary *lib,
-                          const std::string &verilog_file, 
+                          const std::string &verilog_file,
                           const std::string &sdc_file,
                           const std::string design) {
         std::cout << "Reading " << design << " from " << verilog_file << std::endl;
@@ -237,19 +237,18 @@ private:
         return {
             area, arrival
         };
-    }    
+    }
 
     virtual bool compare(const area_delay &a, const area_delay &b) = 0;
     std::string liberty_file;
     std::string sdc_file;
-    std::string temp_prefix;
 };
 
 template <typename T>
 class area_delay_strategy : public tech_strategy<T>
 {
 public:
-    area_delay_strategy(const std::string &liberty_file, const std::string &sdc_file, const std::string &temp_prefix): tech_strategy<T>(liberty_file, sdc_file, temp_prefix) {}
+    area_delay_strategy(const std::string &liberty_file, const std::string &sdc_file): tech_strategy<T>(liberty_file, sdc_file) {}
     const std::string name()
     {
         return "area-delay product";
@@ -265,7 +264,7 @@ template <typename T>
 class delay_strategy : public tech_strategy<T>
 {
 public:
-    delay_strategy(const std::string &liberty_file, const std::string &sdc_file, const std::string &temp_prefix): tech_strategy<T>(liberty_file, sdc_file, temp_prefix) {}
+    delay_strategy(const std::string &liberty_file, const std::string &sdc_file): tech_strategy<T>(liberty_file, sdc_file) {}
     const std::string name()
     {
         return "depth";
@@ -282,7 +281,7 @@ template <typename T>
 class area_strategy : public tech_strategy<T>
 {
 public:
-    area_strategy(const std::string &liberty_file, const std::string &sdc_file, const std::string &temp_prefix): tech_strategy<T>(liberty_file, sdc_file, temp_prefix) {}
+    area_strategy(const std::string &liberty_file, const std::string &sdc_file): tech_strategy<T>(liberty_file, sdc_file) {}
     const std::string name()
     {
         return "area";
@@ -294,5 +293,5 @@ private:
     }
 };
 
-    
+
 };

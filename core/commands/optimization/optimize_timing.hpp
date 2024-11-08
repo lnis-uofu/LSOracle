@@ -49,7 +49,6 @@ public:
         opts.add_option("--sdc,-s", sdc_file, "SDC file.");
         opts.add_option("--clock,-c", clock_name, "Clock net.");
         opts.add_option("--abc_exec", abc_exec, "ABC executable, defaults to using path.");
-	opts.add_option("--temp-prefix", temp_prefix, "Filename prefix for temporary files. If not set, temporary files will be created by OS.");
 }
 protected:
     void execute()
@@ -76,12 +75,12 @@ protected:
 
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result =
-            oracle::optimize_timing<network>(
+            oracle::optimize_timing_tech<network>(
                 partitions_jr,
                 liberty_file, mapping_file, sdc_file, clock_name,
-                output_file, abc_exec, temp_prefix);
+                output_file, abc_exec);
         auto stop = std::chrono::high_resolution_clock::now();
-   
+
 
         mockturtle::depth_view new_depth{ntk_result};
         if (ntk_result.size() == ntk.size()
@@ -107,7 +106,6 @@ protected:
     string sdc_file;
     string mapping_file;
     string clock_name;
-    string temp_prefix;
     string abc_exec{"abc"};
 };
 ALICE_ADD_COMMAND(optimize_timing, "Optimization");

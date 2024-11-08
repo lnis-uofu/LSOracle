@@ -41,7 +41,7 @@ public:
 
     const std::string optimizer_name()
     {
-        return "abc resyn2";
+        return "abc_resyn2";
     }
 
     optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
@@ -51,18 +51,28 @@ public:
 
     void optimize()
     {
-        char *blif_name_char = strdup("/tmp/lsoracle_XXXXXX.blif");
-        if (mkstemps(blif_name_char, 5) == -1) {
-            throw std::exception();
+        std::string blif_name;
+        if (temp_prefix.empty()) {
+            char *blif_name_char = strdup("/tmp/lsoracle_XXXXXX.blif");
+            if (mkstemps(blif_name_char, 5) == -1) {
+                throw std::exception();
+            }
+            blif_name = std::string(blif_name_char);
+        } else {
+            blif_name = fmt::format("{}.abc_input.blif", temp_prefix);
         }
-        std::string blif_name = std::string(blif_name_char);
         std::cout << "writing blif to " << blif_name  << std::endl;
 
-        char *blif_output_name_char = strdup("/tmp/lsoracle_XXXXXX_optimized.blif");
-        if (mkstemps(blif_output_name_char, 15) == -1) {
-            throw std::exception();
+        std::string blif_output_name;
+        if (temp_prefix.empty()) {
+            char *blif_output_name_char = strdup("/tmp/lsoracle_XXXXXX_optimized.blif");
+            if (mkstemps(blif_output_name_char, 15) == -1) {
+                throw std::exception();
+            }
+            blif_output_name = std::string(blif_output_name_char);
+        } else {
+            blif_output_name = fmt::format("{}.abc_output.blif", temp_prefix);
         }
-        std::string blif_output_name = std::string(blif_output_name_char);
         std::cout << "writing abc output to " << blif_output_name  << std::endl;
 
         mockturtle::write_blif_params ps;
@@ -83,6 +93,8 @@ public:
     void reoptimize(){
 
     }
+    std::string temp_prefix = "";
+
 };
 
 };
