@@ -16,12 +16,19 @@ Currently, it supports AIG, MIG, XAG, and XMG based optimization.
 LSOracle can be built on Linux and Mac OS.  Compilation requires CMake 3.12 or newer and gcc 9 or newer. Additional dependencies for the master branch are Boost Program_options 1.48.0 or newer and readline; dependencies for feature branches may vary.
 
 ### Linux
+
+LSOracle has some usual dependencies for CAD tools, but otherwise not so usual, so make sure you have everything required installed:
+```{r, engine='bash', count_lines}
+sudo  apt install swig tcl tcl-dev tk tk-dev yosys yosys-dev
+```
+The `yosys` and `yosys-dev` dependencies should be dropped if you have a local installation.
+
 ```{r, engine='bash', count_lines}
 git clone --recursive https://github.com/LNIS-Projects/LSOracle.git
 cd LSOracle
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DYOSYS_PLUGIN=ON -DYOSYS_INCLUDE_DIR=/path/to/yosys
+cmake .. -DCMAKE_BUILD_TYPE=RELEASE -DYOSYS_PLUGIN=ON -DENABLE_OPENSTA=ON -DENABLE_ABC=ON -DYOSYS_INCLUDE_DIR=/path/to/yosys
 make
 ```
 
