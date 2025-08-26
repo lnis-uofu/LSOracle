@@ -132,7 +132,11 @@ ndp_d = (data['nodes'] * data['level']) / (data['ref_nodes'] * data['ref_level']
 adp_d = (data['area'] * data['arrival']) / (data['ref_arrival'] * data['ref_area'])
 
 fig, ((nodes, depth, ndp), (area, delay, adp))  = plt.subplots(2,3)
+all = np.column_stack((nodes_d, depth_d, area_d, delay_d, ndp_d, adp_d, data['ref_nodes']))
+labels = np.column_stack((data['design'], data['optimization']))
 
+np.savetxt("all.csv", all, delimiter=",")
+np.savetxt("labels.csv", labels, delimiter=",", fmt="%s")
 width = 0.9
 for graph, title, ax, db, label in [
         ("nodes", "Nodes", nodes, nodes_d, True),
