@@ -72,7 +72,7 @@ TEST(sap_test, sap_cones_case)
     uint32_t po0 = net->create_po(w2);
     uint32_t po1 = net->create_po(w3);
 
-    std::vector<kahypar_partition_id_t> partition(net->size(), -1);
+    std::vector<mt_kahypar_partition_id_t> partition(net->size(), -1);
     oracle::structure_partition<network> sap(*net);
     sap.sap_fixed(partition, 5, 1);
     ASSERT_EQ(partition[pi0.index], 0);
@@ -108,7 +108,7 @@ TEST(sap_test, sap_inflection_case)
     uint32_t po6 = net->create_po(w6);
     uint32_t po7 = net->create_po(w7);
 
-    std::vector<kahypar_partition_id_t> partition(net->size(), -1);
+    std::vector<mt_kahypar_partition_id_t> partition(net->size(), -1);
     oracle::structure_partition<network> sap(*net);
 
     sap.sap_fixed(partition, 1,
@@ -138,7 +138,7 @@ TEST(sap_test, sap_packing_case)
     uint32_t po3 = net->create_po(w3);
     uint32_t po4 = net->create_po(w4);
 
-    std::vector<kahypar_partition_id_t> partition(net->size(), -1);
+    std::vector<mt_kahypar_partition_id_t> partition(net->size(), -1);
     oracle::structure_partition<network> sap(*net);
     sap.sap_fixed(partition, 12,
                   2); // Minimum size forces cone per bin during bin packing.

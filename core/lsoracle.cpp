@@ -31,8 +31,9 @@
 /*** Core Libraries ***/
 #include <alice/alice.hpp>
 #include <mockturtle/mockturtle.hpp>
-#include <libkahypar.h>
-
+//#include <libkahypar.h>
+//cam add
+#include <mtkahypar.h>
 
 /*** low priority ***/
 //#include <fdeep/fdeep.hpp>
@@ -43,6 +44,11 @@
 #include "utility.hpp"
 #include "algorithms/partitioning/hyperg.hpp"
 #include "algorithms/partitioning/partition_manager.hpp"
+
+//cam add
+//#include "algorithms/partitioning/partition_manager2.hpp"
+//#include "algorithms/partitioning/structure_partition.hpp"
+
 //#include "algorithms/partitioning/cluster.hpp"
 //#include "algorithms/partitioning/seed_partitioner.hpp"
 //#include "algorithms/partitioning/fpga_seed_partitioner.hpp"
@@ -170,7 +176,7 @@
 
 #include "commands/version.hpp"
 
-#include "kahypar_config.hpp"
+//#include "kahypar_config.hpp"
 #include "config.h"
 
 #ifdef ENABLE_OPENSTA

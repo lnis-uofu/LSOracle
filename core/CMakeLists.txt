@@ -34,7 +34,10 @@ target_include_directories(lsoracle PRIVATE .)
 target_include_directories(lsoracle PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(lsoracle alice mockturtle kahypar nlohmann_json::nlohmann_json)
+#cam add
+target_link_libraries(lsoracle alice mockturtle MtKaHyPar::mtkahypar nlohmann_json::nlohmann_json)
+
+#target_link_libraries(lsoracle alice mockturtle kahypar nlohmann_json::nlohmann_json)
 
 if (${ENABLE_GALOIS})
   add_definitions(-DENABLE_GALOIS)
@@ -47,7 +50,8 @@ set(LSORACLE_TESTS
   algorithms/partitioning/__tests__/partition_manager_junior_test.cpp
 )
 add_executable(unit_tests ${LSORACLE_SOURCE} ${LSORACLE_TESTS})
-target_link_libraries(unit_tests gtest_main alice mockturtle kahypar)
+# target_link_libraries(unit_tests gtest_main alice mockturtle kahypar)
+target_link_libraries(unit_tests gtest_main alice mockturtle MtKaHyPar::mtkahypar)
 target_include_directories(unit_tests INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)

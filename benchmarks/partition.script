@@ -1,0 +1,1 @@
+read /mnt/nas/users/cam/LSOracle_mod/LSOracle/lib/FlowTune/FlowTune-AIG-Optimization/lsoracle_lSloAw.blif;strash;read dontCare;rewrite;refactor -z;rewrite -z;refactor;rewrite;refactor;refactor -z;refactor -z;resub -K 8;refactor;dc2;dc2;rewrite -z;resub -K 8;rewrite;dc2;rewrite -z;resub -K 8;strash;ifraig;dch -f;strash;print_stats;

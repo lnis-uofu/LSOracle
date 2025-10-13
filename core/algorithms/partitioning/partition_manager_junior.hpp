@@ -142,8 +142,8 @@ public:
         ntk.foreach_co([&](signal s, int i) {
                            std::cout << s.index << " " << i << " " << s.complement << std::endl;
                        });
-
     }
+    
     template<class optimized_network>
     void integrate(int partition_id, const window_view &part, mockturtle::names_view<optimized_network> &opt)
     {

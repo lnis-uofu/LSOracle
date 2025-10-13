@@ -77,6 +77,10 @@ public:
                                 "External file containing node weights");
                 opts.add_option("--edge_weights,-e", edge_weight_file,
                                 "External file containing edge weights");
+                //cam add
+                // opts.add_option("--node_weights_critical,-w", node_weight_critical_file,
+                //                 "External file containing node weights critical path");
+                ////
                 add_flag("--sap,-s", "Apply Structure Aware Partitioning");
                 opts.add_option("--epsilon", imbalance,
                                 "Hypergraph partitioning epsilon imbalance parameter.");
@@ -106,6 +110,8 @@ public:
 
             int *node_weights = nullptr;
             int *edge_weights = nullptr;
+            std::unordered_map<std::string, int> weight_map;
+
             if (edge_weight_file != "") {
                 env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
                 std::vector<int> data = read_integer_file(edge_weight_file);
@@ -131,9 +137,17 @@ public:
             oracle::kahypar_partitioner<network> partitioner(ntk,
                                                                   num_partitions,
                                                                   config_direc,
+                                                                  target_graph_file, 
                                                                   node_weights,
                                                                   edge_weights,
                                                                   imbalance);
+
+            // oracle::kahypar_partitioner<network> partitioner(ntk,
+            //                                                       num_partitions,
+            //                                                       config_direc,
+            //                                                       node_weights,
+            //                                                       edge_weights,
+            //                                                       imbalance);
 
             store<std::shared_ptr<oracle::partition_manager_junior<network>>>().extend() =
                 std::make_shared<oracle::partition_manager_junior<network>>(partitioner.partition_manager());
@@ -226,6 +240,8 @@ public:
         std::string initial_file = "";
         std::string edge_weight_file = "";
         std::string node_weight_file = "";
+        std::string target_graph_file = "";
+        // std::string node_weight_critical_file = "";
         double imbalance = 0.9;
         std::string out_file{};
         std:: string strategych={""};

@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include "algorithms/optimization/resynthesis.hpp"
 
+
 namespace alice
 {
 class optimize_command : public alice::command

@@ -148,3 +148,9 @@
 [submodule "benchmarks/techmapping/tigfet/sclib"]
 	path = benchmarks/techmapping/tigfet/sclib
 	url = https://github.com/lnis-uofu/TIGFET-10nm-SCLIB.git
+[submodule "FlowTune"]
+	path = FlowTune
+	url = https://github.com/Yu-Maryland/FlowTune
+[submodule "mt-kahypar"]
+	path = mt-kahypar
+	url = https://github.com/kahypar/mt-kahypar

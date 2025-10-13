@@ -26,7 +26,9 @@
  */
 #pragma once
 #include <vector>
-#include <libkahypar.h>
+//#include <libkahypar.h>
+#include <mtkahypar.h>
+
 #include <mockturtle/mockturtle.hpp>
 namespace oracle
 {
@@ -34,7 +36,7 @@ template<typename Ntk>
 class structure_partition
 {
 public:
-    double sap_fixed(std::vector<kahypar_partition_id_t> &assigned,
+    double sap_fixed(std::vector<mt_kahypar_partition_id_t> &assigned,
                      uint32_t max_size, uint32_t max_inflections)
     {
         ntk.clear_values();
@@ -124,7 +126,7 @@ private:
         return parts;
     }
 
-    uint32_t bin_pack(std::vector<kahypar_partition_id_t> &assigned,
+    uint32_t bin_pack(std::vector<mt_kahypar_partition_id_t> &assigned,
                       std::vector<std::vector<typename Ntk::node>> parts, size_t bin_size)
     {
         uint32_t max_bin = 0;

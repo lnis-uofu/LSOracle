@@ -473,6 +473,86 @@ protected:
 };
 template class aig_optimizer<mockturtle::aig_network>;
 
+//cam add
+template<typename network>
+class flowtune_optimizer : public aig_optimizer<network>
+{
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
+
+public:
+    flowtune_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec)
+        : aig_optimizer<network>(index, original, target, abc_exec) {}
+
+    const std::string optimizer_name() override
+    {
+        return "flowtune";
+    }
+
+    optimizer<mockturtle::xmg_network>* reapply(int index, const xmg_partition &part) override
+    {
+        return new flowtune_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+    }
+
+    void optimize()
+    {
+        //std::string flowtune_abc_path = "/mnt/nas/users/cam/LSOracle_mod/LSOracle/lib/FlowTune/FlowTune-AIG-Optimization/abc";
+
+        // Temporary BLIF file
+        char *blif_name_char = strdup("/mnt/nas/users/cam/LSOracle_mod/LSOracle/lib/FlowTune/FlowTune-AIG-Optimization/lsoracle_XXXXXX.blif");
+        if (mkstemps(blif_name_char, 5) == -1) {
+            throw std::runtime_error("Failed to create temp BLIF file");
+        }
+        std::string blif_name = std::string(blif_name_char);
+        std::cout << "FlowTune Writing input BLIF to: " << blif_name << std::endl;
+
+        // Temporary AIGER file
+        char *aiger_output_name_char = strdup("/mnt/nas/users/cam/LSOracle_mod/LSOracle/benchmarks/output_aig.aig");
+        // if (mkstemps(aiger_output_name_char, 4) == -1) {  // 4 = length of ".aig"
+        //     throw std::runtime_error("Failed to create temp AIGER file");
+        // }
+        std::string aiger_output_name = std::string(aiger_output_name_char);
+
+        std::cout << "[FlowTune] Writing optimized AIGER to: " << aiger_output_name << std::endl;
+
+        // Write current partition to BLIF
+        mockturtle::write_blif_params ps;
+        ps.skip_feedthrough = 1u;
+        mockturtle::write_blif(this->converted, blif_name, ps);
+
+        // FlowTune command: run ftune and output AIGER
+        // std::string cmd = flowtune_abc_path + " -c \"read " + blif_name + "; strash; ftune -d " + blif_name +
+        //                   " -r 3 -t 0 -p 1 -i 10 -s 5; write_aiger " + aiger_output_name + "\"";
+        char *design_name_char = strdup("/mnt/nas/users/cam/LSOracle_mod/LSOracle/lib/FlowTune/FlowTune-AIG-Optimization/lsoracle_XXXXXX");
+        std::string design_name = std::string(design_name_char);
+        //std::string cmd = "/mnt/nas/users/cam/LSOracle_mod/LSOracle/flowtune_script.sh " + design_name + " " + blif_name + " 3 10 0 5 0";
+        std::string cmd = "/mnt/nas/users/cam/LSOracle_mod/LSOracle/flowtune_script.sh " + design_name + " " + blif_name;
+
+        std::cout << "FlowTune Running: " << cmd << std::endl;
+        int code = std::system(cmd.c_str());
+        if (code != 0)
+        {
+            throw std::runtime_error("FlowTune failed");
+        }
+
+        // Read optimized AIGER result
+        mockturtle::aig_network aig;
+        auto result = lorina::read_aiger(aiger_output_name, mockturtle::aiger_reader(aig));
+        if (result != lorina::return_code::success)
+        {
+            throw std::runtime_error("Failed to read optimized AIGER file");
+        }
+
+        // Store the optimized result
+        this->optimal = mockturtle::names_view<mockturtle::aig_network>(aig);
+        this->optimal.set_network_name(this->converted.get_network_name());
+    }
+
+    void reoptimize() override
+    {
+        this->optimize();
+    }
+};
+///
 
 template< typename network>
 class abc_optimizer: public aig_optimizer<network>
@@ -980,6 +1060,7 @@ public:
     }
 };
 
+
 template <typename T>
 class optimization_strategy_comparator {
 public:
@@ -1055,6 +1136,9 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
     const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partman, index);
     std::vector<optimizer<network>*>optimizers {
         new noop<network>(index, part, strategy, abc_exec),
+        //cam add
+        new flowtune_optimizer<network>(index, part, strategy, abc_exec),
+        //
         new migscript_optimizer<network>(index, part, strategy, abc_exec),
         new migscript2_optimizer<network>(index, part, strategy, abc_exec),
         new migscript3_optimizer<network>(index, part, strategy, abc_exec),
@@ -1065,6 +1149,9 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
         new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
         new xmg_optimizer<network>(index, part, strategy, abc_exec),
         new xag_optimizer<network>(index, part, strategy, abc_exec),
+        //cam add
+        //new abc_optimizer<network>(index, part, strategy, abc_exec),
+        //
         // new abc_optimizer<network>(index, part, strategy, abc_exec),
    };
     std::vector<optimizer<network>*> optimizersave {};
@@ -1139,6 +1226,7 @@ optimizer<network> *optimize(optimization_strategy_comparator<network> &comparat
             }
         }
     }
+    
     std::cout << "using " << best->optimizer_name() << " for " << index << std::endl;
     node_depth result2 = best->independent_metric();
     std::cout << "BEST nodes2 " << result2.nodes << " BEST depth2 " << result2.depth <<  std::endl;
@@ -1170,7 +1258,10 @@ vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network>
     std::vector<optimizer<network>*>optimizers {
         new noop<network>(index, part, strategy, abc_exec),
         new migscript_optimizer<network>(index, part, strategy, abc_exec),
-       // new migscript2_optimizer<network>(index, part, strategy, abc_exec),
+        //cam add
+        new flowtune_optimizer<network>(index, part, strategy, abc_exec),
+        //
+        // new migscript2_optimizer<network>(index, part, strategy, abc_exec),
         new migscript3_optimizer<network>(index, part, strategy, abc_exec),
         new aigscript_optimizer<network>(index, part, strategy, abc_exec),
         new aigscript2_optimizer<network>(index, part, strategy, abc_exec),
@@ -1179,7 +1270,7 @@ vector<optimizer<network> *> optimize1(optimization_strategy_comparator<network>
         new aigscript5_optimizer<network>(index, part, strategy, abc_exec),
         new xmg_optimizer<network>(index, part, strategy, abc_exec),
         new xag_optimizer<network>(index, part, strategy, abc_exec),
-        // new abc_optimizer<network>(index, part, strategy, abc_exec),
+        //new abc_optimizer<network>(index, part, strategy, abc_exec),
    };
     std::vector<optimizer<network>*> optimizersave {};
     std::vector<optimizer<network>*> optimizersave1 {};
@@ -1888,32 +1979,55 @@ xmg_names optimize_basic (
     const string &abc_exec,
     optimization_strategy strategy,bool reoptimize_bool)
 {
-  int num_parts = partitions.count();
-  std::vector<optimizer<network>*> optimizersave {};
+    int num_parts = partitions.count();
+    std::vector<optimizer<network>*> optimizersave {};
 
-  std::vector <std::vector <optimizer <network>* > > optimized;
-  optimization_strategy_comparator<network> *target;
-  switch (strategy) {
-  case optimization_strategy::depth: std::cout << "depth\n";
-      target = new d_strategy<network>();
-      break;
-  case optimization_strategy::balanced: std::cout << "balanced\n";
-      target = new ndp_strategy<network>();
-      break;
-  case optimization_strategy::size: std::cout << "size\n";
-      target = new n_strategy<network>();
-      break;
-  }
-  
-  for (int i = 0; i < num_parts; i++) {
-    optimizersave = optimize1(*target, strategy, partitions, i, abc_exec,reoptimize_bool);
-    optimized.push_back(optimizersave);
- 
+    std::vector <std::vector <optimizer <network>* > > optimized;
+    optimization_strategy_comparator<network> *target;
+    switch (strategy) {
+    case optimization_strategy::depth: std::cout << "depth\n";
+        target = new d_strategy<network>();
+        break;
+    case optimization_strategy::balanced: std::cout << "balanced\n";
+        target = new ndp_strategy<network>();
+        break;
+    case optimization_strategy::size: std::cout << "size\n";
+        target = new n_strategy<network>();
+        break;
+    }
 
-  }
-  delete target;
+    std::vector<std::string> optimizer_names = {"noop", "migscript", "flowtune", "aigscript", "aigscript2",
+    "aigscript3", "aigscript4", "aigscript5", "xmgscript", "xagscript"}; 
 
-  return setup_output1(partitions, optimized);
+    //cam add
+    std::unordered_map<std::string, int> script_count;
+    for (const auto& name: optimizer_names) {
+        script_count[name] = 0;
+    }
+    //
+
+    for (int i = 0; i < num_parts; i++) {
+        optimizersave = optimize1(*target, strategy, partitions, i, abc_exec,reoptimize_bool);
+        optimized.push_back(optimizersave);
+
+        //cam add
+        for (auto k=optimizersave.begin(); k!=optimizersave.end(); k++) {
+            std::string optimizer_name = (*k)->optimizer_name();
+            script_count[optimizer_name]++;
+        }
+        //
+    }
+
+    std::cout << "Number of scripts used:\n" << std::endl;
+
+    //cam add
+    for (const auto& [name, count] : script_count) {
+        std::cout << name << ": " << count << std::endl;
+    }
+    //
+    delete target;
+
+    return setup_output1(partitions, optimized);
 }
 
 

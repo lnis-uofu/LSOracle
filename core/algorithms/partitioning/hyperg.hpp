@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <mockturtle/traits.hpp>
 #include "utility.hpp"
-
 namespace oracle
 {
 
@@ -63,6 +62,7 @@ public:
 
         //fanout view to iterate over fanouts and generate hyper edges
         mockturtle::fanout_view fanout{ntk};
+
         //Remove all children indeces from nodes so that the only connections remaining are outputs
         ntk.foreach_node([&](auto node) {
             nodes.clear();

@@ -1,0 +1,10 @@
+
+top: picorv32
+
+picorv32_regs
+picorv32_pcpi_mul
+picorv32_pcpi_fast_mul
+picorv32_pcpi_div
+picorv32_axi
+picorv32_axi_adapter
+picorv32_wb

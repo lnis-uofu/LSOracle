@@ -36,6 +36,8 @@
 #include <limits>
 
 #include <mockturtle/mockturtle.hpp>
+#include <mockturtle/views/depth_view.hpp>
+
 
 namespace oracle
 {
@@ -120,13 +122,105 @@ public:
         return crit_path;
     }
 
+    ///cam add
+    //find PO with max arrival time
+    // std::vector<node> find_critical_path(Ntk const &ntk) 
+    // {
+    //     mockturtle::depth_view d_ntk{ntk};
+
+    //     std::vector<node> critical_path;
+    //     node po_node{};
+
+    //     // this->foreach_node([&](auto curr_node) {
+    //     //     auto PO;
+    //     //     if ((is_pi(curr_node) && is_critical_path(curr_node) && (level(curr_node) == d_ntk.depth()))) {
+    //     //         PO = curr_node;
+    //     //     }
+    //     // })
+
+    //     this->foreach_po([&](auto curr_node) {
+    //         if (is_critical_path(curr_node) && (d_ntk.level(curr_node) == d_ntk.depth())) {
+    //             po_node = this->get_node(curr_node);
+    //         }
+    //     });
+
+
+    //     node curr_node = po_node;
+    //     int curr_depth = d_ntk.depth();
+    //     while(!this->is_pi(ntk, curr_node)) {
+    //         critical_path.push_back(curr_node);
+    //         curr_depth--;
+    //         bool found = false;
+
+    //         this->foreach_fanin(curr_node, [&](auto const& s) {
+    //             auto fanin = this->get_node(s);
+    //             if (is_critical_path(fanin) && (d_ntk.level(fanin) == curr_depth)){
+    //                 curr_node = fanin;
+    //                 found = true;
+    //             }
+    //         });
+    //         if (!found) break;
+    //     }
+
+    //     critical_path.push_back(curr_node);
+    //     std::reverse(critical_path.begin(), critical_path.end());
+    //     return critical_path;
+    // }
+
+    std::vector<node> find_critical_path(Ntk const& ntk) {
+        mockturtle::depth_view d_ntk{ntk};
+        std::vector<node> critical_path;
+        node po_node{};
+
+        // Iterate over primary outputs (signals)
+        ntk.foreach_po([&](auto const& po_signal) {
+            node curr_node = ntk.get_node(po_signal);
+            if (is_critical_path(curr_node) && d_ntk.level(curr_node) == d_ntk.depth()) {
+                po_node = curr_node;
+            }
+        });
+
+        node curr_node = po_node;
+        int curr_depth = d_ntk.depth();
+
+        while (!ntk.is_pi(curr_node)) {
+            critical_path.push_back(curr_node);
+            curr_depth--;
+
+            bool found = false;
+            ntk.foreach_fanin(curr_node, [&](auto const& s) {
+                node fanin = ntk.get_node(s);
+                if (is_critical_path(fanin) && d_ntk.level(fanin) == curr_depth) {
+                    curr_node = fanin;
+                    found = true;
+                }
+            });
+            if (!found) break;
+        }
+
+        critical_path.push_back(curr_node);
+        std::reverse(critical_path.begin(), critical_path.end());
+        return critical_path;
+    }
+
+    bool is_po(Ntk const& ntk, typename Ntk::node const& node) {
+        bool is_po_node = false;
+        ntk.foreach_po([&](auto const& s) {
+            if (ntk.get_node(s) == node) {
+                is_po_node = true;
+            }
+        });
+        return is_po_node;
+    }
+
+    ///
+
+
+
 private:
-
-
 
     void get_required_arrival(Ntk const &ntk)
     {
-
         std::map<node, int> level;
         ntk.foreach_node([&](auto node) {
             level[node] = 0;

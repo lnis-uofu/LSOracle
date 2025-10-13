@@ -27,16 +27,31 @@ else()
   find_package(Boost 1.69)
 endif()
 
-#set up kahypar including the main copy of google test, not the internal one
-set(BUILD_GTEST OFF)
-set(BUILD_GMOCK OFF)
-add_subdirectory(kahypar EXCLUDE_FROM_ALL)
-target_compile_definitions(kahypar PUBLIC "LIN64")
-target_compile_options(kahypar PRIVATE -w)
-
+# #set up kahypar including the main copy of google test, not the internal one
+# set(BUILD_GTEST OFF)
+# set(BUILD_GMOCK OFF)
+# add_subdirectory(kahypar EXCLUDE_FROM_ALL)
+# target_compile_definitions(kahypar PUBLIC "LIN64")
+# target_compile_options(kahypar PRIVATE -w)
 #Literally everything that isn't KaHyPar goes here
 add_subdirectory(mockturtle)
 add_subdirectory(alice)
+
+#mt-kahypar
+set(BUILD_GTEST OFF)
+set(BUILD_GMOCK OFF)
+
+find_library(HWLOC_LIBRARY hwloc HINTS /home/u1410992/install/lib)
+find_path(HWLOC_INCLUDE_DIR hwloc.h HINTS /home/u1410992/install/include)
+
+include_directories(${HWLOC_INCLUDE_DIR})
+include_directories(/home/u1410992/LSOracle/lib/mockturtle/include)
+
+add_subdirectory(mt-kahypar EXCLUDE_FROM_ALL)
+# add_executable(partition ../core/link.cpp)
+# target_include_directories(partition PRIVATE /home/u1410992/LSOracle/lib/mockturtle/include)
+# target_link_libraries(partition PRIVATE mockturtle)
+# target_link_libraries(partition MtKaHyPar::mtkahypar)
 
 if (${ENABLE_GALOIS})
   add_subdirectory(Galois EXCLUDE_FROM_ALL)

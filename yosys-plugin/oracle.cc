@@ -916,6 +916,10 @@ void abc_module(RTLIL::Design *design, RTLIL::Module *current_module, std::strin
 
 	std::string abc_script = stringf("read_blif %s; strash; write %s", blif_input_file.c_str(), aiger_temp_file.c_str());
 
+	//cam add
+	//std::string abc_script = stringf("read_blif %s; strash; write -ascii -symbol %s", blif_input_file.c_str(), aiger_temp_file.c_str());
+	//
+
 	abc_script = add_echos_to_abc_cmd(abc_script);
 
 	for (size_t i = 0; i+1 < abc_script.size(); i++)

@@ -27,6 +27,10 @@
 
 #pragma once
 
+#include <memory>
+#include <iostream>
+#include <thread>
+
 #include <algorithm>
 #include <cstdint>
 #include <unordered_map>
@@ -40,9 +44,10 @@
 #include "structure_partition.hpp"
 #include "hyperg.hpp"
 #include <mockturtle/mockturtle.hpp>
-#include <libkahypar.h>
-#include "kahypar_config.hpp"
+// #include <libkahypar.h>
+// #include "kahypar_config.hpp"
 //#include <fdeep/fdeep.hpp>
+#include <mtkahypar.h>
 
 namespace oracle
 {
@@ -128,8 +133,8 @@ public:
     }
 
     partition_manager(Ntk &ntk, int part_num, std::string config_direc = "",
-                      kahypar_hypernode_weight_t *hypernode_weights = nullptr,
-                      kahypar_hyperedge_weight_t *hyperedge_weights = nullptr, bool sap = false,
+                      mt_kahypar_hypernode_weight_t *hypernode_weights = nullptr,
+                      mt_kahypar_hyperedge_weight_t *hyperedge_weights = nullptr, bool sap = false,
                       double imbalance = 0.9) : Ntk(ntk)
     {
         static_assert(mockturtle::is_network_type_v<Ntk>, "Ntk is not a network type");
@@ -197,22 +202,22 @@ public:
             kahyp_num_sets = t.get_num_sets();
             t.get_indeces(kahyp_set_indeces);
 
-            /******************
-            Partition with kahypar
-            ******************/
-            //configures kahypar
-            kahypar_context_t* context = kahypar_context_new();
 
-            std::cout << "Using config file " << config_direc << std::endl;
-            kahypar_configure_context_from_file(context, config_direc.c_str());
+            mt_kahypar_error_t error{};
+            
+            // Initialize mt-KaHyPar
+            mt_kahypar_initialize(
+                std::thread::hardware_concurrency(), // Use all available cores
+                true // Activate interleaved NUMA allocation policy
+            );
 
             //set number of hyperedges and vertices. These variables are defined by the hyperG command
-            const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
-            const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
+            const mt_kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
+            const mt_kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
 
             //set all edges to have the same weight
             if (hyperedge_weights == nullptr) {
-                hyperedge_weights = new kahypar_hyperedge_weight_t[kahyp_num_vertices];
+                hyperedge_weights = new mt_kahypar_hyperedge_weight_t[kahyp_num_vertices];
                 for (int i = 0; i < kahyp_num_vertices; i++) {
                     hyperedge_weights[i] = 2;
                 }
@@ -226,32 +231,40 @@ public:
                 hyperedge_indices[j] = kahyp_set_indeces[j];
             }
 
-            std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges =
-                std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
+            std::unique_ptr<mt_kahypar_hyperedge_id_t[]> hyperedges =
+                std::make_unique<mt_kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
 
             for (int i = 0; i < kahyp_num_indeces_hyper; i++) {
                 hyperedges[i] = kahypar_connections[i];
             }
 
-            const kahypar_partition_id_t k = part_num;
+            const mt_kahypar_partition_id_t k = part_num;
 
-            kahypar_hyperedge_weight_t objective = 0;
+            mt_kahypar_hyperedge_weight_t objective = 0;
 
-            std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
-            kahypar_hypergraph_t *hypergraph = kahypar_create_hypergraph(k,
+            //std::vector<mt_kahypar_partition_id_t> partition(num_vertices, -1);
+            mt_kahypar_hypergraph_t hypergraph = mt_kahypar_create_hypergraph(k,
                                                num_vertices,
                                                num_hyperedges,
                                                hyperedge_indices.get(),
                                                hyperedges.get(),
                                                hyperedge_weights,
-                                               hypernode_weights);
+                                               hypernode_weights,
+                                               &error);
+
+            if (!hypergraph.hypergraph) {
+                std::cerr << "Error loading hypergraph: " << error.msg << std::endl;
+                std::exit(1);
+            }
+
             initial_partitions.resize(num_vertices, -1);
+            
             if (sap) {
-                std::vector<kahypar_partition_id_t> init_part(num_vertices, -1);
+                std::vector<mt_kahypar_partition_id_t> init_part(num_vertices, -1);
                 structure_partition<Ntk> sap(ntk);
                 uint32_t avg_part = ntk.size() / part_num;
                 double max_bin = (double) sap.sap_fixed(init_part, avg_part, 3);
-                kahypar_set_fixed_vertices(hypergraph, init_part.data());
+                mt_kahypar_add_fixed_vertices(hypergraph, init_part.data(), k, &error);
                 imbalance = std::max(imbalance, 1.5 * 1 - (double)max_bin / avg_part);
                 std::cout << "Average partition size " << avg_part << std::endl;
                 std::cout << "Max bin size " << max_bin << std::endl;
@@ -261,38 +274,53 @@ public:
                 }
             }
 
+            // Setup partitioning context
+            mt_kahypar_context_t* context = mt_kahypar_context_from_preset(DEFAULT);
+            mt_kahypar_set_partitioning_parameters(context, k, imbalance, KM1);
+            mt_kahypar_set_seed(42);
+            mt_kahypar_set_context_parameter(context, VERBOSE, "1", &error);
+            assert(error.code == SUCCESS);
 
-            kahypar_partition_hypergraph(hypergraph, k, imbalance, &objective, context,
-                                         partition.data());
+            // Partition Hypergraph
+            mt_kahypar_partitioned_hypergraph_t partitioned_hg = mt_kahypar_partition(hypergraph, context, &error);
+            if (!partitioned_hg.partitioned_hg) {
+                std::cerr << "Partitioning failed: " << error.msg << std::endl;
+                std::exit(1);
+            }
+
+            // Extract Partition Results
+            auto partition_results_mt = std::make_unique<mt_kahypar_partition_id_t[]>(mt_kahypar_num_hypernodes(hypergraph));
+            mt_kahypar_get_partition(partitioned_hg, partition_results_mt.get());
 
             partition_results.resize(num_vertices, -1);
+
             for (int i = 0; i < num_vertices; i++) {
-                partition_results[i] = partition[i];
+                partition_results[i] = partition_results_mt[i];
             }
 
             for (auto i = 1; i <= ntk.num_pis(); i++) {
                 if (i <= ntk.num_pis() - ntk.num_latches()) {
-                    _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+                    _part_pis.insert(std::pair<int, node>(partition_results_mt[i], ntk.index_to_node(i)));
                 } else {
-                    _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
-                    _part_ros.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+                    _part_pis.insert(std::pair<int, node>(partition_results_mt[i], ntk.index_to_node(i)));
+                    _part_ros.insert(std::pair<int, node>(partition_results_mt[i], ntk.index_to_node(i)));
                 }
             }
 
             ntk.foreach_node([&](auto curr_node) {
                 if (!ntk.is_constant(curr_node)) {
-                    _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+                    _part_scope[partition_results_mt[ntk.node_to_index(curr_node)]].insert(curr_node);
                 }
 
                 //look to partition inputs (those that are not circuit PIs)
                 if (!ntk.is_pi(curr_node) && !ntk.is_ro(curr_node)) {
                     ntk.foreach_fanin(curr_node, [&](auto const & conn, auto j) {
-                        if (partition[conn.index] != partition[ntk.node_to_index(curr_node)]
+                        if (partition_results_mt[conn.index] != partition_results_mt[ntk.node_to_index(curr_node)]
                                 && !ntk.is_constant(ntk.index_to_node(conn.index))) {
-                            _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
-                            _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)],
+                            _part_scope[partition_results_mt[ntk.node_to_index(curr_node)]].insert(curr_node);
+                            _part_pis.insert(std::pair<int, node>(partition_results_mt[ntk.node_to_index(curr_node)],
                                                                   ntk.index_to_node(conn.index)));
-                            _part_pos.insert(std::pair<int, node>(partition[conn.index],
+                            _part_pos.insert(std::pair<int, node>(partition_results_mt[conn.index],
                                                                   ntk.index_to_node(conn.index)));
 
                         }
@@ -303,11 +331,11 @@ public:
             for (auto i = 0; i < ntk.num_pos(); i++) {
                 if (i < ntk.num_pos() - ntk.num_latches()
                         && !ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))) {
-                    _part_pos.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index],
+                    _part_pos.insert(std::pair<int, node>(partition_results_mt[ntk._storage->outputs[i].index],
                                                           ntk.index_to_node(ntk._storage->outputs[i].index)));
                 } else {
                     if (!ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))) {
-                        _part_ris.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index],
+                        _part_ris.insert(std::pair<int, node>(partition_results_mt[ntk._storage->outputs[i].index],
                                                               ntk.index_to_node(ntk._storage->outputs[i].index)));
                     }
                 }
@@ -321,8 +349,138 @@ public:
                 partitionOutputs[i] = create_part_outputs(i);
                 update_io(i);
             }
-            kahypar_context_free(context);
+
+            // Clean up resources
+            mt_kahypar_free_context(context);
+            mt_kahypar_free_hypergraph(hypergraph);
+            mt_kahypar_free_partitioned_hypergraph(partitioned_hg);
         }
+        //     /******************
+        //     Partition with kahypar
+        //     ******************/
+        //     //configures kahypar
+        //     kahypar_context_t* context = kahypar_context_new();
+
+        //     std::cout << "Using config file " << config_direc << std::endl;
+        //     kahypar_configure_context_from_file(context, config_direc.c_str());
+
+        //     //set number of hyperedges and vertices. These variables are defined by the hyperG command
+        //     const kahypar_hyperedge_id_t num_hyperedges = kahyp_num_hyperedges;
+        //     const kahypar_hypernode_id_t num_vertices = kahyp_num_vertices;
+
+        //     //set all edges to have the same weight
+        //     if (hyperedge_weights == nullptr) {
+        //         hyperedge_weights = new kahypar_hyperedge_weight_t[kahyp_num_vertices];
+        //         for (int i = 0; i < kahyp_num_vertices; i++) {
+        //             hyperedge_weights[i] = 2;
+        //         }
+        //     }
+
+        //     //vector with indeces where each set starts
+        //     std::unique_ptr<size_t[]> hyperedge_indices = std::make_unique<size_t[]>
+        //             (kahyp_num_sets + 1);
+
+        //     for (int j = 0; j < kahyp_num_sets + 1; j++) {
+        //         hyperedge_indices[j] = kahyp_set_indeces[j];
+        //     }
+
+        //     std::unique_ptr<kahypar_hyperedge_id_t[]> hyperedges =
+        //         std::make_unique<kahypar_hyperedge_id_t[]>(kahyp_num_indeces_hyper);
+
+        //     for (int i = 0; i < kahyp_num_indeces_hyper; i++) {
+        //         hyperedges[i] = kahypar_connections[i];
+        //     }
+
+        //     const kahypar_partition_id_t k = part_num;
+
+        //     kahypar_hyperedge_weight_t objective = 0;
+
+        //     std::vector<kahypar_partition_id_t> partition(num_vertices, -1);
+        //     kahypar_hypergraph_t *hypergraph = kahypar_create_hypergraph(k,
+        //                                        num_vertices,
+        //                                        num_hyperedges,
+        //                                        hyperedge_indices.get(),
+        //                                        hyperedges.get(),
+        //                                        hyperedge_weights,
+        //                                        hypernode_weights);
+        //     initial_partitions.resize(num_vertices, -1);
+        //     if (sap) {
+        //         std::vector<kahypar_partition_id_t> init_part(num_vertices, -1);
+        //         structure_partition<Ntk> sap(ntk);
+        //         uint32_t avg_part = ntk.size() / part_num;
+        //         double max_bin = (double) sap.sap_fixed(init_part, avg_part, 3);
+        //         kahypar_set_fixed_vertices(hypergraph, init_part.data());
+        //         imbalance = std::max(imbalance, 1.5 * 1 - (double)max_bin / avg_part);
+        //         std::cout << "Average partition size " << avg_part << std::endl;
+        //         std::cout << "Max bin size " << max_bin << std::endl;
+        //         std::cout << "Requested epsilon " << imbalance << std::endl;
+        //         for (int i = 0; i < num_vertices; i++) {
+        //             initial_partitions[i] = init_part[i];
+        //         }
+        //     }
+
+
+        //     kahypar_partition_hypergraph(hypergraph, k, imbalance, &objective, context,
+        //                                  partition.data());
+
+        //     partition_results.resize(num_vertices, -1);
+        //     for (int i = 0; i < num_vertices; i++) {
+        //         partition_results[i] = partition[i];
+        //     }
+
+        //     for (auto i = 1; i <= ntk.num_pis(); i++) {
+        //         if (i <= ntk.num_pis() - ntk.num_latches()) {
+        //             _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+        //         } else {
+        //             _part_pis.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+        //             _part_ros.insert(std::pair<int, node>(partition[i], ntk.index_to_node(i)));
+        //         }
+        //     }
+
+        //     ntk.foreach_node([&](auto curr_node) {
+        //         if (!ntk.is_constant(curr_node)) {
+        //             _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+        //         }
+
+        //         //look to partition inputs (those that are not circuit PIs)
+        //         if (!ntk.is_pi(curr_node) && !ntk.is_ro(curr_node)) {
+        //             ntk.foreach_fanin(curr_node, [&](auto const & conn, auto j) {
+        //                 if (partition[conn.index] != partition[ntk.node_to_index(curr_node)]
+        //                         && !ntk.is_constant(ntk.index_to_node(conn.index))) {
+        //                     _part_scope[partition[ntk.node_to_index(curr_node)]].insert(curr_node);
+        //                     _part_pis.insert(std::pair<int, node>(partition[ntk.node_to_index(curr_node)],
+        //                                                           ntk.index_to_node(conn.index)));
+        //                     _part_pos.insert(std::pair<int, node>(partition[conn.index],
+        //                                                           ntk.index_to_node(conn.index)));
+
+        //                 }
+        //             });
+        //         }
+        //     });
+
+        //     for (auto i = 0; i < ntk.num_pos(); i++) {
+        //         if (i < ntk.num_pos() - ntk.num_latches()
+        //                 && !ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))) {
+        //             _part_pos.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index],
+        //                                                   ntk.index_to_node(ntk._storage->outputs[i].index)));
+        //         } else {
+        //             if (!ntk.is_constant(ntk.index_to_node(ntk._storage->outputs[i].index))) {
+        //                 _part_ris.insert(std::pair<int, node>(partition[ntk._storage->outputs[i].index],
+        //                                                       ntk.index_to_node(ntk._storage->outputs[i].index)));
+        //             }
+        //         }
+        //     }
+
+        //     for (int i = 0; i < part_num; i++) {
+        //         partitionInputs[i] = create_part_inputs(i);
+        //         partitionReg[i] = create_part_latches(i);
+        //         typename std::set<node>::iterator it;
+        //         partitionRegIn[i] = create_part_latches_in(i);
+        //         partitionOutputs[i] = create_part_outputs(i);
+        //         update_io(i);
+        //     }
+        //     kahypar_context_free(context);
+        // }
 
     }
 
@@ -1166,19 +1324,19 @@ public:
         return output_partition[curr_node];
     }
 
-    std::vector<kahypar_partition_id_t> get_partitions()
+    std::vector<mt_kahypar_partition_id_t> get_partitions()
     {
         return partition_results;
     }
 
-    std::vector<kahypar_partition_id_t> get_initial_partitions()
+    std::vector<mt_kahypar_partition_id_t> get_initial_partitions()
     {
         return initial_partitions;
     }
 
-    std::set<kahypar_partition_id_t> fixed_partitions()
+    std::set<mt_kahypar_partition_id_t> fixed_partitions()
     {
-        std::set<kahypar_partition_id_t> ids;
+        std::set<mt_kahypar_partition_id_t> ids;
         for (auto i = initial_partitions.begin(); i != initial_partitions.end(); i++) {
             if (*i >= 0) {
                 ids.insert(*i);
@@ -1221,7 +1379,7 @@ private:
 
     std::map<int, kitty::dynamic_truth_table> tt_map;
     std::map<int, kitty::dynamic_truth_table> output_tt;
-    std::vector<kahypar_partition_id_t> initial_partitions;
-    std::vector<kahypar_partition_id_t> partition_results;
+    std::vector<mt_kahypar_partition_id_t> initial_partitions;
+    std::vector<mt_kahypar_partition_id_t> partition_results;
 };
 } /* namespace oracle */

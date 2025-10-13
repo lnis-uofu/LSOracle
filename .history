@@ -1,0 +1,9 @@
+read /tmp/yosys-abc-LNpDFZ/abc.aig; ps -a
+kahypar --size 2048 --epsilon 0.05 --target_graph target.graph
+read_blif ../benchmarks/ibex/ibex.unoptimized.blif
+read_blif ../benchmarks/ibex/ibex.unoptimized.blif
+read ../benchmarks/ibex/ibex.unoptimized.blif
+read_verilog ../benchmarks/ibex/ibex.unoptimized.blif
+read_verilog ../benchmarks/ibex/ibex.unoptimized.blif
+
+read_blif ../benchmarks/ibex/ibex.unoptimized.blif

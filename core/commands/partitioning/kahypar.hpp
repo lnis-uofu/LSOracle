@@ -37,6 +37,8 @@
 #include "kahypar_config.hpp"
 #include "algorithms/partitioning/partition_manager_junior.hpp"
 #include "algorithms/partitioning/kahypar_partitioner.hpp"
+
+
 namespace alice
 {
     class kahypar_command : public alice::command
@@ -72,11 +74,17 @@ namespace alice
                                 "External file to write the initial partitions to.");
                 opts.add_option("--node_weights,-n", node_weight_file,
                                 "External file containing node weights");
+                //cam add
+                // opts.add_option("--node_weights_critical,-w", node_weight_critical_file,
+                //                 "External file containing node weights critical path");
+                ////
                 opts.add_option("--edge_weights,-e", edge_weight_file,
                                 "External file containing edge weights");
                 add_flag("--sap,-s", "Apply Structure Aware Partitioning");
                 opts.add_option("--epsilon", imbalance,
                                 "Hypergraph partitioning epsilon imbalance parameter.");
+                opts.add_option("--target-graph", target_graph_file,
+                                "Hypergraph partitioning target graph.");
             }
 
     protected:
@@ -98,12 +106,15 @@ namespace alice
             env->out() << "Using " << num_partitions << " partitions" << std::endl;
 
             int *node_weights = nullptr;
+            std::unordered_map<std::string, int> weight_map;
+
             int *edge_weights = nullptr;
             if (edge_weight_file != "") {
                 env->out() << "Reading edge weights from " << edge_weight_file << std::endl;
                 std::vector<int> data = read_integer_file(edge_weight_file);
                 edge_weights = &data[0];
             }
+
             if (node_weight_file != "") {
                 env->out() << "Reading node weights from " << node_weight_file << std::endl;
                 std::vector<int> data = read_integer_file(node_weight_file);
@@ -116,6 +127,41 @@ namespace alice
                 }
             }
 
+            //cam add
+            // if (node_weight_critical_file != "") {
+            //     env->out() << "Reading node weights from " << node_weight_critical_file << std::endl;
+            //     std::ifstream file(node_weight_critical_file);
+            //     std::string line;
+            //     std::istringstream iss(line);
+            //     while (std::getline(file, line)) {
+            //         std::string name;
+            //         float weight;
+            //         if (!(iss >> name >> weight)) continue;
+
+            //         int scale_weight = (int) (weight*10);
+            //         weight_map[name] = scale_weight;
+            //     }
+            // }
+            //     std::unordered_map<std::string, float> weight_map;
+            //     std::ifstream in(node_weight_file);
+            //     std::string name;
+            //     float weight;
+            //     while (in >> name >> weight) {
+            //         weight_map[name] = weight;
+            //     }
+
+            //     ntk.foreach_node([&](auto n) {
+            //         std::string node_name = ntk.node_to_name(n);
+            //         if (weight_map.count(node_name)) {
+            //             node_weights_vec[n] = static_cast<int>(weight_map[node_name] * 100); // optional scaling
+            //         }
+            //     });
+
+            //     node_weights = node_weights_vec.data();
+            // }
+
+            /////////
+
             if (config_direc == "") {
                 config_direc = make_temp_config();
             }
@@ -124,9 +170,21 @@ namespace alice
             oracle::kahypar_partitioner<network> partitioner(ntk,
                                                                   num_partitions,
                                                                   config_direc,
+                                                                  target_graph_file, 
                                                                   node_weights,
                                                                   edge_weights,
                                                                   imbalance);
+
+            //cam add 
+            // oracle::kahypar_partitioner<network> partitioner(ntk,
+            //                                             num_partitions,
+            //                                             config_direc,
+            //                                             target_graph_file, 
+            //                                             node_weights,
+            //                                             edge_weights,
+            //                                             weight_map,
+            //                                             imbalance);
+            ////
 
             store<std::shared_ptr<oracle::partition_manager_junior<network>>>().extend() =
                 std::make_shared<oracle::partition_manager_junior<network>>(partitioner.partition_manager());
@@ -151,6 +209,8 @@ namespace alice
         std::string initial_file = "";
         std::string edge_weight_file = "";
         std::string node_weight_file = "";
+        std::string target_graph_file = "";
+        //std::string node_weight_critical_file = "";
         double imbalance = 0.9;
     };
 

@@ -34,7 +34,7 @@
 #include <cassert>
 
 #include <mockturtle/mockturtle.hpp>
-#include <libkahypar.h>
+//#include <libkahypar.h>
 
 namespace oracle
 {

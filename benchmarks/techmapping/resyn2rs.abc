@@ -17,4 +17,3 @@ refactor -z
 resub -K 12 -N 2
 rewrite -z
 balance
-print_stats
