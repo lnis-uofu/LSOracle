@@ -2,3 +2,4 @@
 /build2/
 /build3/
 core/algorithms/classification/*.json
+/**/*.gch
