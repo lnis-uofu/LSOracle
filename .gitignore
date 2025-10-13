@@ -2,6 +2,8 @@
 **/.DS_Store
 
 build/
+build2/
+build3/
 
 .vscode/
 
@@ -13,8 +15,6 @@ examples/abc/scala/target
 tests/**/*.v
 
 
-build2/
-build3/
 core/algorithms/classification/*.json
 **/*.gch
 *.spef
