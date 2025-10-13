@@ -11,3 +11,10 @@ examples/abc/scala/project
 examples/abc/scala/target
 
 tests/**/*.v
+
+
+build2/
+build3/
+core/algorithms/classification/*.json
+**/*.gch
+*.spef
