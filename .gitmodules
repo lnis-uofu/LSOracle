@@ -154,3 +154,9 @@
 [submodule "mt-kahypar"]
 	path = mt-kahypar
 	url = https://github.com/kahypar/mt-kahypar
+[submodule "GNN-RE"]
+	ignore = dirty
+[submodule "lib/FlowTune"]
+	ignore = dirty
+[submodule "lib/mt-kahypar"]
+	ignore = dirty
