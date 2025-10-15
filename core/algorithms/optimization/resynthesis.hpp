@@ -29,6 +29,7 @@
 #ifdef ENABLE_ABC
 #include <mockturtle/mockturtle.hpp>
 #include "algorithms/partitioning/partition_manager_junior.hpp"
+#include "algorithms/optimization/optimizers.hpp"
 #include "utility.hpp"
 
 namespace oracle
@@ -40,71 +41,32 @@ mockturtle::names_view<mockturtle::xmg_network> optimize_timing(
     oracle::partition_manager_junior<network> &partitions,
     const std::string &liberty_file, const std::string &mapping_file,
     const std::string &sdc_file, const std::string &clock_name,
-    const std::string &output_file, const std::string &abc_exec, const std::string &temp_prefix);
-#endif
+    const std::string &output_file, const std::string &abc_exec);
 
-enum optimization_strategy { size, balanced, depth };
+template <typename network>
+mockturtle::names_view<mockturtle::xmg_network> optimize_timing_tech(
+    oracle::partition_manager_junior<network> &partitions,
+    const std::string &liberty_file, const std::string &mapping_file,
+    const std::string &sdc_file, const std::string &clock_name,
+    const std::string &output_file, const std::string &abc_exec);
+#endif
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_basic(
     oracle::partition_manager_junior<network> &partitions,
     const std::string &abc_exec,
-    const optimization_strategy strategy,bool reoptimize_bool);
-
+    const optimization_strategy strategy,
+    bool reoptimize_bool);
 
 template <typename network>
 mockturtle::names_view<mockturtle::xmg_network> optimize_resynthesis(
     oracle::partition_manager_junior<network> &partitions, const std::string &abc_exec);
 
-
-struct node_depth {
-    int nodes;
-    int depth;
-};
-
-
-template<typename network>
-class optimizer
-{
-public:
-    /**
-     * human readable name
-     */
-    virtual const std::string optimizer_name() = 0;
-    /**
-     * Do any conversion necessary from original network type to the internal network type.
-     */
-    virtual void convert() = 0;
-    /**
-     * Perform optimization
-     */
-    virtual void optimize() = 0;
-    virtual void reoptimize() = 0;
-     /**
-     * Calculate tech independent depth and nodes metrics.
-     */
-    virtual node_depth independent_metric() = 0;
-    /**
-     * List the type of optimization: area, delay, or balanced.
-     */
-    virtual optimization_strategy target() = 0;
-    /**
-     * Techmap, then return a path to a file containing the techmapped verilog.
-     */
-    virtual std::string techmap(const std::string &liberty_file, const std::string &temp_prefix) = 0;
-    /**
-     * convert the network to the superset.
-     */
-    virtual mockturtle::names_view<mockturtle::xmg_network> export_superset() = 0;
-    /**
-     * Reapply this optimization to a different network.
-     */
-    virtual optimizer<mockturtle::xmg_network> *reapply(int index, const mockturtle::window_view<mockturtle::names_view<mockturtle::xmg_network>> &part) = 0;
-};
 template <typename network>
-void write_child( 
-    int index, partition_manager_junior<network> &partman, std::ofstream &verilog);
-
+void write_child(
+    int index,
+    partition_manager_junior<network> &partman,
+    std::ofstream &verilog);
 }
 
 #endif

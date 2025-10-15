@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /********************************************************************
  * Author: Sam Payne
- * 
+ *
  * Module encapsulates an asynchronus FIFO used for bridging signals
  * across clock domains, parameters allow for different sized modules
  * compatible with wide range of frequencies.
@@ -36,14 +36,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-module async_fifo 
+module async_fifo
 #(
 	parameter DSIZE = 64,
 	parameter ASIZE = 5,
 	parameter MEMSIZE = 16 // should be 2 ^ (ASIZE-1)
 )
 (
-	rdata, 
+	rdata,
 	rempty,
 	rclk,
 	ren,
@@ -101,7 +101,7 @@ assign g_wptr_next[ASIZE-1:0] = {1'b0, b_wptr_next[ASIZE-1:1]} ^ b_wptr_next[ASI
 assign g_rptr_next[ASIZE-1:0] = {1'b0, b_rptr_next[ASIZE-1:1]} ^ b_rptr_next[ASIZE-1:0];
 
 //full and empty signals
-assign wfull =  (g_wptr[ASIZE-1]   != g_rsync2[ASIZE-1]  ) && 
+assign wfull =  (g_wptr[ASIZE-1]   != g_rsync2[ASIZE-1]  ) &&
 		(g_wptr[ASIZE-2]   != g_rsync2[ASIZE-2]  ) &&
 		(g_wptr[ASIZE-3:0] == g_rsync2[ASIZE-3:0]) ||
 		(wreset || rreset);
@@ -141,13 +141,13 @@ always @(posedge wclk) begin
 	g_rsync1 <= g_rptr;
 	g_rsync2 <= g_rsync1;
 
-	
+
 end
 
 endmodule
 // Copyright (c) 2015 Princeton University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //     * Redistributions of source code must retain the above copyright
@@ -158,7 +158,7 @@ endmodule
 //     * Neither the name of Princeton University nor the
 //       names of its contributors may be used to endorse or promote products
 //       derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -173,7 +173,7 @@ endmodule
 // Author:      Alexey Lavrov, Tri Nguyen
 // Description: A simple wrapper to infer Xilinx BRAMs for SRAMs, modified to be synthesizable
 
-module bram_1r1w_wrapper 
+module bram_1r1w_wrapper
 #(parameter NAME="", DEPTH=1, ADDR_WIDTH=1, BITMASK_WIDTH=1, DATA_WIDTH=1)
 (
   input wire MEMCLK,
@@ -258,12 +258,12 @@ always @ * begin
     bram_data_in = bram_data_in | (bram_data_in_r & ~WRITE_BIT_MASK_REG);
   else
     bram_data_in = bram_data_in | (bram_data_write_read_out_reg & ~WRITE_BIT_MASK_REG);
-  
+
 
   // note: DOUT retains value if read enable is not asserted
   // which is why default value is not set for DOUT
   if (read_enable_in_reg) begin
-    DOUTA = bram_data_read_out_reg; 
+    DOUTA = bram_data_read_out_reg;
     if (rw_conflict_r) begin
       DOUTA = bram_data_in_r;
     end
@@ -341,7 +341,7 @@ end
 endmodule
 // Copyright (c) 2015 Princeton University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //     * Redistributions of source code must retain the above copyright
@@ -352,7 +352,7 @@ endmodule
 //     * Neither the name of Princeton University nor the
 //       names of its contributors may be used to endorse or promote products
 //       derived from this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY PRINCETON UNIVERSITY "AS IS" AND
 // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -367,7 +367,7 @@ endmodule
 // Author:      Alexey Lavrov, Tri Nguyen
 // Description: A simple wrapper to infer Xilinx BRAMs for SRAMs
 
-module bram_1rw_wrapper 
+module bram_1rw_wrapper
 #(parameter NAME="", DEPTH=1, ADDR_WIDTH=1, BITMASK_WIDTH=1, DATA_WIDTH=1)
 (
     input                         MEMCLK,
@@ -654,14 +654,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //==================================================================================================
 
 
-module sync_fifo 
+module sync_fifo
 #(
 	parameter DSIZE = 64,
 	parameter ASIZE = 5,
 	parameter MEMSIZE = 16 // should be 2 ^ (ASIZE-1)
 )
 (
-	rdata, 
+	rdata,
 	empty,
 	clk,
 	ren,
@@ -730,7 +730,7 @@ end
 always @ *
 begin
     if (reset)
-    begin   
+    begin
         sync_rd_ptr_next = 0;
     end
     else if (ren && !empty)
@@ -751,7 +751,7 @@ end
 always @ *
 begin
     if (reset)
-    begin   
+    begin
         sync_wr_ptr_next = 0;
     end
     else if (wval && !full)
@@ -782,7 +782,7 @@ begin
         sync_buf_mem_f[sync_wr_ptr_f] <= wdata;
     end
     else
-    begin 
+    begin
         sync_buf_mem_f[sync_wr_ptr_f] <= sync_buf_mem_f[sync_wr_ptr_f];
     end
 end
@@ -819,9 +819,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /********************************************************************
  * Author: Sam Payne
- * 
- * Module encapsulates the off chip receive interface for networks 
- * 1, 2 and 3. packets received are 64 bits wide, received in 2 
+ *
+ * Module encapsulates the off chip receive interface for networks
+ * 1, 2 and 3. packets received are 64 bits wide, received in 2
  * 32-bit payloads.
  *
  *******************************************************************/
@@ -938,7 +938,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-    
+
  // endif PITON_CLKS_PASSTHRU
  // endif PITON_CLKS_CHIPSET
 
@@ -992,7 +992,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `timescale 1ns/1ps
 
 module chip_bridge_in (
-    rst, 
+    rst,
     wr_clk,
     rd_clk,
     async_mux,
@@ -1008,7 +1008,7 @@ module chip_bridge_in (
     data_from_fpga,
     data_channel,
     credit_to_fpga
-); 
+);
 
 input rst;
 input wr_clk;
@@ -1398,7 +1398,7 @@ async_credit_fifo(
     .wval(~(rst) & (| credit_gather) & async_mux),
     .wdata(credit_gather),
     .rdata(async_credit_fifo_out),
-    .wfull(async_credit_fifo_full),   
+    .wfull(async_credit_fifo_full),
     .rempty(async_credit_empty)
 );
  //endif PITON_PROTO
@@ -1430,7 +1430,7 @@ sync_credit_fifo(
     .wval(~(rst) & (| credit_gather) & ~async_mux),
     .wdata(credit_gather),
     .rdata(sync_credit_fifo_out),
-    .full(sync_credit_fifo_full),   
+    .full(sync_credit_fifo_full),
     .empty(sync_credit_empty)
 );
  // endif PITON_PROTO
@@ -1446,7 +1446,7 @@ assign credit_gather[1] = bout_rdy_2 & bout_val_2;
 assign credit_gather[2] = bout_rdy_3 & bout_val_3;
 
 /****************************************************
- channel side sequential logic 
+ channel side sequential logic
  ****************************************************/
 always@(posedge wr_clk) begin
 
@@ -1454,15 +1454,15 @@ always@(posedge wr_clk) begin
  // ifndef PITON_PROTO
    if(rst) begin
  // endif PITON_PROTO
-        credit_to_fpga_r <= 3'b000;       
+        credit_to_fpga_r <= 3'b000;
    end
    else begin
-       if(~credit_empty) begin 
+       if(~credit_empty) begin
            credit_to_fpga_r <= credit_fifo_out;
        end
        else
-           credit_to_fpga_r <= 3'b000;       
-   end 
+           credit_to_fpga_r <= 3'b000;
+   end
 end
 
 endmodule
@@ -1496,7 +1496,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /********************************************************************
  * Author: Sam Payne
- * 
+ *
  * Module encapsulates the off chip interface for networks 1, 2 and 3
  * channel is 32 bits wide, splitting flits into two parts before send
  * relies on arbitration logic in chip_net_chooser.v
@@ -1615,7 +1615,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-    
+
  // endif PITON_CLKS_PASSTHRU
  // endif PITON_CLKS_CHIPSET
 
@@ -1669,7 +1669,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 `timescale 1ns/1ps
 
 module chip_bridge_out (
-    rst, 
+    rst,
     wr_clk,
     rd_clk,
     async_mux,
@@ -1685,7 +1685,7 @@ module chip_bridge_out (
     data_to_fpga,
     data_channel,
     credit_from_fpga
-);  
+);
 
 input rst;
 input wr_clk;
@@ -1773,9 +1773,9 @@ reg   [1:0] serial_buffer_channel_dup /* synthesis dont_touch = true */;
 
 
 
-assign bin_rdy_1 = ~fifo1_full; 
-assign bin_rdy_2 = ~fifo2_full; 
-assign bin_rdy_3 = ~fifo3_full; 
+assign bin_rdy_1 = ~fifo1_full;
+assign bin_rdy_2 = ~fifo2_full;
+assign bin_rdy_3 = ~fifo3_full;
 
 assign data_to_fpga = serial_buffer_data_f;
 assign data_channel = serial_buffer_channel;
@@ -2017,7 +2017,7 @@ always @(posedge rd_clk) begin
     end
     else begin
         if( channel_to_serial_buffer != 0 && serial_buffer_data_counter == 1) begin
-            
+
             serial_buffer_data_f <= data_to_serial_buffer[31:0];
             serial_buffer_data <= data_to_serial_buffer[63:32];
             serial_buffer_channel <= channel_to_serial_buffer;
@@ -2036,7 +2036,7 @@ always @(posedge rd_clk) begin
             serial_buffer_channel_dup <= channel_to_serial_buffer;
         end
     end
-end 
+end
 
 endmodule
 /*
@@ -2068,9 +2068,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /********************************************************************
  * Author: Sam Payne
- * 
+ *
  * Module encapsulates logic used to choose between 3 on chip networks
- * based upon round robin ordering factoring in which networks are 
+ * based upon round robin ordering factoring in which networks are
  * empty and which have been given priority previously
  * *******************************************************************/
 
@@ -2133,7 +2133,7 @@ assign data_out =   rdy_1 ? din_1 :
                     rdy_2 ? din_2 :
                     rdy_3 ? din_3 : 64'd0;
 
-assign data_channel = select; 
+assign data_channel = select;
 
 assign rdy_1 = (select == 2'b01 && select_counter == 1'b0) ? 1'b1 : 1'b0;
 assign rdy_2 = (select == 2'b10 && select_counter == 1'b0) ? 1'b1 : 1'b0;
@@ -2141,7 +2141,7 @@ assign rdy_3 = (select == 2'b11 && select_counter == 1'b0) ? 1'b1 : 1'b0;
 
 assign select = ( (select_counter != 1'b0         ) )   ? select_reg :
                 ( (credit_1 == 9'd255 || ~val_1) &&            //3 networks full
-                  (credit_2 == 9'd255 || ~val_2) && 
+                  (credit_2 == 9'd255 || ~val_2) &&
                   (credit_3 == 9'd255 || ~val_3) )   ? 2'b00  :
                 ( (credit_2 == 9'd255 || ~val_2) &&            //2 networks full
                   (credit_3 == 9'd255 || ~val_3) )   ? 2'b01  :
@@ -2186,7 +2186,7 @@ always @(posedge clk) begin
             select_counter <= 0;
         end
         else begin
-            select_counter <= select_counter + 2'b01; 
+            select_counter <= select_counter + 2'b01;
         end
 
         //update incoming credits
@@ -2199,7 +2199,7 @@ always @(posedge clk) begin
         if(credit_from_fpga[2] & ~(rdy_3 & val_3)) begin
             credit_3 <= credit_3 - 9'd1;
         end
-        
+
         if((credit_1 < 9'd255) &&
            (credit_2 < 9'd255) &&
            (credit_3 < 9'd255) &&
@@ -2216,7 +2216,7 @@ always @(posedge clk) begin
             if(~credit_from_fpga[0]) begin
                 credit_1 <= credit_1 + 9'd1;
             end
-        end 
+        end
         if(rdy_2 & val_2) begin
             sel_23 <= 1;
             sel_12 <= 0;
@@ -2270,13 +2270,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//top level module for chip_send tests 
+//top level module for chip_send tests
 
 //`timescale 1ns/1ps
 module chip_bridge(
     rst_n,
-    chip_clk,
-    intcnct_clk,
+    clk,
     async_mux,
     network_out_1,
     network_out_2,
@@ -2305,10 +2304,13 @@ module chip_bridge(
 //    dbg_interconnect_data,
 //    dbg_interconnect_channel
 );
+   input clk;
 
 input           rst_n;
-input           chip_clk;
-input           intcnct_clk;
+wire           chip_clk;
+wire           intcnct_clk;
+   assign chip_clk = clk;
+      assign intcnct_clk = clk;
 input           async_mux;
 
 input  [63:0]   network_out_1;
@@ -2346,7 +2348,7 @@ output [2:0]    intcnct_credit_back_in;
 //assign dbg_interconnect_channel = intcnct_channel;
 
 chip_bridge_out chip_fpga_out(
-    .rst(~rst_n), 
+    .rst(~rst_n),
     .wr_clk(chip_clk),
     .rd_clk(intcnct_clk),
     .async_mux(async_mux),
@@ -2362,10 +2364,10 @@ chip_bridge_out chip_fpga_out(
     .data_to_fpga(intcnct_data_out),
     .data_channel(intcnct_channel_out),
     .credit_from_fpga(intcnct_credit_back_out)
-    );  
+    );
 
 chip_bridge_in chip_fpga_in(
-    .rst(~rst_n), 
+    .rst(~rst_n),
     .wr_clk(intcnct_clk),
     .rd_clk(chip_clk),
     .async_mux(async_mux),

@@ -58,6 +58,7 @@
 #include "algorithms/optimization/mig_script3.hpp"
 #include "algorithms/optimization/test_script.hpp"
 #include "algorithms/optimization/optimization.hpp"
+#include "algorithms/optimization/optimization_test.hpp"
 #include "algorithms/optimization/xmg_script.hpp"
 #include "algorithms/optimization/xag_script.hpp"
 #include "algorithms/optimization/mab.hpp"
@@ -136,10 +137,13 @@
 #include "commands/optimization/migscript.hpp"
 #include "commands/optimization/testscript.hpp"
 #include "commands/optimization/depthr.hpp"
+#include "commands/optimization/exploderize.hpp"
 #include "commands/optimization/cut_e.hpp"
 #include "commands/optimization/cut_rewriting.hpp"
 #include "commands/optimization/optimize_timing.hpp"
+#include "commands/optimization/optimize_timing2.hpp"
 #include "commands/optimization/optimize.hpp"
+#include "commands/optimization/abc.hpp"
 #include "commands/optimization/interleaving.hpp"
 //#include "commands/optimization/balance.hpp" //seem to be having some shared pointer issues.  Shouldn't be hard, but we never use this alone, so come back to it
 #include "commands/optimization/refactor.hpp"
@@ -177,6 +181,7 @@
 #include <sta/Sta.hh>
 #include <tcl.h>
 #include <sta/StaMain.hh>
+
 namespace sta {
 extern const char *tcl_inits[];
 }
@@ -187,6 +192,7 @@ extern int Sta_Init(Tcl_Interp *interp);
 
 int main(int argc, char ** argv)
 {
+
 #ifdef ENABLE_OPENSTA
 
     sta::Sta *test = new sta::Sta;

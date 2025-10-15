@@ -45,7 +45,7 @@ public:
         opts.add_flag("--ndp", "Node Depth Product target");
         opts.add_flag("--nodes", "Node Count target");
         opts.add_flag("--depth", "Depth target");
-	opts.add_flag("--resynth", "Resynthesis for depth");
+        opts.add_flag("--resynth", "Resynthesis for depth");
     opts.add_option("--convergence",strategyconvergence, "Reoptimization until convergence with the strategy wanted (balanced, nodes, depth)");
     }
 protected:
@@ -56,7 +56,7 @@ protected:
 
     template <typename network>
     void synth(string name)
-    {   
+    {
         auto ntk = *store<std::shared_ptr<mockturtle::names_view<network>>>().current();
         if (store<std::shared_ptr<mockturtle::names_view<network>>>().empty()) {
             env->err() << "No " << name << " stored\n";
@@ -71,14 +71,15 @@ protected:
             *store<std::shared_ptr<oracle::partition_manager_junior<network>>>().current();
 
         mockturtle::depth_view orig_depth(partitions_jr.get_network());
+
         auto start = std::chrono::high_resolution_clock::now();
         mockturtle::names_view<mockturtle::xmg_network> ntk_result;
         mockturtle::names_view<mockturtle::xmg_network> ntk2_result;
 
 	if (is_set("resynth")) {
 	    ntk_result = oracle::optimize_resynthesis<mockturtle::aig_network>(partitions_jr, abc_exec);
-	} 
-       
+	}
+
     if (is_set("convergence")){
         oracle::optimization_strategy strategy;
         if (strategyconvergence=="depth") {
@@ -101,13 +102,12 @@ protected:
 	    } else {
 		strategy = oracle::optimization_strategy::balanced;
 	    }
-    
+
         ntk_result = oracle::optimize_basic<network>(partitions_jr, abc_exec, strategy,false);
     }
         auto stop = std::chrono::high_resolution_clock::now();
+
         mockturtle::depth_view new_depth(ntk_result);
-
-
         if (ntk_result.size() == partitions_jr.get_network().size()
                 && orig_depth.depth() == new_depth.depth()) {
             env->err() << "No change made to network" << std::endl;
