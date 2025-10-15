@@ -26,10 +26,10 @@
 
 CLK_PERIOD := 10
 STA := sta
-LSORACLE := ../build2/core/lsoracle
+LSORACLE := ../build/core/lsoracle
 ABC := yosys-abc
 YOSYS := yosys
-YOSYS_PLUGIN := ../build2/yosys-plugin/oracle.so
+YOSYS_PLUGIN := ../build/yosys-plugin/oracle.so
 TEE := cat - >
 FM := fm_shell
 
@@ -52,8 +52,8 @@ gnnre := RTL_Dataset/add_mul_1_bit.v RTL_Dataset/add_mul_2_bit.v RTL_Dataset/add
 #arithmetic := arithmetic/adder.v 
 
 # ORIGINAL_FILES := picorv32/picorv32.v ${EPFL} ibex/ibex.v # ${OPDB} # ${ISCAS85} ${ISCAS89}
-ORIGINAL_FILES := picorv32/picorv32.v
-# ORIGINAL_FILES := ibex/ibex.v
+# ORIGINAL_FILES := picorv32/picorv32.v
+ORIGINAL_FILES := ibex/ibex.v
 # ORIGINAL_FILES := ${arithmetic}
 # ORIGINAL_FILES := koios/softmax.v
 # ORIGINAL_FILES := koios/conv_layer.v
@@ -73,8 +73,8 @@ TECHMAPPING_SCRIPTS := $(patsubst %.lib,%.synth.tcl,${LIBERTY_FILES})
 
 #RUNS := abc lsoracle_old migscript aigscript mixed_nodes mixed_depth mixed_ndp mixed_resynth timing_direct timing_direct_internal direct_ndp unoptimized
 #RUNS := mixed_nodes mixed_depth mixed_ndp mixed_resynth
-RUNS := mixed_nodes
-#RUNS := abc
+#RUNS := mixed_nodes
+RUNS := abc
 
 ################################################################
 ######################## Targets ###############################
@@ -115,7 +115,7 @@ softmax: $(foreach LIB,${LIBERTY_LIBS},$(foreach RUN,${RUNS},koios/softmax.${RUN
 
 chip_bridge: $(foreach LIB,${LIBERTY_LIBS},$(foreach RUN,${RUNS},opdb/chip_bridge.pickle.${RUN}.${LIB}.report.json))
 
-.PHONY: synth clean_synth optimize clean_optimize techmap clean_techmap timing clean_timing reports clean_reports clean all picorv skywater
+.PHONY: synth clean_synth optimize clean_optimize techmap clean_techmap timing clean_timing reports clean_reports clean all picorv skywater ibex
 
 .PRECIOUS: %.rtl %.v %.log %.json %.blif %.sdc %.parts
 

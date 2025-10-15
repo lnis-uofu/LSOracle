@@ -1,0 +1,8 @@
+strash
+balance
+rewrite -lz
+refactor -lz
+balance
+resub -K 6
+balance
+ps

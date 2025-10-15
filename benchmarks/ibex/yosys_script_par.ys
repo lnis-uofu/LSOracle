@@ -1,0 +1,46 @@
+///ibex
+read_verilog -sv ibex.v 
+synth -auto-top -noabc -flatten
+rename -top top
+async2sync
+dffunmap
+dfflegalize -cell $_DFF_P_ x -cell $_DFF_N_ x 
+
+
+select -module top
+abc -script abc.script
+
+select -clear
+
+
+read_verilog -sv ibex.v 
+synth -auto-top -noabc 
+rename -top top
+async2sync
+dffunmap
+dfflegalize -cell $_DFF_P_ x -cell $_DFF_N_ x 
+aigmap
+
+
+
+
+///picorv32
+read_verilog -sv picorv32.v 
+rename -top top
+synth -auto-top -noabc -flatten
+async2sync
+dffunmap
+aigmap
+
+
+select -module top
+abc -script abc.script
+
+select -clear
+
+
+read_verilog -sv picorv32_attr.v 
+synth -auto-top -noabc 
+async2sync
+dffunmap
+aigmap
