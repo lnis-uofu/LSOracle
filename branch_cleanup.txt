@@ -115,6 +115,11 @@ timing_final
 origin/timing_final
 
 
+* timing 2022-09-12 15:43:43 -0600
+* exploder 2022-08-15 11:46:01 -0600
+stuff i was working on
+
+
 origin/timing_metrics
 lnis-snel_lsoracle/timing_metrics
 lnis-snel_lsoracle/tigfet_benchmarks
@@ -132,7 +137,3 @@ origin/updt_migtune
 last is the uncommitted WIP contents
 
 * origin/master 2022-07-07 12:45:44 -0600
-
-* timing 2022-09-12 15:43:43 -0600
-* exploder 2022-08-15 11:46:01 -0600
-stuff i was working on

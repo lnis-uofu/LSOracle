@@ -727,6 +727,7 @@ std::vector<int> read_integer_file(string filename)
         ifs.close();
         return output;
     } else {
+        std::cout<<"buglaq1";
         throw exception();
     }
 }

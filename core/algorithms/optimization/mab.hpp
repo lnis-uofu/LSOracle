@@ -66,6 +66,41 @@ vector<string> mig_default_options()
     return default_opts;
 }
  
+vector<string> xag_default_options()
+{
+    vector<string> default_opts;
+    //default_opts.push_back("rw -x");
+    default_opts.push_back("rw -x");
+    default_opts.push_back("rw -x -z");
+    //default_opts.push_back("balance");
+    default_opts.push_back("refactor -x -d");
+    default_opts.push_back("refactor -x -z");
+    default_opts.push_back("refactor -x -d -z");
+    default_opts.push_back("resub -x");
+    default_opts.push_back("resub -k 8 -x");
+    default_opts.push_back("resub -k 6 -x");
+    
+    //default_opts.push_back("dc2");
+    return default_opts;
+}
+
+vector<string> xmg_default_options()
+{
+    vector<string> default_opts;
+    //default_opts.push_back("rw -g");
+    default_opts.push_back("rw -g");
+    default_opts.push_back("rw -g -z");
+    //default_opts.push_back("balance");
+    default_opts.push_back("refactor -g -d");
+    default_opts.push_back("refactor -g -z");
+    default_opts.push_back("refactor -g -d -z");
+    default_opts.push_back("resub -g");
+    default_opts.push_back("resub -k 8 -g");
+    default_opts.push_back("resub -k 6 -g");
+    
+    //default_opts.push_back("dc2");
+    return default_opts;
+}
 vector<string> split(string str, string token){
     vector<string>result;
     while(str.size()){
@@ -352,6 +387,14 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return "; ps -m;\" | grep \"nodes:\" | grep -v \"MAJ\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if (which_opt == 3) //MIG minimization
         return "; ps -m;\" | grep \"level:\" | grep -v \"MIG\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 4) //MIG minimization
+        return "; ps -x;\" | awk \"/nodes:/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 5) //MIG minimization
+        return "; ps -x;\" | awk \"/level:/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 6) //MIG minimization
+        return "; ps -g;\" | awk \"/nodes:/\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    else if (which_opt == 7) //MIG minimization
+        return "; ps -g;\" | awk \"/level:/\"  > " + to_string(h)+"_"+to_string(i)+".result\n";
     // else if(which_opt == 2 || which_opt == 3) // STA Technology mapping tuning
     //     return ";strash;ifraig;dch -f;map;topo;upsize;dnsize;topo;stime;\" | grep \"Delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     // else if(which_opt == 4 || which_opt == 5) // FPGA Technology mapping tuning
@@ -373,14 +416,16 @@ string abc_stats_commmands(int h, int i, int which_opt)
         return ";strash;ifraig;strash;write_cnf test.cnf\" | grep \"CNF stats\" > " + to_string(h)+"_"+to_string(i)+".result\n";
     else if(which_opt == 8 || which_opt == 9) // FPGA Technology mapping tuning
         return ";strash;retime;strash;ifraig;dch -f;map;print_stats;\" | grep \"delay =\" > " + to_string(h)+"_"+to_string(i)+".result\n";
+    */
     else 
         return ";strash;print_stats;\" | grep \"and =\" > " + to_string(h)+"_"+to_string(i)+".result\n"; //default as AIG minimization
 */
     throw;
+
 }
 
 // generate initial random constrained commands (stored in vector of strings)
-vector<string> constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, 
+vector<string> constr_random_commands(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos,
         string design, int which_opt, string lib ){
     
     vector<string> random_c; //final vector return
@@ -389,9 +434,13 @@ vector<string> constr_random_commands(vector<string> default_opts, int repeats, 
     string begin;
     
     if ( which_opt  <= 1 )
-      begin="./lsoracle -c \"read " + design + " ; " ;
+      begin = lsoracle + " -c \"read " + design + " ; " ;
+    else if (which_opt <= 3)
+      begin = lsoracle + " -c \"read -m " + design + " ; ";
+    else if (which_opt <= 5)
+      begin = lsoracle + " -c \"read -x " + design + " ; ";
     else 
-      begin="./lsoracle -c \"read -m " + design + " ; ";
+      begin = lsoracle + " -c \"read -g " + design + " ; ";
   
     cout<<"begin:"<<begin<<endl;
     
@@ -497,12 +546,18 @@ float get_aig_size_from_result(string resultFile)
     if(find_aig>0)
     {
         //printf("get aig size c2 \n");
-        aig.assign(input, find_aig+5, find_level - find_aig - 5);
+        std::cout<<"here ?"<<std::endl;
+        std::cout<<"input:"<<input<<" find_aig:"<<find_aig<<" find_level:"<<find_level<<std::endl;
+        aig.assign(input, find_aig+7, 4);
+        std::cout<<"aig :"<<aig<<std::endl;
         //printf("stof is %d\n",stof(aig) ); getchar();
         return stof(aig);
     }
     
-    else{ /*printf("get aig size c3\n");*/ return 0.0; } //error message
+    else{ /*printf("get aig size c3\n");*/ 
+        std::cout<<"Going to else"<<std::endl;
+        return 0.0; 
+    } //error message
     //printf("get aig size c4\n");
     return 0.0;
 }
@@ -521,6 +576,7 @@ float get_aig_level_from_result(string resultFile)
     {
         aig.assign(input, find_lev+5, input.length() - find_lev - 5);
         //printf("stof is %d\n",stof(aig) ); getchar();
+        std::cout<<aig<<std::endl;
         return stof(aig);
     }
     else{ return 0.0; } //error message
@@ -671,6 +727,14 @@ float get_results_universe(string resultFile, int which_opt)
     else if (which_opt == 2) // aig #nodes
         res = get_aig_size_from_result(resultFile);
     else if(which_opt==3) // aig #lev
+        res = get_aig_level_from_result(resultFile);
+    else if (which_opt == 4) // aig #nodes
+        res = get_aig_size_from_result(resultFile);
+    else if(which_opt==5) // aig #lev
+        res = get_aig_level_from_result(resultFile);
+    else if (which_opt == 6) // aig #nodes
+        res = get_aig_size_from_result(resultFile);
+    else if(which_opt==7) // aig #lev
         res = get_aig_level_from_result(resultFile);    
     // else if (which_opt==2) //sta delay
     //     res = get_sta_delay_from_result(resultFile);
@@ -690,12 +754,14 @@ float get_results_universe(string resultFile, int which_opt)
     //     res = get_area_noSTA_from_result(resultFile);
     else
         res = -1;
-    if (res == -1)
-        assert(0);
-    else if (res == 0)
-        return 999999999.0;
-
+    if (res == -1) {
+	assert(0);
+        return res;
+    } else if (res == 0) {
+	return 999999999.0;
+    } else {
 	return res;	
+    }
 }
 
 vector<float> to_vec_float(vector<vector<float> > v){
@@ -875,7 +941,7 @@ vector<float> update_prob_short_term_random(vector<vector<float> > v, int Tstart
     global_prob_area/delay      : global probability of wining rewards
     which_opt                   : switch for area/delay opt (==0 => area) (==1 ==> delay) */
 
-vector<string> biased_constr_random_commands(vector<string> default_opts, int repeats, int nCommands, int pos, string design,
+vector<string> biased_constr_random_commands(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos, string design,
     vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc, 
     int which_opt, int fSoftmax, string lib, string output){
     vector<string> random_c; //final vector return
@@ -884,9 +950,11 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     string begin;
 
     if ( which_opt == 0 || which_opt == 1 )
-        begin="./lsoracle -c \"read " + design + /*";strash;read "+lib+*/" ; ";
+        begin=lsoracle + " -c \"read " + design + /*";strash;read "+lib+*/" ; ";
     else if ( which_opt == 2 || which_opt == 3 )
-        begin="./lsoracle -c \"read -m " + design + /*";strash;read "+lib+*/" ; ";
+        begin=lsoracle + " -c \"read -m " + design + /*";strash;read "+lib+*/" ; ";
+    else if ( which_opt == 4  || which_opt == 5 )
+        begin=lsoracle + " -c \"read -x " + design + /*";strash;read "+lib+*/" ; ";
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     vector<int> new_sample_constr(head.size()); // each arm has its own prob/constrain
     vector<float> global_prob_area,global_prob_delay;
@@ -951,13 +1019,13 @@ vector<string> biased_constr_random_commands(vector<string> default_opts, int re
     global_prob_area/delay      : global probability of wining rewards
     which_opt                   : switch for area/delay opt (==0 => area) (==1 ==> delay) */
 
-vector<string> biased_constr_random_commands_forget(vector<string> default_opts, int repeats, int nCommands, int pos, string design,
+vector<string> biased_constr_random_commands_forget(string lsoracle, vector<string> default_opts, int repeats, int nCommands, int pos, string design,
         vector<vector<float> > global_area, vector<vector<float> > global_delay, vector<int> &res_file_loc, int which_opt, int fSoftmax, string lib){
     vector<string> random_c; //final vector return
     //initialization
     vector<string> head = create_headers(pos, default_opts);  // head.size => number of arms
     string begin;
-    begin="./lsoracle -c \"read " + design + /*+ ";strash;read "+lib+*/" ; ";
+    begin=lsoracle + " -c \"read " + design + /*+ ";strash;read "+lib+*/" ; ";
 
     //generating number of samples for each arm based on the global probability (a.k.a probability matching)
     int nTotal = head.size()*nCommands;         // calculate total number of samples at this round
@@ -1016,11 +1084,14 @@ vector<float> get_results(int nCommands, int repeats, int prefix_pos, string out
     ofstream outfile(output.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
     map<int,vector<float> > prefix_res_area;
     map<int,vector<float> > prefix_res_delay;
+    std::cout << "head_size" << head_size << std::endl;
     for (int i=0; i<head_size;i++) //i is first order result indicator; this should match "head.size" 
     {
         vector<float> res_area, res_delay;
+        std::cout << "nCommands" << nCommands << std::endl;
         for (int i2=0; i2<nCommands;i2++){
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
+            std::cout << "print result_file" << result_file << std::endl;
             res_area.push_back(get_results_universe(result_file,which_opt));
             res_delay.push_back(get_results_universe(result_file,which_opt));
             global_delay[i].push_back(get_results_universe(result_file,which_opt));
@@ -1090,6 +1161,7 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
         vector<float> res_area, res_delay;
         for (int i2=0; i2<res_file_loc[i];i2++){ // the number of samples are now biased; it is recorded in res_file_loc
             string result_file = to_string(i)+"_"+to_string(i2)+".result";
+            std::cout << "print result_file 2 " << result_file << std::endl;
             res_area.push_back(get_results_universe(result_file,which_opt));
             res_delay.push_back(get_results_universe(result_file,which_opt));
             global_delay[i].push_back(get_results_universe(result_file,which_opt));
@@ -1137,7 +1209,7 @@ vector<float> get_results_biased(int nCommands, int repeats, int prefix_pos, str
     int iter                            : current iteration of play
     int forget                          : forget/non-forget function applied switch
     int which_opt                       : area/delay switch  */
-vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design, 
+vector<float> sample(string lsoracle, int nCommands, int repeats, int prefix_pos, vector<string> default_opts, string design,
         string out, vector<vector<float> > &global_area, vector<vector<float> > &global_delay,
         vector<string> &global_commands,    int iter, int forget, int which_opt, int fSoftmax, string lib)
 {
@@ -1147,15 +1219,15 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
     vector<string> commands_vec;
 
     if (iter==0 ) // initial with random 
-        commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos 
+        commands_vec = constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib); //default, repeats, number_of_commands, prefix pos
     else
         if(!forget) {
             //printf("c1\n");
-            commands_vec = biased_constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt, fSoftmax, lib, out);  //
         }
         else
-            commands_vec = biased_constr_random_commands_forget(default_opts, repeats, nCommands, prefix_pos, design, 
+            commands_vec = biased_constr_random_commands_forget(lsoracle, default_opts, repeats, nCommands, prefix_pos, design,
                 global_area, global_delay, res_file_loc, which_opt,fSoftmax,lib);   //
 
     //cout<<"Number of Samples: "<<commands_vec.size()<<endl;
@@ -1164,7 +1236,7 @@ vector<float> sample(int nCommands, int repeats, int prefix_pos, vector<string> 
     if(commands_vec.size() == 0) // in case no arm win anything ; need a threthold (number of iters) of trying this
     {
          cout<<"Warning: Trying uniform random samples again since all arms wining rate is 0\n";
-         commands_vec = constr_random_commands(default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib);
+         commands_vec = constr_random_commands(lsoracle, default_opts, repeats, nCommands, prefix_pos, design, which_opt, lib);
          no_arm_win = 1;
     }
 
@@ -1230,9 +1302,8 @@ void best_so_far_command(vector<string> global_commands, vector<vector<float> > 
 }
 
 
-void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target, int nSamples, 
+string bayes_flow_tune(string lsoracle, string design, int repeats, int prefix_pos, int target, int nSamples,
                      int mab_iter, int fForget, int fSoftmax ) {
-    string design = Design;
     string lib = "dontCare";
     
     int forget = fForget;  // enable long-short-term memory for probability upate
@@ -1245,6 +1316,10 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
      *   target=1   => AIG minimization : #lev
      *   target=2   => MIG minimization : #nodes
      *   target=3   => MIG minimization : #lev
+     *   target=4   => XAG minimization : #nodes
+     *   target=5   => XAG minimization : #lev
+     *   target=6   => XMG minimization : #nodes
+     *   target=7   => XMG minimization : #lev
     */
 
     string out = ".temp.result.txt"; 
@@ -1253,6 +1328,10 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     vector<string> default_opts;
     if ( target == 0 || target == 1)
       default_opts = aig_default_options();
+    else if ( target == 4 || target == 5)
+      default_opts = xag_default_options();
+    else if ( target == 6 || target == 7)
+      default_opts = xmg_default_options();
     else 
       default_opts = mig_default_options();
 
@@ -1278,7 +1357,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     {
         vector<float> res_of_this_iter;
         for (int i=0;i<mab_iter;i++){
-            res_of_this_iter = sample(nCommands, repeats, prefix_pos, default_opts, design, out, 
+            res_of_this_iter = sample(lsoracle, nCommands, repeats, prefix_pos, default_opts, design, out,
                                       global_area, global_delay, global_commands, i, forget, which_opt, fSoftmax, lib);
             for( int res_i = 0; res_i<res_of_this_iter.size();res_i++){
                 seq_global_delay.push_back(res_of_this_iter[res_i]);
@@ -1289,13 +1368,14 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     }
     float best_res = best_so_far(global_delay);
     string remove_result = "rm *.result";
-    int rm_temp_result = system(remove_result.c_str());
+    //int rm_temp_result = system(remove_result.c_str());
     assert(seq_global_delay.size() == global_commands.size());
     ofstream outfile(design+".log", std::ofstream::out | std::ofstream::app);
     // End of tuning; printing out the best flow(s) found 
     cout<<"Best Flow(s) (#max=5):\n"; outfile<<"Best Flow(s) (#max=5):\n";
     ofstream save_for_vtr(design+".script");
     int num_recomd_cmds = 0;
+    string bestest;
     if (which_opt != 2 && which_opt != 1 && which_opt != 0
 	&& which_opt !=3 /*&& which_opt !=4*/	) // 2 sta-delay, 1 aig-level, 4 lut-level
     { 
@@ -1304,6 +1384,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
 		    if(seq_global_delay[i]==best_res){
 			    cout<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    outfile<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
+                bestest = clean_flow_only_cmd_yosys(clean_grep(global_commands[i]));
 			    //save_for_vtr<<clean_flow_only_cmd_yosys(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;
 			    //save_for_vtr<<global_commands[i]<<endl;
@@ -1319,6 +1400,7 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
 		    if(seq_global_delay[i]==best_res){
 			    cout<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    outfile<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
+                bestest = clean_flow_only_cmd_yosys(clean_grep(global_commands[i]));
 			    //save_for_vtr<<clean_flow_no_mapping(clean_grep(global_commands[i]))<<endl;
 			    save_for_vtr<<clean_grep_2(global_commands[i])<<endl;
 			    //save_for_vtr<<global_commands[i]<<endl;
@@ -1330,6 +1412,96 @@ void bayes_flow_tune(char const* Design, int repeats, int prefix_pos, int target
     }
     save_for_vtr.close();
     outfile.close();
-    return ;
+    return bestest;
+}
+
+
+
+template <class network, class node_resynth>
+network bayes_flow_tune_network(string lsoracle_path, network &net,
+                                int repeats, int prefix_pos, int target, int nSamples,
+                                int mab_iter, int fForget, int fSoftmax,
+                                string src_flag, node_resynth &&resyn )
+{
+    std::string ckt_name = "testing_mig.blif";
+    mockturtle::write_blif_params ps;
+    mockturtle::write_blif(net, ckt_name, ps);
+
+    string recipe = bayes_flow_tune(lsoracle_path, ckt_name, repeats,
+                                    prefix_pos, target,
+                                    nSamples, mab_iter, fForget, fSoftmax);
+
+    string command = lsoracle_path + " -c \"read " + src_flag + " " + ckt_name + " " +
+        recipe + " write_blif " + src_flag + " testing.out.blif ; \"";
+    std::cout << command << std::endl;
+    system(command.c_str());
+
+    mockturtle::names_view<mockturtle::klut_network> klut_ntk;
+    auto const result = lorina::read_blif("testing.out.blif",
+                                          mockturtle::blif_reader(klut_ntk));
+    if (result != lorina::return_code::success) {
+        std::cerr << "Unable to read blif file" << std::endl;
+        throw;
+    }
+
+    mockturtle::names_view<network> named_dest;
+    mockturtle::node_resynthesis<mockturtle::names_view<network>, mockturtle::names_view<mockturtle::klut_network>, node_resynth>(named_dest, klut_ntk, resyn);
+    return named_dest;
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::aig_network> bayes_flow_tune_aig(
+    string lsoracle_path, mockturtle::names_view<mockturtle::aig_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 1 : 0;
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-a", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::xmg_network> bayes_flow_tune_xmg(
+    string lsoracle_path, mockturtle::names_view<mockturtle::xmg_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 7: 6;
+    mockturtle::xag_npn_resynthesis<mockturtle::aig_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-g", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::xag_network> bayes_flow_tune_xag(
+    string lsoracle_path, mockturtle::names_view<mockturtle::xag_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 5: 4;
+    mockturtle::xag_npn_resynthesis<mockturtle::xag_network> resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-x", resyn);
+}
+
+template <class network>
+mockturtle::names_view<mockturtle::mig_network> bayes_flow_tune_mig(
+    string lsoracle_path, mockturtle::names_view<mockturtle::mig_network> &net, bool depth,
+    int repeats, int prefix_pos, int nSamples,
+    int mab_iter, int fForget, int fSoftmax )
+{
+    int target = depth ? 3 : 2;
+    mockturtle::mig_npn_resynthesis resyn;
+    return bayes_flow_tune_network(lsoracle_path, net,
+                                   repeats, prefix_pos, target, nSamples,
+                                   mab_iter, fForget, fSoftmax,
+                                   "-m", resyn);
 }
 }

@@ -60,7 +60,6 @@ extern int Sta_Init(Tcl_Interp *interp);
 #include "algorithms/partitioning/slack_view.hpp"
 #include "utility.hpp"
 #include "algorithms/optimization/optimizers.hpp"
-
 // TODO replace "pi/po" with "ci/co"
 namespace oracle
 {
@@ -234,6 +233,58 @@ mockturtle::window_view<mockturtle::names_view<network>> fix_names2(partition_ma
     return part;
 }
 
+
+template <typename network>
+class flowtune_aig_optimizer: public aig_optimizer<network>
+{
+    using partition = mockturtle::window_view<mockturtle::names_view<network>>;
+public:
+    flowtune_aig_optimizer(int index, const partition &original, optimization_strategy target, const std::string &abc_exec): aig_optimizer<network>(index, original, target, abc_exec) {}
+
+    optimizer<mockturtle::xmg_network> *reapply(int index, const xmg_partition &part)
+    {
+        return new flowtune_aig_optimizer<mockturtle::xmg_network>(index, part, this->strategy, this->abc_exec);
+    }
+
+    const std::string optimizer_name()
+    {
+        return "flowtune";
+    }
+
+    void optimize()
+    {
+
+        this->optimal = bayes_flow_tune_aig(lsoracle_path,
+                                            this->converted,
+                                            this->target == optimization_strategy::depth,
+                                            repeats,
+                                            prefix_pos,
+                                            n_samples,
+                                            mab_iter,
+                                            f_forget,
+                                            f_softmax);
+    }
+    
+    void reoptimize(){
+        oracle::aig_script opt;
+        if (this->optimal.num_gates() == 0){
+            optimize();  
+        }
+        else{
+            this->optimal = opt.run(this->optimal);
+        }
+    }
+private:
+    std::string lsoracle_path;
+    int repeats = 4;
+    int prefix_pos = 1;
+    int n_samples = 5;
+    int mab_iter = 10;
+    int f_forget = 0;
+    int f_softmax = 0;
+};
+
+
 string join(std::string delim, std::set<string> input)
 {
     std::vector<std::string> data(input.begin(), input.end());
@@ -320,10 +371,10 @@ string techmap(
     std::string output_file;
     std::string temp_prefix = "";
     if (temp_prefix.empty()) {
-        char *output = strdup("/tmp/lsoracle_XXXXXX.combined.v");
-        if (mkstemps(output, 11) == -1) {
-            throw std::exception();
-        }
+    char *output = strdup("/tmp/lsoracle_XXXXXX.combined.v");
+    if (mkstemps(output, 11) == -1) {
+        throw std::exception();
+    }
         output_file = std::string(output);
     } else {
         output_file = fmt::format("{}.working.v", temp_prefix);
@@ -674,8 +725,8 @@ const int worst_indep(oracle::partition_manager_junior<network> &partitions,
 
 template <typename network>
 oracle::partition_manager_junior<mockturtle::xmg_network> setup_output(
-    oracle::partition_manager_junior<network> &partitions_in,
-    std::vector<optimizer<network>*> &optimized)
+        oracle::partition_manager_junior<network> &partitions_in,
+        std::vector<optimizer<network>*> &optimized)
 {
     int num_parts = partitions_in.count();
     xmg_manager partitions_out = partitions_in.convert();
@@ -726,7 +777,7 @@ xmg_names setup_output1(
 
     for (int i = 0; i < num_parts; i++) {
         const xmg_partition part = partitions_out.partition(i);
-
+            
         optimizer<mockturtle::xmg_network> *optim = optimized[i].back()->reapply(i, part);
         for(int j=0;j<optimized[i].size();j++){
             std::cout << "Partition " << i << " " << optimized[i].back()->optimizer_name() << std::endl;
@@ -748,9 +799,9 @@ xmg_names setup_output1(
                     xmg_names opt = optim->export_superset();
                     partitions_out.integrate(i, partitions_out.partition(i), opt);
                 }
-
+                
             }
-        }
+        } 
     }
     partitions_out.substitute_nodes();
     std::cout << "Finished connecting outputs" << std::endl;
@@ -873,6 +924,7 @@ template <typename network> xmg_names optimize_timing(
 /*
 Mixed synthesis followed by XMG resynthesis and combiniation
 */
+
 template <typename network> xmg_names optimize_resynthesis(
     oracle::partition_manager_junior<network> &partitions, const string &abc_exec)
 {
@@ -948,9 +1000,11 @@ xmg_names optimize_basic (
       target = new node_strategy<network>();
       break;
   }
+  
   std::cout << std::endl;
   for (int i = 0; i < num_parts; i++) {
       const mockturtle::window_view<mockturtle::names_view<network>> part = fix_names2(partitions, i);
+ 
 
       optimized[i] = optimize(*target, strategy, part, i, abc_exec);
   }
@@ -959,6 +1013,9 @@ xmg_names optimize_basic (
 
   return setup_output(partitions, optimized).get_network();
 }
+
+
+
 
 /**************** Template instances ****************/
 template xmg_names
@@ -988,21 +1045,23 @@ optimize_resynthesis<mockturtle::aig_network>
     oracle::partition_manager_junior<mockturtle::aig_network> &,
     const std::string &);
 
-template void
-write_child<mockturtle::aig_network>(
+template void 
+write_child<mockturtle::aig_network>( 
     int, partition_manager_junior<mockturtle::aig_network> &, std::ofstream &);
 
-template void
-write_child<mockturtle::mig_network>(
+template void 
+write_child<mockturtle::mig_network>( 
     int, partition_manager_junior<mockturtle::mig_network> &, std::ofstream &);
 
-template void
-write_child<mockturtle::xag_network>(
+template void 
+write_child<mockturtle::xag_network>( 
     int, partition_manager_junior<mockturtle::xag_network> &, std::ofstream &);
 
 template void
 write_child<mockturtle::xmg_network>(
     int, partition_manager_junior<mockturtle::xmg_network> &, std::ofstream &);
 };
+
+
 #endif
 #endif
